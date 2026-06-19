@@ -1,0 +1,35 @@
+# ─────────────────────────────────────────────────────────────
+# Destination overview page (e.g. "Galapagos Islands", "Machu Picchu")
+# ─────────────────────────────────────────────────────────────
+key: destination
+name: Destination Page
+description: >
+  Evergreen overview of a place: what it is, why go, when to go, how to get
+  there, and what to do. Uses TouristDestination schema.
+post_type: page
+status: draft
+schema_type: TouristDestination
+categories: []
+tags: []
+focus_keyword_from: destination
+
+layout:
+  - { slot: featured, kind: media, role: featured, hint: "Iconic photo of the destination" }
+  - { slot: overview, kind: section, required: true, show_heading: false }
+  - { slot: highlights, kind: section, heading: "Highlights", style: list }
+  - { slot: things_to_do, kind: section, heading: "Things to Do" }
+  - { slot: best_time, kind: section, heading: "Best Time to Visit" }
+  - { slot: getting_there, kind: section, heading: "How to Get There" }
+  - { slot: practical_info, kind: section, heading: "Good to Know" }
+  - { slot: gallery, kind: media, role: gallery, hint: "Photo gallery of the destination" }
+  - { slot: faq, kind: faq }
+
+required_sections:
+  - overview
+  - best_time
+
+schema_extra:
+  touristType:
+    - "Adventure"
+    - "Nature"
+    - "Wildlife"

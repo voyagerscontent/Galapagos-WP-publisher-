@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────
+# Blog post / travel guide / article
+# ─────────────────────────────────────────────────────────────
+key: blog_post
+name: Blog Post / Travel Guide
+description: >
+  Editorial articles, destination guides, tips, and news. Maps to the standard
+  WordPress 'post' type with Article schema.
+post_type: post
+schema_type: BlogPosting
+categories:
+  - Travel Blog
+tags: []
+focus_keyword_from: keyword
+
+layout:
+  - { slot: featured, kind: media, role: featured, hint: "Hero image for the article" }
+  - { slot: overview, kind: section, required: true, show_heading: false }
+  - { slot: _body, kind: section }       # placeholder; real body sections flow through
+  - { slot: highlights, kind: section, style: list }
+  - { slot: things_to_do, kind: section }
+  - { slot: practical_info, kind: section }
+  - { slot: faq, kind: faq }
+  - { slot: conclusion, kind: section }
+
+required_sections:
+  - overview
+
+schema_extra:
+  articleSection: "Travel"

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Secrets & credentials
+.env
+*.env
+!.env.example
+credentials.json
+token.json
+service-account*.json
+client_secret*.json
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local artifacts
+/output/
+*.local.*
+.DS_Store

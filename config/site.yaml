@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────
+# Site-wide configuration & defaults for LatinTrails / Galapagos
+# These values feed schema.org output, SEO defaults, and media.
+# ─────────────────────────────────────────────────────────────
+
+organization:
+  name: "LatinTrails"
+  legal_name: "LatinTrails"
+  url: "https://www.latintrails.com"
+  logo: "https://www.latintrails.com/wp-content/uploads/logo.png"
+  same_as:
+    - "https://www.facebook.com/latintrails"
+    - "https://www.instagram.com/latintrails"
+  contact:
+    telephone: "+1-800-000-0000"
+    email: "businessops@latintrails.com"
+    contact_type: "customer support"
+
+locale:
+  language: "en-US"
+  currency: "USD"
+  country: "EC"
+
+seo:
+  # Appended to <title> when a page doesn't define its own brand suffix.
+  title_suffix: " | LatinTrails"
+  # Hard limits used by the SEO optimizer (characters).
+  title_max: 60
+  meta_description_max: 156
+  meta_description_min: 70
+  # Yoast / RankMath meta keys are written if the plugin is detected.
+  seo_plugin: "auto"   # auto | yoast | rankmath | none
+
+media:
+  # Default behavior when a template needs an image and none is supplied.
+  # library  -> search the WP Media Library for a match
+  # placeholder -> insert a tagged placeholder block for a human to fill
+  default_strategy: "placeholder"
+  # Minimum acceptable score (0-1) for a Media Library match to be used.
+  library_match_threshold: 0.45
+  placeholder_label: "📷 IMAGE NEEDED"
+
+defaults:
+  status: "draft"          # draft | pending | publish
+  comment_status: "closed"
+  ping_status: "closed"

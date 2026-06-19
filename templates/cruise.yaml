@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────
+# Galapagos cruise / ship page
+# ─────────────────────────────────────────────────────────────
+key: cruise
+name: Galapagos Cruise / Ship
+description: >
+  A cruise itinerary aboard a specific yacht/ship: the vessel, cabins, deck
+  plan, day-by-day route, and rates. Uses TouristTrip schema.
+post_type: post
+status: draft
+schema_type: TouristTrip
+categories:
+  - Galapagos Cruises
+tags: []
+focus_keyword_from: ship
+
+layout:
+  - { slot: featured, kind: media, role: featured, hint: "Photo of the yacht/ship" }
+  - { slot: overview, kind: section, required: true, show_heading: false }
+  - { slot: highlights, kind: section, heading: "Cruise Highlights", style: list }
+  - { slot: itinerary, kind: section, required: true, heading: "Itinerary" }
+  - { slot: ship, kind: section, heading: "The Ship" }
+  - { slot: cabins, kind: section, heading: "Cabins & Accommodation" }
+  - { slot: whats_included, kind: section, heading: "What's Included", style: list }
+  - { slot: pricing, kind: section, heading: "Rates & Departures" }
+  - { slot: gallery, kind: media, role: gallery, hint: "Gallery of the ship & wildlife" }
+  - { slot: faq, kind: faq }
+
+required_sections:
+  - overview
+  - itinerary
+
+schema_extra:
+  touristType:
+    - "Cruise"
+    - "Wildlife"
+    - "Nature"

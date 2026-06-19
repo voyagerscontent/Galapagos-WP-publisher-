@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────
+# Tour / itinerary product page (land-based or multi-day trips)
+# ─────────────────────────────────────────────────────────────
+key: tour
+name: Tour / Itinerary
+description: >
+  A sellable trip with a day-by-day itinerary, inclusions, and pricing. Uses
+  TouristTrip schema with Offer pricing when a price is provided.
+post_type: post
+status: draft
+schema_type: TouristTrip
+categories:
+  - Tours
+tags: []
+focus_keyword_from: destination
+
+layout:
+  - { slot: featured, kind: media, role: featured, hint: "Hero image of the tour destination" }
+  - { slot: overview, kind: section, required: true, show_heading: false }
+  - { slot: highlights, kind: section, heading: "Trip Highlights", style: list }
+  - { slot: itinerary, kind: section, required: true, heading: "Day-by-Day Itinerary" }
+  - { slot: whats_included, kind: section, heading: "What's Included", style: list }
+  - { slot: whats_excluded, kind: section, heading: "What's Not Included", style: list }
+  - { slot: pricing, kind: section, heading: "Pricing" }
+  - { slot: best_time, kind: section, heading: "Best Time to Travel" }
+  - { slot: practical_info, kind: section, heading: "Good to Know" }
+  - { slot: faq, kind: faq }
+
+required_sections:
+  - overview
+  - itinerary
+
+schema_extra:
+  touristType:
+    - "Adventure"
+    - "Eco-tourism"
