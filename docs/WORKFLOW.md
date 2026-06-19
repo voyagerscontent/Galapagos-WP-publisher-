@@ -96,8 +96,8 @@ wp-publish gdrive "7-Day Peru Highlights" --preview      # build only
 wp-publish gdrive 1AbCdEfGhIjKlMnOpQrStUvWxYz --type tour  # by file ID
 ```
 
-Only `businessops@latintrails.com` is allowed; the first run authorizes the
-account in your browser.
+Only the account in `GDRIVE_ALLOWED_ACCOUNT` is allowed; the first run
+authorizes it in your browser.
 
 ## Typical loop
 

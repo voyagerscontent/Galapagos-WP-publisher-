@@ -4,10 +4,14 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-**Galapagos WP Publisher** — a Python system that turns a document (Word,
-Markdown, plain text, or Google Drive) into a formatted, SEO‑optimized,
-schema‑rich WordPress page using per‑page‑type templates. It is the automation
-behind the LatinTrails / Galapagos site.
+A **site-agnostic WordPress publishing engine** (`src/wp_publisher/`) that turns
+a document (Word, Markdown, plain text, or Google Drive) into a formatted,
+SEO‑optimized, schema‑rich WordPress page using per‑page‑type templates.
+
+**This repository is configured for one site: https://www.galapagosislands.travel.**
+Each site lives in its own repository — same engine, different `config/site.yaml`,
+`templates/`, and `.env`. Keep the engine free of site-specific values; anything
+that names a particular site belongs in config, not in `src/`.
 
 ## Architecture (data flow)
 
@@ -17,7 +21,7 @@ ingest → Document → detect page type → apply template
        → publish (WordPress REST API)
 ```
 
-Key modules under `src/galapagos_publisher/`:
+Key modules under `src/wp_publisher/`:
 
 - `models.py` — the normalized `Document` and final `RenderedPage`. Everything
   downstream of ingestion sees only these, never the original file format.
@@ -31,9 +35,12 @@ Key modules under `src/galapagos_publisher/`:
 - `wordpress/` — REST `client.py` (retries, App Password auth) and
   `publisher.py` (payload assembly, idempotent on slug).
 - `pipeline.py` — orchestration; `cli.py` — the `wp-publish` command.
+- `config.py` — merges `config/site.yaml` with `.env`. The only place site
+  identity enters the engine, and only via config.
 
 Templates are **data, not code**: `templates/*.yaml`. Adding a page type =
-adding a YAML file. See `docs/TEMPLATES.md`.
+adding a YAML file. See `docs/TEMPLATES.md`. Standing up a new site =
+`docs/NEW_SITE.md`.
 
 ## Conventions
 
@@ -46,6 +53,8 @@ adding a YAML file. See `docs/TEMPLATES.md`.
   never a raw Classic HTML blob.
 - schema.org JSON‑LD is embedded as a `wp:html` block so it ships regardless of
   SEO plugin; Yoast/RankMath meta is also written when detected.
+- Do not hardcode a site URL, org name, or account in `src/`. Read it from
+  `config/site.yaml` or the environment.
 
 ## Working here
 
@@ -64,4 +73,5 @@ the sample to confirm structure/ordering still hold.
 - Publishing defaults to **draft**. Never switch a publish to `--status
   publish` without explicit user intent.
 - Never commit `.env`, `credentials.json`, or `token.json` (git‑ignored).
-- Google Drive ingestion is locked to `businessops@latintrails.com`.
+- Google Drive ingestion is restricted to `GDRIVE_ALLOWED_ACCOUNT` when set
+  (this repo's `.env.example` sets it to `businessops@latintrails.com`).

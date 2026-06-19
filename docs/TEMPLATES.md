@@ -57,7 +57,7 @@ normalized to a **canonical slug** with synonym + keyword matching, so:
 - "Rates & Departures", "Pricing", "Cost" → `pricing`
 - "Cabins & Accommodation" → `cabins`
 
-Mappings live in `src/galapagos_publisher/utils.py`
+Mappings live in `src/wp_publisher/utils.py`
 (`SECTION_SYNONYMS` and `_KEYWORD_RULES`). Any document section that doesn't
 match a declared slot is **still rendered**, appended after the templated
 slots — so authored content is never dropped.
@@ -83,6 +83,6 @@ Anything under `schema_extra` is merged in as‑is for full control.
 1. Copy an existing file, e.g. `cp templates/tour.yaml templates/expedition.yaml`.
 2. Change `key`, `name`, `schema_type`, and the `layout`.
 3. (Optional) add detection signals for it in
-   `src/galapagos_publisher/parse/pagetype.py` so it can be auto‑detected, or
+   `src/wp_publisher/parse/pagetype.py` so it can be auto‑detected, or
    just publish with `--type expedition`.
 4. `wp-publish templates` to confirm it loads.

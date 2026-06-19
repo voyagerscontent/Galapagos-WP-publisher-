@@ -2,11 +2,11 @@
 
 from pathlib import Path
 
-from galapagos_publisher.config import get_settings
-from galapagos_publisher.ingest import read_file
-from galapagos_publisher.parse import detect_page_type
-from galapagos_publisher.pipeline import BuildContext, build_page
-from galapagos_publisher.rendering.template import load_registry
+from wp_publisher.config import get_settings
+from wp_publisher.ingest import read_file
+from wp_publisher.parse import detect_page_type
+from wp_publisher.pipeline import BuildContext, build_page
+from wp_publisher.rendering.template import load_registry
 
 SAMPLE = Path(__file__).resolve().parents[1] / "samples" / "galapagos-cruise.md"
 

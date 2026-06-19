@@ -1,4 +1,4 @@
-"""Command-line interface for the Galapagos WP Publisher.
+"""Command-line interface for the WP Publisher engine.
 
 Examples
 --------
@@ -200,7 +200,7 @@ def gdrive(
     media: Optional[str] = typer.Option(None, "--media", "-m"),
     preview_only: bool = typer.Option(False, "--preview", help="Build but do not publish."),
 ) -> None:
-    """Ingest a document from Google Drive (businessops@latintrails.com)."""
+    """Ingest a document from Google Drive (restricted to GDRIVE_ALLOWED_ACCOUNT)."""
     from .ingest.gdrive_reader import find_file_id, read_gdrive
 
     file_id = query

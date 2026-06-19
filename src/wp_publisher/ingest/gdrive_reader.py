@@ -1,14 +1,15 @@
-"""Read documents from Google Drive (businessops@latintrails.com).
+"""Read documents from Google Drive.
 
 This reader is optional and requires the `gdrive` extra:
 
     pip install -e ".[gdrive]"
 
 Authentication uses OAuth user credentials. On first run it opens a browser to
-authorize the businessops@latintrails.com account, then caches a token so later
-runs are non-interactive. The reader refuses to proceed if the authorized
-account does not match GDRIVE_ALLOWED_ACCOUNT — this guarantees content is only
-ever pulled from the approved business account.
+authorize a Google account, then caches a token so later runs are
+non-interactive. If GDRIVE_ALLOWED_ACCOUNT is set (per-site, in .env), the
+reader refuses to proceed unless the authorized account matches it — this
+guarantees content is only ever pulled from the approved account. When the
+setting is empty, no account restriction is enforced.
 
 See docs/SETUP.md for credential creation steps.
 """

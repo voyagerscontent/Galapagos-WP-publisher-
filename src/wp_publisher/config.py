@@ -39,12 +39,12 @@ class Settings:
         author = os.getenv("WP_DEFAULT_AUTHOR_ID")
         self.wp_default_author_id = int(author) if author else None
 
-        # Google Drive
+        # Google Drive. The allowed account is per-site and set in .env; the
+        # engine ships with no default so it stays site-agnostic. When empty,
+        # no account restriction is enforced.
         self.gdrive_credentials_file = os.getenv("GDRIVE_CREDENTIALS_FILE", "credentials.json")
         self.gdrive_token_file = os.getenv("GDRIVE_TOKEN_FILE", "token.json")
-        self.gdrive_allowed_account = os.getenv(
-            "GDRIVE_ALLOWED_ACCOUNT", "businessops@latintrails.com"
-        )
+        self.gdrive_allowed_account = os.getenv("GDRIVE_ALLOWED_ACCOUNT", "")
 
     # Convenience accessors -------------------------------------------------
     @property

@@ -1,7 +1,13 @@
-# Galapagos WP Publisher
+# WP Publisher — Galapagos Islands
 
-Turn a document into a fully formatted, SEO‑optimized, schema‑rich WordPress
-page — with the least manual intervention possible.
+A site-agnostic engine that turns a document into a fully formatted,
+SEO‑optimized, schema‑rich WordPress page — with the least manual intervention
+possible.
+
+> **This repository publishes to https://www.galapagosislands.travel.**
+> The engine itself (`src/wp_publisher/`) carries no site identity — every site
+> gets its own repository with its own `config/`, `templates/`, and `.env`.
+> To stand up another site, see [docs/NEW_SITE.md](docs/NEW_SITE.md).
 
 You write the content (in Word, Markdown, plain text, or Google Docs). The
 system detects what *kind* of page it is, arranges it with a reusable
@@ -19,18 +25,29 @@ Gutenberg blocks that respect your theme.
         →  publish to WordPress (REST API)
 ```
 
-## Why templates
+## Engine vs. site
 
-Each **section of the site** has its own template (`templates/*.yaml`) that
-declares the page's layout, required sections, schema.org type, and SEO/media
-rules. When you send a doc, the system formats and publishes it *correctly for
-the section it was written for* — a cruise page, a tour, a destination, or a
-blog post — without you re‑doing the layout each time.
+| Layer | Lives in | Site-specific? |
+| ----- | -------- | -------------- |
+| **Engine** (ingest, render, SEO, schema, publish) | `src/wp_publisher/` | No — reused as‑is by every site |
+| **Site config** (org, URL, SEO defaults, media) | `config/site.yaml` | Yes |
+| **Templates** (one per page type) | `templates/*.yaml` | Yes |
+| **Secrets** (WP URL, App Password) | `.env` | Yes |
+
+That separation is the whole point: the same engine powers any number of sites;
+each repo only differs in config, templates, and secrets.
+
+## Templates (one per site section)
+
+Each **section of the site** has a template (`templates/*.yaml`) that declares
+the page's layout, required sections, schema.org type, and SEO/media rules. When
+you send a doc, the system formats and publishes it *correctly for the section
+it was written for*.
 
 | Template      | For                                   | Schema type          |
 | ------------- | ------------------------------------- | -------------------- |
 | `blog_post`   | Articles, travel guides, news         | `BlogPosting`        |
-| `destination` | Place overviews (Galapagos, Cusco…)   | `TouristDestination` |
+| `destination` | Place overviews (islands, sites…)     | `TouristDestination` |
 | `tour`        | Sellable itineraries / trips          | `TouristTrip`        |
 | `cruise`      | Galapagos cruises / specific ships    | `TouristTrip`        |
 
@@ -43,7 +60,7 @@ Add or tune a page type by editing YAML — no code changes. See
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"          # add ,gdrive for Google Drive support
 
-cp .env.example .env             # fill in WordPress credentials
+cp .env.example .env             # fill in WordPress credentials for this site
 
 # See what's available
 wp-publish templates
@@ -58,7 +75,7 @@ wp-publish check
 wp-publish publish samples/galapagos-cruise.md
 wp-publish publish my-tour.docx --type tour --media library --status draft
 
-# Pull straight from Google Drive (businessops@latintrails.com)
+# Pull straight from Google Drive
 wp-publish gdrive "8-Day Galapagos" --preview
 ```
 
@@ -73,35 +90,33 @@ at the top. Everything else is just normal headings and paragraphs.
 
 ```markdown
 ---
-type: tour
-title: "7-Day Peru Highlights: Cusco, Sacred Valley & Machu Picchu"
-destination: "Peru"
-duration: "7 days"
-price: "from $2,150"
-focus_keyword: "Peru tour"
-categories: "Tours, Peru"
+type: cruise
+title: "8-Day Galapagos Cruise Aboard the M/Y Evolution"
+ship: "M/Y Evolution"
+destination: "Galapagos Islands"
+duration: "8 days"
+price: "from $5,495"
+focus_keyword: "Galapagos cruise"
+categories: "Galapagos Cruises"
 ---
 
-# 7-Day Peru Highlights
+# 8-Day Galapagos Cruise Aboard the M/Y Evolution
 
 ## Overview
 ...
 
-## Trip Highlights
-- ...
-
-## Day-by-Day Itinerary
+## Itinerary
 1. Day 1 — ...
 
 ## What's Included
 - ...
 
 ## FAQ
-### Is altitude a concern?
-Yes — we build in acclimatization days...
+### Is the cruise suitable for non-swimmers?
+Yes — every excursion offers a dry-landing alternative...
 ```
 
-The section headings can be phrased naturally ("What's Included", "Inclusions",
+Section headings can be phrased naturally ("What's Included", "Inclusions",
 "Price Includes" all map to the same slot). See
 [docs/WORKFLOW.md](docs/WORKFLOW.md) for the full authoring guide.
 
@@ -123,14 +138,15 @@ The section headings can be phrased naturally ("What's Included", "Inclusions",
 - [docs/SETUP.md](docs/SETUP.md) — WordPress App Password + Google Drive setup
 - [docs/TEMPLATES.md](docs/TEMPLATES.md) — how templates work and how to add one
 - [docs/WORKFLOW.md](docs/WORKFLOW.md) — authoring guide and end‑to‑end flow
+- [docs/NEW_SITE.md](docs/NEW_SITE.md) — spin up a repo for a different site
 
 ## Project layout
 
 ```
-config/site.yaml          Site-wide defaults (org, SEO limits, media strategy)
-templates/*.yaml          One template per page type
+config/site.yaml          Per-site defaults (org, SEO limits, media strategy)
+templates/*.yaml          One template per page type (per-site)
 samples/                  Example documents
-src/galapagos_publisher/
+src/wp_publisher/         The site-agnostic engine:
   ingest/                 Word / Markdown / text / Google Drive readers
   parse/                  Page-type detection
   rendering/              Templates + Gutenberg block engine

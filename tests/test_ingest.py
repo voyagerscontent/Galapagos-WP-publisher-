@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from galapagos_publisher.ingest import read_file
-from galapagos_publisher.models import BlockType
-from galapagos_publisher.utils import section_slug
+from wp_publisher.ingest import read_file
+from wp_publisher.models import BlockType
+from wp_publisher.utils import section_slug
 
 SAMPLE = Path(__file__).resolve().parents[1] / "samples" / "galapagos-cruise.md"
 

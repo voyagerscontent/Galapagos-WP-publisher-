@@ -3,12 +3,12 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "galapagos-wp-publisher"
+name = "wp-publisher"
 version = "0.1.0"
-description = "Turn a doc into a fully formatted, SEO-optimized, schema-rich WordPress page using per-page-type templates."
+description = "Site-agnostic engine that turns a doc into a formatted, SEO-optimized, schema-rich WordPress page using per-page-type templates."
 readme = "README.md"
 requires-python = ">=3.10"
-authors = [{ name = "LatinTrails" }]
+authors = [{ name = "Voyagers Content" }]
 license = { text = "Proprietary" }
 dependencies = [
     "requests>=2.31",
@@ -39,13 +39,13 @@ dev = [
 ]
 
 [project.scripts]
-wp-publish = "galapagos_publisher.cli:app"
+wp-publish = "wp_publisher.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"galapagos_publisher" = ["py.typed"]
+"wp_publisher" = ["py.typed"]
 
 [tool.ruff]
 line-length = 100

@@ -1,18 +1,21 @@
 ---
 name: publish-to-wordpress
 description: >
-  Publish a document to the LatinTrails / Galapagos WordPress site. Use when the
-  user wants to turn a doc (Word, Markdown, text, or a Google Drive file) into a
-  formatted, SEO-optimized, schema-rich WordPress page — e.g. "publish this tour
-  doc", "create a cruise page from this", "preview this as a destination page",
-  or "push my Galapagos itinerary to WordPress".
+  Publish a document to this repository's WordPress site
+  (galapagosislands.travel). Use when the user wants to turn a doc (Word,
+  Markdown, text, or a Google Drive file) into a formatted, SEO-optimized,
+  schema-rich WordPress page — e.g. "publish this tour doc", "create a cruise
+  page from this", "preview this as a destination page", or "push my Galapagos
+  itinerary to WordPress".
 ---
 
 # Publish to WordPress
 
-This repository is the **Galapagos WP Publisher** — it converts a document into
-a fully formatted WordPress page using per-page-type templates. Drive it through
-the `wp-publish` CLI.
+This repository uses the site-agnostic **WP Publisher** engine to convert a
+document into a fully formatted WordPress page using per-page-type templates,
+and publishes to the site configured in `.env`
+(**https://www.galapagosislands.travel**). Drive it through the `wp-publish`
+CLI.
 
 ## Setup check (first time in a session)
 

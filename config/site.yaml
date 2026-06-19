@@ -1,19 +1,23 @@
 # ─────────────────────────────────────────────────────────────
-# Site-wide configuration & defaults for LatinTrails / Galapagos
-# These values feed schema.org output, SEO defaults, and media.
+# Site configuration & defaults  —  THIS FILE IS PER-SITE.
+# This repository publishes to: https://www.galapagosislands.travel
+#
+# The publishing engine (src/wp_publisher) is site-agnostic. Everything that
+# identifies a specific site lives here and in .env. To stand up a new site,
+# create a new repo from the engine and edit this file + templates/ + .env.
+# See docs/NEW_SITE.md.
 # ─────────────────────────────────────────────────────────────
 
 organization:
-  name: "LatinTrails"
-  legal_name: "LatinTrails"
-  url: "https://www.latintrails.com"
-  logo: "https://www.latintrails.com/wp-content/uploads/logo.png"
-  same_as:
-    - "https://www.facebook.com/latintrails"
-    - "https://www.instagram.com/latintrails"
+  # TODO: confirm the legal entity, logo, phone and socials for this site.
+  name: "Galapagos Islands"
+  legal_name: "Galapagos Islands"
+  url: "https://www.galapagosislands.travel"
+  logo: "https://www.galapagosislands.travel/wp-content/uploads/logo.png"
+  same_as: []          # e.g. Facebook / Instagram profile URLs
   contact:
-    telephone: "+1-800-000-0000"
-    email: "businessops@latintrails.com"
+    telephone: ""
+    email: ""
     contact_type: "customer support"
 
 locale:
@@ -23,7 +27,7 @@ locale:
 
 seo:
   # Appended to <title> when a page doesn't define its own brand suffix.
-  title_suffix: " | LatinTrails"
+  title_suffix: " | Galapagos Islands"
   # Hard limits used by the SEO optimizer (characters).
   title_max: 60
   meta_description_max: 156
