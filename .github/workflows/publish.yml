@@ -1,0 +1,95 @@
+name: Publish to WordPress
+
+# Run entirely from GitHub.com — no local machine needed.
+#
+# 1. Add your document to the repo (e.g. drop a .docx/.md/.txt into content/
+#    via "Add file → Upload files").
+# 2. Go to the Actions tab → "Publish to WordPress" → "Run workflow".
+# 3. Fill in the file path and choose what to do.
+#
+# Requires three repository secrets (Settings → Secrets and variables →
+# Actions): WP_BASE_URL, WP_USERNAME, WP_APP_PASSWORD.
+# See docs/PUBLISH_VIA_GITHUB.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: "Path to the document in the repo (e.g. content/my-cruise.md)"
+        required: true
+        type: string
+      mode:
+        description: "What to do"
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview          # build only, no publishing (downloadable artifact)
+          - publish-draft    # create/update a DRAFT in WordPress
+          - publish-live     # publish LIVE on the site
+      page_type:
+        description: "Force a page type (blank = auto-detect): blog_post | destination | tour | cruise"
+        required: false
+        type: string
+      media:
+        description: "Media strategy"
+        required: true
+        default: placeholder
+        type: choice
+        options:
+          - placeholder      # insert 'image needed' blocks for a human
+          - library          # reuse best match from the WP Media Library
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the publisher
+        run: pip install -e .
+
+      - name: Run
+        env:
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          # Inputs are passed through the environment (never interpolated
+          # directly into the shell) to avoid script injection.
+          IN_FILE: ${{ inputs.file }}
+          IN_MODE: ${{ inputs.mode }}
+          IN_TYPE: ${{ inputs.page_type }}
+          IN_MEDIA: ${{ inputs.media }}
+        run: |
+          set -euo pipefail
+          if [ ! -f "${IN_FILE}" ]; then
+            echo "::error::File not found in repo: ${IN_FILE}"
+            exit 1
+          fi
+          TYPE_ARGS=()
+          if [ -n "${IN_TYPE}" ]; then TYPE_ARGS=(--type "${IN_TYPE}"); fi
+          case "${IN_MODE}" in
+            preview)
+              wp-publish preview "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}"
+              ;;
+            publish-draft)
+              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}" --status draft --yes
+              ;;
+            publish-live)
+              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}" --status publish --yes
+              ;;
+            *)
+              echo "::error::Unknown mode: ${IN_MODE}"; exit 1 ;;
+          esac
+
+      - name: Upload preview artifacts
+        if: ${{ inputs.mode == 'preview' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-output
+          path: output/
+          if-no-files-found: ignore

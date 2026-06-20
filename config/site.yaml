@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────
+# Site configuration & defaults  —  THIS FILE IS PER-SITE.
+# This repository publishes to: https://www.galapagosislands.travel
+#
+# The publishing engine (src/wp_publisher) is site-agnostic. Everything that
+# identifies a specific site lives here and in .env. To stand up a new site,
+# create a new repo from the engine and edit this file + templates/ + .env.
+# See docs/NEW_SITE.md.
+# ─────────────────────────────────────────────────────────────
+
+organization:
+  # TODO: confirm the legal entity, logo, phone and socials for this site.
+  name: "Galapagos Islands"
+  legal_name: "Galapagos Islands"
+  url: "https://www.galapagosislands.travel"
+  logo: "https://www.galapagosislands.travel/wp-content/uploads/logo.png"
+  same_as: []          # e.g. Facebook / Instagram profile URLs
+  contact:
+    telephone: ""
+    email: ""
+    contact_type: "customer support"
+
+locale:
+  language: "en-US"
+  currency: "USD"
+  country: "EC"
+
+seo:
+  # Appended to <title> when a page doesn't define its own brand suffix.
+  title_suffix: " | Galapagos Islands"
+  # Hard limits used by the SEO optimizer (characters).
+  title_max: 60
+  meta_description_max: 156
+  meta_description_min: 70
+  # Yoast / RankMath meta keys are written if the plugin is detected.
+  seo_plugin: "auto"   # auto | yoast | rankmath | none
+
+media:
+  # Default behavior when a template needs an image and none is supplied.
+  # library  -> search the WP Media Library for a match
+  # placeholder -> insert a tagged placeholder block for a human to fill
+  default_strategy: "placeholder"
+  # Minimum acceptable score (0-1) for a Media Library match to be used.
+  library_match_threshold: 0.45
+  placeholder_label: "📷 IMAGE NEEDED"
+
+defaults:
+  status: "draft"          # draft | pending | publish
+  comment_status: "closed"
+  ping_status: "closed"
