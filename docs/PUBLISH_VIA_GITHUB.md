@@ -4,6 +4,15 @@ You can run the whole pipeline from your browser using **GitHub Actions** — no
 terminal, no local install. You upload a doc to the repo, then click a button to
 publish it. Credentials are stored once as encrypted repository secrets.
 
+> **Publish in 3 steps (once set up):**
+> 1. **Add file → Upload files** into the `content/` folder → Commit.
+> 2. **Actions → Publish to WordPress → Run workflow** → set `file` to
+>    `content/your-doc.md`, pick a `mode`.
+> 3. Use `preview` → `publish-draft` → `publish-live`. Review the draft in
+>    `wp-admin` between steps.
+>
+> If a run fails on authentication, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
 ## One-time setup: add your WordPress secrets
 
 1. On **galapagosislands.travel** `wp-admin`, create an Application Password:
