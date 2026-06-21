@@ -136,6 +136,7 @@ Section headings can be phrased naturally ("What's Included", "Inclusions",
 ## Documentation
 
 - [docs/PUBLISH_VIA_GITHUB.md](docs/PUBLISH_VIA_GITHUB.md) — publish from your browser (no local machine)
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — fixes for auth/REST API errors (incl. miniOrange & WP Cerber)
 - [docs/SETUP.md](docs/SETUP.md) — WordPress App Password + Google Drive setup
 - [docs/TEMPLATES.md](docs/TEMPLATES.md) — how templates work and how to add one
 - [docs/WORKFLOW.md](docs/WORKFLOW.md) — authoring guide and end‑to‑end flow
