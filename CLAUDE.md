@@ -5,56 +5,58 @@ Guidance for Claude Code when working in this repository.
 ## What this is
 
 A **site-agnostic WordPress publishing engine** (`src/wp_publisher/`) that turns
-a document (Word, Markdown, plain text, or Google Drive) into a formatted,
-SEO‑optimized, schema‑rich WordPress page using per‑page‑type templates.
+a document (Word, Markdown, plain text, or Google Drive) into a
+SEO‑optimized, schema‑rich WordPress page by **populating ACF fields** over the
+REST API. The WordPress theme renders the ACF fields, so design/UX lives on the
+WP side — the engine does **not** emit Gutenberg blocks.
 
 **This repository is configured for one site: https://www.galapagosislands.travel.**
 Each site lives in its own repository — same engine, different `config/site.yaml`,
-`templates/`, and `.env`. Keep the engine free of site-specific values; anything
-that names a particular site belongs in config, not in `src/`.
+`config/acf.yaml`, `templates/`, and `.env`. Keep the engine free of
+site-specific values; anything that names a particular site belongs in config.
 
 ## Architecture (data flow)
 
 ```
-ingest → Document → detect page type → apply template
-       → SEO → render Gutenberg blocks → resolve media → schema.org JSON-LD
-       → publish (WordPress REST API)
+ingest → Document → detect page-type profile (schema/categories)
+       → SEO → compose into structured components → resolve media
+       → schema.org JSON-LD → map components to ACF → publish (REST `acf`)
 ```
 
 Key modules under `src/wp_publisher/`:
 
-- `models.py` — the normalized `Document` and final `RenderedPage`. Everything
-  downstream of ingestion sees only these, never the original file format.
-- `ingest/` — format readers (`docx`, `markdown`, `text`, `gdrive`). Each
-  returns a `Document`.
-- `parse/pagetype.py` — picks the template (declared `type:` first, then
-  heuristics).
-- `rendering/` — `template.py` (YAML page templates), `blocks.py` (Gutenberg
-  block builders), `renderer.py` (the layout engine).
-- `seo/`, `schema/`, `media/` — SEO fields, JSON‑LD, image resolution.
-- `wordpress/` — REST `client.py` (retries, App Password auth) and
-  `publisher.py` (payload assembly, idempotent on slug).
-- `pipeline.py` — orchestration; `cli.py` — the `wp-publish` command.
-- `config.py` — merges `config/site.yaml` with `.env`. The only place site
-  identity enters the engine, and only via config.
+- `models.py` — normalized `Document`, `Component`-free `RenderedPage` carrying
+  the `acf` payload. (`content/model.py` holds the `Component` model.)
+- `ingest/` — format readers (`docx`, `markdown`, `text`, `gdrive`); each
+  returns a `Document` and populates `Document.raw_body`.
+- `content/` — the new core: `compose.py` (Document → components, deterministic
+  rules + a bespoke `:::` directive path), `richtext.py` (blocks/Markdown →
+  semantic HTML for WYSIWYG fields), `directives.py` (the `:::` parser).
+- `acf/` — `config.py` loads `config/acf.yaml`; `mapper.py` turns components
+  into the `acf` REST payload (flexible-content rows).
+- `parse/pagetype.py` — picks the page-type profile (declared `type:`, then
+  heuristics; routes generic `wildlife` by search volume).
+- `rendering/template.py` — page-type **profiles** only (schema type, default
+  categories, focus-keyword source, search-volume tier hints). No layout/render.
+- `seo/`, `schema/`, `media/`, `wordpress/`, `pipeline.py`, `cli.py`, `config.py`.
 
-Templates are **data, not code**: `templates/*.yaml`. Adding a page type =
-adding a YAML file. See `docs/TEMPLATES.md`. Standing up a new site =
-`docs/NEW_SITE.md`.
+Mapping to ACF is **config, not code**: `config/acf.yaml` (your field names).
+The component model is fixed; the mapping targets any ACF schema. Reference
+field group: `wordpress-acf/page-builder.acf.json`. See `docs/ACF.md`.
 
 ## Conventions
 
-- Section titles map to canonical slot slugs via `utils.py`
-  (`SECTION_SYNONYMS`, `_KEYWORD_RULES`). Extend those when a new heading
-  phrasing should map to an existing slot.
-- H3+ headings nest inside their parent section (this is how FAQ Q&A pairs are
-  formed). Don't "flatten" them.
-- Content is emitted as **native Gutenberg blocks** so it respects the theme —
-  never a raw Classic HTML blob.
-- schema.org JSON‑LD is embedded as a `wp:html` block so it ships regardless of
-  SEO plugin; Yoast/RankMath meta is also written when detected.
+- Output is **ACF fields**, never Gutenberg. `post_content` stays empty.
+- Composition is **deterministic**; a doc with `:::` directives takes the
+  bespoke path (uploader-designed one-off layout).
+- WYSIWYG/text content is plain semantic HTML (`<p>`, `<ul>`, `<h2>`), not block
+  markup. ACF image fields store attachment IDs (`image_as` in `config/acf.yaml`).
+- schema.org JSON‑LD is delivered as an ACF field (`seo_schema`); Yoast/RankMath
+  meta is also written when detected.
+- Section titles map to canonical slugs via `utils.py` (`SECTION_SYNONYMS`,
+  `_KEYWORD_RULES`); H3+ headings nest inside their parent section.
 - Do not hardcode a site URL, org name, or account in `src/`. Read it from
-  `config/site.yaml` or the environment.
+  `config/*.yaml` or the environment.
 
 ## Working here
 

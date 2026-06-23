@@ -1,26 +1,31 @@
 """End-to-end orchestration.
 
-    Document --(detect type)--> Template
+    Document --(detect type)--> Template (schema/category profile only)
             --(SEO)----------> titles/slug/meta
-            --(render)--------> Gutenberg blocks + media
-            --(schema)--------> JSON-LD
+            --(compose)------> structured components (deterministic, or bespoke
+                               directives) + media
+            --(schema)-------> JSON-LD
+            --(ACF map)------> acf field payload
             ==> RenderedPage
 
-The pipeline does NOT talk to WordPress for publishing — it only optionally uses
-a client for Media Library lookups. This keeps "build the page" and "push the
-page" cleanly separable, so you can preview before anything goes live.
+Output targets **ACF fields**, not Gutenberg blocks — the WordPress theme
+renders the populated fields. "Build the page" and "push the page" stay
+separable, so you can preview the ACF payload before anything goes live.
 """
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 
+from .acf import build_acf
+from .acf.config import AcfConfig, get_acf_config
 from .config import Settings, get_settings
+from .content.compose import Composer
 from .ingest import read_file
 from .media.resolver import MediaResolver
 from .models import Document, RenderedPage
 from .parse import detect_page_type
-from .rendering.renderer import RenderEngine
 from .rendering.template import PageTemplate, TemplateRegistry, load_registry
 from .schema import build_json_ld
 from .seo import optimize_seo
@@ -34,6 +39,7 @@ class BuildContext:
     registry: TemplateRegistry
     wp_client: WordPressClient | None
     media_strategy: str | None = None
+    acf_config: AcfConfig | None = None
 
 
 def build_page(
@@ -43,10 +49,11 @@ def build_page(
     page_type: str | None = None,
     status: str | None = None,
 ) -> tuple[RenderedPage, PageTemplate, str]:
-    """Build a RenderedPage from a Document. Returns (page, template, reason)."""
+    """Build a RenderedPage (ACF payload) from a Document. Returns (page, template, reason)."""
     settings = ctx.settings
+    acf_config = ctx.acf_config or get_acf_config()
 
-    # 1) Choose the template.
+    # 1) Choose the page-type profile (drives schema + default categories).
     if page_type:
         key, reason = page_type, "explicitly requested"
         ctx.registry.get(key)  # validate
@@ -57,16 +64,15 @@ def build_page(
     # 2) SEO.
     seo = optimize_seo(doc, template, settings)
 
-    # 3) Render content + media.
+    # 3) Compose the document into structured components (+ resolve media).
     resolver = MediaResolver(settings, ctx.wp_client, ctx.media_strategy)
-    engine = RenderEngine(settings, resolver)
-    content_html, media_items, featured, render_warnings = engine.render(doc, template)
+    composer = Composer(settings, resolver)
+    components, compose_warnings = composer.compose(doc)
+    featured = _first_featured(composer.media_items)
 
-    # 4) Determine canonical URL (for schema) from base + slug.
+    # 4) Canonical URL + schema.org JSON-LD.
     page_url = f"{settings.wp_base_url}/{seo.slug}/" if settings.wp_base_url else f"/{seo.slug}/"
     featured_url = featured.url if (featured and featured.url) else None
-
-    # 5) schema.org JSON-LD.
     json_ld = build_json_ld(
         doc,
         template,
@@ -77,34 +83,87 @@ def build_page(
         image_url=featured_url,
     )
 
-    # 6) Resolve status precedence: arg > template > env/site default.
-    final_status = status or template.status or settings.wp_default_status
+    # 5) Map components -> ACF payload.
+    subtitle = str(doc.metadata.get("tagline") or doc.metadata.get("subtitle") or "")
+    acf_payload, acf_warnings = build_acf(
+        components,
+        acf_config,
+        subtitle=subtitle,
+        schema_jsonld=json.dumps(json_ld, ensure_ascii=False, separators=(",", ":")),
+    )
 
-    # 7) Categories/tags: doc metadata overrides template defaults.
+    # 6) Status / taxonomies / post type.
+    final_status = status or template.status or settings.wp_default_status
     categories = _csv(doc.metadata.get("categories")) or list(template.categories)
     tags = _csv(doc.metadata.get("tags")) or list(template.tags)
-
-    # 8) Post type: doc metadata ("post" | "page") overrides the template.
     post_type = _normalize_post_type(doc.metadata.get("post_type")) or template.post_type
 
     page = RenderedPage(
         title=doc.title,
         slug=seo.slug,
-        content_html=content_html,
+        acf=acf_payload,
+        content_html="",  # ACF-driven; the theme renders the fields
         excerpt=strip_html(seo.meta_description),
         status=final_status,
         post_type=post_type,
         categories=categories,
         tags=tags,
         featured_media=featured,
-        media=media_items,
+        media=composer.media_items,
         seo_title=seo.seo_title,
         meta_description=seo.meta_description,
         focus_keyword=seo.focus_keyword,
         json_ld=json_ld,
-        warnings=[*seo.warnings, *render_warnings],
+        warnings=[
+            *seo.warnings,
+            *_template_warnings(template, doc),
+            *compose_warnings,
+            *acf_warnings,
+        ],
     )
     return page, template, reason
+
+
+def _template_warnings(template: PageTemplate, doc: Document) -> list[str]:
+    """Content-QA warnings: missing expected sections and search-volume tier."""
+    out: list[str] = []
+    for slug in template.required_sections:
+        if doc.find_section(slug) is None:
+            out.append(f"Expected section '{slug}' is missing from the document.")
+
+    vol = _to_int(doc.metadata.get("search_volume"))
+    if template.min_search_volume:
+        if vol is None:
+            out.append(
+                f"No 'search_volume' given; this template targets "
+                f"{template.min_search_volume}+ monthly searches."
+            )
+        elif vol < template.min_search_volume:
+            out.append(
+                f"search_volume ({vol}) is below the {template.min_search_volume} "
+                f"threshold; consider a lighter template."
+            )
+    if template.max_search_volume and vol is not None and vol > template.max_search_volume:
+        out.append(
+            f"search_volume ({vol}) exceeds this template's cap "
+            f"({template.max_search_volume}); consider a richer template."
+        )
+    return out
+
+
+def _to_int(value) -> int | None:
+    if value is None:
+        return None
+    digits = "".join(ch for ch in str(value) if ch.isdigit())
+    return int(digits) if digits else None
+
+
+def _first_featured(media_items):
+    """The first resolved library image becomes the post's featured image."""
+    for item in media_items:
+        if item.source == "library" and item.wp_media_id:
+            return item
+    return media_items[0] if media_items else None
 
 
 def build_from_file(

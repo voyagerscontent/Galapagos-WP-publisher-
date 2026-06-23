@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 from pydantic import BaseModel
 
 from ..config import Settings
@@ -41,23 +39,6 @@ def _seo_meta(page: RenderedPage, plugin: str) -> dict[str, str]:
     return {}
 
 
-def _content_with_schema(page: RenderedPage) -> str:
-    """Append the JSON-LD as a wp:html block.
-
-    Embedding schema directly in the content guarantees it ships regardless of
-    which (if any) SEO plugin is installed — the "least intervention" path.
-    """
-    if not page.json_ld:
-        return page.content_html
-    script = (
-        '<script type="application/ld+json">'
-        + json.dumps(page.json_ld, ensure_ascii=False, separators=(",", ":"))
-        + "</script>"
-    )
-    schema_block = f"<!-- wp:html -->\n{script}\n<!-- /wp:html -->"
-    return f"{page.content_html}\n\n{schema_block}"
-
-
 def publish_page(
     client: WordPressClient,
     page: RenderedPage,
@@ -72,11 +53,17 @@ def publish_page(
         "title": page.title,
         "slug": page.slug,
         "status": page.status,
-        "content": _content_with_schema(page),
+        # Content lives in ACF fields; post_content stays empty (theme renders ACF).
+        "content": page.content_html,
         "excerpt": page.excerpt or page.meta_description,
         "comment_status": defaults.get("comment_status", "closed"),
         "ping_status": defaults.get("ping_status", "closed"),
     }
+
+    # ACF field values via core REST. Requires the field group(s) to have
+    # "Show in REST API" enabled.
+    if page.acf:
+        payload["acf"] = page.acf
 
     if settings.wp_default_author_id:
         payload["author"] = settings.wp_default_author_id

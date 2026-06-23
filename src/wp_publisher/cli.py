@@ -93,6 +93,15 @@ def _build(
     return page, template, reason, client, settings
 
 
+def _acf_summary(page) -> str:
+    from .acf.config import get_acf_config
+
+    field = get_acf_config().flexible_field
+    rows = page.acf.get(field, []) if isinstance(page.acf, dict) else []
+    layouts = [r.get("acf_fc_layout", "?") for r in rows]
+    return f"{len(rows)} ACF section(s): {', '.join(layouts) or '—'}"
+
+
 def _summary(doc: Document, page, template, reason) -> None:
     console.print(
         Panel.fit(
@@ -106,6 +115,7 @@ def _summary(doc: Document, page, template, reason) -> None:
             f"Status: [bold]{page.status}[/bold]   post_type: {page.post_type}\n"
             f"Categories: {', '.join(page.categories) or '—'}   "
             f"Tags: {', '.join(page.tags) or '—'}\n"
+            f"ACF: [bold]{_acf_summary(page)}[/bold]\n"
             f"Featured: {_media_desc(page.featured_media)}",
             title="Built page",
         )
@@ -138,14 +148,16 @@ def preview(
 
     out_dir = out or (Path("output") / page.slug)
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "content.html").write_text(page.content_html, encoding="utf-8")
+    (out_dir / "acf.json").write_text(
+        json.dumps(page.acf, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     (out_dir / "schema.json").write_text(
         json.dumps(page.json_ld, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     (out_dir / "page.json").write_text(
         page.model_dump_json(indent=2), encoding="utf-8"
     )
-    console.print(f"[green]Artifacts written to[/green] {out_dir}/")
+    console.print(f"[green]Artifacts written to[/green] {out_dir}/ (acf.json = what gets populated)")
 
 
 @app.command()

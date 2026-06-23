@@ -1,27 +1,10 @@
-"""Rendering: Document + Template -> WordPress Gutenberg block markup."""
+"""Page-type templates (schema / category / SEO profiles).
 
-from .blocks import (
-    faq_block,
-    heading_block,
-    image_block,
-    list_block,
-    paragraph_block,
-    placeholder_block,
-    quote_block,
-    table_block,
-)
+The output layer is ACF (see ``wp_publisher.acf`` and ``wp_publisher.content``);
+templates here only carry per-page-type metadata: schema.org type, default
+categories/tags, focus-keyword source, and the search-volume tier hints.
+"""
+
 from .template import PageTemplate, TemplateRegistry, load_registry
 
-__all__ = [
-    "paragraph_block",
-    "heading_block",
-    "list_block",
-    "image_block",
-    "quote_block",
-    "table_block",
-    "faq_block",
-    "placeholder_block",
-    "PageTemplate",
-    "TemplateRegistry",
-    "load_registry",
-]
+__all__ = ["PageTemplate", "TemplateRegistry", "load_registry"]
