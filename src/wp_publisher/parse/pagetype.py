@@ -36,6 +36,16 @@ _SIGNALS: dict[str, dict[str, float]] = {
         "things_to_do": 2.0,
         "practical_info": 1.5,
     },
+    "wildlife_tier1": {
+        "identification": 3.0,
+        "behavior": 2.0,
+        "life_cycle": 2.0,
+        "conservation": 2.0,
+        "range_habitat": 2.0,
+        "where_to_see": 1.5,
+        "species": 1.0,
+        "scientific_name": 1.0,
+    },
     "blog_post": {
         "conclusion": 1.0,
         "overview": 0.3,
@@ -59,6 +69,12 @@ _ALIASES = {
     "post": "blog_post",
     "article": "blog_post",
     "guide": "blog_post",
+    "wildlife": "wildlife_tier1",
+    "wildlife_tier1": "wildlife_tier1",
+    "wildlife_tier_1": "wildlife_tier1",
+    "tier1_wildlife": "wildlife_tier1",
+    "species": "wildlife_tier1",
+    "animal": "wildlife_tier1",
 }
 
 

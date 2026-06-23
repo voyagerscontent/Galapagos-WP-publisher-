@@ -27,6 +27,12 @@ class RenderEngine:
         self, doc: Document, template: PageTemplate
     ) -> tuple[str, list[MediaItem], MediaItem | None, list[str]]:
         """Return (content_html, media_items, featured_media, warnings)."""
+        # Templates may opt into a specialized renderer for richer layouts.
+        if template.renderer == "wildlife_tier1":
+            from .wildlife import WildlifeRenderer
+
+            return WildlifeRenderer(self.settings, self.media).render(doc, template)
+
         parts: list[str] = []
         media_items: list[MediaItem] = []
         featured: MediaItem | None = None

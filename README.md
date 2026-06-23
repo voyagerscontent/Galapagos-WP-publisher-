@@ -50,6 +50,7 @@ it was written for*.
 | `destination` | Place overviews (islands, sites…)     | `TouristDestination` |
 | `tour`        | Sellable itineraries / trips          | `TouristTrip`        |
 | `cruise`      | Galapagos cruises / specific ships    | `TouristTrip`        |
+| `wildlife_tier1` | Iconic species (500+ searches/mo)  | `Article` + `FAQPage` |
 
 Add or tune a page type by editing YAML — no code changes. See
 [docs/TEMPLATES.md](docs/TEMPLATES.md).
@@ -139,6 +140,7 @@ Section headings can be phrased naturally ("What's Included", "Inclusions",
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — fixes for auth/REST API errors (incl. miniOrange & WP Cerber)
 - [docs/SETUP.md](docs/SETUP.md) — WordPress App Password + Google Drive setup
 - [docs/TEMPLATES.md](docs/TEMPLATES.md) — how templates work and how to add one
+- [docs/WILDLIFE_TEMPLATE.md](docs/WILDLIFE_TEMPLATE.md) — the Tier 1 Wildlife (iconic species) template
 - [docs/WORKFLOW.md](docs/WORKFLOW.md) — authoring guide and end‑to‑end flow
 - [docs/NEW_SITE.md](docs/NEW_SITE.md) — spin up a repo for a different site
 

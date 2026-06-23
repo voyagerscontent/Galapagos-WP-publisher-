@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────
+# Tier 1 Wildlife — the most iconic species (content-intensive).
+# Use for species with 500+ monthly searches.
+#
+# This template uses the specialized "wildlife_tier1" renderer, which builds a
+# fixed designed layout (hero, sticky TOC + quick facts, overview, ID guide,
+# range/habitat, behavior cards, life-cycle steps, conservation stats, "where to
+# see" cards, accordion FAQs, related species, booking CTA). The renderer drives
+# the layout, so the `layout:` list below is intentionally not used.
+#
+# Authoring: provide a metadata header (scientific_name, chips, facts, CTAs,
+# related, population numbers) plus H2 sections. H3 sub-headings inside a section
+# become individual cards/steps. See docs/WILDLIFE_TEMPLATE.md.
+# ─────────────────────────────────────────────────────────────
+key: wildlife_tier1
+name: Tier 1 Wildlife (Iconic Species)
+description: >
+  Content-intensive species page for the most iconic Galapagos wildlife.
+  Intended for species with 500+ monthly searches.
+post_type: post
+status: draft
+schema_type: Article
+renderer: wildlife_tier1
+min_search_volume: 500
+categories:
+  - Wildlife
+tags: []
+focus_keyword_from: species
+
+required_sections:
+  - overview
+  - identification
+  - range_habitat
+  - behavior
+  - conservation
+  - where_to_see
+
+schema_extra:
+  articleSection: "Wildlife"
