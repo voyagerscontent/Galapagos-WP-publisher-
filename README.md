@@ -126,9 +126,10 @@ Section headings can be phrased naturally ("What's Included", "Inclusions",
 
 ## What gets generated
 
-- **ACF fields** — a flexible-content stack of components (hero, rich text, FAQ
-  accordion, stats, CTA, …) populated over REST. Your theme renders them; the
-  field mapping lives in `config/acf.yaml`. See [docs/ACF.md](docs/ACF.md).
+- **Flat ACF fields** (`hero_heading`, `hero_image`, `body`, `faq` repeater,
+  `key_facts`, `cta_*`, `seo_schema`…) populated over REST, ready to bind in
+  **Elementor** with Dynamic Tags. The field mapping lives in `config/acf.yaml`.
+  See [docs/ACF.md](docs/ACF.md).
 - **SEO**: clean slug, length‑checked `<title>`, meta description woven with
   the focus keyword, written to Yoast/RankMath when detected.
 - **schema.org JSON‑LD**: the right type per profile, plus an `FAQPage` when

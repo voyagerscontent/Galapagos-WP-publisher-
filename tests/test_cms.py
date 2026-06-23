@@ -34,19 +34,18 @@ def test_header_block_becomes_metadata():
     assert doc.metadata.get("author") == "Juan Magallanes"
 
 
-def test_composes_into_acf_components():
+def test_composes_into_flat_acf_fields():
     doc = read_file(DOC)
     page, template, _ = build_page(doc, _ctx())
     assert template.key == "destination"
     assert page.post_type == "page"
     assert page.slug == "santa-fe"
-    layouts = [r["acf_fc_layout"] for r in page.acf["page_sections"]]
-    assert layouts[0] == "hero"
-    assert "callout" in layouts
-    assert "image" in layouts
-    assert "faq" in layouts
-    faq = next(r for r in page.acf["page_sections"] if r["acf_fc_layout"] == "faq")
-    assert len(faq["items"]) == 5
+    acf = page.acf
+    assert "Santa Fe Island" in acf["hero_heading"]
+    assert acf["hero_subheading"]                 # quick answer
+    assert acf["callout_text"]                    # CALLOUT STAT
+    assert acf["body"]                            # island sections
+    assert len(acf["faq"]) == 5
 
 
 def test_verify_flags_surface_and_hold_draft():

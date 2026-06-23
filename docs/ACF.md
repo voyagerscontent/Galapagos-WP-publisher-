@@ -1,128 +1,90 @@
-# Publishing into ACF fields
+# Publishing into ACF fields (flat) for Elementor
 
 The publisher does **not** write Gutenberg blocks. It captures your content doc,
-composes it into structured **components**, and populates **ACF fields** over the
-REST API. Your WordPress theme renders those fields, so design and UX live on the
-WP side — no fixed page templates required in the doc.
+composes it into structured components, and writes **flat, named ACF fields** over
+the REST API. You then design the page in **Elementor**, binding each field with
+**Dynamic Tags → ACF Field**. The data and the design stay cleanly separate.
 
 ```
-content doc → compose (components) → map to ACF → POST { "acf": {...} } → WordPress
+content doc → compose → flat ACF fields → POST { "acf": {...} } → WordPress → Elementor (Dynamic Tags)
 ```
 
-## 1. One-time WordPress setup
+## 1. Create the field group in WordPress (one time)
 
-### a) Enable ACF in REST
-Each ACF **field group** that the publisher writes to must have **Show in REST
-API = On** (ACF 6.x: field group → Settings → *Show in REST API*). Without it,
-core REST silently drops the `acf` payload.
+> **Important:** the publisher *writes values* into ACF fields; it does **not**
+> create the field-group *definitions*. ACF field groups can't be created over
+> the content REST API — so the group must exist in WordPress first, or the
+> `acf` payload is silently dropped (you'd get a post with only a title).
 
-### b) The field structure
-The engine writes one ACF **flexible content** field whose rows are layouts
-(hero, rich_text, faq, …), plus a couple of top-level fields (subtitle, schema).
+Two ways to create it:
 
-You have two options:
+- **Import the ready group** — WP admin → **ACF → Tools → Import Field Groups**
+  → upload [`wordpress-acf/page-fields.acf.json`](../wordpress-acf/page-fields.acf.json).
+  It matches `config/acf.yaml` exactly and has **Show in REST API** on.
+- **Or register it in your theme/site repo** via ACF local JSON (`acf-json/`),
+  keeping the same field names.
 
-- **Use your existing ACF group** — keep your field/layout names and tell the
-  engine about them in `config/acf.yaml` (see §2). Recommended.
-- **Adopt the reference group** — import
-  [`wordpress-acf/page-builder.acf.json`](../wordpress-acf/page-builder.acf.json)
-  via **ACF → Tools → Import Field Groups**. It matches the default
-  `config/acf.yaml` out of the box.
+Then confirm the group has **Show in REST API = On** (Field Group → Settings).
+Elementor reads ACF straight from the database, so Show-in-REST is only needed so
+*our automation* can write the values.
 
-### c) Auth
-Same as before — a WordPress Application Password in the repo secrets, and (on
-this site) the miniOrange REST endpoints left open for `/wp/v2/*`. See
-[TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+## 2. The fields
 
-## 2. Map to your fields — `config/acf.yaml`
+| ACF field | Type | Filled from |
+| --------- | ---- | ----------- |
+| `hero_eyebrow` | text | optional `eyebrow` |
+| `hero_heading` | text | the title |
+| `hero_subheading` | textarea | tagline / "Quick Answer" |
+| `hero_image` | image (ID) | first image / `featured_image_query` |
+| `hero_cta_label`, `hero_cta_url` | text | first hero CTA |
+| `body` | wysiwyg | all prose sections as clean HTML (`<h2>`, `<p>`, `<ul>`, inline `<figure>`) |
+| `callout_title`, `callout_text` | text / wysiwyg | a `CALLOUT STAT` / `:::callout` |
+| `faq` | repeater (`question`, `answer`) | the FAQ block |
+| `key_facts` | repeater (`label`, `value`) | a `facts:` map |
+| `cta_heading`, `cta_text`, `cta_label`, `cta_url` | text / wysiwyg | a closing CTA |
+| `page_subtitle` | text | `tagline`/`subtitle` |
+| `seo_schema` | textarea | schema.org JSON-LD |
 
-This file is the **only** place field names live. The left side is the engine's
-component model (fixed); the right side is **your** ACF field/layout names.
+To use **your own** field names, edit the right-hand side of `config/acf.yaml`
+(`flat:` and `top_level:`). The component model is fixed; only the names change.
 
-```yaml
-flexible_field: page_sections      # your ACF flexible-content field name
-top_level:
-  subtitle: page_subtitle          # your text field (set "" to skip)
-  schema_jsonld: seo_schema        # your textarea field for JSON-LD
-image_as: id                       # ACF image fields store attachment IDs
-layouts:
-  hero:
-    layout: hero                   # the ACF layout name
-    fields: { heading: heading, subheading: subheading, image: image, ctas: buttons }
-    repeaters: { ctas: { label: label, url: url } }
-  rich_text:
-    layout: rich_text
-    fields: { heading: heading, content: content }
-  faq:
-    layout: faq
-    fields: { heading: heading, items: items }
-    repeaters: { items: { question: question, answer: answer } }
-  # ... callout, stats, cta, columns, image, gallery, quote, bullets, html
-```
+## 3. Build the page in Elementor with Dynamic Tags
 
-Each component becomes one flexible-content row:
+Design the template once (Elementor Pro):
 
-```json
-{ "acf_fc_layout": "hero", "heading": "…", "buttons": [ { "label": "…", "url": "…" } ] }
-```
+1. Add a widget (Heading, Text Editor, Image…).
+2. Click the **Dynamic Tags** icon (🛢️) on the content field.
+3. Choose **ACF Field** → pick the field (e.g. `hero_heading`).
+4. For `faq` / `key_facts` (repeaters): use a **Loop Grid** / repeater, or an
+   accordion widget that reads the ACF repeater.
 
-A component type with **no** mapping falls back to `rich_text` (its content
-coerced to HTML), so nothing is ever dropped.
-
-## 3. How content becomes components
-
-### Auto (a normally-written doc)
-Deterministic rules build the page for readability:
-
-| In the doc | Component |
-| ---------- | --------- |
-| Title + `tagline` + `featured_image_query` + `cta_*` metadata | **hero** |
-| Lead paragraph(s) before the first heading | **rich_text** (intro) |
-| Each `## Section` | **rich_text** (heading + HTML) |
-| An `## FAQ` with `### question` items | **faq** (accordion) |
-| A `facts:` map in the header | **stats** |
-| `booking_heading` / `footer_cta_*` metadata | **cta** |
-
-### Bespoke (hand-designed page)
-If the doc contains `:::` directives, the uploader is designing a one-off
-layout; each directive maps to a component:
-
-| Directive | Component (ACF layout) |
-| --------- | ---------------------- |
-| `hero` | hero |
-| `columns` / `column` | columns |
-| `cards` / `card` | columns |
-| `callout` | callout |
-| `accordion` | faq |
-| `cta` | cta |
-| `image` | image |
-| `buttons` | cta (buttons only) |
-| `group` / `section` | flattened into its inner components |
-| `html` | html |
-| plain Markdown | rich_text |
-
-See [AUTHORING_GUIDE.md](AUTHORING_GUIDE.md) for the directive syntax.
+Every new doc we publish fills these fields, and your Elementor template renders
+them automatically — no re-layout per page.
 
 ## 4. Preview & publish
 
 ```bash
-wp-publish preview samples/galapagos-cruise.md      # writes output/<slug>/acf.json
-wp-publish publish samples/galapagos-cruise.md      # POSTs the acf payload (draft)
+wp-publish preview content/santa-fe-island.docx     # writes output/<slug>/acf.json
+wp-publish publish  content/santa-fe-island.docx     # POSTs the flat acf payload (draft)
 ```
 
 `acf.json` is exactly what gets sent as the post's `acf` object — inspect it to
-confirm the mapping before publishing. `post_content` is intentionally empty.
+confirm the mapping before publishing. `post_content` stays empty.
+
+### Safety
+The publisher **refuses** to touch an existing post with the same slug unless you
+pass `--update` (workflow: the `update_existing` toggle, default off), and even
+then it never changes an existing post's status or blanks its content. Test new
+docs under a fresh slug.
 
 ## 5. Images
 
 ACF image fields store **attachment IDs**. In `--media library` mode the engine
-matches your Media Library and fills the ID; otherwise the image field is left
-empty and a warning lists what's needed (the suggested search terms are kept so
-a human can drop the right asset in). `image_as: url` switches to storing URLs
-if your fields expect them.
+matches your Media Library and fills the ID; otherwise the field is left empty
+and a warning lists the suggested search terms for a human to add the asset.
 
 ## 6. SEO & schema
 
-SEO title/description/focus keyword are still written to RankMath/Yoast meta,
-and the schema.org JSON-LD is delivered as the `seo_schema` ACF field — output
-it inside a `<script type="application/ld+json">` tag in your theme `<head>`.
+SEO title/description/focus keyword are written to RankMath/Yoast meta. The
+schema.org JSON-LD is delivered as the `seo_schema` field — output it inside a
+`<script type="application/ld+json">` tag in your Elementor/theme header.

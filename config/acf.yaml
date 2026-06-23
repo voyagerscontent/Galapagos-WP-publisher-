@@ -1,84 +1,56 @@
 # ─────────────────────────────────────────────────────────────
-# ACF mapping  —  PER-SITE.  This is where you match the engine's components
-# to YOUR ACF field group. Change the right-hand values to your field names.
+# ACF mapping — PER-SITE.  Mode: FLAT (named fields for Elementor Dynamic Tags).
 #
-# Model: one ACF *flexible content* field whose rows are layouts. Each engine
-# component (hero, rich_text, accordion, …) becomes one layout row:
-#   { "acf_fc_layout": "<layout>", "<your_subfield>": <value>, ... }
+# The publisher writes flat, named ACF fields (not a flexible-content blob), so
+# each one binds directly in Elementor via Dynamic Tags → ACF Field. Repeating
+# data (FAQ, key facts) uses ACF repeaters (loop them in Elementor).
 #
-# Values are written via the core REST `acf` payload, so every field group
-# involved must have "Show in REST API" enabled (ACF 6.x). See docs/ACF.md.
-#
-# A reference field group matching these defaults is in
-# wordpress-acf/page-builder.acf.json (importable into ACF).
+# The right-hand values are YOUR ACF field names — change them to match your
+# group, or import wordpress-acf/page-fields.acf.json which matches these.
+# Each field group must have "Show in REST API" enabled so the publisher can
+# write values (Elementor itself reads ACF straight from the DB — no REST needed).
 # ─────────────────────────────────────────────────────────────
 
-# The ACF flexible-content field that holds the page's stacked sections.
-flexible_field: page_sections
+mode: flat
+image_as: id           # ACF image fields store the attachment ID
 
-# Used when a component type has no mapping below (content coerced to HTML).
-fallback_layout: rich_text
-
-# Non-flexible (top-level) ACF fields on the post.
 top_level:
-  subtitle: page_subtitle      # set "" to skip
-  schema_jsonld: seo_schema    # JSON-LD string; set "" to skip
+  subtitle: page_subtitle
+  schema_jsonld: seo_schema
 
-# How images are stored: "id" (attachment ID, ACF default) or "url".
-image_as: id
-# How plain bullet lists are stored: "newline" (textarea), "array", or "html".
-list_as: html
-
-layouts:
+flat:
+  # Hero band — single fields, bind each one directly in Elementor.
   hero:
-    layout: hero
-    fields: { heading: heading, subheading: subheading, eyebrow: eyebrow, image: image, ctas: buttons }
-    repeaters: { ctas: { label: label, url: url } }
+    eyebrow: hero_eyebrow
+    heading: hero_heading
+    subheading: hero_subheading
+    image: hero_image
+    cta_label: hero_cta_label
+    cta_url: hero_cta_url
 
-  rich_text:
-    layout: rich_text
-    fields: { heading: heading, content: content }
+  # Main article body — all prose sections rendered to one WYSIWYG field.
+  body: body
 
-  bullets:
-    layout: list
-    fields: { heading: heading, items: items }
-
-  image:
-    layout: image
-    fields: { image: image, caption: caption, alt: alt }
-
-  gallery:
-    layout: gallery
-    fields: { heading: heading, images: images }
-
+  # First callout / key-stat box.
   callout:
-    layout: callout
-    fields: { variant: style, title: title, content: content }
+    title: callout_title
+    content: callout_text
 
-  accordion:
-    layout: faq
-    fields: { heading: heading, items: items }
-    repeaters: { items: { question: question, answer: answer } }
+  # FAQ accordion -> repeater (question, answer). Loop it in Elementor.
+  faq:
+    field: faq
+    question: question
+    answer: answer
 
+  # Key facts / stats -> repeater (label, value).
   stats:
-    layout: stats
-    fields: { heading: heading, items: items }
-    repeaters: { items: { value: value, label: label } }
+    field: key_facts
+    value: value
+    label: label
 
+  # Closing call-to-action.
   cta:
-    layout: cta
-    fields: { heading: heading, content: content, ctas: buttons }
-    repeaters: { ctas: { label: label, url: url } }
-
-  quote:
-    layout: quote
-    fields: { text: text, citation: citation }
-
-  columns:
-    layout: columns
-    fields: { columns: columns }
-    repeaters: { columns: { content: content } }
-
-  html:
-    layout: html
-    fields: { content: content }
+    heading: cta_heading
+    content: cta_text
+    cta_label: cta_label
+    cta_url: cta_url

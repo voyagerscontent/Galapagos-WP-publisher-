@@ -44,25 +44,22 @@ def test_section_slug_wildlife():
     assert section_slug("Best Places to See Them") == "where_to_see"
 
 
-def test_builds_acf_components():
+def test_builds_flat_acf_fields():
     doc = read_file(SAMPLE)
     page, template, _ = build_page(doc, _ctx())
     assert template.key == "wildlife_tier1"
-    rows = page.acf["page_sections"]
-    layouts = [r["acf_fc_layout"] for r in rows]
-    assert layouts[0] == "hero"
-    assert "rich_text" in layouts
-    assert "faq" in layouts            # Traveler FAQs -> accordion
-    assert "stats" in layouts          # `facts:` -> stats
-    # Subtitle (tagline) populated as a top-level ACF field.
-    assert page.acf.get("page_subtitle")
+    acf = page.acf
+    assert acf["hero_heading"]
+    assert acf["body"]
+    assert isinstance(acf["faq"], list) and acf["faq"]   # Traveler FAQs
+    assert isinstance(acf["key_facts"], list) and acf["key_facts"]  # `facts:` -> stats
+    assert acf.get("page_subtitle")                      # tagline
 
 
-def test_facts_become_stats_repeater():
+def test_facts_become_key_facts_repeater():
     doc = read_file(SAMPLE)
     page, _t, _ = build_page(doc, _ctx())
-    stats = next(r for r in page.acf["page_sections"] if r["acf_fc_layout"] == "stats")
-    labels = [i["label"] for i in stats["items"]]
+    labels = [i["label"] for i in page.acf["key_facts"]]
     assert "Size & Weight" in labels
 
 
@@ -96,14 +93,13 @@ def test_tier2_template_registered():
     assert tpl.max_search_volume == 499
 
 
-def test_tier2_builds_acf_components():
+def test_tier2_builds_flat_acf_fields():
     doc = read_file(SAMPLE2)
     page, template, _ = build_page(doc, _ctx())
     assert template.key == "wildlife_tier2"
-    layouts = [r["acf_fc_layout"] for r in page.acf["page_sections"]]
-    assert layouts[0] == "hero"
-    assert "rich_text" in layouts
-    assert "faq" in layouts
+    assert page.acf["hero_heading"]
+    assert page.acf["body"]
+    assert isinstance(page.acf["faq"], list) and page.acf["faq"]
 
 
 def test_tier2_high_volume_warns():

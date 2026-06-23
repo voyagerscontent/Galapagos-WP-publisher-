@@ -96,8 +96,13 @@ def _build(
 def _acf_summary(page) -> str:
     from .acf.config import get_acf_config
 
-    field = get_acf_config().flexible_field
-    rows = page.acf.get(field, []) if isinstance(page.acf, dict) else []
+    cfg = get_acf_config()
+    acf = page.acf if isinstance(page.acf, dict) else {}
+    if cfg.mode == "flat":
+        keys = [k for k, v in acf.items() if v]
+        shown = ", ".join(keys[:8]) + ("…" if len(keys) > 8 else "")
+        return f"{len(keys)} ACF field(s): {shown or '—'}"
+    rows = acf.get(cfg.flexible_field, [])
     layouts = [r.get("acf_fc_layout", "?") for r in rows]
     return f"{len(rows)} ACF section(s): {', '.join(layouts) or '—'}"
 

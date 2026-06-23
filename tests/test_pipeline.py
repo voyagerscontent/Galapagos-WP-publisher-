@@ -37,21 +37,17 @@ def test_build_page_basic_fields():
     assert "Galapagos Cruises" in page.categories
 
 
-def test_output_is_acf_not_gutenberg():
+def test_output_is_flat_acf_fields():
     doc = read_file(SAMPLE)
     page, _t, _r = build_page(doc, _ctx())
-    # post_content is empty; content lives in ACF fields.
+    # post_content is empty; content lives in flat ACF fields (Elementor-bound).
     assert page.content_html == ""
-    rows = page.acf["page_sections"]
-    layouts = [r["acf_fc_layout"] for r in rows]
-    assert layouts[0] == "hero"
-    assert "rich_text" in layouts
-    assert "faq" in layouts
-    # rich_text carries semantic HTML, not block markup.
-    rt = next(r for r in rows if r["acf_fc_layout"] == "rich_text")
-    assert "<p>" in rt["content"] and "<!-- wp:" not in rt["content"]
+    acf = page.acf
+    assert acf["hero_heading"]
+    assert "<p>" in acf["body"] and "<!-- wp:" not in acf["body"]
+    assert isinstance(acf["faq"], list) and acf["faq"][0]["question"]
     # JSON-LD is delivered as an ACF field, not embedded in content.
-    assert page.acf.get("seo_schema")
+    assert acf.get("seo_schema")
 
 
 def test_seo_fields():

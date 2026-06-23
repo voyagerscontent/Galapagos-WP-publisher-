@@ -15,6 +15,8 @@ DEFAULT_ACF_CONFIG = PROJECT_ROOT / "config" / "acf.yaml"
 
 class AcfConfig:
     def __init__(self, data: dict[str, Any]):
+        self.mode: str = data.get("mode", "flexible")  # flat | flexible
+        self.flat: dict[str, Any] = data.get("flat", {}) or {}
         self.flexible_field: str = data.get("flexible_field", "page_sections")
         self.fallback_layout: str = data.get("fallback_layout", "rich_text")
         self.top_level: dict[str, str] = data.get("top_level", {}) or {}

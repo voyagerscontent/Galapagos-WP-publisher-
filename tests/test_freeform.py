@@ -51,22 +51,16 @@ def test_post_type_override_to_page():
     assert page.slug == "why-travel-with-us"
 
 
-def test_directives_map_to_acf_layouts():
+def test_directives_map_to_flat_fields():
     doc = read_file(SAMPLE)
     page, _t, _ = build_page(doc, _ctx())
-    rows = page.acf["page_sections"]
-    layouts = [r["acf_fc_layout"] for r in rows]
-    assert layouts[0] == "hero"
-    assert "columns" in layouts
-    assert "callout" in layouts
-    assert "faq" in layouts
-    assert "cta" in layouts
-    # Hero buttons became an ACF repeater.
-    hero = rows[0]
-    assert hero["buttons"] and hero["buttons"][0]["url"]
-    # Callout carries its variant.
-    callout = next(r for r in rows if r["acf_fc_layout"] == "callout")
-    assert callout["style"] == "tip"
+    acf = page.acf
+    assert acf["hero_heading"]
+    assert acf["hero_cta_label"]          # first hero button -> hero CTA fields
+    assert acf["callout_text"]            # callout directive
+    assert isinstance(acf["faq"], list) and acf["faq"]
+    assert acf["cta_heading"]             # cta directive
+    assert acf["body"]                    # columns / prose folded into body
 
 
 def test_meta_description_not_polluted_by_directives():

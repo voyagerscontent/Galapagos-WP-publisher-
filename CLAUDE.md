@@ -33,7 +33,9 @@ Key modules under `src/wp_publisher/`:
   rules + a bespoke `:::` directive path), `richtext.py` (blocks/Markdown →
   semantic HTML for WYSIWYG fields), `directives.py` (the `:::` parser).
 - `acf/` — `config.py` loads `config/acf.yaml`; `mapper.py` turns components
-  into the `acf` REST payload (flexible-content rows).
+  into the `acf` REST payload. Default mode is **flat** named fields
+  (`hero_heading`, `body`, `faq` repeater…) for Elementor Dynamic Tags; a
+  `flexible` mode (flexible-content rows) is also supported.
 - `parse/pagetype.py` — picks the page-type profile (declared `type:`, then
   heuristics; routes generic `wildlife` by search volume).
 - `rendering/template.py` — page-type **profiles** only (schema type, default
