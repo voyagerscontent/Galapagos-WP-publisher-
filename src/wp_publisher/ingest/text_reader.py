@@ -55,6 +55,7 @@ def read_text(path: str | Path) -> Document:
     doc = Document(source_name=path.name, source_kind="text")
 
     idx = _consume_metadata(lines, doc)
+    doc.raw_body = "\n".join(lines[idx:])
 
     # Title = first non-empty content line if not set via metadata.
     title = str(doc.metadata.get("title", "")).strip()

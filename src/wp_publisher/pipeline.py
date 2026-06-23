@@ -84,13 +84,16 @@ def build_page(
     categories = _csv(doc.metadata.get("categories")) or list(template.categories)
     tags = _csv(doc.metadata.get("tags")) or list(template.tags)
 
+    # 8) Post type: doc metadata ("post" | "page") overrides the template.
+    post_type = _normalize_post_type(doc.metadata.get("post_type")) or template.post_type
+
     page = RenderedPage(
         title=doc.title,
         slug=seo.slug,
         content_html=content_html,
         excerpt=strip_html(seo.meta_description),
         status=final_status,
-        post_type=template.post_type,
+        post_type=post_type,
         categories=categories,
         tags=tags,
         featured_media=featured,
@@ -127,6 +130,17 @@ def build_from_file(
     )
     doc = read_file(path)
     return build_page(doc, ctx, page_type=page_type, status=status)
+
+
+def _normalize_post_type(value) -> str | None:
+    if not value:
+        return None
+    v = str(value).strip().lower()
+    if v in ("page", "pages"):
+        return "page"
+    if v in ("post", "posts"):
+        return "post"
+    return v  # allow a custom post type REST base
 
 
 def _csv(value) -> list[str]:

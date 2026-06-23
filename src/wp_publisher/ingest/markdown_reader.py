@@ -24,6 +24,7 @@ def read_markdown(path: str | Path) -> Document:
     body = post.content
 
     doc = Document(source_name=path.name, source_kind="markdown", metadata=metadata)
+    doc.raw_body = body
     _parse_body(doc, body)
 
     # Title precedence: frontmatter > first H1 > filename

@@ -76,6 +76,9 @@ class Document(BaseModel):
     # type, focus_keyword, destination, duration, price, categories, tags...
     metadata: dict[str, Any] = Field(default_factory=dict)
     sections: list[Section] = Field(default_factory=list)
+    # The raw, un-sectioned body as authored (used by the directive/freeform
+    # builder, which parses its own layout instructions from the text).
+    raw_body: str = ""
     # Provenance for logging/debugging.
     source_name: str = ""
     source_kind: str = ""  # docx | markdown | text | gdrive

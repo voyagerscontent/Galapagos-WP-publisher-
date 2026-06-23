@@ -36,6 +36,10 @@ class RenderEngine:
             from .wildlife import WildlifeTier2Renderer
 
             return WildlifeTier2Renderer(self.settings, self.media).render(doc, template)
+        if template.renderer == "freeform":
+            from .freeform import FreeformRenderer
+
+            return FreeformRenderer(self.settings, self.media).render(doc, template)
 
         parts: list[str] = []
         media_items: list[MediaItem] = []
