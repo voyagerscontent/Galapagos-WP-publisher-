@@ -79,6 +79,12 @@ _ALIASES = {
     "wildlife_tier_2": "wildlife_tier2",
     "wildlife2": "wildlife_tier2",
     "tier2_wildlife": "wildlife_tier2",
+    "freeform": "freeform",
+    "free_form": "freeform",
+    "builder": "freeform",
+    "custom": "freeform",
+    "directive": "freeform",
+    "layout": "freeform",
 }
 
 # Generic wildlife declarations get routed to a tier by monthly search volume.

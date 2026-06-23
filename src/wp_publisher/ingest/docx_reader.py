@@ -54,6 +54,9 @@ def read_docx(path: str | Path) -> Document:
     list_items: list[str] = []
     list_ordered = False
     seen_body = False
+    # Reconstruct a markdown-ish body so the freeform builder can read any
+    # directives an author typed directly into Word (e.g. "::: columns").
+    raw_lines: list[str] = []
 
     def flush_list() -> None:
         nonlocal list_items, list_ordered
@@ -89,11 +92,13 @@ def read_docx(path: str | Path) -> Document:
                 current.blocks.append(
                     ContentBlock(type=BlockType.HEADING, text=text, level=level)
                 )
+                raw_lines.append("#" * level + " " + text)
                 seen_body = True
                 continue
             if current.blocks or current.title:
                 doc.sections.append(current)
             current = Section(title=text, level=level, slug=section_slug(text))
+            raw_lines.extend(["", "#" * max(2, level) + " " + text])
             seen_body = True
             continue
 
@@ -111,18 +116,22 @@ def read_docx(path: str | Path) -> Document:
         if "list bullet" in style_l or "list number" in style_l or style_l.startswith("list"):
             list_ordered = "number" in style_l
             list_items.append(text)
+            raw_lines.append(("1. " if list_ordered else "- ") + text)
             continue
         flush_list()
 
         if style_l == "quote" or style_l == "intense quote":
             current.blocks.append(ContentBlock(type=BlockType.QUOTE, text=text))
+            raw_lines.extend(["", "> " + text])
             continue
 
         current.blocks.append(ContentBlock(type=BlockType.PARAGRAPH, text=text))
+        raw_lines.extend(["", text])
 
     flush_list()
     if current.blocks or current.title:
         doc.sections.append(current)
+    doc.raw_body = "\n".join(raw_lines).strip()
 
     # Tables become table blocks appended to the lead/last section.
     for table in docx.tables:

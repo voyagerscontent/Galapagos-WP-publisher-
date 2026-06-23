@@ -52,6 +52,7 @@ it was written for*.
 | `cruise`      | Galapagos cruises / specific ships    | `TouristTrip`        |
 | `wildlife_tier1` | Iconic species (500+ searches/mo)  | `Article` + `FAQPage` |
 | `wildlife_tier2` | Compact species (≤499 searches/mo) | `Article` + `FAQPage` |
+| `freeform`    | **Any** page/post — you design the layout with directives | `WebPage` |
 
 Add or tune a page type by editing YAML — no code changes. See
 [docs/TEMPLATES.md](docs/TEMPLATES.md).
@@ -137,6 +138,7 @@ Section headings can be phrased naturally ("What's Included", "Inclusions",
 
 ## Documentation
 
+- [docs/AUTHORING_GUIDE.md](docs/AUTHORING_GUIDE.md) — **what to put in your content doc** (metadata + freeform layout directives)
 - [docs/PUBLISH_VIA_GITHUB.md](docs/PUBLISH_VIA_GITHUB.md) — publish from your browser (no local machine)
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — fixes for auth/REST API errors (incl. miniOrange & WP Cerber)
 - [docs/SETUP.md](docs/SETUP.md) — WordPress App Password + Google Drive setup

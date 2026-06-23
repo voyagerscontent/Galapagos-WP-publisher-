@@ -234,3 +234,43 @@ def heading_anchor_block(text: str, anchor: str, level: int = 2) -> str:
 
 def raw_html_block(inner_html: str) -> str:
     return f"<!-- wp:html -->\n{inner_html}\n<!-- /wp:html -->"
+
+
+# Callout / admonition colors by variant.
+_CALLOUT_STYLES = {
+    "note": ("#3b82f6", "#eff6ff"),
+    "info": ("#3b82f6", "#eff6ff"),
+    "tip": ("#1f7a4d", "#f3f8f5"),
+    "success": ("#1f7a4d", "#f3f8f5"),
+    "warning": ("#d97706", "#fffbeb"),
+    "danger": ("#c0392b", "#fdf2f0"),
+    "important": ("#c0392b", "#fdf2f0"),
+}
+
+
+def callout_block(inner_html: str, variant: str = "note", title: str = "") -> str:
+    """A styled admonition box wrapping already-rendered inner blocks."""
+    border, bg = _CALLOUT_STYLES.get((variant or "note").lower(), _CALLOUT_STYLES["note"])
+    cls = f"gwp-callout gwp-callout-{(variant or 'note').lower()}"
+    style = (
+        f"border-left:4px solid {border};background:{bg};padding:1rem 1.25rem;"
+        "border-radius:8px"
+    )
+    heading = (
+        f'<!-- wp:heading {{"level":4}} -->\n<h4>{html.escape(title)}</h4>\n<!-- /wp:heading -->\n'
+        if title
+        else ""
+    )
+    return (
+        f'<!-- wp:group {{"className":"{cls}","layout":{{"type":"constrained"}}}} -->\n'
+        f'<div class="wp-block-group {cls}" style="{style}">\n{heading}{inner_html}\n</div>\n'
+        "<!-- /wp:group -->"
+    )
+
+
+def separator_block() -> str:
+    return (
+        '<!-- wp:separator -->\n'
+        '<hr class="wp-block-separator has-alpha-channel-opacity"/>\n'
+        "<!-- /wp:separator -->"
+    )

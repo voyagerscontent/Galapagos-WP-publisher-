@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────
+# Freeform / directive-driven page builder.
+#
+# Not a fixed layout: the content document carries its own layout instructions
+# (`:::` directives) and the engine builds the page from them. Publish as a post
+# or a page by setting `post_type: page` (or `post`) in the doc header.
+#
+# See docs/AUTHORING_GUIDE.md for the directive reference and the metadata your
+# document needs to publish correctly.
+# ─────────────────────────────────────────────────────────────
+key: freeform
+name: Freeform (Directive Builder)
+description: >
+  Build any page or post from layout directives embedded in the content doc,
+  rendered as native Gutenberg blocks. No fixed template.
+post_type: post           # default; a doc can override with `post_type: page`
+status: draft
+schema_type: WebPage
+renderer: freeform
+categories: []
+tags: []
+focus_keyword_from: keyword
+required_sections: []

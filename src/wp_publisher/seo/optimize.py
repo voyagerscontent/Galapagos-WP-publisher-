@@ -101,12 +101,27 @@ def _infer_keyword(title: str) -> str:
 def _build_description(doc: Document) -> str:
     overview = doc.find_section("overview", "_lead")
     if overview:
-        text = overview.plain_text()
+        text = _clean(overview.plain_text())
         if text:
             return text
-    # Fall back to the first paragraph anywhere.
+    # Fall back to the first clean paragraph anywhere.
     for section in doc.sections:
-        text = section.plain_text()
+        text = _clean(section.plain_text())
         if text:
             return text
     return ""
+
+
+def _clean(text: str) -> str:
+    """Strip layout directives / inline markup so they don't pollute meta text."""
+    lines = []
+    for line in (text or "").split("\n"):
+        s = line.strip()
+        if s.startswith(":::") or s.startswith("#") or s.startswith("[button:"):
+            continue
+        lines.append(line)
+    cleaned = " ".join(lines)
+    cleaned = re.sub(r"\[button:[^\]]*\]", "", cleaned)
+    cleaned = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", cleaned)  # links -> text
+    cleaned = re.sub(r"[*_`>]", "", cleaned)
+    return re.sub(r"\s+", " ", cleaned).strip()
