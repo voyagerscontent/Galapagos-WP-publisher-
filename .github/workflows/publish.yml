@@ -35,6 +35,11 @@ on:
         description: "Override the page slug (blank = derive from the doc). Use for an isolated test page, e.g. santa-fe-island-test"
         required: false
         type: string
+      test_mode:
+        description: "Test page? Appends '-test' to the slug so it never collides with a real page."
+        required: true
+        default: true
+        type: boolean
       media:
         description: "Media strategy"
         required: true
@@ -74,6 +79,7 @@ jobs:
           IN_TYPE: ${{ inputs.page_type }}
           IN_MEDIA: ${{ inputs.media }}
           IN_SLUG: ${{ inputs.slug }}
+          IN_TEST: ${{ inputs.test_mode }}
           IN_UPDATE: ${{ inputs.update_existing }}
         run: |
           set -euo pipefail
@@ -85,17 +91,19 @@ jobs:
           if [ -n "${IN_TYPE}" ]; then TYPE_ARGS=(--type "${IN_TYPE}"); fi
           SLUG_ARGS=()
           if [ -n "${IN_SLUG}" ]; then SLUG_ARGS=(--slug "${IN_SLUG}"); fi
+          TEST_ARGS=()
+          if [ "${IN_TEST}" = "true" ]; then TEST_ARGS=(--test); fi
           UPDATE_ARGS=()
           if [ "${IN_UPDATE}" = "true" ]; then UPDATE_ARGS=(--update); fi
           case "${IN_MODE}" in
             preview)
-              wp-publish preview "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" --media "${IN_MEDIA}"
+              wp-publish preview "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}"
               ;;
             publish-draft)
-              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" --media "${IN_MEDIA}" --status draft --yes "${UPDATE_ARGS[@]}"
+              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}" --status draft --yes "${UPDATE_ARGS[@]}"
               ;;
             publish-live)
-              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" --media "${IN_MEDIA}" --status publish --yes "${UPDATE_ARGS[@]}"
+              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}" --status publish --yes "${UPDATE_ARGS[@]}"
               ;;
             *)
               echo "::error::Unknown mode: ${IN_MODE}"; exit 1 ;;

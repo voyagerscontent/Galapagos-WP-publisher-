@@ -94,6 +94,18 @@ def _build(
     return page, template, reason, client, settings
 
 
+def _apply_slug(page, slug: Optional[str], test: bool) -> None:
+    """Override and/or test-suffix the page slug in place.
+
+    `--slug` replaces the doc-derived slug; `--test` appends `-test` so a build
+    lands on an isolated page that never collides with the real one.
+    """
+    if slug:
+        page.slug = _slugify(slug)
+    if test and not page.slug.endswith("-test"):
+        page.slug = f"{page.slug}-test"
+
+
 def _acf_summary(page) -> str:
     from .acf.config import get_acf_config
 
@@ -147,14 +159,16 @@ def preview(
     slug: Optional[str] = typer.Option(
         None, "--slug", help="Override the page slug (e.g. for an isolated test page)."
     ),
+    test: bool = typer.Option(
+        False, "--test", help="Append '-test' to the slug so it never collides with a real page."
+    ),
     out: Optional[Path] = typer.Option(None, "--out", "-o", help="Write artifacts here."),
 ) -> None:
     """Build a page and show/save it WITHOUT publishing."""
     doc = read_file(file)
     use_wp = media == "library"
     page, template, reason, _client, _settings = _build(doc, type, None, media, use_wp)
-    if slug:
-        page.slug = _slugify(slug)
+    _apply_slug(page, slug, test)
     _summary(doc, page, template, reason)
 
     out_dir = out or (Path("output") / page.slug)
@@ -184,6 +198,9 @@ def publish(
     slug: Optional[str] = typer.Option(
         None, "--slug", help="Override the page slug (e.g. for an isolated test page)."
     ),
+    test: bool = typer.Option(
+        False, "--test", help="Append '-test' to the slug so it never collides with a real page."
+    ),
     update: bool = typer.Option(
         False, "--update", help="Allow overwriting an existing post with the same slug."
     ),
@@ -194,8 +211,7 @@ def publish(
 
     doc = read_file(file)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
-    if slug:
-        page.slug = _slugify(slug)
+    _apply_slug(page, slug, test)
     _summary(doc, page, template, reason)
 
     if page.status == "publish" and not yes:
