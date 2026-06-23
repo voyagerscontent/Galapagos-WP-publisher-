@@ -170,12 +170,14 @@ def publish(
     media: Optional[str] = typer.Option(
         None, "--media", "-m", help="Media strategy: library | placeholder."
     ),
-    no_update: bool = typer.Option(
-        False, "--no-update", help="Always create new; do not update an existing slug."
+    update: bool = typer.Option(
+        False, "--update", help="Allow overwriting an existing post with the same slug."
     ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
 ) -> None:
     """Build and publish a document to WordPress."""
+    from .wordpress.client import WordPressError
+
     doc = read_file(file)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
     _summary(doc, page, template, reason)
@@ -189,9 +191,13 @@ def publish(
     if plugin == "auto":
         plugin = client.detect_seo_plugin()
 
-    result = publish_page(
-        client, page, settings, seo_plugin=plugin, update_if_exists=not no_update
-    )
+    try:
+        result = publish_page(
+            client, page, settings, seo_plugin=plugin, update_existing=update
+        )
+    except WordPressError as exc:
+        console.print(f"[red]Refused:[/red] {exc}")
+        raise typer.Exit(1) from exc
     verb = "Created" if result.created else "Updated"
     console.print(
         Panel.fit(

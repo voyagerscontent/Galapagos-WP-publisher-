@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from ..config import Settings
 from ..models import RenderedPage
-from .client import WordPressClient
+from .client import WordPressClient, WordPressError
 
 
 class PublishResult(BaseModel):
@@ -45,52 +45,59 @@ def publish_page(
     settings: Settings,
     *,
     seo_plugin: str = "none",
-    update_if_exists: bool = True,
+    update_existing: bool = False,
 ) -> PublishResult:
+    """Create a post, or update one with the same slug.
+
+    Safety: if a post with this slug already exists, we **refuse** unless
+    ``update_existing`` is explicitly set — this prevents accidentally
+    overwriting an unrelated live page that happens to share the slug. Even when
+    updating, we never change the existing post's ``status`` and never blank its
+    ``content``, so an existing page can't be unpublished or emptied by a run.
+    """
     defaults = settings.defaults
 
+    # Fields safe to set on both create and update.
     payload: dict = {
         "title": page.title,
         "slug": page.slug,
-        "status": page.status,
-        # Content lives in ACF fields; post_content stays empty (theme renders ACF).
-        "content": page.content_html,
         "excerpt": page.excerpt or page.meta_description,
-        "comment_status": defaults.get("comment_status", "closed"),
-        "ping_status": defaults.get("ping_status", "closed"),
     }
-
-    # ACF field values via core REST. Requires the field group(s) to have
-    # "Show in REST API" enabled.
     if page.acf:
         payload["acf"] = page.acf
-
     if settings.wp_default_author_id:
         payload["author"] = settings.wp_default_author_id
-
-    # Taxonomies (only apply to the standard 'post' type by default).
     if page.post_type in ("post", "posts"):
         if page.categories:
             payload["categories"] = client.resolve_terms("category", page.categories)
         if page.tags:
             payload["tags"] = client.resolve_terms("post_tag", page.tags)
-
-    # Featured image, if one was resolved from the library.
     if page.featured_media and page.featured_media.wp_media_id:
         payload["featured_media"] = page.featured_media.wp_media_id
-
     seo_meta = _seo_meta(page, seo_plugin)
     if seo_meta:
         payload["meta"] = seo_meta
-
     payload.update(page.extra_fields)
 
-    # Create or update (idempotent on slug).
-    existing = client.find_post_by_slug(page.post_type, page.slug) if update_if_exists else None
+    existing = client.find_post_by_slug(page.post_type, page.slug)
+    if existing and not update_existing:
+        raise WordPressError(
+            f"A {page.post_type} with slug '{page.slug}' already exists "
+            f"(#{existing['id']}, status '{existing.get('status')}'). Refusing to "
+            f"overwrite it. Use a different slug, or pass --update to deliberately "
+            f"update that post."
+        )
+
     if existing:
+        # Non-destructive update: do NOT send status (never unpublish) and do NOT
+        # send content (never blank an existing page's body).
         result = client.update_post(page.post_type, existing["id"], payload)
         created = False
     else:
+        payload["status"] = page.status
+        payload["content"] = page.content_html
+        payload["comment_status"] = defaults.get("comment_status", "closed")
+        payload["ping_status"] = defaults.get("ping_status", "closed")
         result = client.create_post(page.post_type, payload)
         created = True
 
