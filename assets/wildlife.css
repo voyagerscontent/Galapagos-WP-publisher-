@@ -10,6 +10,12 @@
 .gwp-w-hero { margin-bottom: 2.5rem; }
 .gwp-w-hero-name { line-height: 1.1; }
 
+/* Tier 2 compact hero + tour cards */
+.gwp-w-hero-light .gwp-w-hero-name { font-size: 2rem; }
+.gwp-w-tour { transition: box-shadow .2s ease, transform .2s ease; }
+.gwp-w-tour:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, .1); transform: translateY(-2px); }
+.gwp-w-footer-cta { margin-top: 2.5rem; }
+
 /* Sticky table of contents */
 .gwp-w-toc { align-self: flex-start; }
 .gwp-w-toc ul { list-style: none; margin: 0; padding: 0; }

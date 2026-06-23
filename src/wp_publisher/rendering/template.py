@@ -57,6 +57,9 @@ class PageTemplate(BaseModel):
     # Advisory: this content-intensive template is intended for topics with at
     # least this many monthly searches. Builds below it emit a warning.
     min_search_volume: int | None = None
+    # Advisory upper bound (e.g. a lighter template for <500 searches). Builds
+    # above it emit a warning suggesting a richer template.
+    max_search_volume: int | None = None
 
     @classmethod
     def from_file(cls, path: Path) -> "PageTemplate":

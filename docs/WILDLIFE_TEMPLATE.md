@@ -1,3 +1,22 @@
+# Wildlife templates
+
+Species pages come in two tiers, chosen by monthly search volume:
+
+| Tier | `type` | Use for | Layout |
+| ---- | ------ | ------- | ------ |
+| **Tier 1** | `wildlife_tier1` | Iconic species, **500+ searches/mo** | Full content-intensive page |
+| **Tier 2** | `wildlife_tier2` | Lower-search species, **≤499/mo** | Lighter, compact page |
+
+You can also declare a generic `type: wildlife` and let the engine pick the tier
+from `search_volume` (≥500 → Tier 1, otherwise → Tier 2). Each template warns if
+the search volume is on the wrong side of the 500 line.
+
+Both tiers share the same authoring model (metadata header + `##` sections,
+with `###` sub-headings becoming cards/steps) and both emit `Article` + `FAQPage`
+schema describing the species.
+
+---
+
 # Tier 1 Wildlife template
 
 A content-intensive page for the **most iconic species** — the ones worth a full
@@ -89,6 +108,46 @@ wp-publish publish samples/galapagos-giant-tortoise.md --type wildlife_tier1
 
 Required sections: `overview`, `identification`, `range_habitat`, `behavior`,
 `conservation`, `where_to_see`. Missing ones produce warnings, not failures.
+
+---
+
+# Tier 2 Wildlife template
+
+A lighter, compact page for species that don't warrant the full Tier 1
+treatment. Use it for **499 or fewer monthly searches** (it warns if the volume
+exceeds that).
+
+`type: wildlife_tier2`
+
+## What it builds
+
+1. **Minimal hero** — clean light style, chips, a single CTA
+2. **Quick facts + identification** — a 40/60 split (compact facts table + "How to Spot Them")
+3. **Overview & Habitat** — a 60/40 split (short copy + image)
+4. **Lifestyle & Traits** — stacked bullet adaptations
+5. **Where to See & Book** — tour cards (duration / landing style + a CTA each)
+6. **Quick Traveler FAQ** — a mini accordion (`FAQPage` schema)
+7. **Regional footer CTA** — guide download + trip-planner buttons
+
+## Sections (H2)
+
+| Section heading        | Maps to          | Notes |
+| ---------------------- | ---------------- | ----- |
+| How to Spot Them       | `identification` | Shows in the right column of the facts split |
+| (Overview & Habitat)   | `overview`       | A creatively-titled first section is detected automatically |
+| Lifestyle & Traits     | `behavior`       | Rendered as stacked bullets |
+| Where to See & Book    | `where_to_see`   | Each `###` = a tour card; `CTA: Label \| /url` bullet → button |
+| Quick Traveler FAQ     | `faq`            | Each `###` = a question |
+
+Footer CTA and hero use `footer_*` and `cta_primary_*` metadata. Required
+sections: `identification`, `overview`, `where_to_see`.
+
+```bash
+wp-publish preview samples/sally-lightfoot-crab.md
+wp-publish publish samples/sally-lightfoot-crab.md --type wildlife_tier2
+```
+
+---
 
 ## Styling
 

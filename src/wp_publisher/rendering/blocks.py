@@ -149,18 +149,32 @@ def group_block(inner_html: str, *, class_name: str = "", style: str = "") -> st
     )
 
 
-def columns_block(columns: list[str], *, class_name: str = "", style: str = "") -> str:
-    """Build a wp:columns row from a list of inner-HTML column bodies."""
+def columns_block(
+    columns: list[str],
+    *,
+    class_name: str = "",
+    style: str = "",
+    widths: list[str] | None = None,
+) -> str:
+    """Build a wp:columns row from a list of inner-HTML column bodies.
+
+    `widths` optionally sets each column's width (e.g. ["40%", "60%"]).
+    """
     attrs: dict = {}
     if class_name:
         attrs["className"] = class_name
     cls = f"wp-block-columns {class_name}".strip()
     style_attr = f' style="{style}"' if style else ""
     inner = []
-    for body in columns:
+    for i, body in enumerate(columns):
+        col_attr = ""
+        col_style = ""
+        if widths and i < len(widths) and widths[i]:
+            col_attr = _attrs({"width": widths[i]})
+            col_style = f' style="flex-basis:{widths[i]}"'
         inner.append(
-            "<!-- wp:column -->\n"
-            f'<div class="wp-block-column">\n{body}\n</div>\n'
+            f"<!-- wp:column{col_attr} -->\n"
+            f'<div class="wp-block-column"{col_style}>\n{body}\n</div>\n'
             "<!-- /wp:column -->"
         )
     return (

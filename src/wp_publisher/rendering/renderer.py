@@ -32,6 +32,10 @@ class RenderEngine:
             from .wildlife import WildlifeRenderer
 
             return WildlifeRenderer(self.settings, self.media).render(doc, template)
+        if template.renderer == "wildlife_tier2":
+            from .wildlife import WildlifeTier2Renderer
+
+            return WildlifeTier2Renderer(self.settings, self.media).render(doc, template)
 
         parts: list[str] = []
         media_items: list[MediaItem] = []

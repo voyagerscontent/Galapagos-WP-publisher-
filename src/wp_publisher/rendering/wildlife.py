@@ -51,6 +51,15 @@ _CHIP = (
     "display:inline-block;padding:.3rem .8rem;margin:.2rem;border-radius:999px;"
     "background:rgba(255,255,255,.18);color:#fff;font-size:.85rem;font-weight:600"
 )
+_CHIP_LIGHT = (
+    "display:inline-block;padding:.3rem .8rem;margin:.2rem;border-radius:999px;"
+    "background:#eef4f0;color:#1f7a4d;font-size:.85rem;font-weight:600;"
+    "border:1px solid #d6e4dc"
+)
+_HERO_LIGHT = (
+    "background:#f6f9f7;border:1px solid #e3e6e3;border-bottom:4px solid #1f7a4d;"
+    "color:#15241d;padding:2.5rem 2rem;border-radius:14px;text-align:center"
+)
 _STAT = (
     "border:1px solid #e3e6e3;border-radius:12px;padding:1.25rem;"
     "background:#fbfdfb;text-align:center"
@@ -90,7 +99,7 @@ class WildlifeRenderer:
 
         # Required sections present?
         for slug in template.required_sections:
-            if doc.find_section(slug) is None:
+            if not self._section_present(doc, slug):
                 warnings.append(f"Required section '{slug}' is missing from the document.")
 
         hero_html, featured = self._hero(doc)
@@ -117,36 +126,6 @@ class WildlifeRenderer:
         query = str(meta.get("hero_image_query") or meta.get("featured_image_query") or doc.title)
         featured = self.media.resolve("featured", query, alt=doc.title)
 
-        crumbs = _as_list(meta.get("breadcrumbs"))
-        crumb_html = ""
-        if crumbs:
-            crumb_html = (
-                '<p style="opacity:.85;font-size:.85rem;margin:0 0 .75rem">'
-                + " &rsaquo; ".join(html.escape(str(c)) for c in crumbs)
-                + "</p>"
-            )
-
-        name = html.escape(doc.title)
-        sci = meta.get("scientific_name")
-        sci_html = (
-            f'<p style="font-style:italic;opacity:.9;margin:.25rem 0 0">{html.escape(str(sci))}</p>'
-            if sci
-            else ""
-        )
-        tagline = meta.get("tagline") or meta.get("subtitle")
-        tag_html = (
-            f'<p style="font-size:1.15rem;max-width:46rem;margin:1rem auto 0">'
-            f"&ldquo;{html.escape(str(tagline))}&rdquo;</p>"
-            if tagline
-            else ""
-        )
-
-        chips = self._chip_values(doc)
-        chip_html = ""
-        if chips:
-            spans = "".join(f'<span style="{_CHIP}">{html.escape(c)}</span>' for c in chips)
-            chip_html = f'<p style="margin:1.25rem 0 0">{spans}</p>'
-
         buttons = self._ctas(
             doc,
             default_primary=("See This Species", "#where-to-see"),
@@ -169,14 +148,7 @@ class WildlifeRenderer:
             )
         style = bg or _HERO
 
-        inner = (
-            crumb_html
-            + f'<p class="gwp-w-hero-name" style="font-size:2.4rem;font-weight:800;'
-            f'letter-spacing:.04em;margin:0;text-transform:uppercase">{name}</p>'
-            + sci_html
-            + tag_html
-            + chip_html
-        )
+        inner = self._hero_inner(doc)
         hero_div = (
             '<!-- wp:group {"className":"gwp-w-hero","layout":{"type":"constrained"}} -->\n'
             f'<div class="wp-block-group gwp-w-hero" style="{style}">\n'
@@ -184,6 +156,43 @@ class WildlifeRenderer:
             "<!-- /wp:group -->"
         )
         return hero_div, featured
+
+    def _hero_inner(self, doc: Document, *, chip_on_dark: bool = True) -> str:
+        """Breadcrumbs + name + scientific name + tagline + chips (shared)."""
+        meta = doc.metadata
+        crumbs = _as_list(meta.get("breadcrumbs"))
+        crumb_html = ""
+        if crumbs:
+            crumb_html = (
+                '<p style="opacity:.85;font-size:.85rem;margin:0 0 .75rem">'
+                + " &rsaquo; ".join(html.escape(str(c)) for c in crumbs)
+                + "</p>"
+            )
+        name_html = (
+            '<p class="gwp-w-hero-name" style="font-size:2.4rem;font-weight:800;'
+            'letter-spacing:.04em;margin:0;text-transform:uppercase">'
+            f"{html.escape(doc.title)}</p>"
+        )
+        sci = meta.get("scientific_name")
+        sci_html = (
+            f'<p style="font-style:italic;opacity:.9;margin:.25rem 0 0">{html.escape(str(sci))}</p>'
+            if sci
+            else ""
+        )
+        tagline = meta.get("tagline") or meta.get("subtitle")
+        tag_html = (
+            f'<p style="font-size:1.1rem;max-width:46rem;margin:1rem auto 0">'
+            f"&ldquo;{html.escape(str(tagline))}&rdquo;</p>"
+            if tagline
+            else ""
+        )
+        chip_style = _CHIP if chip_on_dark else _CHIP_LIGHT
+        chips = self._chip_values(doc)
+        chip_html = ""
+        if chips:
+            spans = "".join(f'<span style="{chip_style}">{html.escape(c)}</span>' for c in chips)
+            chip_html = f'<p style="margin:1.25rem 0 0">{spans}</p>'
+        return crumb_html + name_html + sci_html + tag_html + chip_html
 
     def _chip_values(self, doc: Document) -> list[str]:
         meta = doc.metadata
@@ -244,7 +253,7 @@ class WildlifeRenderer:
 
     # ---- OVERVIEW ----------------------------------------------------- #
     def _overview(self, doc: Document) -> str:
-        section = doc.find_section("overview", "_lead")
+        section = self._overview_section(doc)
         if section is None:
             return ""
         prose, callout = self._split_callout(section)
@@ -517,6 +526,39 @@ class WildlifeRenderer:
             f"{html.escape(text)}</div>"
         )
 
+    # Sections "owned" by other wildlife slots; the overview fallback skips them.
+    _KNOWN_SLUGS = {
+        "identification",
+        "range_habitat",
+        "behavior",
+        "life_cycle",
+        "conservation",
+        "where_to_see",
+        "faq",
+        "related",
+        "gallery",
+        "_lead",
+    }
+
+    def _overview_section(self, doc: Document) -> Section | None:
+        """Find the overview, tolerating a creatively-titled heading.
+
+        Tries the canonical 'overview'/lead first, then the first section that
+        isn't claimed by another wildlife slot (e.g. "A Splash of Color...").
+        """
+        sec = doc.find_section("overview", "_lead")
+        if sec is not None and sec.blocks:
+            return sec
+        for s in doc.sections:
+            if s.slug not in self._KNOWN_SLUGS and s.blocks:
+                return s
+        return sec
+
+    def _section_present(self, doc: Document, slug: str) -> bool:
+        if slug == "overview":
+            return self._overview_section(doc) is not None
+        return doc.find_section(slug) is not None
+
     def _grid(self, cards: list[str], *, per_row: int, class_name: str) -> str:
         rows = []
         for i in range(0, len(cards), per_row):
@@ -622,6 +664,173 @@ class WildlifeRenderer:
             else:
                 kept.append(b)
         return kept, cta
+
+
+class WildlifeTier2Renderer(WildlifeRenderer):
+    """Lighter, compact species page for lower-search-volume wildlife (<500/mo).
+
+    Reuses all of the Tier 1 helpers; only the page composition differs: a
+    minimal hero, a 40/60 quick-facts + identification split, a 60/40 overview,
+    stacked lifestyle traits, tour cards, a mini FAQ, and a regional footer CTA.
+    """
+
+    def render(
+        self, doc: Document, template: PageTemplate
+    ) -> tuple[str, list[MediaItem], MediaItem | None, list[str]]:
+        warnings: list[str] = []
+        self.media_items = []
+        meta = doc.metadata
+
+        cap = template.max_search_volume
+        if cap:
+            vol = _to_int(meta.get("search_volume"))
+            if vol is not None and vol > cap:
+                warnings.append(
+                    f"search_volume ({vol}) exceeds the Tier 2 cap ({cap}); "
+                    f"consider the richer wildlife_tier1 template."
+                )
+
+        for slug in template.required_sections:
+            if not self._section_present(doc, slug):
+                warnings.append(f"Required section '{slug}' is missing from the document.")
+
+        hero_html, featured = self._hero_minimal(doc)
+        parts = [
+            hero_html,
+            self._facts_and_id(doc),
+            self._overview_habitat(doc),
+            self._lifestyle(doc),
+            self._where_to_book(doc),
+            self._faqs(doc),
+            self._footer_cta(doc),
+        ]
+        content = "\n\n".join(p for p in parts if p)
+        return content, self.media_items, featured, warnings
+
+    def _hero_minimal(self, doc: Document) -> tuple[str, MediaItem | None]:
+        meta = doc.metadata
+        query = str(meta.get("hero_image_query") or meta.get("featured_image_query") or doc.title)
+        featured = self.media.resolve("featured", query, alt=doc.title)
+        primary = (
+            str(meta.get("cta_primary_label") or "Find Tours Checking This Region"),
+            str(meta.get("cta_primary_url") or "#where-to-see"),
+        )
+        btn_html = B.buttons_block([primary], class_name="gwp-w-hero-cta").replace(
+            'class="wp-block-buttons gwp-w-hero-cta"',
+            'class="wp-block-buttons gwp-w-hero-cta" style="justify-content:center;margin-top:1.25rem"',
+        )
+        inner = self._hero_inner(doc, chip_on_dark=False)
+        return (
+            '<!-- wp:group {"className":"gwp-w-hero gwp-w-hero-light","layout":{"type":"constrained"}} -->\n'
+            f'<div class="wp-block-group gwp-w-hero gwp-w-hero-light" style="{_HERO_LIGHT}">\n'
+            f"{B.raw_html_block(inner)}\n{btn_html}\n</div>\n"
+            "<!-- /wp:group -->",
+            featured,
+        )
+
+    def _facts_and_id(self, doc: Document) -> str:
+        facts = _as_dict(doc.metadata.get("facts"))
+        if facts:
+            facts_col = B.table_block([[k, str(v)] for k, v in facts.items()], has_header=False)
+        else:
+            facts_col = B.placeholder_block(
+                "📋 QUICK FACTS NEEDED", hint="Add a 'facts:' map (Size, Diet, Habitat, Predators)."
+            )
+        ident = doc.find_section("identification")
+        if ident is not None:
+            id_col = (
+                B.heading_anchor_block(ident.title or "How to Spot Them", "identification")
+                + "\n\n"
+                + self._blocks_to_html(ident.blocks)
+            )
+        else:
+            id_col = B.placeholder_block(
+                "🔍 IDENTIFICATION NEEDED", hint="Add a 'How to Spot Them' section."
+            )
+        return B.columns_block(
+            [facts_col, id_col], class_name="gwp-w-facts", widths=["40%", "60%"]
+        )
+
+    def _overview_habitat(self, doc: Document) -> str:
+        section = self._overview_section(doc)
+        if section is None:
+            return ""
+        text_html = (
+            B.heading_anchor_block(section.title or "Overview & Habitat", "overview")
+            + "\n\n"
+            + self._blocks_to_html(section.blocks)
+        )
+        img_html, _ = self._image(
+            doc.metadata.get("overview_image_query") or doc.title,
+            alt=str(doc.title),
+            hint="Supporting visual",
+        )
+        return B.columns_block(
+            [text_html, img_html], class_name="gwp-w-overview", widths=["60%", "40%"]
+        )
+
+    def _lifestyle(self, doc: Document) -> str:
+        section = doc.find_section("behavior")
+        if section is None:
+            return ""
+        head = B.heading_anchor_block(section.title or "Lifestyle & Traits", "behavior")
+        return head + "\n\n" + self._blocks_to_html(section.blocks)
+
+    def _where_to_book(self, doc: Document) -> str:
+        section = doc.find_section("where_to_see")
+        if section is None:
+            return ""
+        lead, groups = self._split_by_subheadings(section)
+        head = B.heading_anchor_block(section.title or "Where to See & Book", "where-to-see")
+        intro = self._blocks_to_html(lead) if lead else ""
+        cards = []
+        for title, body in groups:
+            bullets, cta = self._extract_cta(body)
+            inner = B.heading_block(title, level=3) + "\n\n" + self._blocks_to_html(bullets)
+            if cta:
+                inner += "\n\n" + B.buttons_block([cta])
+            cards.append(B.group_block(inner, class_name="gwp-w-tour", style=_CARD))
+        grid = self._grid(cards, per_row=2, class_name="gwp-w-tours") if cards else ""
+        return "\n\n".join(p for p in [head, intro, grid] if p)
+
+    def _footer_cta(self, doc: Document) -> str:
+        meta = doc.metadata
+        heading = str(meta.get("footer_heading", "Explore all Galapagos Island Expeditions"))
+        blurb = str(
+            meta.get(
+                "footer_blurb",
+                "Discover hundreds of unique island species with our resident marine naturalists.",
+            )
+        )
+        primary = (
+            str(meta.get("footer_cta_primary_label", "Download Destination Guide")),
+            str(meta.get("footer_cta_primary_url", "/guide")),
+        )
+        secondary = (
+            str(meta.get("footer_cta_secondary_label", "Contact Trip Planner")),
+            str(meta.get("footer_cta_secondary_url", "/contact")),
+        )
+        btn_html = B.buttons_block([primary, secondary]).replace(
+            'class="wp-block-buttons"',
+            'class="wp-block-buttons" style="justify-content:center"',
+        )
+        inner = (
+            B.raw_html_block(
+                f'<h3 style="margin:0 0 .5rem">{html.escape(heading)}</h3>'
+                f'<p style="max-width:40rem;margin:0 auto">{html.escape(blurb)}</p>'
+            )
+            + "\n\n"
+            + btn_html
+        )
+        style = (
+            "background:#f6f9f7;border:1px solid #e3e6e3;padding:2rem;"
+            "border-radius:14px;text-align:center"
+        )
+        return (
+            '<!-- wp:group {"className":"gwp-w-footer-cta","layout":{"type":"constrained"}} -->\n'
+            f'<div class="wp-block-group gwp-w-footer-cta" style="{style}">\n{inner}\n</div>\n'
+            "<!-- /wp:group -->"
+        )
 
 
 # --------------------------------------------------------------------------- #

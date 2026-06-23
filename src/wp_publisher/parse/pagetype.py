@@ -75,7 +75,22 @@ _ALIASES = {
     "tier1_wildlife": "wildlife_tier1",
     "species": "wildlife_tier1",
     "animal": "wildlife_tier1",
+    "wildlife_tier2": "wildlife_tier2",
+    "wildlife_tier_2": "wildlife_tier2",
+    "wildlife2": "wildlife_tier2",
+    "tier2_wildlife": "wildlife_tier2",
 }
+
+# Generic wildlife declarations get routed to a tier by monthly search volume.
+_GENERIC_WILDLIFE = {"wildlife", "species", "animal"}
+_WILDLIFE_TIER_THRESHOLD = 500
+
+
+def _search_volume(value) -> int | None:
+    if value is None:
+        return None
+    digits = "".join(ch for ch in str(value) if ch.isdigit())
+    return int(digits) if digits else None
 
 
 def detect_page_type(doc: Document, registry: TemplateRegistry) -> tuple[str, str]:
@@ -88,6 +103,13 @@ def detect_page_type(doc: Document, registry: TemplateRegistry) -> tuple[str, st
     )
     if declared:
         norm = str(declared).strip().lower().replace(" ", "_")
+        # Generic "wildlife"/"species" -> pick a tier by monthly search volume.
+        if norm in _GENERIC_WILDLIFE:
+            vol = _search_volume(doc.metadata.get("search_volume"))
+            if vol is not None and vol < _WILDLIFE_TIER_THRESHOLD and "wildlife_tier2" in registry:
+                return "wildlife_tier2", f"declared '{declared}', {vol} searches/mo -> Tier 2"
+            if "wildlife_tier1" in registry:
+                return "wildlife_tier1", f"declared '{declared}'"
         key = _ALIASES.get(norm, norm)
         if key in registry:
             return key, f"declared type '{declared}'"

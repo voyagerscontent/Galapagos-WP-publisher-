@@ -88,3 +88,54 @@ def test_low_search_volume_warns():
     doc.metadata["search_volume"] = "120"
     page, _t, _ = build_page(doc, _ctx())
     assert any("threshold" in w.lower() for w in page.warnings)
+
+
+# --------------------------------------------------------------------------- #
+# Tier 2 (compact species)
+# --------------------------------------------------------------------------- #
+SAMPLE2 = Path(__file__).resolve().parents[1] / "samples" / "sally-lightfoot-crab.md"
+
+
+def test_tier2_template_registered():
+    tpl = load_registry().get("wildlife_tier2")
+    assert tpl.renderer == "wildlife_tier2"
+    assert tpl.max_search_volume == 499
+
+
+def test_tier2_builds_compact_layout():
+    doc = read_file(SAMPLE2)
+    page, template, _ = build_page(doc, _ctx())
+    html = page.content_html
+    assert template.key == "wildlife_tier2"
+    assert "gwp-w-hero-light" in html            # minimal hero
+    assert 'id="identification"' in html
+    assert 'id="overview"' in html               # creative heading still mapped
+    assert "gwp-w-tour" in html                  # tour cards
+    assert "<!-- wp:details -->" in html         # mini FAQ accordion
+    assert "gwp-w-footer-cta" in html
+    # A 'CTA: Label | /url' bullet becomes a button.
+    assert 'href="/tours/western-islands"' in page.content_html
+    # No required-section warnings for the sample.
+    assert not any("missing" in w for w in page.warnings)
+
+
+def test_tier2_high_volume_warns():
+    doc = read_file(SAMPLE2)
+    doc.metadata["search_volume"] = "5000"
+    page, _t, _ = build_page(doc, _ctx())
+    assert any("exceeds" in w.lower() and "tier 2" in w.lower() for w in page.warnings)
+
+
+def test_generic_wildlife_routes_by_search_volume():
+    registry = load_registry()
+    low = read_file(SAMPLE2)
+    low.metadata["type"] = "wildlife"
+    low.metadata["search_volume"] = "200"
+    key, _ = detect_page_type(low, registry)
+    assert key == "wildlife_tier2"
+
+    high = read_file(SAMPLE)
+    high.metadata["type"] = "wildlife"
+    high.metadata["search_volume"] = "5400"
+    key, _ = detect_page_type(high, registry)
+    assert key == "wildlife_tier1"

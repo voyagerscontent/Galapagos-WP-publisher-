@@ -51,6 +51,7 @@ it was written for*.
 | `tour`        | Sellable itineraries / trips          | `TouristTrip`        |
 | `cruise`      | Galapagos cruises / specific ships    | `TouristTrip`        |
 | `wildlife_tier1` | Iconic species (500+ searches/mo)  | `Article` + `FAQPage` |
+| `wildlife_tier2` | Compact species (≤499 searches/mo) | `Article` + `FAQPage` |
 
 Add or tune a page type by editing YAML — no code changes. See
 [docs/TEMPLATES.md](docs/TEMPLATES.md).
