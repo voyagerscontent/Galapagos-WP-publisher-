@@ -51,6 +51,43 @@ SECTION_SYNONYMS: dict[str, str] = {
     "photos": "gallery",
     "conclusion": "conclusion",
     "final-thoughts": "conclusion",
+    # --- Tier 1 Wildlife sections ---
+    "identification": "identification",
+    "identification-guide": "identification",
+    "how-to-identify": "identification",
+    "where-they-live": "range_habitat",
+    "range-habitat": "range_habitat",
+    "range-and-habitat": "range_habitat",
+    "range": "range_habitat",
+    "habitat": "range_habitat",
+    "behavior": "behavior",
+    "behaviour": "behavior",
+    "behavior-adaptations": "behavior",
+    "behavior-diet-adaptations": "behavior",
+    "behaviour-diet-adaptations": "behavior",
+    "survival-traits": "behavior",
+    "adaptations": "behavior",
+    "life-cycle": "life_cycle",
+    "lifecycle": "life_cycle",
+    "threats-conservation": "conservation",
+    "threats-and-conservation": "conservation",
+    "conservation": "conservation",
+    "threats": "conservation",
+    "best-places-to-see-them": "where_to_see",
+    "best-places-to-encounter-them": "where_to_see",
+    "where-to-see": "where_to_see",
+    "where-to-see-them": "where_to_see",
+    "related-wildlife": "related",
+    "related-species": "related",
+    # Tier 2 wildlife phrasings
+    "how-to-spot-them": "identification",
+    "how-to-spot": "identification",
+    "quick-identification": "identification",
+    "lifestyle": "behavior",
+    "lifestyle-traits": "behavior",
+    "traits": "behavior",
+    "dynamic-adaptations": "behavior",
+    "where-to-see-book": "where_to_see",
 }
 
 
@@ -73,6 +110,14 @@ _KEYWORD_RULES: list[tuple[str, list[str]]] = [
     ("ship", ["ship", "yacht", "vessel", "the-boat"]),
     ("faq", ["faq", "frequently-asked", "question"]),
     ("conclusion", ["conclusion", "final-thought", "wrap-up"]),
+    # --- Tier 1 Wildlife ---
+    ("identification", ["identif", "how-to-id", "how-to-spot", "spot-them"]),
+    ("life_cycle", ["life-cycle", "lifecycle", "breeding-cycle"]),
+    ("conservation", ["conservation", "threat", "endangered", "protecting"]),
+    ("where_to_see", ["where-to-see", "best-place", "encounter", "see-them", "see-book"]),
+    ("behavior", ["behavi", "adaptation", "survival-trait", "lifestyle", "dynamic-adapt"]),
+    ("range_habitat", ["where-they-live", "habitat", "distribution", "range"]),
+    ("related", ["related-wildlife", "related-species"]),
 ]
 
 

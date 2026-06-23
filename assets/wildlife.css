@@ -1,0 +1,60 @@
+/* ─────────────────────────────────────────────────────────────
+   Tier 1 Wildlife template — optional polish.
+
+   The publisher emits inline styles so pages look right with no setup, but
+   adding this stylesheet (Appearance → Customize → Additional CSS, or enqueue
+   it in your theme) refines spacing, hover states, and responsiveness.
+   All hooks are prefixed `.gwp-w-`.
+   ───────────────────────────────────────────────────────────── */
+
+.gwp-w-hero { margin-bottom: 2.5rem; }
+.gwp-w-hero-name { line-height: 1.1; }
+
+/* Tier 2 compact hero + tour cards */
+.gwp-w-hero-light .gwp-w-hero-name { font-size: 2rem; }
+.gwp-w-tour { transition: box-shadow .2s ease, transform .2s ease; }
+.gwp-w-tour:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, .1); transform: translateY(-2px); }
+.gwp-w-footer-cta { margin-top: 2.5rem; }
+
+/* Sticky table of contents */
+.gwp-w-toc { align-self: flex-start; }
+.gwp-w-toc ul { list-style: none; margin: 0; padding: 0; }
+.gwp-w-toc li { margin: .35rem 0; }
+.gwp-w-toc a { text-decoration: none; }
+.gwp-w-toc a:hover { text-decoration: underline; }
+
+/* Cards (behavior, places, life-cycle steps, related) */
+.gwp-w-card,
+.gwp-w-place,
+.gwp-w-step,
+.gwp-w-related-card {
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.gwp-w-card:hover,
+.gwp-w-place:hover,
+.gwp-w-step:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .1);
+  transform: translateY(-2px);
+}
+
+.gwp-w-card h3,
+.gwp-w-place h3,
+.gwp-w-step h3 { margin-top: .5rem; }
+
+/* Quick-facts table */
+.gwp-w-facts table { width: 100%; border-collapse: collapse; }
+.gwp-w-facts th { text-align: left; background: #f3f8f5; }
+
+/* Callout */
+.gwp-w-callout { margin: 1.25rem 0; }
+
+/* Accordion FAQ */
+.wp-block-details { border-bottom: 1px solid #e3e6e3; padding: .75rem 0; }
+.wp-block-details summary { cursor: pointer; font-weight: 600; }
+
+/* Responsive: stack the asymmetric two-column sections on small screens.
+   (Gutenberg already stacks at its mobile breakpoint; this tightens spacing.) */
+@media (max-width: 781px) {
+  .gwp-w-hero { padding: 2rem 1.25rem; }
+  .gwp-w-toc { position: static !important; }
+}

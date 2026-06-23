@@ -99,6 +99,21 @@ def _enrich_by_type(
         }
         main["mainEntityOfPage"] = {"@type": "WebPage", "@id": main["url"]}
 
+    # Wildlife species pages: describe the subject animal via `about`.
+    if meta.get("scientific_name"):
+        about: dict[str, Any] = {
+            "@type": "Thing",
+            "name": main["name"],
+            "alternateName": str(meta["scientific_name"]),
+        }
+        if meta.get("conservation_status"):
+            about["additionalProperty"] = {
+                "@type": "PropertyValue",
+                "name": "Conservation status",
+                "value": str(meta["conservation_status"]),
+            }
+        main["about"] = about
+
 
 def _itinerary_items(doc: Document) -> list[dict[str, Any]]:
     itinerary = doc.find_section("itinerary")

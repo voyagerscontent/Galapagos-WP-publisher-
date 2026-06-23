@@ -36,6 +36,16 @@ _SIGNALS: dict[str, dict[str, float]] = {
         "things_to_do": 2.0,
         "practical_info": 1.5,
     },
+    "wildlife_tier1": {
+        "identification": 3.0,
+        "behavior": 2.0,
+        "life_cycle": 2.0,
+        "conservation": 2.0,
+        "range_habitat": 2.0,
+        "where_to_see": 1.5,
+        "species": 1.0,
+        "scientific_name": 1.0,
+    },
     "blog_post": {
         "conclusion": 1.0,
         "overview": 0.3,
@@ -59,7 +69,28 @@ _ALIASES = {
     "post": "blog_post",
     "article": "blog_post",
     "guide": "blog_post",
+    "wildlife": "wildlife_tier1",
+    "wildlife_tier1": "wildlife_tier1",
+    "wildlife_tier_1": "wildlife_tier1",
+    "tier1_wildlife": "wildlife_tier1",
+    "species": "wildlife_tier1",
+    "animal": "wildlife_tier1",
+    "wildlife_tier2": "wildlife_tier2",
+    "wildlife_tier_2": "wildlife_tier2",
+    "wildlife2": "wildlife_tier2",
+    "tier2_wildlife": "wildlife_tier2",
 }
+
+# Generic wildlife declarations get routed to a tier by monthly search volume.
+_GENERIC_WILDLIFE = {"wildlife", "species", "animal"}
+_WILDLIFE_TIER_THRESHOLD = 500
+
+
+def _search_volume(value) -> int | None:
+    if value is None:
+        return None
+    digits = "".join(ch for ch in str(value) if ch.isdigit())
+    return int(digits) if digits else None
 
 
 def detect_page_type(doc: Document, registry: TemplateRegistry) -> tuple[str, str]:
@@ -72,6 +103,13 @@ def detect_page_type(doc: Document, registry: TemplateRegistry) -> tuple[str, st
     )
     if declared:
         norm = str(declared).strip().lower().replace(" ", "_")
+        # Generic "wildlife"/"species" -> pick a tier by monthly search volume.
+        if norm in _GENERIC_WILDLIFE:
+            vol = _search_volume(doc.metadata.get("search_volume"))
+            if vol is not None and vol < _WILDLIFE_TIER_THRESHOLD and "wildlife_tier2" in registry:
+                return "wildlife_tier2", f"declared '{declared}', {vol} searches/mo -> Tier 2"
+            if "wildlife_tier1" in registry:
+                return "wildlife_tier1", f"declared '{declared}'"
         key = _ALIASES.get(norm, norm)
         if key in registry:
             return key, f"declared type '{declared}'"

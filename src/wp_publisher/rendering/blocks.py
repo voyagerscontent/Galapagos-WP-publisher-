@@ -129,3 +129,108 @@ def spacer_block(height_px: int = 24) -> str:
         f"<div style=\"height:{height_px}px\" aria-hidden=\"true\" "
         f"class=\"wp-block-spacer\"></div>\n<!-- /wp:spacer -->"
     )
+
+
+# --------------------------------------------------------------------------- #
+# Structural / layout blocks (used by richer templates).
+# --------------------------------------------------------------------------- #
+
+def group_block(inner_html: str, *, class_name: str = "", style: str = "") -> str:
+    """Wrap inner block markup in a constrained wp:group."""
+    attrs: dict = {"layout": {"type": "constrained"}}
+    if class_name:
+        attrs["className"] = class_name
+    cls = f"wp-block-group {class_name}".strip()
+    style_attr = f' style="{style}"' if style else ""
+    return (
+        f"<!-- wp:group{_attrs(attrs)} -->\n"
+        f'<div class="{cls}"{style_attr}>\n{inner_html}\n</div>\n'
+        f"<!-- /wp:group -->"
+    )
+
+
+def columns_block(
+    columns: list[str],
+    *,
+    class_name: str = "",
+    style: str = "",
+    widths: list[str] | None = None,
+) -> str:
+    """Build a wp:columns row from a list of inner-HTML column bodies.
+
+    `widths` optionally sets each column's width (e.g. ["40%", "60%"]).
+    """
+    attrs: dict = {}
+    if class_name:
+        attrs["className"] = class_name
+    cls = f"wp-block-columns {class_name}".strip()
+    style_attr = f' style="{style}"' if style else ""
+    inner = []
+    for i, body in enumerate(columns):
+        col_attr = ""
+        col_style = ""
+        if widths and i < len(widths) and widths[i]:
+            col_attr = _attrs({"width": widths[i]})
+            col_style = f' style="flex-basis:{widths[i]}"'
+        inner.append(
+            f"<!-- wp:column{col_attr} -->\n"
+            f'<div class="wp-block-column"{col_style}>\n{body}\n</div>\n'
+            "<!-- /wp:column -->"
+        )
+    return (
+        f"<!-- wp:columns{_attrs(attrs)} -->\n"
+        f'<div class="{cls}"{style_attr}>\n' + "\n".join(inner) + "\n</div>\n"
+        "<!-- /wp:columns -->"
+    )
+
+
+def buttons_block(buttons: list[tuple[str, str]], *, class_name: str = "") -> str:
+    """Build a wp:buttons group. Each button is (label, url)."""
+    if not buttons:
+        return ""
+    attrs: dict = {}
+    if class_name:
+        attrs["className"] = class_name
+    cls = f"wp-block-buttons {class_name}".strip()
+    inner = []
+    for label, url in buttons:
+        href = html.escape(url or "#")
+        inner.append(
+            "<!-- wp:button -->\n"
+            '<div class="wp-block-button">'
+            f'<a class="wp-block-button__link wp-element-button" href="{href}">'
+            f"{html.escape(label)}</a></div>\n"
+            "<!-- /wp:button -->"
+        )
+    return (
+        f"<!-- wp:buttons{_attrs(attrs)} -->\n"
+        f'<div class="{cls}">\n' + "\n".join(inner) + "\n</div>\n"
+        "<!-- /wp:buttons -->"
+    )
+
+
+def details_block(summary: str, inner_html: str) -> str:
+    """Native accordion item (wp:details, WordPress 6.4+)."""
+    return (
+        "<!-- wp:details -->\n"
+        f'<details class="wp-block-details"><summary>{html.escape(summary)}</summary>\n'
+        f"{inner_html}\n</details>\n"
+        "<!-- /wp:details -->"
+    )
+
+
+def heading_anchor_block(text: str, anchor: str, level: int = 2) -> str:
+    """Heading with an id anchor (so a table of contents can link to it)."""
+    level = max(2, min(6, level))
+    attrs: dict = {"anchor": anchor}
+    if level != 2:
+        attrs["level"] = level
+    return (
+        f"<!-- wp:heading{_attrs(attrs)} -->\n"
+        f'<h{level} id="{html.escape(anchor)}">{html.escape(text)}</h{level}>\n'
+        f"<!-- /wp:heading -->"
+    )
+
+
+def raw_html_block(inner_html: str) -> str:
+    return f"<!-- wp:html -->\n{inner_html}\n<!-- /wp:html -->"

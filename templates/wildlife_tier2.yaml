@@ -1,0 +1,33 @@
+# ─────────────────────────────────────────────────────────────
+# Tier 2 Wildlife — lighter, compact species page.
+# Use for species with 499 or fewer monthly searches.
+#
+# Uses the specialized "wildlife_tier2" renderer: a minimal hero, a 40/60
+# quick-facts + identification split, a 60/40 overview, stacked lifestyle
+# traits, tour cards, a mini FAQ accordion, and a regional footer CTA. The
+# renderer drives the layout, so the `layout:` list is not used.
+#
+# See docs/WILDLIFE_TEMPLATE.md.
+# ─────────────────────────────────────────────────────────────
+key: wildlife_tier2
+name: Tier 2 Wildlife (Compact Species)
+description: >
+  Lighter species page for lower-search wildlife. Intended for species with
+  499 or fewer monthly searches.
+post_type: post
+status: draft
+schema_type: Article
+renderer: wildlife_tier2
+max_search_volume: 499
+categories:
+  - Wildlife
+tags: []
+focus_keyword_from: species
+
+required_sections:
+  - identification
+  - overview
+  - where_to_see
+
+schema_extra:
+  articleSection: "Wildlife"
