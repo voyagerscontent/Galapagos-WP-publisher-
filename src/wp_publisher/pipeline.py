@@ -117,6 +117,7 @@ def build_page(
         warnings=[
             *seo.warnings,
             *_template_warnings(template, doc),
+            *doc.metadata.get("_ingest_warnings", []),
             *compose_warnings,
             *acf_warnings,
         ],
