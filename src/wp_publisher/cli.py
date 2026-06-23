@@ -26,6 +26,7 @@ from .ingest import read_file
 from .models import Document
 from .pipeline import BuildContext, build_page
 from .rendering.template import load_registry
+from .utils import to_slug as _slugify
 from .wordpress.client import WordPressClient
 from .wordpress.publisher import publish_page
 
@@ -143,12 +144,17 @@ def preview(
     media: Optional[str] = typer.Option(
         None, "--media", "-m", help="Media strategy: library | placeholder."
     ),
+    slug: Optional[str] = typer.Option(
+        None, "--slug", help="Override the page slug (e.g. for an isolated test page)."
+    ),
     out: Optional[Path] = typer.Option(None, "--out", "-o", help="Write artifacts here."),
 ) -> None:
     """Build a page and show/save it WITHOUT publishing."""
     doc = read_file(file)
     use_wp = media == "library"
     page, template, reason, _client, _settings = _build(doc, type, None, media, use_wp)
+    if slug:
+        page.slug = _slugify(slug)
     _summary(doc, page, template, reason)
 
     out_dir = out or (Path("output") / page.slug)
@@ -175,6 +181,9 @@ def publish(
     media: Optional[str] = typer.Option(
         None, "--media", "-m", help="Media strategy: library | placeholder."
     ),
+    slug: Optional[str] = typer.Option(
+        None, "--slug", help="Override the page slug (e.g. for an isolated test page)."
+    ),
     update: bool = typer.Option(
         False, "--update", help="Allow overwriting an existing post with the same slug."
     ),
@@ -185,6 +194,8 @@ def publish(
 
     doc = read_file(file)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
+    if slug:
+        page.slug = _slugify(slug)
     _summary(doc, page, template, reason)
 
     if page.status == "publish" and not yes:
