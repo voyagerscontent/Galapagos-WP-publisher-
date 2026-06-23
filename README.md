@@ -10,19 +10,20 @@ possible.
 > To stand up another site, see [docs/NEW_SITE.md](docs/NEW_SITE.md).
 
 You write the content (in Word, Markdown, plain text, or Google Docs). The
-system detects what *kind* of page it is, arranges it with a reusable
-**template**, generates the SEO metadata and schema.org markup, places images
-(or marks where they're needed), and publishes it to WordPress as native
-Gutenberg blocks that respect your theme.
+system composes it into structured **components**, generates the SEO metadata and
+schema.org markup, places images (or marks where they're needed), and
+**populates ACF fields** over the REST API. Your WordPress theme renders the ACF
+fields, so design and UX stay on the WP side — no Gutenberg blocks, no fixed page
+templates in the doc. See [docs/ACF.md](docs/ACF.md).
 
 ```
   doc (.docx / .md / .txt / Google Doc)
         │
         ▼
-  ingest  →  normalize  →  detect page type  →  apply template
-        →  SEO (title, slug, meta)  →  render Gutenberg blocks
-        →  resolve media (library / placeholder)  →  schema.org JSON-LD
-        →  publish to WordPress (REST API)
+  ingest  →  normalize  →  detect page-type profile (schema/categories)
+        →  SEO (title, slug, meta)  →  compose into components (auto, or
+        →  resolve media  →  schema.org JSON-LD  →  bespoke ::: directives)
+        →  map components → ACF  →  publish to WordPress (REST `acf`)
 ```
 
 ## Engine vs. site
@@ -125,20 +126,23 @@ Section headings can be phrased naturally ("What's Included", "Inclusions",
 
 ## What gets generated
 
-- **Native Gutenberg blocks** (headings, lists, quotes, tables, images) so the
-  content stays editable and on‑theme — never a frozen HTML blob.
+- **Flat ACF fields** (`hero_heading`, `hero_image`, `body`, `faq` repeater,
+  `key_facts`, `cta_*`, `seo_schema`…) populated over REST, ready to bind in
+  **Elementor** with Dynamic Tags. The field mapping lives in `config/acf.yaml`.
+  See [docs/ACF.md](docs/ACF.md).
 - **SEO**: clean slug, length‑checked `<title>`, meta description woven with
   the focus keyword, written to Yoast/RankMath when detected.
-- **schema.org JSON‑LD**: the right type per template, plus an `FAQPage` when
-  the doc has a FAQ — embedded so it ships regardless of plugins.
-- **Media**: best‑match from your WordPress Media Library, or a clearly marked
-  placeholder block for a human to fill.
-- **Warnings**: missing required sections, short meta, keyword gaps — surfaced
-  before you publish.
+- **schema.org JSON‑LD**: the right type per profile, plus an `FAQPage` when
+  the doc has a FAQ — delivered as the `seo_schema` ACF field.
+- **Media**: best‑match attachment IDs from your WordPress Media Library, or a
+  warning listing what a human needs to add.
+- **Warnings**: missing expected sections, short meta, keyword gaps, unmapped
+  components — surfaced before you publish.
 
 ## Documentation
 
-- [docs/AUTHORING_GUIDE.md](docs/AUTHORING_GUIDE.md) — **what to put in your content doc** (metadata + freeform layout directives)
+- [docs/ACF.md](docs/ACF.md) — **how content maps to ACF fields** (setup, `config/acf.yaml`, components)
+- [docs/AUTHORING_GUIDE.md](docs/AUTHORING_GUIDE.md) — **what to put in your content doc** (metadata + bespoke `:::` directives)
 - [docs/PUBLISH_VIA_GITHUB.md](docs/PUBLISH_VIA_GITHUB.md) — publish from your browser (no local machine)
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — fixes for auth/REST API errors (incl. miniOrange & WP Cerber)
 - [docs/SETUP.md](docs/SETUP.md) — WordPress App Password + Google Drive setup

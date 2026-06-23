@@ -39,6 +39,11 @@ on:
         options:
           - placeholder      # insert 'image needed' blocks for a human
           - library          # reuse best match from the WP Media Library
+      update_existing:
+        description: "Overwrite an existing post with the same slug? (off = refuse, safe default)"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   run:
@@ -64,6 +69,7 @@ jobs:
           IN_MODE: ${{ inputs.mode }}
           IN_TYPE: ${{ inputs.page_type }}
           IN_MEDIA: ${{ inputs.media }}
+          IN_UPDATE: ${{ inputs.update_existing }}
         run: |
           set -euo pipefail
           if [ ! -f "${IN_FILE}" ]; then
@@ -72,15 +78,17 @@ jobs:
           fi
           TYPE_ARGS=()
           if [ -n "${IN_TYPE}" ]; then TYPE_ARGS=(--type "${IN_TYPE}"); fi
+          UPDATE_ARGS=()
+          if [ "${IN_UPDATE}" = "true" ]; then UPDATE_ARGS=(--update); fi
           case "${IN_MODE}" in
             preview)
               wp-publish preview "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}"
               ;;
             publish-draft)
-              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}" --status draft --yes
+              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}" --status draft --yes "${UPDATE_ARGS[@]}"
               ;;
             publish-live)
-              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}" --status publish --yes
+              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" --media "${IN_MEDIA}" --status publish --yes "${UPDATE_ARGS[@]}"
               ;;
             *)
               echo "::error::Unknown mode: ${IN_MODE}"; exit 1 ;;

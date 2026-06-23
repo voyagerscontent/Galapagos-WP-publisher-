@@ -8,6 +8,10 @@ the page however you want, independent of the fixed templates.
 Works in **Markdown (`.md`), plain text (`.txt`), or Word (`.docx`)**, and from
 Google Drive.
 
+> **Output:** your content is published by populating **ACF fields** (not
+> Gutenberg). The directives below map to ACF flexible-content layouts; the theme
+> renders them. How that mapping works is in [ACF.md](ACF.md).
+
 ---
 
 ## 1. The metadata header (always include this)

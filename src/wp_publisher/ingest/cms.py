@@ -1,0 +1,286 @@
+"""Adapter for the Voyagers "CMS Stage" house document format.
+
+These docs are authored in Word with **no heading styles** — every paragraph is
+"Normal" — and carry their own conventions instead:
+
+* a leading ``PUBLISHER HEADER BLOCK`` (Publisher / Website / Page type / Slug /
+  JSON-LD hints / breadcrumb / geo),
+* plain-text section titles (short, title-case lines),
+* ``QUICK ANSWER`` and ``CALLOUT STAT`` labels,
+* ``[ PHOTO PLACEHOLDER — … ]`` / ``[ INFOGRAPHIC PLACEHOLDER — … ]`` markers
+  with a following ``Suggested caption:`` line,
+* a ``Frequently Asked Questions`` block (question / answer paragraph pairs),
+* inline ``[VERIFY — …]`` editorial flags and a closing ``VERIFY SUMMARY``.
+
+This module detects that format and normalizes it into a `Document`: metadata +
+a `raw_body` of Markdown/`:::` directives (so the composer produces hero / image
+/ callout / accordion components) + a real FAQ section (so the schema generator
+emits FAQPage). `[VERIFY]` items are stripped from the published text and
+surfaced as warnings — the doc must not go live until they're resolved.
+"""
+
+from __future__ import annotations
+
+import re
+
+from ..models import BlockType, ContentBlock, Document, Section
+from ..utils import to_slug
+
+_KV = re.compile(r"^([A-Za-z][\w /\-]{1,34}):\s*(.+)$")
+_PLACEHOLDER = re.compile(r"^\[\s*(PHOTO|INFOGRAPHIC)\s+PLACEHOLDER\s*[—\-:]\s*(.+?)\s*\]$", re.I)
+_CAPTION = re.compile(r"^Suggested caption:\s*(.+)$", re.I)
+_VERIFY_INLINE = re.compile(r"\[\s*VERIFY[^\]]*\]")
+_HEADER_KEYS = {
+    "publisher", "website", "page type", "slug", "canonical url",
+    "json-ld schema types", "author",
+}
+
+
+def looks_like_cms(texts: list[str]) -> bool:
+    head = " | ".join(texts[:5]).upper()
+    return "PUBLISHER HEADER BLOCK" in head or "CMS STAGE" in head
+
+
+def build_cms_document(texts: list[str], source_name: str) -> Document:
+    doc = Document(source_name=source_name, source_kind="docx")
+    meta = doc.metadata
+    warnings: list[str] = []
+
+    idx, title = _parse_header(texts, meta)
+    doc.title = title or source_name
+
+    parts: list[str] = []
+    faq_pairs: list[tuple[str, str]] = []
+    quick_answer = ""
+    featured_q = ""
+
+    body = texts[idx:]
+    i, n = 0, len(body)
+    pending_section: list[str] = []     # buffered prose for the current section
+
+    def flush_prose():
+        if pending_section:
+            parts.append("\n\n".join(pending_section))
+            pending_section.clear()
+
+    while i < n:
+        line = body[i].strip()
+        i += 1
+        if not line:
+            continue
+
+        # Stop at the editorial VERIFY summary / footer.
+        if line.upper().startswith("VERIFY SUMMARY") or line.startswith("GalapagosIslands.travel"):
+            while i < n:
+                tail = body[i].strip()
+                i += 1
+                if re.match(r"^V\d+\b", tail) or "VERIFY" in tail.upper():
+                    warnings.append("VERIFY: " + _VERIFY_INLINE.sub("", tail).strip(" —-"))
+            break
+
+        # Strip inline [VERIFY …] flags, recording them.
+        if _VERIFY_INLINE.search(line):
+            for m in _VERIFY_INLINE.finditer(line):
+                warnings.append("VERIFY: " + m.group(0).strip("[] ").removeprefix("VERIFY").strip(" —-:"))
+            line = _VERIFY_INLINE.sub("", line).strip()
+            if not line:
+                continue
+
+        # Byline -> author metadata.
+        if line.lower().startswith("by ") and "," in line:
+            meta.setdefault("author", line[3:].split(",")[0].strip())
+            continue
+
+        # Image / infographic placeholders.
+        ph = _PLACEHOLDER.match(line)
+        if ph:
+            desc = ph.group(2).strip()
+            caption = ""
+            if i < n and _CAPTION.match(body[i].strip()):
+                caption = _CAPTION.match(body[i].strip()).group(1).strip()
+                i += 1
+            elif ph.group(1).upper() == "INFOGRAPHIC" and i < n:
+                caption = body[i].strip()
+                i += 1
+            if not featured_q:
+                # The first image becomes the hero background, not an inline block.
+                featured_q = desc
+                continue
+            flush_prose()
+            cap = caption.replace('"', "'")
+            parts.append(f'::: image query="{desc}"\n{cap}\n:::')
+            continue
+
+        # QUICK ANSWER -> hero subheading + meta description.
+        if line.upper() == "QUICK ANSWER":
+            if i < n:
+                quick_answer = body[i].strip()
+                i += 1
+            continue
+
+        # CALLOUT STAT -> callout directive with the following short paras.
+        if line.upper() == "CALLOUT STAT":
+            stat_lines = []
+            while i < n and body[i].strip() and not _is_heading(body[i].strip()):
+                cl = _VERIFY_INLINE.sub("", body[i].strip()).strip()
+                i += 1
+                if cl:
+                    stat_lines.append(cl)
+            flush_prose()
+            inner = "\n\n".join(stat_lines)
+            parts.append(f'::: callout tip title="Key stat"\n{inner}\n:::')
+            continue
+
+        # FAQ block -> accordion + collected pairs (for schema).
+        if re.sub(r"[^a-z]", "", line.lower()) == "frequentlyaskedquestions":
+            flush_prose()
+            i = _consume_faq(body, i, n, parts, faq_pairs)
+            continue
+
+        # Section heading vs prose.
+        if _is_heading(line):
+            flush_prose()
+            parts.append(f"## {line}")
+        else:
+            pending_section.append(line)
+
+    flush_prose()
+
+    # Lead with a hero from the title + quick answer + first image.
+    hero_img = f' image="{featured_q}"' if featured_q else ""
+    hero = f"::: hero{hero_img}\n# {doc.title}"
+    if quick_answer:
+        hero += f"\n{quick_answer}"
+    hero += "\n:::"
+    parts.insert(0, hero)
+
+    doc.raw_body = "\n\n".join(p for p in parts if p.strip())
+
+    # Metadata the pipeline uses.
+    if quick_answer:
+        meta.setdefault("meta_description", quick_answer)
+    if featured_q:
+        meta.setdefault("featured_image_query", featured_q)
+    meta.setdefault("type", _map_page_type(meta.get("page_type", "")))
+    meta.setdefault("destination", title.split("—")[0].strip() if title else "")
+    meta.setdefault("status", "draft")
+    if warnings:
+        meta["_ingest_warnings"] = warnings + [
+            "This doc is marked DRAFT pending VERIFY — review the flags above before publishing live."
+        ]
+
+    # A real FAQ section so the schema generator emits FAQPage.
+    if faq_pairs:
+        faq = Section(title="FAQ", slug="faq", level=2)
+        for q, a in faq_pairs:
+            faq.blocks.append(ContentBlock(type=BlockType.HEADING, text=q, level=3))
+            faq.blocks.append(ContentBlock(type=BlockType.PARAGRAPH, text=a))
+        doc.sections.append(faq)
+
+    return doc
+
+
+# --------------------------------------------------------------------------- #
+def _parse_header(texts: list[str], meta: dict) -> tuple[int, str]:
+    """Consume the PUBLISHER HEADER BLOCK; return (body_start_index, title)."""
+    i, n = 0, len(texts)
+    title = ""
+    while i < n:
+        line = texts[i].strip()
+        if not line:
+            i += 1
+            continue
+        if line.upper() == "PUBLISHER HEADER BLOCK":
+            i += 1
+            continue
+        m = _KV.match(line)
+        key = m.group(1).strip().lower() if m else ""
+        if m and key in _HEADER_KEYS:
+            _store_header_kv(key, m.group(2).strip(), meta)
+            i += 1
+            continue
+        if line[0] in "[{\"" or '"@type"' in line or "latitude" in line or line.startswith("Home >") or line.endswith("]") or line.startswith('"'):
+            if line.startswith("Home >"):
+                meta.setdefault("breadcrumbs", [p.strip() for p in line.split(">")])
+            i += 1
+            continue
+        # First content-like line is the page title.
+        title = line
+        i += 1
+        break
+    return i, title
+
+
+def _store_header_kv(key: str, value: str, meta: dict) -> None:
+    if key == "slug":
+        meta["slug"] = to_slug(value.strip("/").split("/")[-1])
+    elif key == "page type":
+        meta["page_type"] = value
+    elif key == "author":
+        meta.setdefault("author", value)
+    elif key == "canonical url":
+        meta["canonical_url"] = value
+    elif key == "website":
+        meta["site_url"] = value
+
+
+def _consume_faq(body, i, n, parts, faq_pairs) -> int:
+    parts.append("::: accordion")
+    question = None
+    answer: list[str] = []
+
+    def flush():
+        nonlocal question, answer
+        if question is not None:
+            ans = " ".join(answer).strip()
+            parts.append(f"### {question}")
+            parts.append(ans)
+            faq_pairs.append((question, ans))
+        question, answer = None, []
+
+    while i < n:
+        line = _VERIFY_INLINE.sub("", body[i].strip()).strip()
+        if not line:
+            i += 1
+            continue
+        # A non-question heading ends the FAQ block.
+        if not line.endswith("?") and _is_heading(line) and question is None:
+            break
+        if not line.endswith("?") and _is_heading(line) and question is not None and not answer:
+            break
+        if line.endswith("?"):
+            flush()
+            question = line
+        else:
+            answer.append(line)
+        i += 1
+    flush()
+    parts.append(":::")
+    return i
+
+
+def _is_heading(line: str) -> bool:
+    line = line.strip()
+    if not line or line[0] not in _UPPER or line.endswith((".", ",", ":", ";", "?", "!")):
+        return False
+    if line.startswith("[") or _KV.match(line) or line.lower().startswith("www."):
+        return False
+    if len(line) > 72:
+        return False
+    return len(line.split()) <= 9
+
+
+def _map_page_type(page_type: str) -> str:
+    p = (page_type or "").lower()
+    if "island" in p or "destination" in p or "guide" in p:
+        return "destination"
+    if "wildlife" in p or "species" in p:
+        return "wildlife_tier1"
+    if "tour" in p or "itinerary" in p:
+        return "tour"
+    if "cruise" in p:
+        return "cruise"
+    return "destination"
+
+
+_UPPER = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")

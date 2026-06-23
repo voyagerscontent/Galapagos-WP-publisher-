@@ -1,5 +1,12 @@
 # Wildlife templates
 
+> **Note:** Output is now **ACF fields** (see [ACF.md](ACF.md)), not Gutenberg.
+> The two wildlife *profiles* below still drive page-type detection, schema, and
+> the search-volume tier warnings; their content is composed into ACF components
+> (hero, rich_text, FAQ accordion, stats) like any other doc — the rich
+> card/step/anchor layouts described further down are historical and now live in
+> the WordPress theme, not in the published output.
+
 Species pages come in two tiers, chosen by monthly search volume:
 
 | Tier | `type` | Use for | Layout |

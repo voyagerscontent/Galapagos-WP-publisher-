@@ -1,0 +1,50 @@
+[
+  {
+    "key": "group_page_fields",
+    "title": "Page Content (Flat)",
+    "show_in_rest": 1,
+    "fields": [
+      { "key": "f_hero_eyebrow", "label": "Hero — Eyebrow", "name": "hero_eyebrow", "type": "text" },
+      { "key": "f_hero_heading", "label": "Hero — Heading", "name": "hero_heading", "type": "text" },
+      { "key": "f_hero_subheading", "label": "Hero — Subheading", "name": "hero_subheading", "type": "textarea", "rows": 3 },
+      { "key": "f_hero_image", "label": "Hero — Image", "name": "hero_image", "type": "image", "return_format": "id", "preview_size": "medium" },
+      { "key": "f_hero_cta_label", "label": "Hero — CTA Label", "name": "hero_cta_label", "type": "text" },
+      { "key": "f_hero_cta_url", "label": "Hero — CTA URL", "name": "hero_cta_url", "type": "url" },
+
+      { "key": "f_body", "label": "Body", "name": "body", "type": "wysiwyg", "tabs": "all", "media_upload": 1 },
+
+      { "key": "f_callout_title", "label": "Callout — Title", "name": "callout_title", "type": "text" },
+      { "key": "f_callout_text", "label": "Callout — Text", "name": "callout_text", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+
+      {
+        "key": "f_faq", "label": "FAQ", "name": "faq", "type": "repeater",
+        "button_label": "Add question", "layout": "row",
+        "sub_fields": [
+          { "key": "f_faq_q", "label": "Question", "name": "question", "type": "text" },
+          { "key": "f_faq_a", "label": "Answer", "name": "answer", "type": "wysiwyg", "tabs": "all", "media_upload": 0 }
+        ]
+      },
+
+      {
+        "key": "f_key_facts", "label": "Key Facts", "name": "key_facts", "type": "repeater",
+        "button_label": "Add fact", "layout": "table",
+        "sub_fields": [
+          { "key": "f_kf_label", "label": "Label", "name": "label", "type": "text" },
+          { "key": "f_kf_value", "label": "Value", "name": "value", "type": "text" }
+        ]
+      },
+
+      { "key": "f_cta_heading", "label": "CTA — Heading", "name": "cta_heading", "type": "text" },
+      { "key": "f_cta_text", "label": "CTA — Text", "name": "cta_text", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+      { "key": "f_cta_label", "label": "CTA — Button Label", "name": "cta_label", "type": "text" },
+      { "key": "f_cta_url", "label": "CTA — Button URL", "name": "cta_url", "type": "url" },
+
+      { "key": "f_page_subtitle", "label": "Subtitle", "name": "page_subtitle", "type": "text" },
+      { "key": "f_seo_schema", "label": "SEO Schema (JSON-LD)", "name": "seo_schema", "type": "textarea", "rows": 4, "instructions": "Auto-populated JSON-LD. Output inside a <script type=\"application/ld+json\"> tag in the theme/Elementor header." }
+    ],
+    "location": [
+      [ { "param": "post_type", "operator": "==", "value": "post" } ],
+      [ { "param": "post_type", "operator": "==", "value": "page" } ]
+    ]
+  }
+]

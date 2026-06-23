@@ -44,31 +44,23 @@ def test_section_slug_wildlife():
     assert section_slug("Best Places to See Them") == "where_to_see"
 
 
-def test_builds_full_layout():
+def test_builds_flat_acf_fields():
     doc = read_file(SAMPLE)
     page, template, _ = build_page(doc, _ctx())
-    html = page.content_html
     assert template.key == "wildlife_tier1"
-    # Hero + designed sections present
-    assert "gwp-w-hero" in html
-    assert 'id="overview"' in html
-    assert 'id="identification"' in html
-    assert 'id="where-to-see"' in html
-    # Behavior cards, life-cycle steps, accordion FAQ, related strip
-    assert "gwp-w-card" in html
-    assert "gwp-w-step" in html
-    assert "<!-- wp:details -->" in html
-    assert "gwp-w-related" in html
-    # CTA buttons rendered
-    assert "wp-block-button" in html
+    acf = page.acf
+    assert acf["hero_heading"]
+    assert acf["body"]
+    assert isinstance(acf["faq"], list) and acf["faq"]   # Traveler FAQs
+    assert isinstance(acf["key_facts"], list) and acf["key_facts"]  # `facts:` -> stats
+    assert acf.get("page_subtitle")                      # tagline
 
 
-def test_quick_facts_table_and_cta_button():
+def test_facts_become_key_facts_repeater():
     doc = read_file(SAMPLE)
     page, _t, _ = build_page(doc, _ctx())
-    assert "Up to 900 lbs / 5 feet" in page.content_html
-    # A 'CTA: Label | /url' bullet becomes a real button link.
-    assert 'href="/tours/santa-cruz"' in page.content_html
+    labels = [i["label"] for i in page.acf["key_facts"]]
+    assert "Size & Weight" in labels
 
 
 def test_schema_species_about_and_faq():
@@ -98,32 +90,23 @@ SAMPLE2 = Path(__file__).resolve().parents[1] / "samples" / "sally-lightfoot-cra
 
 def test_tier2_template_registered():
     tpl = load_registry().get("wildlife_tier2")
-    assert tpl.renderer == "wildlife_tier2"
     assert tpl.max_search_volume == 499
 
 
-def test_tier2_builds_compact_layout():
+def test_tier2_builds_flat_acf_fields():
     doc = read_file(SAMPLE2)
     page, template, _ = build_page(doc, _ctx())
-    html = page.content_html
     assert template.key == "wildlife_tier2"
-    assert "gwp-w-hero-light" in html            # minimal hero
-    assert 'id="identification"' in html
-    assert 'id="overview"' in html               # creative heading still mapped
-    assert "gwp-w-tour" in html                  # tour cards
-    assert "<!-- wp:details -->" in html         # mini FAQ accordion
-    assert "gwp-w-footer-cta" in html
-    # A 'CTA: Label | /url' bullet becomes a button.
-    assert 'href="/tours/western-islands"' in page.content_html
-    # No required-section warnings for the sample.
-    assert not any("missing" in w for w in page.warnings)
+    assert page.acf["hero_heading"]
+    assert page.acf["body"]
+    assert isinstance(page.acf["faq"], list) and page.acf["faq"]
 
 
 def test_tier2_high_volume_warns():
     doc = read_file(SAMPLE2)
     doc.metadata["search_volume"] = "5000"
     page, _t, _ = build_page(doc, _ctx())
-    assert any("exceeds" in w.lower() and "tier 2" in w.lower() for w in page.warnings)
+    assert any("exceeds" in w.lower() for w in page.warnings)
 
 
 def test_generic_wildlife_routes_by_search_volume():

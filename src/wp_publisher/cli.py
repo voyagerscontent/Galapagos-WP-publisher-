@@ -93,6 +93,20 @@ def _build(
     return page, template, reason, client, settings
 
 
+def _acf_summary(page) -> str:
+    from .acf.config import get_acf_config
+
+    cfg = get_acf_config()
+    acf = page.acf if isinstance(page.acf, dict) else {}
+    if cfg.mode == "flat":
+        keys = [k for k, v in acf.items() if v]
+        shown = ", ".join(keys[:8]) + ("…" if len(keys) > 8 else "")
+        return f"{len(keys)} ACF field(s): {shown or '—'}"
+    rows = acf.get(cfg.flexible_field, [])
+    layouts = [r.get("acf_fc_layout", "?") for r in rows]
+    return f"{len(rows)} ACF section(s): {', '.join(layouts) or '—'}"
+
+
 def _summary(doc: Document, page, template, reason) -> None:
     console.print(
         Panel.fit(
@@ -106,6 +120,7 @@ def _summary(doc: Document, page, template, reason) -> None:
             f"Status: [bold]{page.status}[/bold]   post_type: {page.post_type}\n"
             f"Categories: {', '.join(page.categories) or '—'}   "
             f"Tags: {', '.join(page.tags) or '—'}\n"
+            f"ACF: [bold]{_acf_summary(page)}[/bold]\n"
             f"Featured: {_media_desc(page.featured_media)}",
             title="Built page",
         )
@@ -138,14 +153,16 @@ def preview(
 
     out_dir = out or (Path("output") / page.slug)
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "content.html").write_text(page.content_html, encoding="utf-8")
+    (out_dir / "acf.json").write_text(
+        json.dumps(page.acf, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     (out_dir / "schema.json").write_text(
         json.dumps(page.json_ld, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     (out_dir / "page.json").write_text(
         page.model_dump_json(indent=2), encoding="utf-8"
     )
-    console.print(f"[green]Artifacts written to[/green] {out_dir}/")
+    console.print(f"[green]Artifacts written to[/green] {out_dir}/ (acf.json = what gets populated)")
 
 
 @app.command()
@@ -158,12 +175,14 @@ def publish(
     media: Optional[str] = typer.Option(
         None, "--media", "-m", help="Media strategy: library | placeholder."
     ),
-    no_update: bool = typer.Option(
-        False, "--no-update", help="Always create new; do not update an existing slug."
+    update: bool = typer.Option(
+        False, "--update", help="Allow overwriting an existing post with the same slug."
     ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
 ) -> None:
     """Build and publish a document to WordPress."""
+    from .wordpress.client import WordPressError
+
     doc = read_file(file)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
     _summary(doc, page, template, reason)
@@ -177,9 +196,13 @@ def publish(
     if plugin == "auto":
         plugin = client.detect_seo_plugin()
 
-    result = publish_page(
-        client, page, settings, seo_plugin=plugin, update_if_exists=not no_update
-    )
+    try:
+        result = publish_page(
+            client, page, settings, seo_plugin=plugin, update_existing=update
+        )
+    except WordPressError as exc:
+        console.print(f"[red]Refused:[/red] {exc}")
+        raise typer.Exit(1) from exc
     verb = "Created" if result.created else "Updated"
     console.print(
         Panel.fit(

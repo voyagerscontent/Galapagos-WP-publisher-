@@ -1,0 +1,193 @@
+[
+  {
+    "key": "group_page_builder",
+    "title": "Page Builder",
+    "show_in_rest": 1,
+    "fields": [
+      {
+        "key": "field_page_subtitle",
+        "label": "Subtitle",
+        "name": "page_subtitle",
+        "type": "text"
+      },
+      {
+        "key": "field_seo_schema",
+        "label": "SEO Schema (JSON-LD)",
+        "name": "seo_schema",
+        "type": "textarea",
+        "rows": 4,
+        "instructions": "Auto-populated JSON-LD. Output inside a <script type=\"application/ld+json\"> tag in your theme header."
+      },
+      {
+        "key": "field_page_sections",
+        "label": "Page Sections",
+        "name": "page_sections",
+        "type": "flexible_content",
+        "button_label": "Add Section",
+        "layouts": {
+          "layout_hero": {
+            "key": "layout_hero",
+            "name": "hero",
+            "label": "Hero",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_hero_eyebrow", "label": "Eyebrow", "name": "eyebrow", "type": "text" },
+              { "key": "f_hero_heading", "label": "Heading", "name": "heading", "type": "text" },
+              { "key": "f_hero_subheading", "label": "Subheading", "name": "subheading", "type": "textarea", "rows": 2 },
+              { "key": "f_hero_image", "label": "Image", "name": "image", "type": "image", "return_format": "id" },
+              {
+                "key": "f_hero_buttons", "label": "Buttons", "name": "buttons", "type": "repeater",
+                "sub_fields": [
+                  { "key": "f_hero_btn_label", "label": "Label", "name": "label", "type": "text" },
+                  { "key": "f_hero_btn_url", "label": "URL", "name": "url", "type": "text" }
+                ]
+              }
+            ]
+          },
+          "layout_rich_text": {
+            "key": "layout_rich_text",
+            "name": "rich_text",
+            "label": "Rich Text",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_rt_heading", "label": "Heading", "name": "heading", "type": "text" },
+              { "key": "f_rt_content", "label": "Content", "name": "content", "type": "wysiwyg" }
+            ]
+          },
+          "layout_list": {
+            "key": "layout_list",
+            "name": "list",
+            "label": "List",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_list_heading", "label": "Heading", "name": "heading", "type": "text" },
+              { "key": "f_list_items", "label": "Items", "name": "items", "type": "wysiwyg" }
+            ]
+          },
+          "layout_image": {
+            "key": "layout_image",
+            "name": "image",
+            "label": "Image",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_img_image", "label": "Image", "name": "image", "type": "image", "return_format": "id" },
+              { "key": "f_img_caption", "label": "Caption", "name": "caption", "type": "text" },
+              { "key": "f_img_alt", "label": "Alt", "name": "alt", "type": "text" }
+            ]
+          },
+          "layout_gallery": {
+            "key": "layout_gallery",
+            "name": "gallery",
+            "label": "Gallery",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_gal_heading", "label": "Heading", "name": "heading", "type": "text" },
+              { "key": "f_gal_images", "label": "Images", "name": "images", "type": "gallery", "return_format": "id" }
+            ]
+          },
+          "layout_callout": {
+            "key": "layout_callout",
+            "name": "callout",
+            "label": "Callout",
+            "display": "block",
+            "sub_fields": [
+              {
+                "key": "f_call_style", "label": "Style", "name": "style", "type": "select",
+                "choices": { "note": "Note", "tip": "Tip", "warning": "Warning", "danger": "Danger" },
+                "default_value": "note"
+              },
+              { "key": "f_call_title", "label": "Title", "name": "title", "type": "text" },
+              { "key": "f_call_content", "label": "Content", "name": "content", "type": "wysiwyg" }
+            ]
+          },
+          "layout_faq": {
+            "key": "layout_faq",
+            "name": "faq",
+            "label": "FAQ / Accordion",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_faq_heading", "label": "Heading", "name": "heading", "type": "text" },
+              {
+                "key": "f_faq_items", "label": "Items", "name": "items", "type": "repeater",
+                "sub_fields": [
+                  { "key": "f_faq_q", "label": "Question", "name": "question", "type": "text" },
+                  { "key": "f_faq_a", "label": "Answer", "name": "answer", "type": "wysiwyg" }
+                ]
+              }
+            ]
+          },
+          "layout_stats": {
+            "key": "layout_stats",
+            "name": "stats",
+            "label": "Stats",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_stats_heading", "label": "Heading", "name": "heading", "type": "text" },
+              {
+                "key": "f_stats_items", "label": "Items", "name": "items", "type": "repeater",
+                "sub_fields": [
+                  { "key": "f_stats_value", "label": "Value", "name": "value", "type": "text" },
+                  { "key": "f_stats_label", "label": "Label", "name": "label", "type": "text" }
+                ]
+              }
+            ]
+          },
+          "layout_cta": {
+            "key": "layout_cta",
+            "name": "cta",
+            "label": "Call To Action",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_cta_heading", "label": "Heading", "name": "heading", "type": "text" },
+              { "key": "f_cta_content", "label": "Content", "name": "content", "type": "wysiwyg" },
+              {
+                "key": "f_cta_buttons", "label": "Buttons", "name": "buttons", "type": "repeater",
+                "sub_fields": [
+                  { "key": "f_cta_btn_label", "label": "Label", "name": "label", "type": "text" },
+                  { "key": "f_cta_btn_url", "label": "URL", "name": "url", "type": "text" }
+                ]
+              }
+            ]
+          },
+          "layout_quote": {
+            "key": "layout_quote",
+            "name": "quote",
+            "label": "Quote",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_quote_text", "label": "Text", "name": "text", "type": "textarea", "rows": 3 },
+              { "key": "f_quote_citation", "label": "Citation", "name": "citation", "type": "text" }
+            ]
+          },
+          "layout_columns": {
+            "key": "layout_columns",
+            "name": "columns",
+            "label": "Columns",
+            "display": "block",
+            "sub_fields": [
+              {
+                "key": "f_cols_columns", "label": "Columns", "name": "columns", "type": "repeater",
+                "sub_fields": [
+                  { "key": "f_cols_content", "label": "Content", "name": "content", "type": "wysiwyg" }
+                ]
+              }
+            ]
+          },
+          "layout_html": {
+            "key": "layout_html",
+            "name": "html",
+            "label": "Raw HTML",
+            "display": "block",
+            "sub_fields": [
+              { "key": "f_html_content", "label": "Content", "name": "content", "type": "textarea", "rows": 6 }
+            ]
+          }
+        }
+      }
+    ],
+    "location": [
+      [ { "param": "post_type", "operator": "==", "value": "post" } ],
+      [ { "param": "post_type", "operator": "==", "value": "page" } ]
+    ]
+  }
+]

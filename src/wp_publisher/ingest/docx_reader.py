@@ -44,6 +44,15 @@ def read_docx(path: str | Path) -> Document:
 
     path = Path(path)
     docx = DocxDocument(str(path))
+
+    # House "CMS Stage" docs use no heading styles and their own conventions;
+    # route them to the dedicated adapter.
+    from .cms import build_cms_document, looks_like_cms
+
+    all_texts = [p.text for p in docx.paragraphs]
+    if looks_like_cms([t for t in all_texts if t.strip()]):
+        return build_cms_document(all_texts, path.name)
+
     doc = Document(source_name=path.name, source_kind="docx")
 
     # Core properties give us a title for free if the author set one.

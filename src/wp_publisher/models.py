@@ -111,11 +111,14 @@ class MediaItem(BaseModel):
 
 
 class RenderedPage(BaseModel):
-    """The final, WordPress-ready artifact produced by the renderer."""
+    """The final, WordPress-ready artifact produced by the build."""
 
     title: str
     slug: str
-    content_html: str  # Gutenberg block markup
+    # ACF field payload (the post's `acf` object) — the primary output.
+    acf: dict[str, Any] = Field(default_factory=dict)
+    # Optional HTML for post_content (normally empty; the theme renders ACF).
+    content_html: str = ""
     excerpt: str = ""
     status: str = "draft"
     post_type: str = "post"

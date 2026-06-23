@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────────
+# ACF mapping — PER-SITE.  Mode: FLAT (named fields for Elementor Dynamic Tags).
+#
+# The publisher writes flat, named ACF fields (not a flexible-content blob), so
+# each one binds directly in Elementor via Dynamic Tags → ACF Field. Repeating
+# data (FAQ, key facts) uses ACF repeaters (loop them in Elementor).
+#
+# The right-hand values are YOUR ACF field names — change them to match your
+# group, or import wordpress-acf/page-fields.acf.json which matches these.
+# Each field group must have "Show in REST API" enabled so the publisher can
+# write values (Elementor itself reads ACF straight from the DB — no REST needed).
+# ─────────────────────────────────────────────────────────────
+
+mode: flat
+image_as: id           # ACF image fields store the attachment ID
+
+top_level:
+  subtitle: page_subtitle
+  schema_jsonld: seo_schema
+
+flat:
+  # Hero band — single fields, bind each one directly in Elementor.
+  hero:
+    eyebrow: hero_eyebrow
+    heading: hero_heading
+    subheading: hero_subheading
+    image: hero_image
+    cta_label: hero_cta_label
+    cta_url: hero_cta_url
+
+  # Main article body — all prose sections rendered to one WYSIWYG field.
+  body: body
+
+  # First callout / key-stat box.
+  callout:
+    title: callout_title
+    content: callout_text
+
+  # FAQ accordion -> repeater (question, answer). Loop it in Elementor.
+  faq:
+    field: faq
+    question: question
+    answer: answer
+
+  # Key facts / stats -> repeater (label, value).
+  stats:
+    field: key_facts
+    value: value
+    label: label
+
+  # Closing call-to-action.
+  cta:
+    heading: cta_heading
+    content: cta_text
+    cta_label: cta_label
+    cta_url: cta_url

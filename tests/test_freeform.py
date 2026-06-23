@@ -6,7 +6,8 @@ from wp_publisher.config import get_settings
 from wp_publisher.ingest import read_file
 from wp_publisher.parse import detect_page_type
 from wp_publisher.pipeline import BuildContext, build_page
-from wp_publisher.rendering.freeform import FreeformRenderer, parse_directives
+from wp_publisher.content.directives import parse_directives
+from wp_publisher.content.richtext import md_to_html
 from wp_publisher.rendering.template import load_registry
 
 SAMPLE = Path(__file__).resolve().parents[1] / "samples" / "freeform-example.md"
@@ -50,17 +51,16 @@ def test_post_type_override_to_page():
     assert page.slug == "why-travel-with-us"
 
 
-def test_directives_render_to_blocks():
+def test_directives_map_to_flat_fields():
     doc = read_file(SAMPLE)
     page, _t, _ = build_page(doc, _ctx())
-    h = page.content_html
-    assert "gwp-hero" in h
-    assert "gwp-cards" in h and "gwp-card" in h
-    assert "gwp-callout-tip" in h
-    assert 'wp:column {"width":"60%"}' in h and 'wp:column {"width":"40%"}' in h
-    assert "<!-- wp:details -->" in h          # accordion
-    assert "gwp-cta" in h
-    assert "wp-block-button" in h
+    acf = page.acf
+    assert acf["hero_heading"]
+    assert acf["hero_cta_label"]          # first hero button -> hero CTA fields
+    assert acf["callout_text"]            # callout directive
+    assert isinstance(acf["faq"], list) and acf["faq"]
+    assert acf["cta_heading"]             # cta directive
+    assert acf["body"]                    # columns / prose folded into body
 
 
 def test_meta_description_not_polluted_by_directives():
@@ -71,17 +71,11 @@ def test_meta_description_not_polluted_by_directives():
     assert "naturalists" in page.meta_description
 
 
-def test_plain_markdown_without_directives():
-    settings = get_settings()
-    resolver_ctx = _ctx()
-    doc = read_file(SAMPLE)
-    doc.raw_body = "## Hello\n\nA simple paragraph with **bold** and a [link](https://x.io).\n\n- one\n- two"
-    from wp_publisher.media.resolver import MediaResolver
-
-    renderer = FreeformRenderer(settings, MediaResolver(settings, None, "placeholder"))
-    html, _media, _featured, warnings = renderer.render(doc, resolver_ctx.registry.get("freeform"))
-    assert "<!-- wp:heading -->" in html
+def test_plain_markdown_renders_to_semantic_html():
+    html = md_to_html(
+        "## Hello\n\nA simple paragraph with **bold** and a [link](https://x.io).\n\n- one\n- two"
+    )
+    assert "<h2>Hello</h2>" in html
     assert "<strong>bold</strong>" in html
     assert '<a href="https://x.io">link</a>' in html
-    assert "<!-- wp:list -->" in html
-    assert not warnings
+    assert "<ul><li>one</li><li>two</li></ul>" in html

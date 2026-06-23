@@ -37,13 +37,17 @@ def test_build_page_basic_fields():
     assert "Galapagos Cruises" in page.categories
 
 
-def test_content_is_gutenberg_blocks():
+def test_output_is_flat_acf_fields():
     doc = read_file(SAMPLE)
     page, _t, _r = build_page(doc, _ctx())
-    assert "<!-- wp:heading -->" in page.content_html
-    assert "<!-- wp:list" in page.content_html
-    # Overview slot suppresses its heading, so the lead paragraph comes first.
-    assert "<!-- wp:paragraph -->" in page.content_html
+    # post_content is empty; content lives in flat ACF fields (Elementor-bound).
+    assert page.content_html == ""
+    acf = page.acf
+    assert acf["hero_heading"]
+    assert "<p>" in acf["body"] and "<!-- wp:" not in acf["body"]
+    assert isinstance(acf["faq"], list) and acf["faq"][0]["question"]
+    # JSON-LD is delivered as an ACF field, not embedded in content.
+    assert acf.get("seo_schema")
 
 
 def test_seo_fields():
