@@ -103,6 +103,8 @@ def build_page(
         author=str(doc.metadata.get("author") or ""),
         quick_facts=doc.metadata.get("quick_facts") or None,
         visitor_sites=doc.metadata.get("visitor_sites") or None,
+        cta_blocks=doc.metadata.get("cta_blocks") or None,
+        sources=doc.metadata.get("sources") or None,
     )
 
     # 6) Status / taxonomies / post type.

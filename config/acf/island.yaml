@@ -62,3 +62,8 @@ island:
     text: text
     button_label: button_label
     button_url: button_url
+
+  sources:
+    field: sources
+    label: label
+    url: url

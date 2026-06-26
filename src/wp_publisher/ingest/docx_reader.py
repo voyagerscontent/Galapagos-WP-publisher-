@@ -118,6 +118,49 @@ def _extract_quick_facts(rows: list[list[str]]) -> list[dict]:
         if len(r) >= 2 and r[0].strip() and r[1].strip():
             out.append({"label": r[0].strip(), "value": r[1].strip()})
     return out
+
+
+_URL_RE = re.compile(r"https?://\S+")
+_TRADE_RE = re.compile(r"\b(trade|latin trails|dmc|wholesaler|agent|group programs)\b", re.IGNORECASE)
+
+
+def _is_cta_table(rows: list[list[str]]) -> bool:
+    text = " ".join(c for row in rows for c in row).lower()
+    return "voyagers" in text or "latin trails" in text or ("book" in text and "specialist" in text)
+
+
+def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
+    out: list[dict] = []
+    for row in rows:
+        for cell in row:
+            cell = cell.strip()
+            if not cell:
+                continue
+            title, _, body = cell.partition("\n")
+            audience = "Travel trade" if _TRADE_RE.search(cell) else "Direct travelers"
+            out.append({
+                "audience": audience,
+                "title": title.strip(),
+                "text": " ".join(body.split()).strip(),
+            })
+    return out
+
+
+def _extract_sources(section: Section) -> list[dict]:
+    out: list[dict] = []
+    lines: list[str] = []
+    for b in section.blocks:
+        if b.items:
+            lines.extend(b.items)
+        elif b.text:
+            lines.append(b.text)
+    for line in lines:
+        m = _URL_RE.search(line)
+        url = m.group(0).rstrip(".,);") if m else ""
+        label = (line[: m.start()] if m else line).strip().rstrip("—–-. ").strip()
+        if label or url:
+            out.append({"label": label, "url": url})
+    return out
 _KNOWN_META_KEYS = {
     "type",
     "page type",
@@ -282,8 +325,20 @@ def read_docx(path: str | Path) -> Document:
             if facts:
                 doc.metadata.setdefault("quick_facts", []).extend(facts)
                 continue
+        if _is_cta_table(rows):
+            blocks = _extract_cta_blocks(rows)
+            if blocks:
+                doc.metadata.setdefault("cta_blocks", []).extend(blocks)
+                continue
         target = doc.sections[-1] if doc.sections else current
         target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
+
+    # Citations / sources section -> structured metadata.
+    sources_section = doc.find_section("sources")
+    if sources_section is not None:
+        sources = _extract_sources(sources_section)
+        if sources:
+            doc.metadata["sources"] = sources
 
     if verify_warnings:
         doc.metadata["_ingest_warnings"] = [

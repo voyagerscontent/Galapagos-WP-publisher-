@@ -102,3 +102,21 @@ def test_santa_cruz_doc_extracts_tables():
     fs_text = " ".join(r.get("content", "") for r in acf["feature_sections"])
     assert "Black Turtle Cove" not in fs_text   # visitor-sites table not duplicated
     assert "864 m" not in fs_text               # quick-facts table not duplicated
+
+
+def test_santa_cruz_doc_extracts_cta_and_sources():
+    """Layer 2c-1: the CTA table -> dual cta; the Sources section -> sources."""
+    doc = read_file(SANTA_CRUZ)
+    ctx = BuildContext(
+        settings=get_settings(), registry=load_registry(), wp_client=None,
+        media_strategy="placeholder",
+    )
+    page, _t, _ = build_page(doc, ctx, page_type="destination")
+    acf = page.acf
+    audiences = {r["audience"] for r in acf["cta"]}
+    assert {"Direct travelers", "Travel trade"} <= audiences
+    assert len(acf["sources"]) >= 3
+    assert acf["sources"][0]["url"].startswith("http")
+    # Sources are not duplicated as a feature section.
+    titles = [r.get("title", "").lower() for r in acf["feature_sections"]]
+    assert "sources" not in titles

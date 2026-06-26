@@ -37,6 +37,8 @@ def build_acf(
     author: str = "",
     quick_facts: list | None = None,
     visitor_sites: list | None = None,
+    cta_blocks: list | None = None,
+    sources: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -45,6 +47,7 @@ def build_acf(
             components, config, subtitle=subtitle, schema_jsonld=schema_jsonld,
             geo_answer=geo_answer, author=author,
             quick_facts=quick_facts, visitor_sites=visitor_sites,
+            cta_blocks=cta_blocks, sources=sources,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -214,12 +217,14 @@ def build_acf_island(
     author: str = "",
     quick_facts: list | None = None,
     visitor_sites: list | None = None,
+    cta_blocks: list | None = None,
+    sources: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
-    Hero, FAQs, a CTA row, and prose fold into ``feature_sections``.
-    ``quick_facts`` and ``visitor_sites`` come pre-extracted from the doc's
-    tables (via metadata); ``wildlife`` extraction is a later layer.
+    Hero, FAQs, and prose fold into ``feature_sections``. ``quick_facts``,
+    ``visitor_sites``, ``cta_blocks`` and ``sources`` come pre-extracted from the
+    doc's tables/sections (via metadata); ``wildlife`` extraction is a later layer.
     """
     warnings: list[str] = []
     m = config.island
@@ -238,6 +243,16 @@ def build_acf_island(
     if visitor_sites and m.get("visitor_sites"):
         out[m["visitor_sites"]["field"]] = [
             _visitor_row(m["visitor_sites"], r) for r in visitor_sites
+        ]
+    # Dual CTA from the doc's CTA table (overrides a single component CTA).
+    if cta_blocks and m.get("cta"):
+        cf = m["cta"]
+        out[cf["field"]] = [_cta_block_row(cf, b) for b in cta_blocks]
+        used.add("cta")
+    if sources and m.get("sources"):
+        sf = m["sources"]
+        out[sf["field"]] = [
+            {sf["label"]: r.get("label", ""), sf["url"]: r.get("url", "")} for r in sources
         ]
 
     for comp in components:
@@ -270,6 +285,8 @@ def build_acf_island(
             out[m["cta"]["field"]] = [_cta_row(m["cta"], comp.data)]
         elif t == "rich_text" and m.get("feature_sections"):
             d = comp.data
+            if d.get("heading", "").strip().lower() in _FEATURE_SKIP_HEADINGS:
+                continue  # handled as sources / related links elsewhere
             features.append(_feature_row(m["feature_sections"], title=d.get("heading", ""),
                                          content=d.get("content", "")))
         elif m.get("feature_sections"):
@@ -287,6 +304,21 @@ def build_acf_island(
     if schema_jsonld and config.top_level.get("schema_jsonld"):
         out[config.top_level["schema_jsonld"]] = schema_jsonld
     return out, warnings
+
+
+# Section headings handled by dedicated fields, not folded into feature_sections.
+_FEATURE_SKIP_HEADINGS = {"sources", "sources & citations", "sources and citations", "citations"}
+
+
+def _cta_block_row(cf: dict, b: dict) -> dict:
+    row: dict[str, Any] = {}
+    if cf.get("audience"):
+        row[cf["audience"]] = b.get("audience", "Direct travelers")
+    if cf.get("title"):
+        row[cf["title"]] = b.get("title", "")
+    if cf.get("text"):
+        row[cf["text"]] = b.get("text", "")
+    return row
 
 
 def _visitor_row(vs: dict, r: dict) -> dict:
