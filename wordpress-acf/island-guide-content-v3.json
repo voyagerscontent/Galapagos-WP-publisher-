@@ -1,0 +1,155 @@
+[
+  {
+    "key": "group_island_guide_content_v2",
+    "title": "Island Guide Content",
+    "show_in_rest": 1,
+    "active": true,
+    "description": "Content model for /islands/ pages. SEO meta (title, description, focus keyword, canonical) is handled by Rank Math / Yoast — NOT here.",
+    "fields": [
+      { "key": "tab_hero", "label": "Hero", "name": "", "type": "tab" },
+      { "key": "hero_title", "label": "Hero Title", "name": "hero_title", "type": "text" },
+      { "key": "hero_subtitle", "label": "Hero Subtitle", "name": "hero_subtitle", "type": "textarea", "rows": 2 },
+      {
+        "key": "geo_answer", "label": "GEO / AI Answer (on-page)", "name": "geo_answer", "type": "textarea", "rows": 3,
+        "instructions": "Short ~50-word answer shown on the page, optimized for AI / featured snippets. This is VISIBLE on-page content, not a meta tag."
+      },
+      { "key": "hero_image", "label": "Hero Image", "name": "hero_image", "type": "image", "return_format": "id", "preview_size": "medium" },
+      { "key": "hero_image_alt", "label": "Hero Image Alt", "name": "hero_image_alt", "type": "text" },
+      {
+        "key": "author", "label": "Author / Byline", "name": "author", "type": "text",
+        "instructions": "Display byline, e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Optional — leave blank to use the WordPress post author."
+      },
+
+      { "key": "tab_facts", "label": "Quick Facts", "name": "", "type": "tab" },
+      {
+        "key": "quick_facts", "label": "Quick Facts", "name": "quick_facts", "type": "repeater",
+        "instructions": "Display data only (Location, Area, Main town, Access…). Keep SEO meta out of here.",
+        "layout": "table", "button_label": "Add fact",
+        "sub_fields": [
+          { "key": "qf_label", "label": "Label", "name": "label", "type": "text" },
+          { "key": "qf_value", "label": "Value", "name": "value", "type": "textarea", "rows": 2 }
+        ]
+      },
+
+      { "key": "tab_highlights", "label": "Feature Sections", "name": "", "type": "tab" },
+      {
+        "key": "highlights", "label": "Feature Sections", "name": "feature_sections", "type": "repeater",
+        "instructions": "Editorial / thematic stories (geology, history, conservation, what makes this island special). NOT the place-by-place catalog — that is Visitor Sites.",
+        "layout": "block", "button_label": "Add section",
+        "sub_fields": [
+          { "key": "hl_title", "label": "Title", "name": "title", "type": "text" },
+          { "key": "hl_subtitle", "label": "Subtitle", "name": "subtitle", "type": "text" },
+          { "key": "hl_content", "label": "Content", "name": "content", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+          { "key": "hl_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
+          { "key": "hl_alt", "label": "Image Alt", "name": "image_alt", "type": "text" }
+        ]
+      },
+
+      { "key": "tab_sites", "label": "Visitor Sites", "name": "", "type": "tab" },
+      {
+        "key": "visitor_sites", "label": "Visitor Sites", "name": "visitor_sites", "type": "repeater",
+        "instructions": "Place-by-place catalog. 'Species Seen' is only a short pointer — the full species profile lives in the Wildlife tab.",
+        "layout": "block", "button_label": "Add visitor site",
+        "sub_fields": [
+          { "key": "vs_name", "label": "Site Name", "name": "site_name", "type": "text" },
+          {
+            "key": "vs_access_type", "label": "Access Type", "name": "access_type", "type": "select",
+            "choices": { "Land-based": "Land-based", "Cruise-only": "Cruise-only" },
+            "default_value": "Land-based", "allow_null": 1, "ui": 1, "return_format": "value"
+          },
+          { "key": "vs_desc", "label": "Description", "name": "description", "type": "textarea", "rows": 4 },
+          { "key": "vs_activities", "label": "Activities", "name": "activities", "type": "textarea", "rows": 2 },
+          { "key": "vs_wildlife", "label": "Species Seen (short list)", "name": "species_seen", "type": "textarea", "rows": 2,
+            "instructions": "Short mention only, e.g. 'marine iguanas, sea lions, penguins'. Full profiles go in the Wildlife tab." },
+          { "key": "vs_access", "label": "Access Notes", "name": "access", "type": "text" },
+          { "key": "vs_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" }
+        ]
+      },
+
+      { "key": "tab_wildlife", "label": "Wildlife", "name": "", "type": "tab" },
+      {
+        "key": "wildlife", "label": "Wildlife Species", "name": "wildlife", "type": "repeater",
+        "instructions": "Species profiles (organized by species, not by place).",
+        "layout": "block", "button_label": "Add species",
+        "sub_fields": [
+          { "key": "w_name", "label": "Common Name", "name": "common_name", "type": "text" },
+          { "key": "w_sci", "label": "Scientific Name", "name": "scientific_name", "type": "text" },
+          { "key": "w_desc", "label": "Description", "name": "description", "type": "textarea", "rows": 4 },
+          { "key": "w_seen", "label": "Where Seen", "name": "where_seen", "type": "text" },
+          { "key": "w_season", "label": "Best Season", "name": "best_season", "type": "text" },
+          { "key": "w_img", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" }
+        ]
+      },
+
+      { "key": "tab_travel", "label": "Travel Information", "name": "", "type": "tab" },
+      {
+        "key": "travel_information", "label": "Travel Information", "name": "travel_information", "type": "group",
+        "sub_fields": [
+          { "key": "ti_access", "label": "Getting There", "name": "getting_there", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+          { "key": "ti_best", "label": "Best Time to Visit", "name": "best_time", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+          { "key": "ti_accommodation", "label": "Accommodation / Where to Stay", "name": "accommodation", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+          { "key": "ti_duration", "label": "Recommended Duration", "name": "recommended_duration", "type": "text" },
+          {
+            "key": "ti_diff", "label": "Difficulty", "name": "difficulty", "type": "select",
+            "choices": { "Easy": "Easy", "Moderate": "Moderate", "Challenging": "Challenging" },
+            "allow_null": 1, "ui": 1, "return_format": "value"
+          },
+          { "key": "ti_notes", "label": "Travel Notes", "name": "travel_notes", "type": "textarea", "rows": 3 }
+        ]
+      },
+
+      { "key": "tab_faq", "label": "FAQs", "name": "", "type": "tab" },
+      {
+        "key": "faqs", "label": "FAQs", "name": "faqs", "type": "repeater",
+        "layout": "row", "button_label": "Add question",
+        "sub_fields": [
+          { "key": "faq_q", "label": "Question", "name": "question", "type": "text" },
+          { "key": "faq_a", "label": "Answer", "name": "answer", "type": "textarea", "rows": 3 }
+        ]
+      },
+
+      { "key": "tab_cta", "label": "CTA", "name": "", "type": "tab" },
+      {
+        "key": "cta", "label": "CTA Blocks", "name": "cta", "type": "repeater",
+        "instructions": "Supports more than one CTA (e.g. direct travelers + travel trade / DMC).",
+        "layout": "block", "button_label": "Add CTA",
+        "sub_fields": [
+          {
+            "key": "cta_audience", "label": "Audience", "name": "audience", "type": "select",
+            "choices": { "Direct travelers": "Direct travelers", "Travel trade": "Travel trade" },
+            "default_value": "Direct travelers", "allow_null": 1, "ui": 1, "return_format": "value"
+          },
+          { "key": "cta_title", "label": "Title", "name": "title", "type": "text" },
+          { "key": "cta_text", "label": "Text", "name": "text", "type": "textarea", "rows": 2 },
+          { "key": "cta_button", "label": "Button Label", "name": "button_label", "type": "text" },
+          { "key": "cta_url", "label": "Button URL", "name": "button_url", "type": "url" }
+        ]
+      },
+
+      { "key": "tab_sources", "label": "Sources & Links", "name": "", "type": "tab" },
+      {
+        "key": "sources", "label": "Sources / Citations", "name": "sources", "type": "repeater",
+        "instructions": "Authority references (GNPD, CDF, IUCN…). Feeds E-E-A-T and schema.",
+        "layout": "table", "button_label": "Add source",
+        "sub_fields": [
+          { "key": "src_label", "label": "Label", "name": "label", "type": "text" },
+          { "key": "src_url", "label": "URL", "name": "url", "type": "url" }
+        ]
+      },
+      {
+        "key": "related_links", "label": "Related Links (internal)", "name": "related_links", "type": "repeater",
+        "instructions": "Internal linking block ('Explore More'). Optional — can also be handled in the Elementor template.",
+        "layout": "table", "button_label": "Add link",
+        "sub_fields": [
+          { "key": "rl_label", "label": "Label", "name": "label", "type": "text" },
+          { "key": "rl_url", "label": "URL", "name": "url", "type": "text" }
+        ]
+      }
+    ],
+    "location": [
+      [
+        { "param": "page_parent", "operator": "==", "value": "" }
+      ]
+    ]
+  }
+]
