@@ -1,10 +1,10 @@
 [
   {
-    "key": "group_island_guide_content_v2",
+    "key": "group_island_pages",
     "title": "Island Guide Content",
     "show_in_rest": 1,
     "active": true,
-    "description": "Content model for /islands/ pages. SEO meta (title, description, focus keyword, canonical) is handled by Rank Math / Yoast — NOT here.",
+    "description": "Content model for island pages (children of the 'Galapagos Islands' parent page). SEO meta (title, description, focus keyword, canonical) is handled by Rank Math / Yoast — NOT here.",
     "fields": [
       { "key": "tab_hero", "label": "Hero", "name": "", "type": "tab" },
       { "key": "hero_title", "label": "Hero Title", "name": "hero_title", "type": "text" },
