@@ -8,6 +8,7 @@ description: >
   there, and what to do. Uses TouristDestination schema.
 post_type: page
 status: draft
+parent_page: islands   # nests under /islands/ (the "Galapagos Islands" page) so the island ACF group attaches
 schema_type: TouristDestination
 categories: []
 tags: []

@@ -42,6 +42,11 @@ class PageTemplate(BaseModel):
     description: str = ""
     post_type: str = "post"
     status: str | None = None  # overrides default if set
+    # Slug of the WordPress parent page this type nests under (e.g. "islands",
+    # "wildlife"). The publisher resolves it to an ID and sets the post `parent`
+    # so section-scoped ACF field groups (located by page_parent) attach. None =
+    # top-level (no parent).
+    parent_page: str | None = None
     schema_type: str = "Article"
     categories: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)

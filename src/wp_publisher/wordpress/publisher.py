@@ -74,6 +74,7 @@ def publish_page(
             payload["tags"] = client.resolve_terms("post_tag", page.tags)
     if page.featured_media and page.featured_media.wp_media_id:
         payload["featured_media"] = page.featured_media.wp_media_id
+    parent_warning = _resolve_parent(client, page, payload)
     seo_meta = _seo_meta(page, seo_plugin)
     if seo_meta:
         payload["meta"] = seo_meta
@@ -104,11 +105,41 @@ def publish_page(
     post_id = result["id"]
     link = result.get("link", "")
     edit_url = f"{settings.wp_base_url}/wp-admin/post.php?post={post_id}&action=edit"
+    warnings = [*page.warnings, parent_warning] if parent_warning else page.warnings
     return PublishResult(
         post_id=post_id,
         url=link,
         edit_url=edit_url,
         status=result.get("status", page.status),
         created=created,
-        warnings=page.warnings,
+        warnings=warnings,
     )
+
+
+def _resolve_parent(client: WordPressClient, page: RenderedPage, payload: dict) -> str | None:
+    """Resolve ``page.parent_slug`` to a page ID and set ``payload['parent']``.
+
+    Returns a warning string if a parent slug was given but no matching page was
+    found (so the post is still published, just without nesting — and a
+    section-scoped ACF group located by page_parent would not attach).
+    """
+    slug = (page.parent_slug or "").strip()
+    if not slug:
+        return None
+    if page.post_type in ("post", "posts"):
+        # Only hierarchical types (pages / hierarchical CPTs) support `parent`.
+        return (
+            f"parent_page '{slug}' is set but post type '{page.post_type}' is not "
+            f"hierarchical; parent ignored. Use a page or hierarchical CPT to nest."
+        )
+    try:
+        parent = client.find_post_by_slug("page", slug)
+    except WordPressError:
+        return f"Could not look up parent page '{slug}'; published without a parent."
+    if not parent:
+        return (
+            f"Parent page '{slug}' not found — published without a parent. "
+            f"Create a page with that slug, or section-scoped ACF fields won't attach."
+        )
+    payload["parent"] = parent["id"]
+    return None

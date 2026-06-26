@@ -115,6 +115,9 @@ class RenderedPage(BaseModel):
 
     title: str
     slug: str
+    # Slug of the parent page this post should nest under (e.g. "islands"). The
+    # publisher resolves it to an ID and sets the post `parent`. Empty = none.
+    parent_slug: str = ""
     # ACF field payload (the post's `acf` object) — the primary output.
     acf: dict[str, Any] = Field(default_factory=dict)
     # Optional HTML for post_content (normally empty; the theme renders ACF).

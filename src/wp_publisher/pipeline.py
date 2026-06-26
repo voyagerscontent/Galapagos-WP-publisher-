@@ -101,6 +101,7 @@ def build_page(
     page = RenderedPage(
         title=doc.title,
         slug=seo.slug,
+        parent_slug=template.parent_page or "",
         acf=acf_payload,
         content_html="",  # ACF-driven; the theme renders the fields
         excerpt=strip_html(seo.meta_description),
