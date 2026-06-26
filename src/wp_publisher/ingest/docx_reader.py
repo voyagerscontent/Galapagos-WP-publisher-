@@ -14,6 +14,21 @@ from ..models import BlockType, ContentBlock, Document, Section
 from ..utils import section_slug
 
 _META_RE = re.compile(r"^([A-Za-z][A-Za-z0-9 _/-]{1,40}):\s*(.+)$")
+# House editorial markers that authors type literally into Word.
+_HEADING_MARK = re.compile(r"^\[H[1-6]\]\s*", re.IGNORECASE)
+_EDITORIAL_FLAG = re.compile(
+    r"^(⚠️\s*)?(WEBMASTER\b|.*\bDo not publish\b|\[?VERIFY\]?\b)", re.IGNORECASE
+)
+
+
+def _is_instruction_table(rows: list[list[str]]) -> bool:
+    """Internal-instruction / explainer tables (green boxes) are not content."""
+    head = " ".join(rows[0]).lower() if rows else ""
+    return (
+        "internal instruction" in head
+        or "what this is" in head
+        or head.startswith("this green box")
+    )
 _KNOWN_META_KEYS = {
     "type",
     "page type",
@@ -55,14 +70,16 @@ def read_docx(path: str | Path) -> Document:
 
     doc = Document(source_name=path.name, source_kind="docx")
 
-    # Core properties give us a title for free if the author set one.
-    if docx.core_properties.title:
-        doc.title = docx.core_properties.title.strip()
+    # A real H1 / "Title"-styled line in the body wins. The core-properties title
+    # is only a fallback — Word frequently leaves the generic "Word Document"
+    # there, which must never become the page title.
+    core_title = (docx.core_properties.title or "").strip()
 
     current = Section(title="", level=1, slug="_lead")
     list_items: list[str] = []
     list_ordered = False
     seen_body = False
+    verify_warnings: list[str] = []
     # Reconstruct a markdown-ish body so the freeform builder can read any
     # directives an author typed directly into Word (e.g. "::: columns").
     raw_lines: list[str] = []
@@ -82,6 +99,13 @@ def read_docx(path: str | Path) -> Document:
         style_l = style.lower()
 
         if not text:
+            continue
+
+        # Strip literal house markers like "[H2] " from heading/paragraph text.
+        text = _HEADING_MARK.sub("", text).strip()
+        # Drop (and surface) editorial flags: "⚠️ WEBMASTER: Do not publish…".
+        if _EDITORIAL_FLAG.match(text):
+            verify_warnings.append("VERIFY: " + text.lstrip("⚠️ ").strip())
             continue
 
         # Title style -> document title.
@@ -142,15 +166,25 @@ def read_docx(path: str | Path) -> Document:
         doc.sections.append(current)
     doc.raw_body = "\n".join(raw_lines).strip()
 
-    # Tables become table blocks appended to the lead/last section.
+    # Tables become table blocks appended to the lead/last section. Internal
+    # instruction / explainer tables (green boxes) are skipped — not content.
     for table in docx.tables:
         rows = [[cell.text.strip() for cell in row.cells] for row in table.rows]
-        if rows:
+        if rows and not _is_instruction_table(rows):
             target = doc.sections[-1] if doc.sections else current
             target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
 
+    if verify_warnings:
+        doc.metadata["_ingest_warnings"] = [
+            *verify_warnings,
+            "This doc has unresolved VERIFY flags — review before publishing live.",
+        ]
+
     if not doc.title:
-        doc.title = path.stem.replace("_", " ").title()
+        if core_title and core_title.lower() != "word document":
+            doc.title = core_title
+        else:
+            doc.title = path.stem.replace("_", " ").replace("-", " ").title()
     return doc
 
 
