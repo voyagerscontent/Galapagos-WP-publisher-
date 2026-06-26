@@ -127,6 +127,11 @@ _CTA_BUTTON_RE = re.compile(r'CTA button:\s*"(.+?)"\s*(?:→|->)\s*(\S+)', re.IG
 # hyperlinks, which python-docx's `.text` silently drops.
 _WT = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"
 _INTERNAL_LINK_RE = re.compile(r"\[INTERNAL LINK:\s*(.+?)\s*(?:→|->)\s*([^\]\s]+)\s*\]")
+# "⬛ WEBMASTER DESIGN NOTE: …" styling instructions — never published, even when
+# appended inline to a real paragraph. Stripped from the marker to end of line.
+_DESIGN_NOTE_RE = re.compile(
+    r"\s*[^\w\s\n]*\s*WEBMASTER\s+DESIGN\s+NOTE\b[^\n]*", re.IGNORECASE
+)
 
 
 def _p_text(paragraph) -> str:
@@ -143,6 +148,7 @@ def _clean_markers(text: str) -> str:
     WYSIWYG fields render the Markdown link to a real <a>; textarea fields strip
     it back to the label (they can't hold links). Either way the URL is kept here.
     """
+    text = _DESIGN_NOTE_RE.sub("", text)
     return _INTERNAL_LINK_RE.sub(r"[\1](\2)", text)
 
 
