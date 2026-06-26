@@ -47,6 +47,9 @@ class PageTemplate(BaseModel):
     # so section-scoped ACF field groups (located by page_parent) attach. None =
     # top-level (no parent).
     parent_page: str | None = None
+    # Which ACF mapping profile to use (config/acf/<acf_profile>.yaml). None =
+    # the default config/acf.yaml. Lets each section target its own field group.
+    acf_profile: str | None = None
     schema_type: str = "Article"
     categories: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)

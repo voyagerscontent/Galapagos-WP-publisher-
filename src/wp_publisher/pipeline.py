@@ -51,7 +51,6 @@ def build_page(
 ) -> tuple[RenderedPage, PageTemplate, str]:
     """Build a RenderedPage (ACF payload) from a Document. Returns (page, template, reason)."""
     settings = ctx.settings
-    acf_config = ctx.acf_config or get_acf_config()
 
     # 1) Choose the page-type profile (drives schema + default categories).
     if page_type:
@@ -60,6 +59,16 @@ def build_page(
     else:
         key, reason = detect_page_type(doc, ctx.registry)
     template = ctx.registry.get(key)
+
+    # ACF mapping profile follows the page type (config/acf/<profile>.yaml),
+    # falling back to the default config/acf.yaml.
+    acf_config = ctx.acf_config or get_acf_config(template.acf_profile)
+    profile_warnings: list[str] = []
+    if acf_config.resolved_from_default and template.acf_profile:
+        profile_warnings.append(
+            f"ACF profile '{template.acf_profile}' not found "
+            f"(config/acf/{template.acf_profile}.yaml); used the default mapping."
+        )
 
     # 2) SEO.
     seo = optimize_seo(doc, template, settings)
@@ -119,6 +128,7 @@ def build_page(
             *seo.warnings,
             *_template_warnings(template, doc),
             *doc.metadata.get("_ingest_warnings", []),
+            *profile_warnings,
             *compose_warnings,
             *acf_warnings,
         ],
