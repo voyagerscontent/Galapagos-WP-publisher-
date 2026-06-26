@@ -17,7 +17,7 @@
       { "key": "hero_image_alt", "label": "Hero Image Alt", "name": "hero_image_alt", "type": "text" },
       {
         "key": "author", "label": "Author / Byline", "name": "author", "type": "text",
-        "instructions": "Display byline, e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Optional — leave blank to use the WordPress post author."
+        "instructions": "Display byline from the document, e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline — do NOT fall back to the WordPress post author (the uploader); the byline simply stays empty."
       },
 
       { "key": "tab_facts", "label": "Quick Facts", "name": "", "type": "tab" },
