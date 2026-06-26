@@ -35,11 +35,36 @@ def _is_instruction_table(rows: list[list[str]]) -> bool:
         "internal instruction" in head
         or "what this is" in head
         or head.startswith("this green box")
+        or "verify items" in head
+        or "requires editorial review" in head
+        or "version footer" in head
     )
 
 
+def _is_sources_table(rows: list[list[str]]) -> bool:
+    """A 2-column citations table whose rows carry URLs."""
+    if _ncols(rows) < 2 or len(rows) < 2:
+        return False
+    with_urls = sum(1 for r in rows if _URL_RE.search(" ".join(r)))
+    return with_urls >= max(2, len(rows) // 2)
+
+
+def _extract_sources_table(rows: list[list[str]]) -> list[dict]:
+    out: list[dict] = []
+    for r in rows:
+        m = _URL_RE.search(" ".join(r))
+        if not m:
+            continue
+        url = m.group(0).rstrip(".,);")
+        label = r[0].strip().rstrip("—–-. ").strip()
+        if label:
+            out.append({"label": label, "url": url})
+    return out
+
+
 _GEO_ANSWER_RE = re.compile(
-    r"PUBLISH THIS ANSWER TEXT[^:]*:\s*(.+?)(?:\n\s*\n|WHAT THIS\b|WHY THIS\b|HOW \b|\Z)",
+    r"(?:PUBLISH THIS ANSWER TEXT[^:]*:|answer extraction[^\n]*|Quick Answer:?)"
+    r"\s*\n?\s*(.+?)(?:\n\s*\n|WHAT THIS\b|WHY THIS\b|HOW \b|\Z)",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -154,7 +179,38 @@ def _clean_markers(text: str) -> str:
 
 def _is_cta_table(rows: list[list[str]]) -> bool:
     text = " ".join(c for row in rows for c in row).lower()
-    return "voyagers" in text or "latin trails" in text or ("book" in text and "specialist" in text)
+    return "cta button:" in text or "call to action" in text or "with a specialist" in text
+
+
+# "CALL TO ACTION … CTA 1 — <audience>: Headline: … Body: … Button: label → url".
+_CTA_INSTR_RE = re.compile(
+    r"CTA\s*\d+\s*[—–-]\s*([^\n:]+):(.*?)(?=CTA\s*\d+\s*[—–-]|\Z)", re.IGNORECASE | re.DOTALL
+)
+_CTA_TRADE_RE = re.compile(r"trade|industry|partner|wholesal|agent|dmc", re.IGNORECASE)
+
+
+def _grab_field(block: str, name: str) -> str:
+    m = re.search(rf"{name}:\s*(.+)", block, re.IGNORECASE)
+    return m.group(1).strip() if m else ""
+
+
+def _parse_cta_instruction(cell: str) -> list[dict]:
+    out: list[dict] = []
+    for m in _CTA_INSTR_RE.finditer(cell):
+        audience_text, body_block = m.group(1).strip(), m.group(2)
+        block = {
+            "audience": "Travel trade" if _CTA_TRADE_RE.search(audience_text) else "Direct travelers",
+            "title": _grab_field(body_block, "Headline"),
+            "text": _grab_field(body_block, "Body"),
+        }
+        bm = re.search(r"(.+?)\s*(?:→|->)\s*(.+)$", _grab_field(body_block, "Button"))
+        if bm:
+            block["button_label"] = bm.group(1).strip()
+            url = bm.group(2).strip()
+            if url.startswith(("/", "http", "mailto:")):  # ignore non-URL placeholders
+                block["button_url"] = url
+        out.append(block)
+    return out
 
 
 def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
@@ -163,6 +219,9 @@ def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
         for cell in row:
             cell = cell.strip()
             if not cell:
+                continue
+            if re.search(r"call to action|CTA\s*\d+\s*[—–-]", cell, re.IGNORECASE):
+                out.extend(_parse_cta_instruction(cell))
                 continue
             buttons = _CTA_BUTTON_RE.findall(cell)
             body = _CTA_BUTTON_RE.sub("", cell)  # strip the button directive line
@@ -215,6 +274,64 @@ def _extract_related_links(section: Section) -> list[dict]:
             if label and url.startswith(("/", "http")):
                 out.append({"label": label, "url": url})
     return out
+
+
+def _visual_heading_level(para) -> int:
+    """Infer a heading level for docs that style headings by bold + font size
+    rather than Word heading styles. 0 means 'not a heading'."""
+    runs = [r for r in para.runs if (r.text or "").strip()]
+    if not runs or not any(r.bold for r in runs):
+        return 0
+    text = para.text.strip()
+    if len(text) > 140 or text.endswith((".", "!", "?")):
+        return 0
+    sizes = [r.font.size.pt for r in runs if r.font.size is not None]
+    size = max(sizes) if sizes else 0.0
+    if size >= 18:
+        return 1
+    if size >= 13.5:
+        return 2
+    if size >= 11.5:
+        return 3
+    return 0
+
+
+def _is_title_para(para) -> bool:
+    style = (para.style.name if para.style else "").lower()
+    return style in ("title", "heading 1") or _visual_heading_level(para) == 1
+
+
+_SCI_NAME_RE = re.compile(r"\(([A-ZÁÉÍÓÚ][a-zé]+ [a-z]+)\)")
+
+
+def _extract_wildlife(section: Section) -> list[dict]:
+    """Species from a Wildlife section: each H3 sub-heading + its prose."""
+    species: list[dict] = []
+    name: str | None = None
+    desc: list[str] = []
+
+    def make(nm: str, paras: list[str]) -> dict:
+        text = "\n\n".join(paras).strip()
+        sci = _SCI_NAME_RE.search(text)
+        common = re.split(r"\s+[—–-]\s+", nm, maxsplit=1)[0].strip()
+        return {
+            "common_name": common,
+            "scientific_name": sci.group(1) if sci else "",
+            "description": text,
+        }
+
+    for b in section.blocks:
+        if b.type == BlockType.HEADING:
+            if name and desc:
+                species.append(make(name, desc))
+            name, desc = b.text, []
+        elif b.text:
+            desc.append(b.text)
+        elif b.items:
+            desc.append("\n".join(b.items))
+    if name and desc:
+        species.append(make(name, desc))
+    return species
 _KNOWN_META_KEYS = {
     "type",
     "page type",
@@ -279,7 +396,16 @@ def read_docx(path: str | Path) -> Document:
             list_items = []
             list_ordered = False
 
-    for para in docx.paragraphs:
+    # Skip a cover-letter preamble: start at the document title (styled or a
+    # bold, large-font line) when one exists.
+    paras = list(docx.paragraphs)
+    start = 0
+    for i, p in enumerate(paras):
+        if _p_text(p).strip() and _is_title_para(p):
+            start = i
+            break
+
+    for para in paras[start:]:
         text = _clean_markers(_p_text(para)).strip()
         style = (para.style.name if para.style else "") or ""
         style_l = style.lower()
@@ -297,15 +423,17 @@ def read_docx(path: str | Path) -> Document:
         if text.lower().startswith("cta button:"):
             continue
 
-        # Title style -> document title.
-        if style_l == "title" and not doc.title:
-            doc.title = text
-            continue
-
-        # Heading styles -> new section.
+        # Heading from a heading/title style, or visually (bold + larger font for
+        # docs that don't use Word heading styles).
         if style_l.startswith("heading"):
-            flush_list()
             level = _heading_level(style_l)
+        elif style_l == "title":
+            level = 1
+        else:
+            level = _visual_heading_level(para)
+
+        if level:
+            flush_list()
             if level == 1 and not doc.title and not seen_body:
                 doc.title = text
                 continue
@@ -377,6 +505,11 @@ def read_docx(path: str | Path) -> Document:
             if sites:
                 doc.metadata.setdefault("visitor_sites", []).extend(sites)
                 continue
+        if _is_sources_table(rows):
+            srcs = _extract_sources_table(rows)
+            if srcs:
+                doc.metadata.setdefault("sources", []).extend(srcs)
+                continue
         if _is_quick_facts_table(rows):
             facts = _extract_quick_facts(rows)
             if facts:
@@ -403,6 +536,14 @@ def read_docx(path: str | Path) -> Document:
             related = _extract_related_links(s)
             if related:
                 doc.metadata["related_links"] = related
+            break
+
+    # A "Wildlife" section with H3 species sub-headings -> species profiles.
+    for s in doc.sections:
+        if s.slug.startswith("wildlife") or s.title.lower().startswith("wildlife"):
+            wildlife = _extract_wildlife(s)
+            if wildlife:
+                doc.metadata["wildlife"] = wildlife
             break
 
     if verify_warnings:

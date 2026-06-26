@@ -20,7 +20,7 @@ import re
 from typing import Any
 
 from ..content.model import Component
-from ..content.richtext import inline_md
+from ..content.richtext import inline_md, md_to_html
 from .config import AcfConfig
 
 # Component data keys that hold an image reference / list of references.
@@ -41,6 +41,7 @@ def build_acf(
     cta_blocks: list | None = None,
     sources: list | None = None,
     related_links: list | None = None,
+    wildlife: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -50,6 +51,7 @@ def build_acf(
             geo_answer=geo_answer, author=author,
             quick_facts=quick_facts, visitor_sites=visitor_sites,
             cta_blocks=cta_blocks, sources=sources, related_links=related_links,
+            wildlife=wildlife,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -222,6 +224,7 @@ def build_acf_island(
     cta_blocks: list | None = None,
     sources: list | None = None,
     related_links: list | None = None,
+    wildlife: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
@@ -249,6 +252,8 @@ def build_acf_island(
         out[m["visitor_sites"]["field"]] = [
             _visitor_row(m["visitor_sites"], r) for r in visitor_sites
         ]
+    if wildlife and m.get("wildlife"):
+        out[m["wildlife"]["field"]] = [_wildlife_row(m["wildlife"], r) for r in wildlife]
     # Dual CTA from the doc's CTA table (overrides a single component CTA).
     if cta_blocks and m.get("cta"):
         cf = m["cta"]
@@ -344,6 +349,8 @@ def _travel_field(heading: str) -> str | None:
 
 def _should_skip_feature(heading: str) -> bool:
     h = heading.strip().lower()
+    if h.startswith("wildlife"):  # the species list -> the wildlife repeater
+        return True
     return h in _FEATURE_SKIP_HEADINGS or any(s in h for s in _SKIP_CONTAINS)
 
 
@@ -365,6 +372,21 @@ def _cta_block_row(cf: dict, b: dict) -> dict:
 # description is WYSIWYG (links survive); the short list fields stay plain text.
 _VISITOR_RICH = {"description"}
 _VISITOR_PLAIN = {"activities", "species_seen"}
+
+
+def _wildlife_row(w: dict, r: dict) -> dict:
+    row: dict[str, Any] = {}
+    if w.get("common_name"):
+        row[w["common_name"]] = r.get("common_name", "")
+    if w.get("scientific_name") and r.get("scientific_name"):
+        row[w["scientific_name"]] = r["scientific_name"]
+    if w.get("description"):
+        row[w["description"]] = md_to_html(r.get("description", ""))  # WYSIWYG
+    if w.get("where_seen") and r.get("where_seen"):
+        row[w["where_seen"]] = r["where_seen"]
+    if w.get("best_season") and r.get("best_season"):
+        row[w["best_season"]] = r["best_season"]
+    return row
 
 
 def _visitor_row(vs: dict, r: dict) -> dict:

@@ -201,6 +201,10 @@ class Composer:
             elif b.type == BlockType.PARAGRAPH and _Q_PREFIX.match(b.text):
                 flush()
                 question, answer = _Q_PREFIX.sub("", b.text).strip(), []
+            elif b.type == BlockType.PARAGRAPH and b.text.strip().endswith("?"):
+                # A bare question paragraph (no "Q:" prefix, no heading style).
+                flush()
+                question, answer = b.text.strip(), []
             elif question is not None:
                 answer.append(b)
         flush()

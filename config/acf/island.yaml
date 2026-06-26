@@ -63,6 +63,14 @@ island:
     button_label: button_label
     button_url: button_url
 
+  wildlife:
+    field: wildlife
+    common_name: common_name
+    scientific_name: scientific_name
+    description: description
+    where_seen: where_seen
+    best_season: best_season
+
   travel_information:
     field: travel_information
     getting_there: getting_there
