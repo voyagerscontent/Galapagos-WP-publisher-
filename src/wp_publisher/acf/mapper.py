@@ -32,11 +32,15 @@ def build_acf(
     *,
     subtitle: str = "",
     schema_jsonld: str = "",
+    geo_answer: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
     if config.mode == "island":
-        return build_acf_island(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
+        return build_acf_island(
+            components, config, subtitle=subtitle, schema_jsonld=schema_jsonld,
+            geo_answer=geo_answer,
+        )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
 
@@ -201,6 +205,7 @@ def build_acf_island(
     *,
     subtitle: str = "",
     schema_jsonld: str = "",
+    geo_answer: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
@@ -253,8 +258,9 @@ def build_acf_island(
 
     if m.get("feature_sections") and features:
         out[m["feature_sections"]["field"]] = features
-    if subtitle and m.get("geo_answer"):
-        out[m["geo_answer"]] = subtitle
+    # GEO/AI answer: prefer the doc's extracted GEO block, else a tagline/subtitle.
+    if m.get("geo_answer") and (geo_answer or subtitle):
+        out[m["geo_answer"]] = geo_answer or subtitle
     if schema_jsonld and config.top_level.get("schema_jsonld"):
         out[config.top_level["schema_jsonld"]] = schema_jsonld
     return out, warnings

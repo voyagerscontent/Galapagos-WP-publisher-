@@ -1,8 +1,16 @@
-"""Tests for the Layer-1 island ACF mapping (config/acf/island.yaml)."""
+"""Tests for the island ACF mapping (config/acf/island.yaml)."""
+
+from pathlib import Path
 
 from wp_publisher.acf import build_acf
 from wp_publisher.acf.config import load_acf_config
+from wp_publisher.config import get_settings
 from wp_publisher.content import model as C
+from wp_publisher.ingest import read_file
+from wp_publisher.pipeline import BuildContext, build_page
+from wp_publisher.rendering.template import load_registry
+
+SANTA_CRUZ = Path(__file__).resolve().parents[1] / "content" / "santa-cruz-island.docx"
 
 
 def _cfg():
@@ -47,3 +55,20 @@ def test_no_seo_schema_field_in_island_output():
     acf, _ = build_acf(components, _cfg(), schema_jsonld='{"@context":"x"}')
     # Island group has no SEO field; schema must not be written here.
     assert "seo_schema" not in acf
+
+
+def test_santa_cruz_doc_extracts_geo_and_faqs():
+    """Layer 2a: the GEO block -> geo_answer, and Q:/A: pairs -> faqs."""
+    doc = read_file(SANTA_CRUZ)
+    ctx = BuildContext(
+        settings=get_settings(), registry=load_registry(), wp_client=None,
+        media_strategy="placeholder",
+    )
+    page, template, _ = build_page(doc, ctx, page_type="destination")
+    assert template.acf_profile == "island"
+    acf = page.acf
+    assert acf["geo_answer"].startswith("Santa Cruz is the most visited")
+    assert len(acf["faqs"]) >= 3
+    assert acf["faqs"][0]["question"].endswith("?")
+    # Editorial "WEBMASTER: Do not publish" flags are surfaced and hold the draft.
+    assert any("VERIFY" in w for w in page.warnings)

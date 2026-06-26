@@ -25,6 +25,9 @@ from .richtext import blocks_to_html, inline_md, md_to_html
 
 _HAS_DIRECTIVES = re.compile(r"(?m)^\s*:::+\s*[A-Za-z]")
 _BUTTON = re.compile(r"\[button:\s*([^|\]]+?)\s*(?:\|\s*([^\]]*?))?\s*\]")
+# FAQ written as "Q: …" / "A: …" paragraph pairs (a common house style).
+_Q_PREFIX = re.compile(r"^Q[:.]\s*", re.IGNORECASE)
+_A_PREFIX = re.compile(r"^<p>\s*A[:.]\s*", re.IGNORECASE)
 
 
 class Composer:
@@ -180,16 +183,27 @@ class Composer:
         return ctas
 
     def _faq_items(self, section: Section) -> list[dict]:
-        items, question, answer = [], None, []
+        """FAQ items from H3 headings OR 'Q:'/'A:' paragraph pairs."""
+        items: list[dict] = []
+        question: str | None = None
+        answer: list = []
+
+        def flush() -> None:
+            if question is not None:
+                html = blocks_to_html(answer)
+                html = _A_PREFIX.sub("<p>", html)  # drop a leading "A:" marker
+                items.append({"question": question, "answer": html})
+
         for b in section.blocks:
             if b.type == BlockType.HEADING:
-                if question is not None:
-                    items.append({"question": question, "answer": blocks_to_html(answer)})
+                flush()
                 question, answer = b.text, []
-            else:
+            elif b.type == BlockType.PARAGRAPH and _Q_PREFIX.match(b.text):
+                flush()
+                question, answer = _Q_PREFIX.sub("", b.text).strip(), []
+            elif question is not None:
                 answer.append(b)
-        if question is not None:
-            items.append({"question": question, "answer": blocks_to_html(answer)})
+        flush()
         return items
 
     def _accordion_items(self, inner: str) -> list[dict]:

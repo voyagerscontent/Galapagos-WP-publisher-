@@ -29,6 +29,21 @@ def _is_instruction_table(rows: list[list[str]]) -> bool:
         or "what this is" in head
         or head.startswith("this green box")
     )
+
+
+_GEO_ANSWER_RE = re.compile(
+    r"PUBLISH THIS ANSWER TEXT[^:]*:\s*(.+?)(?:\n\s*\n|WHAT THIS\b|WHY THIS\b|HOW \b|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _extract_geo_answer(rows: list[list[str]]) -> str:
+    """Pull the publishable ~50-word GEO/AI answer out of a GEO block table."""
+    text = "\n".join(cell for row in rows for cell in row if cell)
+    m = _GEO_ANSWER_RE.search(text)
+    if not m:
+        return ""
+    return " ".join(m.group(1).split()).strip()
 _KNOWN_META_KEYS = {
     "type",
     "page type",
@@ -170,9 +185,16 @@ def read_docx(path: str | Path) -> Document:
     # instruction / explainer tables (green boxes) are skipped — not content.
     for table in docx.tables:
         rows = [[cell.text.strip() for cell in row.cells] for row in table.rows]
-        if rows and not _is_instruction_table(rows):
-            target = doc.sections[-1] if doc.sections else current
-            target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
+        if not rows:
+            continue
+        geo = _extract_geo_answer(rows)
+        if geo:
+            doc.metadata.setdefault("geo_answer", geo)
+            continue  # the GEO block is scaffolding, not body content
+        if _is_instruction_table(rows):
+            continue
+        target = doc.sections[-1] if doc.sections else current
+        target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
 
     if verify_warnings:
         doc.metadata["_ingest_warnings"] = [
