@@ -294,8 +294,8 @@ def _visitor_row(vs: dict, r: dict) -> dict:
     for key in ("site_name", "access_type", "description", "activities", "species_seen", "access"):
         if vs.get(key):
             row[vs[key]] = r.get(key, "")
-    if vs.get("image"):
-        row[vs["image"]] = False  # image extraction is a later layer
+    # Image is omitted until we extract one: an ACF image field over REST must be
+    # an attachment ID or null, never a boolean.
     return row
 
 
