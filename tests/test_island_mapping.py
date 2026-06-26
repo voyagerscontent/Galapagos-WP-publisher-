@@ -124,3 +124,8 @@ def test_santa_cruz_doc_extracts_cta_and_sources():
     # Sources are not duplicated as a feature section.
     titles = [r.get("title", "").lower() for r in acf["feature_sections"]]
     assert "sources" not in titles
+    # Internal links render as real anchors in wysiwyg feature sections,
+    # while the textarea CTA text keeps no raw markdown link syntax.
+    fs_html = " ".join(r.get("content", "") for r in acf["feature_sections"])
+    assert "<a href=" in fs_html
+    assert all("](" not in r.get("text", "") for r in acf["cta"])

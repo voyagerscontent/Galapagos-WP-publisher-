@@ -126,7 +126,7 @@ _CTA_BUTTON_RE = re.compile(r'CTA button:\s*"(.+?)"\s*(?:→|->)\s*(\S+)', re.IG
 # Visible text inside a paragraph, INCLUDING content controls (w:sdt) and
 # hyperlinks, which python-docx's `.text` silently drops.
 _WT = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"
-_INTERNAL_LINK_RE = re.compile(r"\[INTERNAL LINK:\s*(.+?)\s*(?:→|->)\s*[^\]]+\]")
+_INTERNAL_LINK_RE = re.compile(r"\[INTERNAL LINK:\s*(.+?)\s*(?:→|->)\s*([^\]\s]+)\s*\]")
 
 
 def _p_text(paragraph) -> str:
@@ -138,8 +138,12 @@ def _cell_text(cell) -> str:
 
 
 def _clean_markers(text: str) -> str:
-    """Drop house markup, keeping the visible link label: [INTERNAL LINK: x → /u/] -> x."""
-    return _INTERNAL_LINK_RE.sub(r"\1", text)
+    """[INTERNAL LINK: label → /url/] -> Markdown [label](/url/).
+
+    WYSIWYG fields render the Markdown link to a real <a>; textarea fields strip
+    it back to the label (they can't hold links). Either way the URL is kept here.
+    """
+    return _INTERNAL_LINK_RE.sub(r"[\1](\2)", text)
 
 
 def _is_cta_table(rows: list[list[str]]) -> bool:

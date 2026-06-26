@@ -320,7 +320,7 @@ def _cta_block_row(cf: dict, b: dict) -> dict:
     if cf.get("title"):
         row[cf["title"]] = b.get("title", "")
     if cf.get("text"):
-        row[cf["text"]] = b.get("text", "")
+        row[cf["text"]] = _plain_text(b.get("text", ""))
     if cf.get("button_label") and b.get("button_label"):
         row[cf["button_label"]] = b["button_label"]
     if cf.get("button_url") and b.get("button_url"):
@@ -328,19 +328,27 @@ def _cta_block_row(cf: dict, b: dict) -> dict:
     return row
 
 
+_VISITOR_TEXTAREA = {"description", "activities", "species_seen"}
+
+
 def _visitor_row(vs: dict, r: dict) -> dict:
     row: dict[str, Any] = {}
     for key in ("site_name", "access_type", "description", "activities", "species_seen", "access"):
         if vs.get(key):
-            row[vs[key]] = r.get(key, "")
+            value = r.get(key, "")
+            row[vs[key]] = _plain_text(value) if key in _VISITOR_TEXTAREA else value
     # Image is omitted until we extract one: an ACF image field over REST must be
     # an attachment ID or null, never a boolean.
     return row
 
 
+_MD_LINK = re.compile(r"\[([^\]]+)\]\([^)\s]+\)")
+
+
 def _plain_text(html_str: str) -> str:
-    """HTML -> clean single-line text for textarea fields (no tags)."""
-    text = re.sub(r"(?i)</(p|li|h[1-6]|div)>", " ", html_str or "")
+    """HTML/Markdown -> clean single-line text for textarea fields (no tags/links)."""
+    text = _MD_LINK.sub(r"\1", html_str or "")  # [label](url) -> label
+    text = re.sub(r"(?i)</(p|li|h[1-6]|div)>", " ", text)
     text = re.sub(r"(?i)<br\s*/?>", " ", text)
     text = re.sub(r"<[^>]+>", "", text)
     return " ".join(html.unescape(text).split()).strip()
