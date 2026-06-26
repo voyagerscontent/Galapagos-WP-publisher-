@@ -285,11 +285,10 @@ def build_acf_island(
             out[m["cta"]["field"]] = [_cta_row(m["cta"], comp.data)]
         elif t == "rich_text" and m.get("feature_sections"):
             d = comp.data
+            # Only skip sections whose content was MOVED to a dedicated field
+            # (e.g. Sources -> the sources repeater). Header-only sections are
+            # kept so the WordPress editor decides whether to remove them.
             if d.get("heading", "").strip().lower() in _FEATURE_SKIP_HEADINGS:
-                continue  # handled as sources / related links elsewhere
-            # Skip header-only sections whose body was extracted elsewhere (e.g.
-            # a "Visitor Sites" heading whose table is now the visitor_sites repeater).
-            if not _plain_text(d.get("content", "")):
                 continue
             features.append(_feature_row(m["feature_sections"], title=d.get("heading", ""),
                                          content=d.get("content", "")))
