@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────────────────────
+# ACF profile: ISLAND  →  the "Island Guide Content" group (group_island_pages).
+# Selected by templates that declare `acf_profile: island` (e.g. destination).
+#
+# Layer 1 mapping: hero, FAQs, quick facts, a CTA row, and all prose folded into
+# `feature_sections`. Structured `visitor_sites` / `wildlife` extraction comes in
+# a later layer. NO SEO field here — Rank Math / Yoast handles meta.
+# Field names on the right must match the ACF group; group needs Show in REST.
+# ─────────────────────────────────────────────────────────────
+
+mode: island
+image_as: id
+
+# No top_level schema field: the island group has no seo_schema (Rank Math owns SEO).
+top_level: {}
+
+island:
+  hero:
+    title: hero_title
+    subtitle: hero_subtitle
+    image: hero_image
+    image_alt: hero_image_alt
+
+  # ~50-word AI/featured-snippet answer. Populated from the doc's GEO block in a
+  # later layer; for now fills from a tagline/subtitle when present.
+  geo_answer: geo_answer
+
+  # Editorial/thematic sections (Layer 1 also receives generic prose here).
+  feature_sections:
+    field: feature_sections
+    title: title
+    subtitle: subtitle
+    content: content
+
+  faqs:
+    field: faqs
+    question: question
+    answer: answer
+
+  quick_facts:
+    field: quick_facts
+    label: label
+    value: value
+
+  cta:
+    field: cta
+    audience: audience
+    title: title
+    text: text
+    button_label: button_label
+    button_url: button_url

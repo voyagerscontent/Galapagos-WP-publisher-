@@ -34,8 +34,9 @@ class AcfConfig:
         # True when a named profile was requested but its file was missing, so
         # the default config was used instead.
         self.resolved_from_default: bool = resolved_from_default
-        self.mode: str = data.get("mode", "flexible")  # flat | flexible
+        self.mode: str = data.get("mode", "flexible")  # flat | flexible | island
         self.flat: dict[str, Any] = data.get("flat", {}) or {}
+        self.island: dict[str, Any] = data.get("island", {}) or {}
         self.flexible_field: str = data.get("flexible_field", "page_sections")
         self.fallback_layout: str = data.get("fallback_layout", "rich_text")
         self.top_level: dict[str, str] = data.get("top_level", {}) or {}

@@ -35,6 +35,8 @@ def build_acf(
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
+    if config.mode == "island":
+        return build_acf_island(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
 
@@ -191,6 +193,99 @@ def build_acf_flat(
     if schema_jsonld and config.top_level.get("schema_jsonld"):
         out[config.top_level["schema_jsonld"]] = schema_jsonld
     return out, warnings
+
+
+def build_acf_island(
+    components: list[Component],
+    config: AcfConfig,
+    *,
+    subtitle: str = "",
+    schema_jsonld: str = "",
+) -> tuple[dict[str, Any], list[str]]:
+    """Map components to the structured 'Island Guide Content' ACF group.
+
+    Layer 1: hero, FAQs, quick facts, a (single) CTA row, and all prose folded
+    into ``feature_sections`` rows. Structured ``visitor_sites`` / ``wildlife``
+    extraction is a later layer; until then their source prose lands in
+    ``feature_sections`` so nothing is dropped.
+    """
+    warnings: list[str] = []
+    m = config.island
+    out: dict[str, Any] = {}
+    features: list[dict] = []
+    used: set[str] = set()
+
+    for comp in components:
+        t = comp.type
+        if t == "hero" and "hero" not in used and m.get("hero"):
+            used.add("hero")
+            hf, d = m["hero"], comp.data
+            img = d.get("image") if isinstance(d.get("image"), dict) else {}
+            _set(out, hf.get("title"), d.get("heading"))
+            _set(out, hf.get("subtitle"), d.get("subheading"))
+            _set(out, hf.get("image"), _image_value(img, config), allow_falsey=True)
+            _set(out, hf.get("image_alt"), img.get("alt"))
+        elif t == "accordion" and "faqs" not in used and m.get("faqs"):
+            used.add("faqs")
+            ff = m["faqs"]
+            out[ff["field"]] = [
+                {ff["question"]: it.get("question", ""), ff["answer"]: it.get("answer", "")}
+                for it in comp.data.get("items", [])
+            ]
+        elif t == "stats" and "quick_facts" not in used and m.get("quick_facts"):
+            used.add("quick_facts")
+            qf = m["quick_facts"]
+            out[qf["field"]] = [
+                {qf["label"]: it.get("label", ""), qf["value"]: it.get("value", "")}
+                for it in comp.data.get("items", [])
+            ]
+        elif t == "cta" and "cta" not in used and m.get("cta"):
+            used.add("cta")
+            out[m["cta"]["field"]] = [_cta_row(m["cta"], comp.data)]
+        elif t == "rich_text" and m.get("feature_sections"):
+            d = comp.data
+            features.append(_feature_row(m["feature_sections"], title=d.get("heading", ""),
+                                         content=d.get("content", "")))
+        elif m.get("feature_sections"):
+            chunk = _component_body_html(comp)
+            if chunk:
+                features.append(_feature_row(m["feature_sections"], content=chunk))
+
+    if m.get("feature_sections") and features:
+        out[m["feature_sections"]["field"]] = features
+    if subtitle and m.get("geo_answer"):
+        out[m["geo_answer"]] = subtitle
+    if schema_jsonld and config.top_level.get("schema_jsonld"):
+        out[config.top_level["schema_jsonld"]] = schema_jsonld
+    return out, warnings
+
+
+def _feature_row(fs: dict, *, title: str = "", content: str = "", subtitle: str = "") -> dict:
+    row: dict[str, Any] = {}
+    if fs.get("title"):
+        row[fs["title"]] = title
+    if fs.get("subtitle"):
+        row[fs["subtitle"]] = subtitle
+    if fs.get("content"):
+        row[fs["content"]] = content
+    return row
+
+
+def _cta_row(cf: dict, d: dict) -> dict:
+    ctas = d.get("ctas") or []
+    first = ctas[0] if ctas else {}
+    row: dict[str, Any] = {}
+    if cf.get("audience"):
+        row[cf["audience"]] = "Direct travelers"
+    if cf.get("title"):
+        row[cf["title"]] = d.get("heading", "")
+    if cf.get("text"):
+        row[cf["text"]] = d.get("content", "")
+    if cf.get("button_label"):
+        row[cf["button_label"]] = first.get("label", "")
+    if cf.get("button_url"):
+        row[cf["button_url"]] = first.get("url", "")
+    return row
 
 
 def _set(out: dict, key, value, *, allow_falsey: bool = False) -> None:

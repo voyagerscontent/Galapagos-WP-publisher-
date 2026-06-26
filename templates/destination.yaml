@@ -9,6 +9,7 @@ description: >
 post_type: page
 status: draft
 parent_page: islands   # nests under /islands/ (the "Galapagos Islands" page) so the island ACF group attaches
+acf_profile: island    # map content into the "Island Guide Content" ACF group (config/acf/island.yaml)
 schema_type: TouristDestination
 categories: []
 tags: []
