@@ -16,6 +16,7 @@ separable, so you can preview the ACF payload before anything goes live.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 
 from .acf import build_acf
@@ -106,6 +107,10 @@ def build_page(
         cta_blocks=doc.metadata.get("cta_blocks") or None,
         sources=doc.metadata.get("sources") or None,
     )
+    # Make domainless links absolute (e.g. /cruises/ -> https://site/cruises/).
+    # Links that already carry a domain are left untouched.
+    if settings.wp_base_url:
+        acf_payload = _absolutize_links(acf_payload, settings.wp_base_url.rstrip("/"))
 
     # 6) Status / taxonomies / post type.
     final_status = status or template.status or settings.wp_default_status
@@ -140,6 +145,29 @@ def build_page(
         ],
     )
     return page, template, reason
+
+
+_HREF_REL = re.compile(r'href="(/[^"]*)"')
+_BARE_PATH = re.compile(r"^/[\w\-./#?=&%~]*$")
+
+
+def _absolutize_links(value, base: str):
+    """Prefix domainless links with the site base URL, recursively.
+
+    - `href="/x"` in HTML -> `href="{base}/x"`.
+    - a whole value that is a root-relative path (`/x`) -> `{base}/x` (url fields).
+    Absolute links (with a scheme/domain) are left unchanged.
+    """
+    if isinstance(value, str):
+        v = _HREF_REL.sub(lambda m: f'href="{base}{m.group(1)}"', value)
+        if _BARE_PATH.match(v):
+            v = base + v
+        return v
+    if isinstance(value, dict):
+        return {k: _absolutize_links(x, base) for k, x in value.items()}
+    if isinstance(value, list):
+        return [_absolutize_links(x, base) for x in value]
+    return value
 
 
 def _template_warnings(template: PageTemplate, doc: Document) -> list[str]:

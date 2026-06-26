@@ -20,6 +20,7 @@ import re
 from typing import Any
 
 from ..content.model import Component
+from ..content.richtext import inline_md
 from .config import AcfConfig
 
 # Component data keys that hold an image reference / list of references.
@@ -268,9 +269,9 @@ def build_acf_island(
         elif t == "accordion" and "faqs" not in used and m.get("faqs"):
             used.add("faqs")
             ff = m["faqs"]
-            # `answer` is a textarea -> store clean text, not HTML.
+            # `answer` is a WYSIWYG field -> keep HTML (links survive).
             out[ff["field"]] = [
-                {ff["question"]: it.get("question", ""), ff["answer"]: _plain_text(it.get("answer", ""))}
+                {ff["question"]: it.get("question", ""), ff["answer"]: it.get("answer", "")}
                 for it in comp.data.get("items", [])
             ]
         elif t == "stats" and "quick_facts" not in used and m.get("quick_facts"):
@@ -320,7 +321,7 @@ def _cta_block_row(cf: dict, b: dict) -> dict:
     if cf.get("title"):
         row[cf["title"]] = b.get("title", "")
     if cf.get("text"):
-        row[cf["text"]] = _plain_text(b.get("text", ""))
+        row[cf["text"]] = inline_md(b.get("text", ""))  # WYSIWYG -> keep links
     if cf.get("button_label") and b.get("button_label"):
         row[cf["button_label"]] = b["button_label"]
     if cf.get("button_url") and b.get("button_url"):
@@ -328,7 +329,9 @@ def _cta_block_row(cf: dict, b: dict) -> dict:
     return row
 
 
-_VISITOR_TEXTAREA = {"description", "activities", "species_seen"}
+# description is WYSIWYG (links survive); the short list fields stay plain text.
+_VISITOR_RICH = {"description"}
+_VISITOR_PLAIN = {"activities", "species_seen"}
 
 
 def _visitor_row(vs: dict, r: dict) -> dict:
@@ -336,7 +339,12 @@ def _visitor_row(vs: dict, r: dict) -> dict:
     for key in ("site_name", "access_type", "description", "activities", "species_seen", "access"):
         if vs.get(key):
             value = r.get(key, "")
-            row[vs[key]] = _plain_text(value) if key in _VISITOR_TEXTAREA else value
+            if key in _VISITOR_RICH:
+                row[vs[key]] = inline_md(value)
+            elif key in _VISITOR_PLAIN:
+                row[vs[key]] = _plain_text(value)
+            else:
+                row[vs[key]] = value
     # Image is omitted until we extract one: an ACF image field over REST must be
     # an attachment ID or null, never a boolean.
     return row

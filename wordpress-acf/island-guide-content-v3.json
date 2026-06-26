@@ -57,7 +57,7 @@
             "choices": { "Land-based": "Land-based", "Cruise-only": "Cruise-only" },
             "default_value": "Land-based", "allow_null": 1, "ui": 1, "return_format": "value"
           },
-          { "key": "vs_desc", "label": "Description", "name": "description", "type": "textarea", "rows": 4 },
+          { "key": "vs_desc", "label": "Description", "name": "description", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "vs_activities", "label": "Activities", "name": "activities", "type": "textarea", "rows": 2 },
           { "key": "vs_wildlife", "label": "Species Seen (short list)", "name": "species_seen", "type": "textarea", "rows": 2,
             "instructions": "Short mention only, e.g. 'marine iguanas, sea lions, penguins'. Full profiles go in the Wildlife tab." },
@@ -74,7 +74,7 @@
         "sub_fields": [
           { "key": "w_name", "label": "Common Name", "name": "common_name", "type": "text" },
           { "key": "w_sci", "label": "Scientific Name", "name": "scientific_name", "type": "text" },
-          { "key": "w_desc", "label": "Description", "name": "description", "type": "textarea", "rows": 4 },
+          { "key": "w_desc", "label": "Description", "name": "description", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "w_seen", "label": "Where Seen", "name": "where_seen", "type": "text" },
           { "key": "w_season", "label": "Best Season", "name": "best_season", "type": "text" },
           { "key": "w_img", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" }
@@ -94,7 +94,7 @@
             "choices": { "Easy": "Easy", "Moderate": "Moderate", "Challenging": "Challenging" },
             "allow_null": 1, "ui": 1, "return_format": "value"
           },
-          { "key": "ti_notes", "label": "Travel Notes", "name": "travel_notes", "type": "textarea", "rows": 3 }
+          { "key": "ti_notes", "label": "Travel Notes", "name": "travel_notes", "type": "wysiwyg", "tabs": "all", "media_upload": 0 }
         ]
       },
 
@@ -104,7 +104,7 @@
         "layout": "row", "button_label": "Add question",
         "sub_fields": [
           { "key": "faq_q", "label": "Question", "name": "question", "type": "text" },
-          { "key": "faq_a", "label": "Answer", "name": "answer", "type": "textarea", "rows": 3 }
+          { "key": "faq_a", "label": "Answer", "name": "answer", "type": "wysiwyg", "tabs": "all", "media_upload": 0 }
         ]
       },
 
@@ -120,7 +120,7 @@
             "default_value": "Direct travelers", "allow_null": 1, "ui": 1, "return_format": "value"
           },
           { "key": "cta_title", "label": "Title", "name": "title", "type": "text" },
-          { "key": "cta_text", "label": "Text", "name": "text", "type": "textarea", "rows": 2 },
+          { "key": "cta_text", "label": "Text", "name": "text", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "cta_button", "label": "Button Label", "name": "button_label", "type": "text" },
           { "key": "cta_url", "label": "Button URL", "name": "button_url", "type": "url" }
         ]

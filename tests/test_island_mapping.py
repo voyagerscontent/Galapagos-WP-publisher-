@@ -39,8 +39,8 @@ def test_hero_faq_quickfacts_cta_and_features():
     assert acf["hero_title"] == "Santa Cruz"
     assert acf["hero_subtitle"] == "The hub island"
     assert acf["quick_facts"] == [{"label": "Area", "value": "986 km²"}]
-    # answer is a textarea -> clean text, no HTML tags.
-    assert acf["faqs"] == [{"question": "Q1?", "answer": "A1"}]
+    # answer is now a WYSIWYG field -> HTML is preserved (links survive).
+    assert acf["faqs"] == [{"question": "Q1?", "answer": "<p>A1</p>"}]
     # CTA -> single repeater row tagged with an audience.
     assert acf["cta"][0]["audience"] == "Direct travelers"
     assert acf["cta"][0]["button_url"] == "https://x/contact"
