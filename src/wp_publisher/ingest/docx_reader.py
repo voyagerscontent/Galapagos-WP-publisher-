@@ -122,6 +122,24 @@ def _extract_quick_facts(rows: list[list[str]]) -> list[dict]:
 
 _URL_RE = re.compile(r"https?://\S+")
 _TRADE_RE = re.compile(r"\b(trade|latin trails|dmc|wholesaler|agent|group programs)\b", re.IGNORECASE)
+_CTA_BUTTON_RE = re.compile(r'CTA button:\s*"(.+?)"\s*(?:→|->)\s*(\S+)', re.IGNORECASE)
+# Visible text inside a paragraph, INCLUDING content controls (w:sdt) and
+# hyperlinks, which python-docx's `.text` silently drops.
+_WT = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"
+_INTERNAL_LINK_RE = re.compile(r"\[INTERNAL LINK:\s*(.+?)\s*(?:→|->)\s*[^\]]+\]")
+
+
+def _p_text(paragraph) -> str:
+    return "".join(node.text or "" for node in paragraph._p.iter(_WT))
+
+
+def _cell_text(cell) -> str:
+    return "\n".join(_p_text(p) for p in cell.paragraphs).strip()
+
+
+def _clean_markers(text: str) -> str:
+    """Drop house markup, keeping the visible link label: [INTERNAL LINK: x → /u/] -> x."""
+    return _INTERNAL_LINK_RE.sub(r"\1", text)
 
 
 def _is_cta_table(rows: list[list[str]]) -> bool:
@@ -136,13 +154,21 @@ def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
             cell = cell.strip()
             if not cell:
                 continue
-            title, _, body = cell.partition("\n")
-            audience = "Travel trade" if _TRADE_RE.search(cell) else "Direct travelers"
-            out.append({
-                "audience": audience,
-                "title": title.strip(),
-                "text": " ".join(body.split()).strip(),
-            })
+            buttons = _CTA_BUTTON_RE.findall(cell)
+            body = _CTA_BUTTON_RE.sub("", cell)  # strip the button directive line
+            lines = [ln.strip() for ln in body.split("\n") if ln.strip()]
+            title = lines[0] if lines else ""
+            text = " ".join(" ".join(lines[1:]).split())
+            block = {
+                "audience": "Travel trade" if _TRADE_RE.search(cell) else "Direct travelers",
+                "title": title,
+                "text": text,
+            }
+            if buttons:
+                label, url = buttons[0]
+                block["button_label"] = label.strip().rstrip("→ ").strip()
+                block["button_url"] = url.strip()
+            out.append(block)
     return out
 
 
@@ -226,7 +252,7 @@ def read_docx(path: str | Path) -> Document:
             list_ordered = False
 
     for para in docx.paragraphs:
-        text = para.text.strip()
+        text = _clean_markers(_p_text(para)).strip()
         style = (para.style.name if para.style else "") or ""
         style_l = style.lower()
 
@@ -238,6 +264,9 @@ def read_docx(path: str | Path) -> Document:
         # Drop (and surface) editorial flags: "⚠️ WEBMASTER: Do not publish…".
         if _EDITORIAL_FLAG.match(text):
             verify_warnings.append("VERIFY: " + text.lstrip("⚠️ ").strip())
+            continue
+        # A stray "CTA button:" directive in the body is an instruction, not prose.
+        if text.lower().startswith("cta button:"):
             continue
 
         # Title style -> document title.
@@ -306,7 +335,7 @@ def read_docx(path: str | Path) -> Document:
     # Tables become table blocks appended to the lead/last section. Internal
     # instruction / explainer tables (green boxes) are skipped — not content.
     for table in docx.tables:
-        rows = [[cell.text.strip() for cell in row.cells] for row in table.rows]
+        rows = [[_clean_markers(_cell_text(cell)) for cell in row.cells] for row in table.rows]
         if not rows:
             continue
         geo = _extract_geo_answer(rows)

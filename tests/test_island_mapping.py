@@ -115,6 +115,10 @@ def test_santa_cruz_doc_extracts_cta_and_sources():
     acf = page.acf
     audiences = {r["audience"] for r in acf["cta"]}
     assert {"Direct travelers", "Travel trade"} <= audiences
+    # CTA button (label + URL) lives in a Word content control; it must be captured.
+    direct = next(r for r in acf["cta"] if r["audience"] == "Direct travelers")
+    assert direct["button_label"].startswith("Contact Voyagers")
+    assert direct["button_url"] == "https://www.galapagosislands.travel/contact/"
     assert len(acf["sources"]) >= 3
     assert acf["sources"][0]["url"].startswith("http")
     # Sources are not duplicated as a feature section.

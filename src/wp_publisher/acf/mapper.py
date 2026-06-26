@@ -321,6 +321,10 @@ def _cta_block_row(cf: dict, b: dict) -> dict:
         row[cf["title"]] = b.get("title", "")
     if cf.get("text"):
         row[cf["text"]] = b.get("text", "")
+    if cf.get("button_label") and b.get("button_label"):
+        row[cf["button_label"]] = b["button_label"]
+    if cf.get("button_url") and b.get("button_url"):
+        row[cf["button_url"]] = b["button_url"]
     return row
 
 
