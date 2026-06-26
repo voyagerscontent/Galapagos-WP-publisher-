@@ -63,7 +63,18 @@ island:
     button_label: button_label
     button_url: button_url
 
+  travel_information:
+    field: travel_information
+    getting_there: getting_there
+    best_time: best_time
+    accommodation: accommodation
+
   sources:
     field: sources
+    label: label
+    url: url
+
+  related_links:
+    field: related_links
     label: label
     url: url

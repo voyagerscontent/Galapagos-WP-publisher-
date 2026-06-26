@@ -106,6 +106,7 @@ def build_page(
         visitor_sites=doc.metadata.get("visitor_sites") or None,
         cta_blocks=doc.metadata.get("cta_blocks") or None,
         sources=doc.metadata.get("sources") or None,
+        related_links=doc.metadata.get("related_links") or None,
     )
     # Make domainless links absolute (e.g. /cruises/ -> https://site/cruises/).
     # Links that already carry a domain are left untouched.

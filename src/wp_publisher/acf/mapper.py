@@ -40,6 +40,7 @@ def build_acf(
     visitor_sites: list | None = None,
     cta_blocks: list | None = None,
     sources: list | None = None,
+    related_links: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -48,7 +49,7 @@ def build_acf(
             components, config, subtitle=subtitle, schema_jsonld=schema_jsonld,
             geo_answer=geo_answer, author=author,
             quick_facts=quick_facts, visitor_sites=visitor_sites,
-            cta_blocks=cta_blocks, sources=sources,
+            cta_blocks=cta_blocks, sources=sources, related_links=related_links,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -220,17 +221,20 @@ def build_acf_island(
     visitor_sites: list | None = None,
     cta_blocks: list | None = None,
     sources: list | None = None,
+    related_links: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
     Hero, FAQs, and prose fold into ``feature_sections``. ``quick_facts``,
-    ``visitor_sites``, ``cta_blocks`` and ``sources`` come pre-extracted from the
-    doc's tables/sections (via metadata); ``wildlife`` extraction is a later layer.
+    ``visitor_sites``, ``cta_blocks``, ``sources`` and ``related_links`` come
+    pre-extracted from the doc; travel sections route to ``travel_information``;
+    ``wildlife`` extraction is a later layer.
     """
     warnings: list[str] = []
     m = config.island
     out: dict[str, Any] = {}
     features: list[dict] = []
+    travel: dict[str, str] = {}
     used: set[str] = set()
 
     # Table-derived repeaters (extracted upstream from the doc's tables).
@@ -286,12 +290,15 @@ def build_acf_island(
             out[m["cta"]["field"]] = [_cta_row(m["cta"], comp.data)]
         elif t == "rich_text" and m.get("feature_sections"):
             d = comp.data
-            # Only skip sections whose content was MOVED to a dedicated field
-            # (e.g. Sources -> the sources repeater). Header-only sections are
-            # kept so the WordPress editor decides whether to remove them.
-            if d.get("heading", "").strip().lower() in _FEATURE_SKIP_HEADINGS:
+            heading = d.get("heading", "")
+            # Content MOVED to a dedicated field is not also a feature section.
+            tf = _travel_field(heading) if m.get("travel_information") else None
+            if tf:
+                travel.setdefault(tf, d.get("content", ""))
                 continue
-            features.append(_feature_row(m["feature_sections"], title=d.get("heading", ""),
+            if _should_skip_feature(heading):
+                continue  # sources / related-links footer -> dedicated fields
+            features.append(_feature_row(m["feature_sections"], title=heading,
                                          content=d.get("content", "")))
         elif m.get("feature_sections"):
             chunk = _component_body_html(comp)
@@ -300,6 +307,14 @@ def build_acf_island(
 
     if m.get("feature_sections") and features:
         out[m["feature_sections"]["field"]] = features
+    if m.get("travel_information") and travel:
+        ti = m["travel_information"]
+        out[ti["field"]] = {ti[k]: v for k, v in travel.items() if ti.get(k)}
+    if related_links and m.get("related_links"):
+        rl = m["related_links"]
+        out[rl["field"]] = [
+            {rl["label"]: r.get("label", ""), rl["url"]: r.get("url", "")} for r in related_links
+        ]
     # GEO/AI answer: prefer the doc's extracted GEO block, else a tagline/subtitle.
     if m.get("geo_answer") and (geo_answer or subtitle):
         out[m["geo_answer"]] = geo_answer or subtitle
@@ -312,6 +327,24 @@ def build_acf_island(
 
 # Section headings handled by dedicated fields, not folded into feature_sections.
 _FEATURE_SKIP_HEADINGS = {"sources", "sources & citations", "sources and citations", "citations"}
+_SKIP_CONTAINS = ("explore more", "seo footer")
+_TRAVEL_RULES = [
+    ("getting_there", re.compile(r"getting (to|there)|how to get|how to reach|arriv", re.I)),
+    ("best_time", re.compile(r"best time|when to (visit|go)|best season", re.I)),
+    ("accommodation", re.compile(r"where to stay|accommodation|hotels|lodging", re.I)),
+]
+
+
+def _travel_field(heading: str) -> str | None:
+    for field, rx in _TRAVEL_RULES:
+        if rx.search(heading):
+            return field
+    return None
+
+
+def _should_skip_feature(heading: str) -> bool:
+    h = heading.strip().lower()
+    return h in _FEATURE_SKIP_HEADINGS or any(s in h for s in _SKIP_CONTAINS)
 
 
 def _cta_block_row(cf: dict, b: dict) -> dict:

@@ -59,6 +59,25 @@ def test_author_byline_maps_when_present():
     assert acf["author"] == "Juan Magallanes, Naturalist Expert Contributor"
 
 
+def test_santa_cruz_doc_extracts_travel_and_related_links():
+    """Layer 2c-2: travel sections -> travel_information; footer -> related_links."""
+    doc = read_file(SANTA_CRUZ)
+    ctx = BuildContext(
+        settings=get_settings(), registry=load_registry(), wp_client=None,
+        media_strategy="placeholder",
+    )
+    page, _t, _ = build_page(doc, ctx, page_type="destination")
+    acf = page.acf
+    assert acf["travel_information"]["getting_there"]
+    assert acf["travel_information"]["accommodation"]
+    assert len(acf["related_links"]) >= 5
+    # Domainless related links are made absolute.
+    assert acf["related_links"][0]["url"].startswith("https://www.galapagosislands.travel/")
+    # Those sections are not also duplicated as feature sections.
+    titles = [r.get("title", "").lower() for r in acf["feature_sections"]]
+    assert not any("getting to" in t or "explore more" in t or "where to stay" in t for t in titles)
+
+
 def test_no_seo_schema_field_in_island_output():
     components = [C.hero(heading="X", subheading="", image={}, ctas=[])]
     acf, _ = build_acf(components, _cfg(), schema_jsonld='{"@context":"x"}')

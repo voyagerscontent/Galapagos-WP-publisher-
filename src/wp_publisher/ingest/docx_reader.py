@@ -197,6 +197,24 @@ def _extract_sources(section: Section) -> list[dict]:
         if label or url:
             out.append({"label": label, "url": url})
     return out
+
+
+_REL_LINK_RE = re.compile(r"^[•·\-*\s]*(.+?)\s*(?:→|->)\s*(\S+)\s*$")
+
+
+def _extract_related_links(section: Section) -> list[dict]:
+    """'• Label → /url/' bullet lines from an 'Explore More' footer."""
+    out: list[dict] = []
+    for b in section.blocks:
+        lines = list(b.items) if b.items else ([b.text] if b.text else [])
+        for line in lines:
+            m = _REL_LINK_RE.match(line.strip())
+            if not m:
+                continue
+            label, url = m.group(1).strip(), m.group(2).strip()
+            if label and url.startswith(("/", "http")):
+                out.append({"label": label, "url": url})
+    return out
 _KNOWN_META_KEYS = {
     "type",
     "page type",
@@ -378,6 +396,14 @@ def read_docx(path: str | Path) -> Document:
         sources = _extract_sources(sources_section)
         if sources:
             doc.metadata["sources"] = sources
+
+    # "Explore More" footer -> related internal links.
+    for s in doc.sections:
+        if "explore" in s.slug or "footer" in s.slug:
+            related = _extract_related_links(s)
+            if related:
+                doc.metadata["related_links"] = related
+            break
 
     if verify_warnings:
         doc.metadata["_ingest_warnings"] = [
