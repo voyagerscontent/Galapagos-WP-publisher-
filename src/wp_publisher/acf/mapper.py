@@ -287,6 +287,10 @@ def build_acf_island(
             d = comp.data
             if d.get("heading", "").strip().lower() in _FEATURE_SKIP_HEADINGS:
                 continue  # handled as sources / related links elsewhere
+            # Skip header-only sections whose body was extracted elsewhere (e.g.
+            # a "Visitor Sites" heading whose table is now the visitor_sites repeater).
+            if not _plain_text(d.get("content", "")):
+                continue
             features.append(_feature_row(m["feature_sections"], title=d.get("heading", ""),
                                          content=d.get("content", "")))
         elif m.get("feature_sections"):
