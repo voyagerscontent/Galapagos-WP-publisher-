@@ -16,6 +16,7 @@ Produces the dict sent as the post's ``acf`` field over core REST:
 from __future__ import annotations
 
 import html
+import re
 from typing import Any
 
 from ..content.model import Component
@@ -33,13 +34,14 @@ def build_acf(
     subtitle: str = "",
     schema_jsonld: str = "",
     geo_answer: str = "",
+    author: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
     if config.mode == "island":
         return build_acf_island(
             components, config, subtitle=subtitle, schema_jsonld=schema_jsonld,
-            geo_answer=geo_answer,
+            geo_answer=geo_answer, author=author,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -206,6 +208,7 @@ def build_acf_island(
     subtitle: str = "",
     schema_jsonld: str = "",
     geo_answer: str = "",
+    author: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
@@ -233,8 +236,9 @@ def build_acf_island(
         elif t == "accordion" and "faqs" not in used and m.get("faqs"):
             used.add("faqs")
             ff = m["faqs"]
+            # `answer` is a textarea -> store clean text, not HTML.
             out[ff["field"]] = [
-                {ff["question"]: it.get("question", ""), ff["answer"]: it.get("answer", "")}
+                {ff["question"]: it.get("question", ""), ff["answer"]: _plain_text(it.get("answer", ""))}
                 for it in comp.data.get("items", [])
             ]
         elif t == "stats" and "quick_facts" not in used and m.get("quick_facts"):
@@ -261,9 +265,19 @@ def build_acf_island(
     # GEO/AI answer: prefer the doc's extracted GEO block, else a tagline/subtitle.
     if m.get("geo_answer") and (geo_answer or subtitle):
         out[m["geo_answer"]] = geo_answer or subtitle
+    if m.get("author") and author:
+        out[m["author"]] = author
     if schema_jsonld and config.top_level.get("schema_jsonld"):
         out[config.top_level["schema_jsonld"]] = schema_jsonld
     return out, warnings
+
+
+def _plain_text(html_str: str) -> str:
+    """HTML -> clean single-line text for textarea fields (no tags)."""
+    text = re.sub(r"(?i)</(p|li|h[1-6]|div)>", " ", html_str or "")
+    text = re.sub(r"(?i)<br\s*/?>", " ", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    return " ".join(html.unescape(text).split()).strip()
 
 
 def _feature_row(fs: dict, *, title: str = "", content: str = "", subtitle: str = "") -> dict:

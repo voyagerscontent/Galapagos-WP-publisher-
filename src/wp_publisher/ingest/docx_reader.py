@@ -19,6 +19,13 @@ _HEADING_MARK = re.compile(r"^\[H[1-6]\]\s*", re.IGNORECASE)
 _EDITORIAL_FLAG = re.compile(
     r"^(⚠️\s*)?(WEBMASTER\b|.*\bDo not publish\b|\[?VERIFY\]?\b)", re.IGNORECASE
 )
+# A byline near the top: "By Juan Magallanes, Naturalist Expert Contributor — …".
+_BYLINE = re.compile(r"^By\s+[A-Z][\w'.-]+\s+[A-Z]")
+
+
+def _clean_byline(text: str) -> str:
+    s = re.sub(r"^By\s+", "", text).strip()
+    return re.split(r"\s+[—–-]\s+", s, maxsplit=1)[0].strip()
 
 
 def _is_instruction_table(rows: list[list[str]]) -> bool:
@@ -148,6 +155,11 @@ def read_docx(path: str | Path) -> Document:
             current = Section(title=text, level=level, slug=section_slug(text))
             raw_lines.extend(["", "#" * max(2, level) + " " + text])
             seen_body = True
+            continue
+
+        # A byline near the top -> author metadata (not body content).
+        if not seen_body and not doc.metadata.get("author") and _BYLINE.match(text):
+            doc.metadata["author"] = _clean_byline(text)
             continue
 
         # Leading "Key: value" lines before any prose -> metadata.

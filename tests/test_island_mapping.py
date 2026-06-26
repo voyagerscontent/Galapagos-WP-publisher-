@@ -39,7 +39,8 @@ def test_hero_faq_quickfacts_cta_and_features():
     assert acf["hero_title"] == "Santa Cruz"
     assert acf["hero_subtitle"] == "The hub island"
     assert acf["quick_facts"] == [{"label": "Area", "value": "986 km²"}]
-    assert acf["faqs"] == [{"question": "Q1?", "answer": "<p>A1</p>"}]
+    # answer is a textarea -> clean text, no HTML tags.
+    assert acf["faqs"] == [{"question": "Q1?", "answer": "A1"}]
     # CTA -> single repeater row tagged with an audience.
     assert acf["cta"][0]["audience"] == "Direct travelers"
     assert acf["cta"][0]["button_url"] == "https://x/contact"
@@ -48,6 +49,14 @@ def test_hero_faq_quickfacts_cta_and_features():
     assert "Darwin Station" in titles
     # No flat-group field names leak in.
     assert "hero_heading" not in acf and "body" not in acf and "faq" not in acf
+
+
+def test_author_byline_maps_when_present():
+    acf, _ = build_acf(
+        [C.hero(heading="X", subheading="", image={}, ctas=[])],
+        _cfg(), author="Juan Magallanes, Naturalist Expert Contributor",
+    )
+    assert acf["author"] == "Juan Magallanes, Naturalist Expert Contributor"
 
 
 def test_no_seo_schema_field_in_island_output():

@@ -21,6 +21,9 @@ island:
     image: hero_image
     image_alt: hero_image_alt
 
+  # Byline ("By <Name> …"), when the doc has one.
+  author: author
+
   # ~50-word AI/featured-snippet answer. Populated from the doc's GEO block in a
   # later layer; for now fills from a tagline/subtitle when present.
   geo_answer: geo_answer
