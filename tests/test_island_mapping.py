@@ -81,3 +81,24 @@ def test_santa_cruz_doc_extracts_geo_and_faqs():
     assert acf["faqs"][0]["question"].endswith("?")
     # Editorial "WEBMASTER: Do not publish" flags are surfaced and hold the draft.
     assert any("VERIFY" in w for w in page.warnings)
+
+
+def test_santa_cruz_doc_extracts_tables():
+    """Layer 2b: the facts table -> quick_facts, the sites table -> visitor_sites."""
+    doc = read_file(SANTA_CRUZ)
+    ctx = BuildContext(
+        settings=get_settings(), registry=load_registry(), wp_client=None,
+        media_strategy="placeholder",
+    )
+    page, _t, _ = build_page(doc, ctx, page_type="destination")
+    acf = page.acf
+    labels = [r["label"] for r in acf["quick_facts"]]
+    assert "Location" in labels and "Area" in labels
+    sites = {r["site_name"]: r for r in acf["visitor_sites"]}
+    assert "Tortuga Bay" in sites
+    assert sites["Tortuga Bay"]["access_type"] == "Land-based"
+    assert sites["Cerro Dragón"]["access_type"] == "Cruise-only"
+    # The extracted tables are not also duplicated into feature_sections.
+    fs_text = " ".join(r.get("content", "") for r in acf["feature_sections"])
+    assert "Black Turtle Cove" not in fs_text   # visitor-sites table not duplicated
+    assert "864 m" not in fs_text               # quick-facts table not duplicated

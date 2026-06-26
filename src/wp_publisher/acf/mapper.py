@@ -35,6 +35,8 @@ def build_acf(
     schema_jsonld: str = "",
     geo_answer: str = "",
     author: str = "",
+    quick_facts: list | None = None,
+    visitor_sites: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -42,6 +44,7 @@ def build_acf(
         return build_acf_island(
             components, config, subtitle=subtitle, schema_jsonld=schema_jsonld,
             geo_answer=geo_answer, author=author,
+            quick_facts=quick_facts, visitor_sites=visitor_sites,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -209,19 +212,33 @@ def build_acf_island(
     schema_jsonld: str = "",
     geo_answer: str = "",
     author: str = "",
+    quick_facts: list | None = None,
+    visitor_sites: list | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
-    Layer 1: hero, FAQs, quick facts, a (single) CTA row, and all prose folded
-    into ``feature_sections`` rows. Structured ``visitor_sites`` / ``wildlife``
-    extraction is a later layer; until then their source prose lands in
-    ``feature_sections`` so nothing is dropped.
+    Hero, FAQs, a CTA row, and prose fold into ``feature_sections``.
+    ``quick_facts`` and ``visitor_sites`` come pre-extracted from the doc's
+    tables (via metadata); ``wildlife`` extraction is a later layer.
     """
     warnings: list[str] = []
     m = config.island
     out: dict[str, Any] = {}
     features: list[dict] = []
     used: set[str] = set()
+
+    # Table-derived repeaters (extracted upstream from the doc's tables).
+    if quick_facts and m.get("quick_facts"):
+        qf = m["quick_facts"]
+        out[qf["field"]] = [
+            {qf["label"]: r.get("label", ""), qf["value"]: r.get("value", "")}
+            for r in quick_facts
+        ]
+        used.add("quick_facts")
+    if visitor_sites and m.get("visitor_sites"):
+        out[m["visitor_sites"]["field"]] = [
+            _visitor_row(m["visitor_sites"], r) for r in visitor_sites
+        ]
 
     for comp in components:
         t = comp.type
@@ -270,6 +287,16 @@ def build_acf_island(
     if schema_jsonld and config.top_level.get("schema_jsonld"):
         out[config.top_level["schema_jsonld"]] = schema_jsonld
     return out, warnings
+
+
+def _visitor_row(vs: dict, r: dict) -> dict:
+    row: dict[str, Any] = {}
+    for key in ("site_name", "access_type", "description", "activities", "species_seen", "access"):
+        if vs.get(key):
+            row[vs[key]] = r.get(key, "")
+    if vs.get("image"):
+        row[vs["image"]] = False  # image extraction is a later layer
+    return row
 
 
 def _plain_text(html_str: str) -> str:

@@ -45,6 +45,16 @@ island:
     label: label
     value: value
 
+  visitor_sites:
+    field: visitor_sites
+    site_name: site_name
+    access_type: access_type
+    description: description
+    activities: activities
+    species_seen: species_seen
+    access: access
+    image: image
+
   cta:
     field: cta
     audience: audience

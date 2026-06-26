@@ -51,6 +51,73 @@ def _extract_geo_answer(rows: list[list[str]]) -> str:
     if not m:
         return ""
     return " ".join(m.group(1).split()).strip()
+
+
+# --- structured tables ----------------------------------------------------- #
+def _ncols(rows: list[list[str]]) -> int:
+    return max((len(r) for r in rows), default=0)
+
+
+def _is_visitor_sites_table(rows: list[list[str]]) -> bool:
+    head = " ".join(c.lower() for c in rows[0])
+    return _ncols(rows) >= 3 and ("visitor site" in head or ("site" in head and "access" in head))
+
+
+def _is_quick_facts_table(rows: list[list[str]]) -> bool:
+    """A 2-column label|value reference table (short labels, no prose header)."""
+    if _ncols(rows) != 2 or len(rows) < 3:
+        return False
+    labels = [r[0].strip() for r in rows if len(r) >= 2 and r[0].strip()]
+    return bool(labels) and all(len(label) <= 40 for label in labels)
+
+
+def _infer_access_type(access: str) -> str:
+    a = access.lower()
+    if "cruise" in a:
+        return "Cruise-only"
+    if any(w in a for w in ("walk", "taxi", "bus", "free", "drive", "ferry", "road", "town")):
+        return "Land-based"
+    return ""
+
+
+def _extract_visitor_sites(rows: list[list[str]]) -> list[dict]:
+    header = [c.lower() for c in rows[0]]
+
+    def col(*names: str) -> int | None:
+        for i, h in enumerate(header):
+            if any(n in h for n in names):
+                return i
+        return None
+
+    i_name, i_access = col("site"), col("access")
+    i_wild, i_notes = col("wildlife", "species"), col("note", "description")
+
+    def cell(row: list[str], i: int | None) -> str:
+        return row[i].strip() if i is not None and i < len(row) else ""
+
+    out: list[dict] = []
+    for r in rows[1:]:
+        name = cell(r, i_name)
+        if not name:
+            continue
+        access = cell(r, i_access)
+        out.append({
+            "site_name": name,
+            "access": access,
+            "access_type": _infer_access_type(access),
+            "species_seen": cell(r, i_wild),
+            "description": cell(r, i_notes),
+        })
+    return out
+
+
+def _extract_quick_facts(rows: list[list[str]]) -> list[dict]:
+    start = 1 if {c.lower() for c in rows[0]} & {"fact", "detail", "label", "value", "item"} else 0
+    out: list[dict] = []
+    for r in rows[start:]:
+        if len(r) >= 2 and r[0].strip() and r[1].strip():
+            out.append({"label": r[0].strip(), "value": r[1].strip()})
+    return out
 _KNOWN_META_KEYS = {
     "type",
     "page type",
@@ -205,6 +272,16 @@ def read_docx(path: str | Path) -> Document:
             continue  # the GEO block is scaffolding, not body content
         if _is_instruction_table(rows):
             continue
+        if _is_visitor_sites_table(rows):
+            sites = _extract_visitor_sites(rows)
+            if sites:
+                doc.metadata.setdefault("visitor_sites", []).extend(sites)
+                continue
+        if _is_quick_facts_table(rows):
+            facts = _extract_quick_facts(rows)
+            if facts:
+                doc.metadata.setdefault("quick_facts", []).extend(facts)
+                continue
         target = doc.sections[-1] if doc.sections else current
         target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
 

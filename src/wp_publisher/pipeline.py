@@ -101,6 +101,8 @@ def build_page(
         schema_jsonld=json.dumps(json_ld, ensure_ascii=False, separators=(",", ":")),
         geo_answer=str(doc.metadata.get("geo_answer") or ""),
         author=str(doc.metadata.get("author") or ""),
+        quick_facts=doc.metadata.get("quick_facts") or None,
+        visitor_sites=doc.metadata.get("visitor_sites") or None,
     )
 
     # 6) Status / taxonomies / post type.
