@@ -45,6 +45,7 @@ island:
     label: label
     value: value
 
+  visitor_sites_intro: visitor_sites_intro
   visitor_sites:
     field: visitor_sites
     site_name: site_name
@@ -54,6 +55,8 @@ island:
     species_seen: species_seen
     access: access
     image: image
+    button_label: button_label
+    button_url: button_url
 
   cta:
     field: cta
@@ -63,6 +66,7 @@ island:
     button_label: button_label
     button_url: button_url
 
+  wildlife_intro: wildlife_intro
   wildlife:
     field: wildlife
     common_name: common_name
@@ -70,6 +74,8 @@ island:
     description: description
     where_seen: where_seen
     best_season: best_season
+    button_label: button_label
+    button_url: button_url
 
   travel_information:
     field: travel_information

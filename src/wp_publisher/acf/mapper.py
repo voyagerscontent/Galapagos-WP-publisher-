@@ -42,6 +42,8 @@ def build_acf(
     sources: list | None = None,
     related_links: list | None = None,
     wildlife: list | None = None,
+    wildlife_intro: str = "",
+    visitor_sites_intro: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -51,7 +53,8 @@ def build_acf(
             geo_answer=geo_answer, author=author,
             quick_facts=quick_facts, visitor_sites=visitor_sites,
             cta_blocks=cta_blocks, sources=sources, related_links=related_links,
-            wildlife=wildlife,
+            wildlife=wildlife, wildlife_intro=wildlife_intro,
+            visitor_sites_intro=visitor_sites_intro,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -225,6 +228,8 @@ def build_acf_island(
     sources: list | None = None,
     related_links: list | None = None,
     wildlife: list | None = None,
+    wildlife_intro: str = "",
+    visitor_sites_intro: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
@@ -254,6 +259,10 @@ def build_acf_island(
         ]
     if wildlife and m.get("wildlife"):
         out[m["wildlife"]["field"]] = [_wildlife_row(m["wildlife"], r) for r in wildlife]
+    if wildlife_intro and m.get("wildlife_intro"):
+        out[m["wildlife_intro"]] = md_to_html(wildlife_intro)
+    if visitor_sites_intro and m.get("visitor_sites_intro"):
+        out[m["visitor_sites_intro"]] = md_to_html(visitor_sites_intro)
     # Dual CTA from the doc's CTA table (overrides a single component CTA).
     if cta_blocks and m.get("cta"):
         cf = m["cta"]
@@ -386,6 +395,10 @@ def _wildlife_row(w: dict, r: dict) -> dict:
         row[w["where_seen"]] = r["where_seen"]
     if w.get("best_season") and r.get("best_season"):
         row[w["best_season"]] = r["best_season"]
+    if w.get("button_label") and r.get("button_label"):
+        row[w["button_label"]] = r["button_label"]
+    if w.get("button_url") and r.get("button_url"):
+        row[w["button_url"]] = r["button_url"]
     return row
 
 
@@ -400,6 +413,10 @@ def _visitor_row(vs: dict, r: dict) -> dict:
                 row[vs[key]] = _plain_text(value)
             else:
                 row[vs[key]] = value
+    if vs.get("button_label") and r.get("button_label"):
+        row[vs["button_label"]] = r["button_label"]
+    if vs.get("button_url") and r.get("button_url"):
+        row[vs["button_url"]] = r["button_url"]
     # Image is omitted until we extract one: an ACF image field over REST must be
     # an attachment ID or null, never a boolean.
     return row

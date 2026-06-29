@@ -46,6 +46,8 @@
       },
 
       { "key": "tab_sites", "label": "Visitor Sites", "name": "", "type": "tab" },
+      { "key": "visitor_sites_intro", "label": "Visitor Sites — Intro", "name": "visitor_sites_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
+        "instructions": "Intro/overview for the Visitor Sites section (the H2 lead text)." },
       {
         "key": "visitor_sites", "label": "Visitor Sites", "name": "visitor_sites", "type": "repeater",
         "instructions": "Place-by-place catalog. 'Species Seen' is only a short pointer — the full species profile lives in the Wildlife tab.",
@@ -62,11 +64,15 @@
           { "key": "vs_wildlife", "label": "Species Seen (short list)", "name": "species_seen", "type": "textarea", "rows": 2,
             "instructions": "Short mention only, e.g. 'marine iguanas, sea lions, penguins'. Full profiles go in the Wildlife tab." },
           { "key": "vs_access", "label": "Access Notes", "name": "access", "type": "text" },
-          { "key": "vs_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" }
+          { "key": "vs_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
+          { "key": "vs_btn_label", "label": "Button Label", "name": "button_label", "type": "text" },
+          { "key": "vs_btn_url", "label": "Button URL", "name": "button_url", "type": "url" }
         ]
       },
 
       { "key": "tab_wildlife", "label": "Wildlife", "name": "", "type": "tab" },
+      { "key": "wildlife_intro", "label": "Wildlife — Intro", "name": "wildlife_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
+        "instructions": "Intro/overview for the Wildlife section (the H2 lead text)." },
       {
         "key": "wildlife", "label": "Wildlife Species", "name": "wildlife", "type": "repeater",
         "instructions": "Species profiles (organized by species, not by place).",
@@ -77,7 +83,9 @@
           { "key": "w_desc", "label": "Description", "name": "description", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "w_seen", "label": "Where Seen", "name": "where_seen", "type": "text" },
           { "key": "w_season", "label": "Best Season", "name": "best_season", "type": "text" },
-          { "key": "w_img", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" }
+          { "key": "w_img", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
+          { "key": "w_btn_label", "label": "Button Label", "name": "button_label", "type": "text" },
+          { "key": "w_btn_url", "label": "Button URL", "name": "button_url", "type": "url" }
         ]
       },
 

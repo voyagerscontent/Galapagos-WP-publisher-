@@ -304,34 +304,61 @@ def _is_title_para(para) -> bool:
 _SCI_NAME_RE = re.compile(r"\(([A-ZÁÉÍÓÚ][a-zé]+ [a-z]+)\)")
 
 
-def _extract_wildlife(section: Section) -> list[dict]:
-    """Species from a Wildlife section: each H3 sub-heading + its prose."""
+def _split_off_button(paras: list[str]) -> tuple[list[str], dict | None]:
+    """Pull a trailing '→ Label …/url' button line off a card's prose."""
+    if not paras:
+        return paras, None
+    last = paras[-1].strip()
+    m = re.match(r"(?:→|->)\s*(.+)$", last)
+    if not m:
+        return paras, None
+    rest = m.group(1)
+    link = re.search(r"\[([^\]]+)\]\(([^)\s]+)\)", rest)  # markdown link from [INTERNAL LINK]
+    if link:
+        label = rest[: link.start()].strip() or link.group(1)
+        return paras[:-1], {"label": label.strip(), "url": link.group(2)}
+    arrow = re.search(r"(.+?)\s*(?:→|->)\s*(\S+)$", rest)
+    if arrow and arrow.group(2).startswith(("/", "http")):
+        return paras[:-1], {"label": arrow.group(1).strip(), "url": arrow.group(2)}
+    return paras, None
+
+
+def _extract_wildlife(section: Section) -> tuple[str, list[dict]]:
+    """Wildlife section -> (intro prose, species list).
+
+    The H2 lead text (before the first H3) is the intro; each H3 sub-heading +
+    its prose is a species, with an optional trailing '→' button.
+    """
+    intro: list[str] = []
     species: list[dict] = []
     name: str | None = None
     desc: list[str] = []
 
     def make(nm: str, paras: list[str]) -> dict:
+        paras, button = _split_off_button(paras)
         text = "\n\n".join(paras).strip()
         sci = _SCI_NAME_RE.search(text)
-        common = re.split(r"\s+[—–-]\s+", nm, maxsplit=1)[0].strip()
-        return {
-            "common_name": common,
+        row = {
+            "common_name": re.split(r"\s+[—–-]\s+", nm, maxsplit=1)[0].strip(),
             "scientific_name": sci.group(1) if sci else "",
             "description": text,
         }
+        if button:
+            row["button_label"] = button["label"]
+            row["button_url"] = button["url"]
+        return row
 
     for b in section.blocks:
         if b.type == BlockType.HEADING:
             if name and desc:
                 species.append(make(name, desc))
             name, desc = b.text, []
-        elif b.text:
-            desc.append(b.text)
-        elif b.items:
-            desc.append("\n".join(b.items))
+        elif b.text or b.items:
+            chunk = "\n".join(b.items) if b.items else b.text
+            (desc if name else intro).append(chunk)
     if name and desc:
         species.append(make(name, desc))
-    return species
+    return "\n\n".join(intro).strip(), species
 _KNOWN_META_KEYS = {
     "type",
     "page type",
@@ -538,10 +565,12 @@ def read_docx(path: str | Path) -> Document:
                 doc.metadata["related_links"] = related
             break
 
-    # A "Wildlife" section with H3 species sub-headings -> species profiles.
+    # A "Wildlife" section with H3 species sub-headings -> intro + species.
     for s in doc.sections:
         if s.slug.startswith("wildlife") or s.title.lower().startswith("wildlife"):
-            wildlife = _extract_wildlife(s)
+            intro, wildlife = _extract_wildlife(s)
+            if intro:
+                doc.metadata["wildlife_intro"] = intro
             if wildlife:
                 doc.metadata["wildlife"] = wildlife
             break
