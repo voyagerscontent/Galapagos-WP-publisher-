@@ -376,7 +376,7 @@ def _travel_field(heading: str) -> str | None:
 
 def _should_skip_feature(heading: str) -> bool:
     h = heading.strip().lower()
-    if h.startswith("wildlife"):  # the species list -> the wildlife repeater
+    if h.startswith(("wildlife", "visitor sites")):  # -> their dedicated repeaters
         return True
     if "at a glance" in h or "quick facts" in h:  # -> the quick facts tab
         return True
@@ -428,7 +428,7 @@ def _visitor_row(vs: dict, r: dict) -> dict:
         if vs.get(key):
             value = r.get(key, "")
             if key in _VISITOR_RICH:
-                row[vs[key]] = inline_md(value)
+                row[vs[key]] = md_to_html(value)  # WYSIWYG: paragraphs + links
             elif key in _VISITOR_PLAIN:
                 row[vs[key]] = _plain_text(value)
             else:

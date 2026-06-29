@@ -30,14 +30,19 @@ def _clean_byline(text: str) -> str:
 
 def _is_instruction_table(rows: list[list[str]]) -> bool:
     """Internal-instruction / explainer tables (green boxes) are not content."""
-    head = " ".join(rows[0]).lower() if rows else ""
+    head = " ".join(rows[0]).strip() if rows else ""
+    low = head.lower()
     return (
-        "internal instruction" in head
-        or "what this is" in head
-        or head.startswith("this green box")
-        or "verify items" in head
-        or "requires editorial review" in head
-        or "version footer" in head
+        head.startswith(("⚠", "▶", "■"))
+        or "internal instruction" in low
+        or "what this is" in low
+        or low.startswith("this green box")
+        or "publisher header" in low
+        or "access note" in low
+        or "verify items" in low
+        or "verify —" in low or "verify -" in low
+        or "requires editorial review" in low
+        or "version footer" in low
     )
 
 
@@ -62,20 +67,57 @@ def _extract_sources_table(rows: list[list[str]]) -> list[dict]:
     return out
 
 
-_GEO_ANSWER_RE = re.compile(
-    r"(?:PUBLISH THIS ANSWER TEXT[^:]*:|answer extraction[^\n]*|Quick Answer:?)"
-    r"\s*\n?\s*(.+?)(?:\n\s*\n|WHAT THIS\b|WHY THIS\b|HOW \b|\Z)",
-    re.IGNORECASE | re.DOTALL,
+# A GEO/AIO answer block, in any of its house variants. The answer is the prose
+# AFTER the marker line ("AIO / GEO BLOCK …", "PUBLISH THIS ANSWER TEXT:", etc.).
+_GEO_MARKER_RE = re.compile(
+    r"(AIO\b|GEO\s+(?:BLOCK|ANSWER)|PUBLISH THIS ANSWER TEXT|answer extraction|Quick Answer)",
+    re.IGNORECASE,
 )
+_PUBLISH_ANSWER_RE = re.compile(r"PUBLISH(?:ABLE)?[^\n:]*ANSWER[^\n:]*:\s*", re.IGNORECASE)
+_GEO_STOP_RE = re.compile(r"^(PLACE UNDER|PUBLISH URL|SLUG\b|■|⚠|⬛|VERSION)", re.IGNORECASE)
+_GEO_EXPLAINER_RE = re.compile(r"^(WHAT THIS|WHY THIS|HOW \b|HOW THIS)", re.IGNORECASE)
 
 
 def _extract_geo_answer(rows: list[list[str]]) -> str:
-    """Pull the publishable ~50-word GEO/AI answer out of a GEO block table."""
-    text = "\n".join(cell for row in rows for cell in row if cell)
-    m = _GEO_ANSWER_RE.search(text)
-    if not m:
+    """Pull the publishable ~50-word GEO/AI answer out of a GEO block table.
+
+    Handles two house styles: an explicit 'PUBLISH THIS ANSWER TEXT:' marker
+    (answer follows it), or an 'AIO / GEO …' header whose answer is the first
+    prose after the marker line (skipping any 'WHAT THIS IS' explainer).
+    """
+    text = "\n".join(cell for row in rows for cell in row if cell).strip()
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+
+    # Case 1: explicit publishable-answer marker.
+    for idx, line in enumerate(lines):
+        if _PUBLISH_ANSWER_RE.search(line):
+            rest = _PUBLISH_ANSWER_RE.sub("", line).strip()
+            collected = [rest] if rest else []
+            for nxt in lines[idx + 1:]:
+                if _GEO_STOP_RE.match(nxt):
+                    break
+                collected.append(nxt)
+            ans = " ".join(" ".join(collected).split()).strip()
+            if ans:
+                return ans
+
+    # Case 2: AIO / GEO header, answer is the first prose after the marker.
+    if not _GEO_MARKER_RE.search(text[:160]):
         return ""
-    return " ".join(m.group(1).split()).strip()
+    out: list[str] = []
+    started = False
+    for line in lines:
+        if not started:
+            started = bool(_GEO_MARKER_RE.search(line))
+            continue
+        if _GEO_STOP_RE.match(line):
+            break
+        if _GEO_EXPLAINER_RE.match(line):
+            if out:
+                break
+            continue  # skip explainer text before the answer
+        out.append(line)
+    return " ".join(" ".join(out).split()).strip()
 
 
 # --- structured tables ----------------------------------------------------- #
@@ -177,9 +219,71 @@ def _clean_markers(text: str) -> str:
     return _INTERNAL_LINK_RE.sub(r"[\1](\2)", text)
 
 
+_CTA_SIGNALS = (
+    "cta button:", "call to action", "dual cta block", "with a specialist",
+    "book with voyagers", "direct travelers — book", "direct travellers — book",
+    "voyagers travel company", "latin trails", "planning your galápagos",
+    "planning your galapagos", "independent travellers", "independent travelers",
+)
+
+
 def _is_cta_table(rows: list[list[str]]) -> bool:
     text = " ".join(c for row in rows for c in row).lower()
-    return "cta button:" in text or "call to action" in text or "with a specialist" in text
+    return any(sig in text for sig in _CTA_SIGNALS)
+
+
+_TRADE_MARK_RE = re.compile(
+    r"latin trails|dmc|trade use|travel agent|tour operator|wholesal|"
+    r"industry partner|group program|travel trade",
+    re.IGNORECASE,
+)
+_AUD_SPLIT_RE = re.compile(
+    r"(INDEPENDENT TRAVELLERS?|DIRECT TRAVEL\w*|TRAVEL AGENTS?[^\n:]*|"
+    r"TRAVEL TRADE|TRADE (?:&|AND)[^\n:]*)\s*:",
+    re.IGNORECASE,
+)
+_FIELD_PREFIX_RE = re.compile(r"^(website|email|web|tel|phone|button)\s*:\s*", re.IGNORECASE)
+
+
+def _cta_audience(text: str) -> str:
+    return "Travel trade" if _TRADE_MARK_RE.search(text) else "Direct travelers"
+
+
+def _split_audience_segments(cell: str) -> list[str]:
+    marks = list(_AUD_SPLIT_RE.finditer(cell))
+    if len(marks) < 2:
+        return []
+    return [
+        cell[m.start(): (marks[i + 1].start() if i + 1 < len(marks) else len(cell))].strip()
+        for i, m in enumerate(marks)
+    ]
+
+
+def _cta_from_text(cell: str) -> dict:
+    btn = _CTA_BUTTON_RE.search(cell)
+    cell_wo = _CTA_BUTTON_RE.sub("", cell)
+    lines = [ln.strip() for ln in cell_wo.split("\n") if ln.strip()]
+    title = lines[0] if lines else ""
+    url = btn.group(2).strip() if btn else ""
+    body: list[str] = []
+    for ln in lines[1:]:
+        if not url:
+            m = _URL_RE.search(ln)
+            if m:
+                url = m.group(0).rstrip(".,);")
+        if _FIELD_PREFIX_RE.match(ln):
+            continue  # drop "Website:/Email:" label lines from body
+        body.append(ln)
+    block = {
+        "audience": _cta_audience(cell),
+        "title": title,
+        "text": " ".join(" ".join(body).split()),
+    }
+    if btn:
+        block["button_label"] = btn.group(1).strip().rstrip("→ ").strip()
+    if url:
+        block["button_url"] = url
+    return block
 
 
 # "CALL TO ACTION … CTA 1 — <audience>: Headline: … Body: … Button: label → url".
@@ -214,6 +318,7 @@ def _parse_cta_instruction(cell: str) -> list[dict]:
 
 
 def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
+    """Parse the two formal CTAs (Voyagers + Latin Trails) across house formats."""
     out: list[dict] = []
     for row in rows:
         for cell in row:
@@ -221,27 +326,19 @@ def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
             if not cell:
                 continue
             if re.search(r"call to action|CTA\s*\d+\s*[—–-]", cell, re.IGNORECASE):
-                out.extend(_parse_cta_instruction(cell))
+                out.extend(_parse_cta_instruction(cell))  # "CTA 1 — …: Headline/Body"
                 continue
-            buttons = _CTA_BUTTON_RE.findall(cell)
-            body = _CTA_BUTTON_RE.sub("", cell)  # strip the button directive line
-            lines = [ln.strip() for ln in body.split("\n") if ln.strip()]
-            title = lines[0] if lines else ""
-            text = " ".join(" ".join(lines[1:]).split())
-            block = {
-                "audience": "Travel trade" if _TRADE_RE.search(cell) else "Direct travelers",
-                "title": title,
-                "text": text,
-            }
-            if buttons:
-                label, url = buttons[0]
-                block["button_label"] = label.strip().rstrip("→ ").strip()
-                block["button_url"] = url.strip()
-            out.append(block)
+            segments = _split_audience_segments(cell)  # "INDEPENDENT…:" / "TRADE…:"
+            if len(segments) >= 2:
+                out.extend(_cta_from_text(seg) for seg in segments)
+                continue
+            out.append(_cta_from_text(cell))  # one contact/CTA block per cell
     return out
 
 
 def _extract_sources(section: Section) -> list[dict]:
+    """Citations -> [{label, url}]. Requires a URL; supports one-line
+    ('Label — desc. URL') and multi-line ('1. Label' / 'URL' / 'desc') styles."""
     out: list[dict] = []
     lines: list[str] = []
     for b in section.blocks:
@@ -249,12 +346,17 @@ def _extract_sources(section: Section) -> list[dict]:
             lines.extend(b.items)
         elif b.text:
             lines.append(b.text)
+    pending = ""
     for line in lines:
         m = _URL_RE.search(line)
-        url = m.group(0).rstrip(".,);") if m else ""
-        label = (line[: m.start()] if m else line).strip().rstrip("—–-. ").strip()
-        if label or url:
-            out.append({"label": label, "url": url})
+        if not m:
+            pending = line.strip()  # a label line for a following URL
+            continue
+        url = m.group(0).rstrip(".,);")
+        label = (line[: m.start()]).strip().rstrip("—–-.) ").strip() or pending
+        label = re.sub(r"^\d+[.)]\s*", "", label).strip()  # drop list numbering
+        out.append({"label": label, "url": url})
+        pending = ""
     return out
 
 
@@ -321,6 +423,45 @@ def _split_off_button(paras: list[str]) -> tuple[list[str], dict | None]:
     if arrow and arrow.group(2).startswith(("/", "http")):
         return paras[:-1], {"label": arrow.group(1).strip(), "url": arrow.group(2)}
     return paras, None
+
+
+def _extract_cards(section: Section) -> tuple[str, list[tuple[str, list[str]]]]:
+    """Split a prose section into (intro, [(h3_heading, paragraphs), …])."""
+    intro: list[str] = []
+    cards: list[tuple[str, list[str]]] = []
+    name: str | None = None
+    desc: list[str] = []
+    for b in section.blocks:
+        if b.type == BlockType.HEADING:
+            if name is not None:
+                cards.append((name, desc))
+            name, desc = b.text, []
+        elif b.text or b.items:
+            chunk = "\n".join(b.items) if b.items else b.text
+            (desc if name is not None else intro).append(chunk)
+    if name is not None:
+        cards.append((name, desc))
+    return "\n\n".join(intro).strip(), cards
+
+
+def _extract_visitor_sites_prose(section: Section) -> list[dict]:
+    """Visitor sites written as H3 sub-headings + prose (not a table)."""
+    tl = section.title.lower()
+    access = "Cruise-only" if "cruise" in tl else ("Land-based" if "land" in tl else "")
+    _intro, cards = _extract_cards(section)
+    out: list[dict] = []
+    for name, paras in cards:
+        paras, button = _split_off_button(paras)
+        row = {
+            "site_name": name.strip(),
+            "description": "\n\n".join(paras).strip(),
+            "access_type": access,
+        }
+        if button:
+            row["button_label"] = button["label"]
+            row["button_url"] = button["url"]
+        out.append(row)
+    return out
 
 
 def _extract_wildlife(section: Section) -> tuple[str, list[dict]]:
@@ -550,12 +691,14 @@ def read_docx(path: str | Path) -> Document:
         target = doc.sections[-1] if doc.sections else current
         target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
 
-    # Citations / sources section -> structured metadata.
-    sources_section = doc.find_section("sources")
-    if sources_section is not None:
-        sources = _extract_sources(sources_section)
-        if sources:
-            doc.metadata["sources"] = sources
+    # Citations / sources section -> structured metadata ('sources',
+    # 'sources-citations', 'sources & citations'…).
+    for s in doc.sections:
+        if s.slug.startswith("sources") or s.title.lower().startswith("sources"):
+            srcs = _extract_sources(s)
+            if srcs:
+                doc.metadata.setdefault("sources", []).extend(srcs)
+            break
 
     # "Explore More" footer -> related internal links.
     for s in doc.sections:
@@ -590,11 +733,16 @@ def read_docx(path: str | Path) -> Document:
                 doc.metadata["wildlife"] = wildlife
             break
 
-    # A "Visitor Sites" section heading -> the visitor-sites title.
+    # "Visitor Sites" sections -> the title + prose-based sites (H3 sub-headings).
+    # (A table-based extraction may already have filled visitor_sites upstream.)
     for s in doc.sections:
         if s.slug.startswith("visitor-sites") or s.title.lower().startswith("visitor sites"):
-            doc.metadata["visitor_sites_title"] = s.title
-            break
+            doc.metadata.setdefault(
+                "visitor_sites_title", re.split(r"\s+[—–-]\s+", s.title, maxsplit=1)[0].strip()
+            )
+            prose_sites = _extract_visitor_sites_prose(s)
+            if prose_sites:
+                doc.metadata.setdefault("visitor_sites", []).extend(prose_sites)
 
     if verify_warnings:
         doc.metadata["_ingest_warnings"] = [
