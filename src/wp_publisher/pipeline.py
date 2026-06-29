@@ -112,6 +112,8 @@ def build_page(
         visitor_sites_intro=str(doc.metadata.get("visitor_sites_intro") or ""),
         quick_facts_title=str(doc.metadata.get("quick_facts_title") or ""),
         quick_facts_intro=str(doc.metadata.get("quick_facts_intro") or ""),
+        wildlife_title=str(doc.metadata.get("wildlife_title") or ""),
+        visitor_sites_title=str(doc.metadata.get("visitor_sites_title") or ""),
     )
     # Make domainless links absolute (e.g. /cruises/ -> https://site/cruises/).
     # Links that already carry a domain are left untouched.

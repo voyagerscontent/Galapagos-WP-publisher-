@@ -46,6 +46,8 @@ def build_acf(
     visitor_sites_intro: str = "",
     quick_facts_title: str = "",
     quick_facts_intro: str = "",
+    wildlife_title: str = "",
+    visitor_sites_title: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -58,6 +60,7 @@ def build_acf(
             wildlife=wildlife, wildlife_intro=wildlife_intro,
             visitor_sites_intro=visitor_sites_intro,
             quick_facts_title=quick_facts_title, quick_facts_intro=quick_facts_intro,
+            wildlife_title=wildlife_title, visitor_sites_title=visitor_sites_title,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -235,6 +238,8 @@ def build_acf_island(
     visitor_sites_intro: str = "",
     quick_facts_title: str = "",
     quick_facts_intro: str = "",
+    wildlife_title: str = "",
+    visitor_sites_title: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
@@ -264,8 +269,12 @@ def build_acf_island(
         ]
     if wildlife and m.get("wildlife"):
         out[m["wildlife"]["field"]] = [_wildlife_row(m["wildlife"], r) for r in wildlife]
+    if wildlife_title and m.get("wildlife_title"):
+        out[m["wildlife_title"]] = wildlife_title
     if wildlife_intro and m.get("wildlife_intro"):
         out[m["wildlife_intro"]] = md_to_html(wildlife_intro)
+    if visitor_sites_title and m.get("visitor_sites_title"):
+        out[m["visitor_sites_title"]] = visitor_sites_title
     if visitor_sites_intro and m.get("visitor_sites_intro"):
         out[m["visitor_sites_intro"]] = md_to_html(visitor_sites_intro)
     if quick_facts_title and m.get("quick_facts_title"):

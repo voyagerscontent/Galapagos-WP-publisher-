@@ -579,14 +579,21 @@ def read_docx(path: str | Path) -> Document:
                 doc.metadata["quick_facts_intro"] = intro
             break
 
-    # A "Wildlife" section with H3 species sub-headings -> intro + species.
+    # A "Wildlife" section with H3 species sub-headings -> title + intro + species.
     for s in doc.sections:
         if s.slug.startswith("wildlife") or s.title.lower().startswith("wildlife"):
+            doc.metadata["wildlife_title"] = s.title
             intro, wildlife = _extract_wildlife(s)
             if intro:
                 doc.metadata["wildlife_intro"] = intro
             if wildlife:
                 doc.metadata["wildlife"] = wildlife
+            break
+
+    # A "Visitor Sites" section heading -> the visitor-sites title.
+    for s in doc.sections:
+        if s.slug.startswith("visitor-sites") or s.title.lower().startswith("visitor sites"):
+            doc.metadata["visitor_sites_title"] = s.title
             break
 
     if verify_warnings:

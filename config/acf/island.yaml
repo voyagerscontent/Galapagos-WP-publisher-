@@ -47,6 +47,7 @@ island:
     label: label
     value: value
 
+  visitor_sites_title: visitor_sites_title
   visitor_sites_intro: visitor_sites_intro
   visitor_sites:
     field: visitor_sites
@@ -68,6 +69,7 @@ island:
     button_label: button_label
     button_url: button_url
 
+  wildlife_title: wildlife_title
   wildlife_intro: wildlife_intro
   wildlife:
     field: wildlife
