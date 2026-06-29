@@ -45,7 +45,9 @@
           { "key": "hl_subtitle", "label": "Subtitle", "name": "subtitle", "type": "text" },
           { "key": "hl_content", "label": "Content", "name": "content", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "hl_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
-          { "key": "hl_alt", "label": "Image Alt", "name": "image_alt", "type": "text" }
+          { "key": "hl_alt", "label": "Image Alt", "name": "image_alt", "type": "text" },
+          { "key": "hl_btn_label", "label": "Button Label", "name": "button_label", "type": "text" },
+          { "key": "hl_btn_url", "label": "Button URL", "name": "button_url", "type": "url" }
         ]
       },
 

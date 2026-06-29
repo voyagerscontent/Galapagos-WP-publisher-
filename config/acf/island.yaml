@@ -34,6 +34,8 @@ island:
     title: title
     subtitle: subtitle
     content: content
+    button_label: button_label
+    button_url: button_url
 
   faqs:
     field: faqs

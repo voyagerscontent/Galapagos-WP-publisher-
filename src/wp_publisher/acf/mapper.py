@@ -330,8 +330,10 @@ def build_acf_island(
                 continue
             if _should_skip_feature(heading):
                 continue  # sources / related-links footer -> dedicated fields
+            body, btn_label, btn_url = _split_feature_button(d.get("content", ""))
             features.append(_feature_row(m["feature_sections"], title=heading,
-                                         content=d.get("content", "")))
+                                         content=body, button_label=btn_label,
+                                         button_url=btn_url))
         elif m.get("feature_sections"):
             chunk = _component_body_html(comp)
             if chunk:
@@ -359,7 +361,7 @@ def build_acf_island(
 
 # Section headings handled by dedicated fields, not folded into feature_sections.
 _FEATURE_SKIP_HEADINGS = {"sources", "sources & citations", "sources and citations", "citations"}
-_SKIP_CONTAINS = ("explore more", "seo footer")
+_SKIP_CONTAINS = ("explore more", "seo footer", "version footer")
 _TRAVEL_RULES = [
     ("getting_there", re.compile(r"getting (to|there)|how to get|how to reach|arriv", re.I)),
     ("best_time", re.compile(r"best time|when to (visit|go)|best season", re.I)),
@@ -454,7 +456,15 @@ def _plain_text(html_str: str) -> str:
     return " ".join(html.unescape(text).split()).strip()
 
 
-def _feature_row(fs: dict, *, title: str = "", content: str = "", subtitle: str = "") -> dict:
+def _feature_row(
+    fs: dict,
+    *,
+    title: str = "",
+    content: str = "",
+    subtitle: str = "",
+    button_label: str = "",
+    button_url: str = "",
+) -> dict:
     row: dict[str, Any] = {}
     if fs.get("title"):
         row[fs["title"]] = title
@@ -462,7 +472,46 @@ def _feature_row(fs: dict, *, title: str = "", content: str = "", subtitle: str 
         row[fs["subtitle"]] = subtitle
     if fs.get("content"):
         row[fs["content"]] = content
+    if fs.get("button_label") and button_label:
+        row[fs["button_label"]] = button_label
+    if fs.get("button_url") and button_url:
+        row[fs["button_url"]] = button_url
     return row
+
+
+# A trailing "→ Label /url" paragraph at the end of a feature section is its
+# call-to-action button (button_label / button_url), not body copy. No current
+# island doc emits one, but the Española-style "→ Explore X" card uses it.
+_FEATURE_BTN_RE = re.compile(r"<p>\s*(?:→|&rarr;|&#8594;)\s*(.*?)</p>\s*$", re.I | re.S)
+_HTML_LINK_RE = re.compile(r'<a\s[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.I | re.S)
+
+
+def _split_feature_button(content: str) -> tuple[str, str, str]:
+    """Pull a trailing '→ Label /url' CTA paragraph out of feature HTML.
+
+    Returns ``(content_without_button, button_label, button_url)``. When the
+    content has no such trailing paragraph (or no usable target) it comes back
+    unchanged with empty label/url so the text stays in the body.
+    """
+    if not content:
+        return content, "", ""
+    m = _FEATURE_BTN_RE.search(content)
+    if not m:
+        return content, "", ""
+    inner = m.group(1).strip()
+    link = _HTML_LINK_RE.search(inner)
+    if link:
+        url, label = link.group(1).strip(), _plain_text(link.group(2))
+    else:
+        text = _plain_text(inner)
+        head, _, tail = text.rpartition(" ")
+        if head and re.match(r"^(/|https?:|mailto:)", tail):
+            label, url = head.strip(), tail.strip()
+        else:
+            label, url = text, ""
+    if not url:
+        return content, "", ""  # no link target -> leave it in the body
+    return content[: m.start()].rstrip(), label, url
 
 
 def _cta_row(cf: dict, d: dict) -> dict:
