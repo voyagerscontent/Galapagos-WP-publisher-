@@ -565,6 +565,20 @@ def read_docx(path: str | Path) -> Document:
                 doc.metadata["related_links"] = related
             break
 
+    # "At a Glance" / "Quick Facts" section -> the quick-facts heading + intro.
+    for s in doc.sections:
+        tl = s.title.lower()
+        if "at a glance" in tl or "quick facts" in tl or "glance" in s.slug:
+            doc.metadata["quick_facts_title"] = s.title
+            intro = "\n\n".join(
+                ("\n".join(b.items) if b.items else b.text)
+                for b in s.blocks
+                if b.type in (BlockType.PARAGRAPH, BlockType.LIST) and (b.text or b.items)
+            ).strip()
+            if intro:
+                doc.metadata["quick_facts_intro"] = intro
+            break
+
     # A "Wildlife" section with H3 species sub-headings -> intro + species.
     for s in doc.sections:
         if s.slug.startswith("wildlife") or s.title.lower().startswith("wildlife"):

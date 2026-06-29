@@ -21,6 +21,10 @@
       },
 
       { "key": "tab_facts", "label": "Quick Facts", "name": "", "type": "tab" },
+      { "key": "quick_facts_title", "label": "Quick Facts — Title", "name": "quick_facts_title", "type": "text",
+        "instructions": "Section heading, e.g. 'At a Glance' / 'The Island at a Glance'." },
+      { "key": "quick_facts_intro", "label": "Quick Facts — Intro", "name": "quick_facts_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
+        "instructions": "Optional lead text under the heading (if the doc has any)." },
       {
         "key": "quick_facts", "label": "Quick Facts", "name": "quick_facts", "type": "repeater",
         "instructions": "Display data only (Location, Area, Main town, Access…). Keep SEO meta out of here.",

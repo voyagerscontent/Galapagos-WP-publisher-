@@ -44,6 +44,8 @@ def build_acf(
     wildlife: list | None = None,
     wildlife_intro: str = "",
     visitor_sites_intro: str = "",
+    quick_facts_title: str = "",
+    quick_facts_intro: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -55,6 +57,7 @@ def build_acf(
             cta_blocks=cta_blocks, sources=sources, related_links=related_links,
             wildlife=wildlife, wildlife_intro=wildlife_intro,
             visitor_sites_intro=visitor_sites_intro,
+            quick_facts_title=quick_facts_title, quick_facts_intro=quick_facts_intro,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -230,6 +233,8 @@ def build_acf_island(
     wildlife: list | None = None,
     wildlife_intro: str = "",
     visitor_sites_intro: str = "",
+    quick_facts_title: str = "",
+    quick_facts_intro: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
@@ -263,6 +268,10 @@ def build_acf_island(
         out[m["wildlife_intro"]] = md_to_html(wildlife_intro)
     if visitor_sites_intro and m.get("visitor_sites_intro"):
         out[m["visitor_sites_intro"]] = md_to_html(visitor_sites_intro)
+    if quick_facts_title and m.get("quick_facts_title"):
+        out[m["quick_facts_title"]] = quick_facts_title
+    if quick_facts_intro and m.get("quick_facts_intro"):
+        out[m["quick_facts_intro"]] = md_to_html(quick_facts_intro)
     # Dual CTA from the doc's CTA table (overrides a single component CTA).
     if cta_blocks and m.get("cta"):
         cf = m["cta"]
@@ -359,6 +368,8 @@ def _travel_field(heading: str) -> str | None:
 def _should_skip_feature(heading: str) -> bool:
     h = heading.strip().lower()
     if h.startswith("wildlife"):  # the species list -> the wildlife repeater
+        return True
+    if "at a glance" in h or "quick facts" in h:  # -> the quick facts tab
         return True
     return h in _FEATURE_SKIP_HEADINGS or any(s in h for s in _SKIP_CONTAINS)
 

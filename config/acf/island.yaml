@@ -40,6 +40,8 @@ island:
     question: question
     answer: answer
 
+  quick_facts_title: quick_facts_title
+  quick_facts_intro: quick_facts_intro
   quick_facts:
     field: quick_facts
     label: label
