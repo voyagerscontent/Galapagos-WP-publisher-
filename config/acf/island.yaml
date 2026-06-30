@@ -87,9 +87,15 @@ island:
     field: travel_information
     getting_there_title: getting_there_title
     getting_there: getting_there
+    getting_there_button_label: getting_there_button_label
+    getting_there_button_url: getting_there_button_url
     stay_visit_title: stay_visit_title
     best_time: best_time
+    best_time_button_label: best_time_button_label
+    best_time_button_url: best_time_button_url
     accommodation: accommodation
+    accommodation_button_label: accommodation_button_label
+    accommodation_button_url: accommodation_button_url
 
   sources:
     field: sources

@@ -439,7 +439,34 @@ def _route_travel(heading: str, content: str) -> dict | None:
     title_field = _TRAVEL_TITLE_FIELD.get(field)
     if title_field and heading:
         out[title_field] = heading
+    # A trailing standalone link in each block (e.g. "→ /planning/best-time/")
+    # becomes that block's button, not an inline <a> at the foot of the prose.
+    for f in ("getting_there", "best_time", "accommodation"):
+        if out.get(f):
+            body, label, url = _split_trailing_link(out[f])
+            if url:
+                out[f] = body
+                out[f + "_button_label"] = label
+                out[f + "_button_url"] = url
     return out
+
+
+# A trailing paragraph that is ONLY a link (arrow optional) — the internal-link
+# notation after _clean_markers/md_to_html renders as <p><a href>label</a></p>.
+_TRAILING_LINK_RE = re.compile(
+    r'<p>\s*(?:→|&rarr;|&#8594;)?\s*<a\s[^>]*href="([^"]+)"[^>]*>(.*?)</a>\s*</p>\s*$',
+    re.I | re.S,
+)
+
+
+def _split_trailing_link(html: str) -> tuple[str, str, str]:
+    """Pull a trailing pure-link paragraph off HTML -> (html_without, label, url)."""
+    if not html:
+        return html, "", ""
+    m = _TRAILING_LINK_RE.search(html)
+    if not m:
+        return html, "", ""
+    return html[: m.start()].rstrip(), _plain_text(m.group(2)), m.group(1).strip()
 
 
 def _should_skip_feature(heading: str) -> bool:
