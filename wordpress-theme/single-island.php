@@ -163,7 +163,7 @@ while (have_posts()) :
       display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(60,40,25,.05)}
     .isl .dark-card{background:#fbf6f1;border-color:#caa988}
     .isl .band.brown .card,.isl .band.brown .dark-card{color:var(--ink)}
-    .isl .band.brown .card a,.isl .band.brown .dark-card a{color:var(--brown)}
+    .isl .band.brown .card a:not(.btn),.isl .band.brown .dark-card a:not(.btn){color:var(--brown)}
     .isl .card-body{padding:20px 22px;display:flex;flex-direction:column;gap:10px}
     .isl .card h3{font-size:20px;font-style:italic;color:var(--brown);margin:0}
     .isl .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -183,6 +183,8 @@ while (have_posts()) :
     .isl .ph{background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 12px,#dccdbb 12px,#dccdbb 24px);
       display:flex;align-items:center;justify-content:center;color:#8a7058;font-size:13px}
     .isl .isl-img{width:100%;object-fit:cover;display:block}
+    .isl .ti-meta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:0 auto 24px}
+    .isl .ti-meta span{background:var(--card);border:1px solid var(--card-border);border-radius:30px;padding:8px 18px;font-size:14px}
     .isl .ti{display:flex;flex-direction:column;gap:22px;max-width:820px;margin:0 auto}
     .isl .ti-block{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:24px 28px}
     .isl .ti-block h3{margin:0 0 10px;color:var(--brown);font-size:22px;font-style:italic}
@@ -308,7 +310,9 @@ while (have_posts()) :
                             <?php if ($at) : ?><span class="badge <?php echo esc_attr($bcls); ?>"><?php echo esc_html($at); ?></span><?php endif; ?>
                         </div>
                         <div class="rt"><?php echo wp_kses_post($v['description'] ?? ''); ?></div>
+                        <?php if (!empty($v['activities'])) : ?><p class="kv"><b><?php esc_html_e('Activities:', 'island'); ?></b> <?php echo esc_html($v['activities']); ?></p><?php endif; ?>
                         <?php if (!empty($v['species_seen'])) : ?><p class="kv"><b><?php esc_html_e('Species:', 'island'); ?></b> <?php echo esc_html($v['species_seen']); ?></p><?php endif; ?>
+                        <?php if (!empty($v['access'])) : ?><p class="kv"><b><?php esc_html_e('Access:', 'island'); ?></b> <?php echo esc_html($v['access']); ?></p><?php endif; ?>
                         <?php echo island_btn($v['button_label'] ?? '', $v['button_url'] ?? '', true); ?>
                     </div>
                 </article>
@@ -325,11 +329,20 @@ while (have_posts()) :
                 [$travel['stay_visit_title'] ?? 'Best Time to Visit', $travel['best_time'] ?? '', $travel['best_time_button_label'] ?? '', $travel['best_time_button_url'] ?? ''],
                 [__('Where to Stay', 'island'), $travel['accommodation'] ?? '', $travel['accommodation_button_label'] ?? '', $travel['accommodation_button_url'] ?? ''],
             ];
+            $notes = $travel['travel_notes'] ?? '';
+            $dur   = $travel['recommended_duration'] ?? '';
+            $diff  = $travel['difficulty'] ?? '';
             $has = array_filter($ti_blocks, fn($b) => trim((string) $b[1]) !== '');
-            if ($has) :
+            if ($has || $notes) :
         ?>
         <section class="band sand"><div class="wrap">
             <?php echo island_head(__('Travel Information', 'island'), __('Getting there, when to go, and where to stay', 'island')); ?>
+            <?php if ($dur || $diff) : ?>
+            <div class="ti-meta">
+                <?php if ($dur) : ?><span><b><?php esc_html_e('Recommended stay:', 'island'); ?></b> <?php echo esc_html($dur); ?></span><?php endif; ?>
+                <?php if ($diff) : ?><span><b><?php esc_html_e('Difficulty:', 'island'); ?></b> <?php echo esc_html($diff); ?></span><?php endif; ?>
+            </div>
+            <?php endif; ?>
             <div class="ti">
             <?php foreach ($ti_blocks as [$t, $c, $bl, $bu]) :
                 if (trim((string) $c) === '') { continue; } ?>
@@ -339,6 +352,9 @@ while (have_posts()) :
                     <?php echo island_btn($bl, $bu); ?>
                 </div>
             <?php endforeach; ?>
+            <?php if ($notes) : ?>
+                <div class="ti-block"><h3><?php esc_html_e('Good to Know', 'island'); ?></h3><div class="rt"><?php echo wp_kses_post($notes); ?></div></div>
+            <?php endif; ?>
             </div>
         </div></section>
         <?php endif; endif; ?>
