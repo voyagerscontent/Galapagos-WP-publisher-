@@ -192,7 +192,11 @@ _TRADE_RE = re.compile(r"\b(trade|latin trails|dmc|wholesaler|agent|group progra
 _CTA_BUTTON_RE = re.compile(r'CTA button:\s*"(.+?)"\s*(?:→|->)\s*(\S+)', re.IGNORECASE)
 # Visible text inside a paragraph, INCLUDING content controls (w:sdt) and
 # hyperlinks, which python-docx's `.text` silently drops.
-_WT = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"
+_W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+_WT = _W_NS + "t"
+_WBR = _W_NS + "br"  # soft line break (Shift+Enter)
+_WCR = _W_NS + "cr"  # carriage return
+_WTAB = _W_NS + "tab"
 _INTERNAL_LINK_RE = re.compile(r"\[INTERNAL LINK:\s*(.+?)\s*(?:→|->)\s*([^\]\s]+)\s*\]")
 # "⬛ WEBMASTER DESIGN NOTE: …" styling instructions — never published, even when
 # appended inline to a real paragraph. Stripped from the marker to end of line.
@@ -202,11 +206,65 @@ _DESIGN_NOTE_RE = re.compile(
 
 
 def _p_text(paragraph) -> str:
-    return "".join(node.text or "" for node in paragraph._p.iter(_WT))
+    # Walk descendants in document order so soft line breaks (<w:br>) and tabs
+    # survive as real separators — Word packs multi-line cells (e.g. CTA blocks)
+    # into ONE paragraph with <w:br>, and dropping them runs the lines together.
+    parts: list[str] = []
+    for node in paragraph._p.iter():
+        if node.tag == _WT:
+            parts.append(node.text or "")
+        elif node.tag in (_WBR, _WCR):
+            parts.append("\n")
+        elif node.tag == _WTAB:
+            parts.append("\t")
+    return "".join(parts)
 
 
 def _cell_text(cell) -> str:
     return "\n".join(_p_text(p) for p in cell.paragraphs).strip()
+
+
+# A visual rule made of box-drawing / dash / underscore / equals runs. These are
+# layout separators in the house docs, never content — drop them so they don't
+# become empty feature sections or trail into the previous card's prose.
+_SEP_CHARS = set("─━╌╍—–-_=~⎯。・ \t")
+_SEP_KEY = set("─━╌╍—–-_=")
+
+
+def _is_separator(text: str) -> bool:
+    t = text.strip()
+    if len(t) < 3 or any(ch.isalnum() for ch in t):
+        return False
+    return all(ch in _SEP_CHARS for ch in t) and any(ch in _SEP_KEY for ch in t)
+
+
+# "→ INTERNAL LINK: /url/ [| See also: /url2/ | /url3/]" — the arrow-style
+# internal-link notation used across the house docs (no brackets, no label).
+_ARROW_LINK_RE = re.compile(r"(?:→|->)\s*INTERNAL LINK:\s*([^\n]+)", re.IGNORECASE)
+_ANY_URL_RE = re.compile(r"https?://\S+|/[\w\-./]+/?")
+
+
+def _slug_label(url: str) -> str:
+    """Derive a human label from a URL slug: /wildlife/giant-tortoise/ -> 'Giant Tortoise'."""
+    slug = url.rstrip("/").rsplit("/", 1)[-1]
+    slug = re.sub(r"[-_]+", " ", slug).strip()
+    return slug.title() if slug else "Learn more"
+
+
+def _arrow_links_to_md(text: str) -> str:
+    """'→ INTERNAL LINK: /url/ | …' -> Markdown link(s) with slug-derived labels.
+
+    Drops the arrow + "INTERNAL LINK:"/"See also:" scaffolding, keeping each URL as
+    a real link. A standalone link paragraph later becomes a card button; an inline
+    one stays an inline <a>.
+    """
+    def repl(m: re.Match) -> str:
+        urls = _ANY_URL_RE.findall(m.group(1))
+        if not urls:
+            return ""
+        return " ".join(f"[{_slug_label(u)}]({u})" for u in urls)
+
+    return _ARROW_LINK_RE.sub(repl, text)
 
 
 def _clean_markers(text: str) -> str:
@@ -216,7 +274,8 @@ def _clean_markers(text: str) -> str:
     it back to the label (they can't hold links). Either way the URL is kept here.
     """
     text = _DESIGN_NOTE_RE.sub("", text)
-    return _INTERNAL_LINK_RE.sub(r"[\1](\2)", text)
+    text = _INTERNAL_LINK_RE.sub(r"[\1](\2)", text)
+    return _arrow_links_to_md(text)
 
 
 _CTA_SIGNALS = (
@@ -259,14 +318,55 @@ def _split_audience_segments(cell: str) -> list[str]:
     ]
 
 
+# A button line like "Contact Latin Trails → https://…" or "Book now → /cruises/".
+_CONTACT_BTN_RE = re.compile(r"^(.{0,60}?)\s*(?:→|->)\s*(.+)$")
+# A bare domain (no scheme), e.g. "galapagosislands.travel/contact", "latintrails.com".
+_BARE_DOMAIN_RE = re.compile(
+    r"\b([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*\.(?:com|travel|org|net|io|co)(?:\.[a-z]{2})?(?:/\S*)?)",
+    re.IGNORECASE,
+)
+
+
+def _norm_url(u: str) -> str:
+    u = u.rstrip(".,);")
+    if u.startswith(("http://", "https://", "/", "mailto:")):
+        return u
+    return "https://" + u
+
+
 def _cta_from_text(cell: str) -> dict:
     btn = _CTA_BUTTON_RE.search(cell)
     cell_wo = _CTA_BUTTON_RE.sub("", cell)
+    # House format: "INDEPENDENT TRAVELLERS: <body…>" — the audience label is a
+    # prefix, not a headline; everything after it is body copy (no separate title).
+    aud_prefix = _AUD_SPLIT_RE.match(cell_wo.strip())
+    if aud_prefix:
+        cell_wo = cell_wo[aud_prefix.end():].strip()
     lines = [ln.strip() for ln in cell_wo.split("\n") if ln.strip()]
-    title = lines[0] if lines else ""
+    # One line after stripping the label = body only; multi-line = headline + body.
+    if aud_prefix or len(lines) <= 1:
+        title, rest = "", lines
+    else:
+        title, rest = lines[0], lines[1:]
     url = btn.group(2).strip() if btn else ""
+    label = btn.group(1).strip().rstrip("→ ").strip() if btn else ""
     body: list[str] = []
-    for ln in lines[1:]:
+    for ln in rest:
+        # A "Label → url" contact/button line: lift it out of the body.
+        bm = _CONTACT_BTN_RE.match(ln)
+        if not btn and bm and _ANY_URL_RE.search(bm.group(2)):
+            urls = _ANY_URL_RE.findall(bm.group(2))
+            url = url or _norm_url(urls[-1])  # prefer the absolute (last) URL
+            label = label or bm.group(1).strip()
+            continue
+        # A trailing bare-domain URL (no scheme, no arrow): pull it as the button.
+        if not url and not _URL_RE.search(ln):
+            dm = _BARE_DOMAIN_RE.search(ln)
+            if dm:
+                url = _norm_url(dm.group(1))
+                ln = (ln[: dm.start()] + ln[dm.end():]).strip()
+                if not ln:
+                    continue
         if not url:
             m = _URL_RE.search(ln)
             if m:
@@ -279,8 +379,8 @@ def _cta_from_text(cell: str) -> dict:
         "title": title,
         "text": " ".join(" ".join(body).split()),
     }
-    if btn:
-        block["button_label"] = btn.group(1).strip().rstrip("→ ").strip()
+    if label:
+        block["button_label"] = label
     if url:
         block["button_url"] = url
     return block
@@ -406,22 +506,34 @@ def _is_title_para(para) -> bool:
 _SCI_NAME_RE = re.compile(r"\(([A-ZÁÉÍÓÚ][a-zé]+ [a-z]+)\)")
 
 
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\s]+)\)")
+
+
 def _split_off_button(paras: list[str]) -> tuple[list[str], dict | None]:
-    """Pull a trailing '→ Label …/url' button line off a card's prose."""
+    """Pull a trailing button off a card's prose.
+
+    Fires when the LAST paragraph is *only* link(s) (the internal-link notation
+    sits on its own line) or an explicit '→ Label …/url' line. A paragraph that
+    ends with a link but also carries prose is left alone — that link stays inline.
+    """
     if not paras:
         return paras, None
     last = paras[-1].strip()
-    m = re.match(r"(?:→|->)\s*(.+)$", last)
-    if not m:
-        return paras, None
-    rest = m.group(1)
-    link = re.search(r"\[([^\]]+)\]\(([^)\s]+)\)", rest)  # markdown link from [INTERNAL LINK]
-    if link:
-        label = rest[: link.start()].strip() or link.group(1)
-        return paras[:-1], {"label": label.strip(), "url": link.group(2)}
-    arrow = re.search(r"(.+?)\s*(?:→|->)\s*(\S+)$", rest)
-    if arrow and arrow.group(2).startswith(("/", "http")):
-        return paras[:-1], {"label": arrow.group(1).strip(), "url": arrow.group(2)}
+    body = re.sub(r"^(?:→|->)\s*", "", last)  # tolerate a leading arrow
+
+    # The paragraph is purely link(s) (optionally "See also:" / "|" separated).
+    links = _MD_LINK_RE.findall(body)
+    residue = _MD_LINK_RE.sub("", body)
+    residue = re.sub(r"(?i)see also:?|[\s,|·•]", "", residue).strip()
+    if links and not residue:
+        label, url = links[0]
+        return paras[:-1], {"label": label.strip(), "url": url.strip()}
+
+    # Explicit "→ Label /url" with a bare path/URL.
+    if last.startswith(("→", "->")):
+        arrow = re.search(r"(.+?)\s*(?:→|->)\s*(\S+)$", body)
+        if arrow and arrow.group(2).startswith(("/", "http")):
+            return paras[:-1], {"label": arrow.group(1).strip(), "url": arrow.group(2)}
     return paras, None
 
 
@@ -579,6 +691,10 @@ def read_docx(path: str | Path) -> Document:
         style_l = style.lower()
 
         if not text:
+            continue
+
+        # Visual separator rule (────, ____) -> layout, not content.
+        if _is_separator(text):
             continue
 
         # Strip literal house markers like "[H2] " from heading/paragraph text.

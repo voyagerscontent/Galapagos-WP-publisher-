@@ -324,9 +324,17 @@ def build_acf_island(
             d = comp.data
             heading = d.get("heading", "")
             # Content MOVED to a dedicated field is not also a feature section.
-            tf = _travel_field(heading) if m.get("travel_information") else None
-            if tf:
-                travel.setdefault(tf, d.get("content", ""))
+            routed = (
+                _route_travel(heading, d.get("content", ""))
+                if m.get("travel_information")
+                else None
+            )
+            if routed:
+                for k, v in routed.items():
+                    if k.endswith("_title"):
+                        travel.setdefault(k, v)  # H2 heading -> keep it, never lose titles
+                    elif v:
+                        travel[k] = (travel[k] + "\n" + v) if travel.get(k) else v
                 continue
             if _should_skip_feature(heading):
                 continue  # sources / related-links footer -> dedicated fields
@@ -374,6 +382,64 @@ def _travel_field(heading: str) -> str | None:
         if rx.search(heading):
             return field
     return None
+
+
+# Which "section title" field holds a travel H2 heading (so it is never lost).
+_TRAVEL_TITLE_FIELD = {
+    "getting_there": "getting_there_title",
+    "best_time": "stay_visit_title",
+    "accommodation": "stay_visit_title",
+}
+_H3_SPLIT_RE = re.compile(r"(<h3[^>]*>.*?</h3>)", re.I | re.S)
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _split_by_h3(content: str) -> list[tuple[str | None, str]]:
+    """[(h3_text|None, html_chunk), …]; the chunk keeps its own <h3>."""
+    parts = _H3_SPLIT_RE.split(content or "")
+    segments: list[tuple[str | None, str]] = []
+    if parts and parts[0].strip():
+        segments.append((None, parts[0]))
+    i = 1
+    while i < len(parts):
+        h3_html = parts[i]
+        chunk = h3_html + (parts[i + 1] if i + 1 < len(parts) else "")
+        segments.append((_TAG_RE.sub("", h3_html).strip(), chunk))
+        i += 2
+    return segments
+
+
+def _route_travel(heading: str, content: str) -> dict | None:
+    """Route a travel H2 into Travel-Information sub-fields.
+
+    A container H2 ('Where to Stay and When to Visit') is split by its H3 children
+    so Accommodation and Best Time land in their own fields instead of one
+    swallowing the other. The H2 heading is kept in a *_title field. Returns None
+    when the section isn't travel-related (so it falls through to feature sections).
+    """
+    field = _travel_field(heading)
+    if not field:
+        return None
+    out: dict[str, str] = {}
+    segments = _split_by_h3(content)
+    mapped = [(s, _travel_field(s[0])) for s in segments if s[0]]
+    if any(f for _, f in mapped):
+        # Container: each child H3 that maps goes to its field; the rest (lead
+        # text, non-mapping H3s) join the H2's own field.
+        for (h3, chunk), f in mapped:
+            if f:
+                out[f] = (out.get(f, "") + chunk) if out.get(f) else chunk
+        leftover = "".join(
+            chunk for (h3, chunk) in segments if not (h3 and _travel_field(h3))
+        )
+        if leftover.strip():
+            out[field] = (out.get(field, "") + leftover) if out.get(field) else leftover
+    else:
+        out[field] = content
+    title_field = _TRAVEL_TITLE_FIELD.get(field)
+    if title_field and heading:
+        out[title_field] = heading
+    return out
 
 
 def _should_skip_feature(heading: str) -> bool:

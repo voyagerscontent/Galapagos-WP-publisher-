@@ -85,7 +85,9 @@ island:
 
   travel_information:
     field: travel_information
+    getting_there_title: getting_there_title
     getting_there: getting_there
+    stay_visit_title: stay_visit_title
     best_time: best_time
     accommodation: accommodation
 

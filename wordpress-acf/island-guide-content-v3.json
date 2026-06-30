@@ -103,7 +103,11 @@
       {
         "key": "travel_information", "label": "Travel Information", "name": "travel_information", "type": "group",
         "sub_fields": [
+          { "key": "ti_gt_title", "label": "Getting There — Heading", "name": "getting_there_title", "type": "text",
+            "instructions": "The document's H2 for this block (e.g. 'Getting to Isabela'). Kept so the editorial title is not lost." },
           { "key": "ti_access", "label": "Getting There", "name": "getting_there", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+          { "key": "ti_sv_title", "label": "Where to Stay / When to Visit — Heading", "name": "stay_visit_title", "type": "text",
+            "instructions": "The document's H2 for the stay + best-time block (e.g. 'Where to Stay and When to Visit')." },
           { "key": "ti_best", "label": "Best Time to Visit", "name": "best_time", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "ti_accommodation", "label": "Accommodation / Where to Stay", "name": "accommodation", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "ti_duration", "label": "Recommended Duration", "name": "recommended_duration", "type": "text" },
