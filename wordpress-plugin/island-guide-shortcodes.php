@@ -64,9 +64,23 @@ final class Island_Guide_Shortcodes
         );
     }
 
+    private function img_src($img, $size = 'large')
+    {
+        if (empty($img)) {
+            return '';
+        }
+        if (is_array($img)) {
+            return $img['sizes'][$size] ?? ($img['url'] ?? '');
+        }
+        if (is_numeric($img)) {
+            return wp_get_attachment_image_url((int) $img, $size) ?: '';
+        }
+        return is_string($img) ? $img : '';
+    }
+
     private function img($id, $alt = '', $h = 200)
     {
-        if ($id && ($src = wp_get_attachment_image_url((int) $id, 'large'))) {
+        if ($id && ($src = $this->img_src($id))) {
             return sprintf(
                 '<img class="isl-img" src="%s" alt="%s" loading="lazy" style="height:%dpx">',
                 esc_url($src),
@@ -112,7 +126,7 @@ final class Island_Guide_Shortcodes
         $sub   = $this->f($pid, 'hero_subtitle');
         $author = $this->f($pid, 'author');
         $img = $this->f($pid, 'hero_image');
-        $bg = $img ? wp_get_attachment_image_url((int) $img, 'full') : '';
+        $bg = $this->img_src($img, 'full');
         $style = $bg ? ' style="background-image:url(\'' . esc_url($bg) . '\')"' : '';
         ob_start(); ?>
         <div class="isl"><?php echo $this->styleonce(); ?>

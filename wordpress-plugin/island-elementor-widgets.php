@@ -18,6 +18,27 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Resolve an ACF image sub-field to a URL regardless of its Return Format
+ * (Image ID, Image Array, or Image URL). This is why "the image is set but
+ * doesn't show" — the widget must not assume one format.
+ */
+if (!function_exists('island_ew_image_src')) {
+    function island_ew_image_src($img, $size = 'large')
+    {
+        if (empty($img)) {
+            return '';
+        }
+        if (is_array($img)) {                         // Return Format: Image Array
+            return $img['sizes'][$size] ?? ($img['url'] ?? '');
+        }
+        if (is_numeric($img)) {                        // Return Format: Image ID
+            return wp_get_attachment_image_url((int) $img, $size) ?: '';
+        }
+        return is_string($img) ? $img : '';            // Return Format: Image URL
+    }
+}
+
 add_action('elementor/widgets/register', function ($widgets_manager) {
     if (!did_action('elementor/loaded')) {
         return;
@@ -207,8 +228,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<div class="iw-grid">';
             foreach ($rows as $w) {
                 echo '<article class="iw-card">';
-                $img = $w['image'] ?? 0;
-                if ($img && ($src = wp_get_attachment_image_url((int) $img, 'large'))) {
+                $src = island_ew_image_src($w['image'] ?? '');
+                if ($src) {
                     echo '<img class="iw-img" src="' . esc_url($src) . '" alt="' . esc_attr($w['common_name'] ?? '') . '">';
                 } else {
                     echo '<div class="iw-ph"><span>Image</span></div>';

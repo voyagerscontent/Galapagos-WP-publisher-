@@ -47,11 +47,28 @@ if (!function_exists('island_btn')) {
     }
 }
 
+if (!function_exists('island_img_src')) {
+    /** Resolve an ACF image (ID / array / URL) to a URL, whatever the Return Format. */
+    function island_img_src($img, $size = 'large')
+    {
+        if (empty($img)) {
+            return '';
+        }
+        if (is_array($img)) {
+            return $img['sizes'][$size] ?? ($img['url'] ?? '');
+        }
+        if (is_numeric($img)) {
+            return wp_get_attachment_image_url((int) $img, $size) ?: '';
+        }
+        return is_string($img) ? $img : '';
+    }
+}
+
 if (!function_exists('island_img')) {
-    /** ACF image fields store an attachment ID; fall back to a placeholder box. */
+    /** ACF image field -> <img>, or a placeholder box when empty. */
     function island_img($id, $alt = '', $height = 200, $class = '')
     {
-        if ($id && ($src = wp_get_attachment_image_url((int) $id, 'large'))) {
+        if ($id && ($src = island_img_src($id))) {
             return sprintf(
                 '<img class="isl-img %s" src="%s" alt="%s" loading="lazy" style="height:%dpx">',
                 esc_attr($class),
@@ -120,7 +137,7 @@ while (have_posts()) :
     $sources      = get_field('sources') ?: [];
     $related      = get_field('related_links') ?: [];
 
-    $hero_bg = $hero_img ? wp_get_attachment_image_url((int) $hero_img, 'full') : '';
+    $hero_bg = island_img_src($hero_img, 'full');
     ?>
 
     <style>
