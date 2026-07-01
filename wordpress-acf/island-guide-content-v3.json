@@ -30,8 +30,11 @@
       {
         "key": "quick_facts", "label": "Quick Facts", "name": "quick_facts", "type": "repeater",
         "instructions": "Display data only (Location, Area, Main town, Access…). Keep SEO meta out of here.",
-        "layout": "table", "button_label": "Add fact",
+        "layout": "block", "button_label": "Add fact",
         "sub_fields": [
+          { "key": "qf_icon", "label": "Icon (SVG/Image)", "name": "icon", "type": "image", "return_format": "id",
+            "preview_size": "thumbnail", "library": "all", "mime_types": "svg,png",
+            "instructions": "Upload your own icon (SVG recommended). Needs the free Safe SVG plugin for SVG uploads." },
           { "key": "qf_label", "label": "Label", "name": "label", "type": "text" },
           { "key": "qf_value", "label": "Value", "name": "value", "type": "textarea", "rows": 2 }
         ]

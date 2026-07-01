@@ -39,6 +39,24 @@ if (!function_exists('island_ew_image_src')) {
     }
 }
 
+/** Split a quick-fact "value" into (title, detail): "Cerro Crocker, 864 m" -> ["Cerro Crocker","864 m"]. */
+if (!function_exists('island_ew_split')) {
+    function island_ew_split($v)
+    {
+        $v = trim((string) $v);
+        foreach (['—', '–', ', ', '('] as $d) {
+            $i = mb_strpos($v, $d);
+            if ($i !== false && $i > 0) {
+                return [
+                    trim(mb_substr($v, 0, $i), " ,(—–"),
+                    trim(mb_substr($v, $i + mb_strlen($d)), " ,)—–"),
+                ];
+            }
+        }
+        return [$v, ''];
+    }
+}
+
 add_action('elementor/widgets/register', function ($widgets_manager) {
     if (!did_action('elementor/loaded')) {
         return;
@@ -261,5 +279,148 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /* ===================================================================
+     *  ISLAND QUICK FACTS — icon (your own SVG) + label + value(title/detail)
+     * =================================================================== */
+    class Island_QuickFacts_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_quickfacts';
+        }
+
+        public function get_title()
+        {
+            return 'Island Quick Facts';
+        }
+
+        public function get_icon()
+        {
+            return 'eicon-info-circle-o';
+        }
+
+        public function get_categories()
+        {
+            return ['general'];
+        }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', [
+                'label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER,
+            ]);
+            $this->add_responsive_control('columns', [
+                'label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT,
+                'default' => '2', 'tablet_default' => '2', 'mobile_default' => '1',
+                'options' => ['1' => '1', '2' => '2', '3' => '3'],
+                'selectors' => ['{{WRAPPER}} .qf-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
+            ]);
+            $this->add_control('show_detail', [
+                'label' => 'Show detail line', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            ]);
+            $this->end_controls_section();
+
+            /* CARD */
+            $this->start_controls_section('card', ['label' => 'Card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_responsive_control('gap', [
+                'label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 50]], 'default' => ['size' => 16, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .qf-grid' => 'gap:{{SIZE}}{{UNIT}}'],
+            ]);
+            $this->add_control('card_bg', [
+                'label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EAE4',
+                'selectors' => ['{{WRAPPER}} .qf-item' => 'background:{{VALUE}}'],
+            ]);
+            $this->add_control('card_radius', [
+                'label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 40]], 'default' => ['size' => 9, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .qf-item' => 'border-radius:{{SIZE}}{{UNIT}}'],
+            ]);
+            $this->add_responsive_control('card_pad', [
+                'label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'default' => ['top' => 20, 'right' => 22, 'bottom' => 20, 'left' => 22, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .qf-item' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}'],
+            ]);
+            $this->end_controls_section();
+
+            /* ICON */
+            $this->start_controls_section('icon', ['label' => 'Icon', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('icon_bg', [
+                'label' => 'Circle color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .qf-ic' => 'background:{{VALUE}}'],
+            ]);
+            $this->add_responsive_control('icon_circle', [
+                'label' => 'Circle size', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 30, 'max' => 90]], 'default' => ['size' => 46, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .qf-ic' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}'],
+            ]);
+            $this->add_responsive_control('icon_glyph', [
+                'label' => 'Icon size', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 12, 'max' => 50]], 'default' => ['size' => 22, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .qf-ic img' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}'],
+            ]);
+            $this->end_controls_section();
+
+            /* TEXT */
+            $this->start_controls_section('text', ['label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('label_color', [
+                'label' => 'Label color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .qf-l' => 'color:{{VALUE}}'],
+            ]);
+            $this->add_control('title_color', [
+                'label' => 'Title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .qf-t' => 'color:{{VALUE}}'],
+            ]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), [
+                'name' => 'title_typo', 'selector' => '{{WRAPPER}} .qf-t',
+            ]);
+            $this->add_control('desc_color', [
+                'label' => 'Detail color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#222222',
+                'selectors' => ['{{WRAPPER}} .qf-d' => 'color:{{VALUE}}'],
+            ]);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $rows = get_field('quick_facts', $pid) ?: [];
+            if (!$rows) {
+                return;
+            }
+            echo '<style>
+              {{WRAPPER}} .qf-grid{display:grid;gap:16px}
+              {{WRAPPER}} .qf-item{display:flex;gap:16px;align-items:flex-start;background:#F1EAE4;border-radius:9px;padding:20px 22px}
+              {{WRAPPER}} .qf-ic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;background:#64402C;display:flex;align-items:center;justify-content:center}
+              {{WRAPPER}} .qf-ic img{width:22px;height:22px;object-fit:contain}
+              {{WRAPPER}} .qf-tx{flex:1;min-width:0}
+              {{WRAPPER}} .qf-l{margin:0 0 3px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+              {{WRAPPER}} .qf-t{margin:0 0 4px;font-weight:700;font-size:18px}
+              {{WRAPPER}} .qf-d{margin:0;font-size:14px;line-height:1.5}
+            </style>';
+            echo '<div class="qf-grid">';
+            foreach ($rows as $r) {
+                [$title, $detail] = island_ew_split($r['value'] ?? '');
+                $icon = island_ew_image_src($r['icon'] ?? '');
+                echo '<div class="qf-item">';
+                echo '<span class="qf-ic">' . ($icon ? '<img src="' . esc_url($icon) . '" alt="">' : '') . '</span>';
+                echo '<div class="qf-tx">';
+                echo '<p class="qf-l">' . esc_html($r['label'] ?? '') . '</p>';
+                echo '<p class="qf-t">' . esc_html($title) . '</p>';
+                if ($s['show_detail'] === 'yes' && $detail !== '') {
+                    echo '<p class="qf-d">' . esc_html($detail) . '</p>';
+                }
+                echo '</div></div>';
+            }
+            echo '</div>';
+        }
+    }
+
     $widgets_manager->register(new Island_Wildlife_Widget());
+    $widgets_manager->register(new Island_QuickFacts_Widget());
 });
