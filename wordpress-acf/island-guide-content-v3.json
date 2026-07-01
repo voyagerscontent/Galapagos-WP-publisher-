@@ -13,6 +13,8 @@
         "key": "geo_answer", "label": "GEO / AI Answer (on-page)", "name": "geo_answer", "type": "textarea", "rows": 3,
         "instructions": "Short ~50-word answer shown on the page, optimized for AI / featured snippets. This is VISIBLE on-page content, not a meta tag."
       },
+      { "key": "island_intro", "label": "Intro / Overview", "name": "intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
+        "instructions": "Lead paragraph that opens the guide, shown before 'At a Glance'. Populated from the document's opening text." },
       { "key": "hero_image", "label": "Hero Image", "name": "hero_image", "type": "image", "return_format": "id", "preview_size": "medium" },
       { "key": "hero_image_alt", "label": "Hero Image Alt", "name": "hero_image_alt", "type": "text" },
       {

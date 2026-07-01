@@ -338,6 +338,11 @@ def build_acf_island(
                 continue
             if _should_skip_feature(heading):
                 continue  # sources / related-links footer -> dedicated fields
+            # The lead paragraph (no heading, before any titled section) is the
+            # island intro/overview -> its own field, not a title-less card.
+            if m.get("intro") and not heading.strip() and m["intro"] not in out and not features:
+                out[m["intro"]] = d.get("content", "")
+                continue
             body, btn_label, btn_url = _split_feature_button(d.get("content", ""))
             features.append(_feature_row(m["feature_sections"], title=heading,
                                          content=body, button_label=btn_label,

@@ -28,6 +28,10 @@ island:
   # later layer; for now fills from a tagline/subtitle when present.
   geo_answer: geo_answer
 
+  # Lead/overview paragraph that opens the doc (before the first section, e.g.
+  # before "At a Glance"). Its own field so it isn't a title-less feature card.
+  intro: intro
+
   # Editorial/thematic sections (Layer 1 also receives generic prose here).
   feature_sections:
     field: feature_sections

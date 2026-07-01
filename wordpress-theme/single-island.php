@@ -96,6 +96,7 @@ while (have_posts()) :
     $hero_img     = get_field('hero_image');        // attachment ID
     $hero_alt     = get_field('hero_image_alt');
     $author       = get_field('author');
+    $intro        = get_field('intro');
     $geo          = get_field('geo_answer');
 
     $qf_title     = get_field('quick_facts_title');
@@ -173,6 +174,7 @@ while (have_posts()) :
     .isl .rt h3{font-size:17px;color:var(--brown);font-style:normal;margin:16px 0 6px}
     .isl .rt p{margin:0 0 10px}.isl .rt a{font-weight:600}
     .isl .center{text-align:center;max-width:70ch;margin:0 auto 30px}.isl .light{color:#ecd9c8}
+    .isl .intro-lead{font-size:19px;color:#4a3a2c;margin:0 auto}
     .isl .meta,.isl .kv{font-size:13.5px}.isl .meta{list-style:none;padding:0;margin:6px 0 0;color:#5a4636}
     .isl .meta li{margin:2px 0}.isl .kv{color:#5a4636;margin:4px 0 0}
     .isl .badge{font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;white-space:nowrap;font-weight:700}
@@ -218,6 +220,13 @@ while (have_posts()) :
                 <?php if ($author) : ?><p class="byline"><?php echo esc_html('By ' . $author); ?></p><?php endif; ?>
             </div>
         </header>
+
+        <!-- INTRO / OVERVIEW -------------------------------------------- -->
+        <?php if ($intro) : ?>
+        <section class="band sand"><div class="wrap">
+            <div class="rt center intro-lead"><?php echo wp_kses_post($intro); ?></div>
+        </div></section>
+        <?php endif; ?>
 
         <!-- GEO / AI ANSWER --------------------------------------------- -->
         <?php if ($geo) : ?>

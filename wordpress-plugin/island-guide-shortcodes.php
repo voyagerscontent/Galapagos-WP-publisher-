@@ -27,9 +27,9 @@ final class Island_Guide_Shortcodes
     public function __construct()
     {
         foreach ([
-            'island_hero', 'island_geo', 'island_quickfacts', 'island_features',
-            'island_wildlife', 'island_visitor_sites', 'island_travel',
-            'island_faqs', 'island_cta', 'island_sources',
+            'island_hero', 'island_intro', 'island_geo', 'island_quickfacts',
+            'island_features', 'island_wildlife', 'island_visitor_sites',
+            'island_travel', 'island_faqs', 'island_cta', 'island_sources',
         ] as $tag) {
             $method = 'sc_' . substr($tag, 7);          // island_geo -> sc_geo
             add_shortcode($tag, [$this, $method]);
@@ -124,6 +124,15 @@ final class Island_Guide_Shortcodes
               <?php if ($author) : ?><p class="byline"><?php echo esc_html('By ' . $author); ?></p><?php endif; ?>
             </div></header></div>
         <?php return ob_get_clean();
+    }
+
+    public function sc_intro($atts)
+    {
+        $intro = $this->f($this->pid($atts), 'intro');
+        if (!$intro) {
+            return '';
+        }
+        return $this->wrap('<div class="rt center intro-lead">' . wp_kses_post($intro) . '</div>', 'sand');
     }
 
     public function sc_geo($atts)
@@ -389,6 +398,7 @@ final class Island_Guide_Shortcodes
 .isl .rt{font-size:15px}.isl .rt :first-child{margin-top:0}.isl .rt :last-child{margin-bottom:0}
 .isl .rt h3{font-size:17px;color:var(--brown);font-style:normal;margin:16px 0 6px}.isl .rt p{margin:0 0 10px}.isl .rt a{font-weight:600}
 .isl .center{text-align:center;max-width:70ch;margin:0 auto 30px}.isl .light{color:#ecd9c8}
+.isl .intro-lead{font-size:19px;color:#4a3a2c;margin:0 auto}
 .isl .meta,.isl .kv{font-size:13.5px}.isl .meta{list-style:none;padding:0;margin:6px 0 0;color:#5a4636}.isl .meta li{margin:2px 0}.isl .kv{color:#5a4636;margin:4px 0 0}
 .isl .badge{font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;white-space:nowrap;font-weight:700}
 .isl .badge.land{background:#e7efe6;color:#3f6b46}.isl .badge.cruise{background:#e7ecf5;color:#3a5a8c}
