@@ -91,7 +91,10 @@ def publish_page(
 
     if existing:
         # Non-destructive update: do NOT send status (never unpublish) and do NOT
-        # send content (never blank an existing page's body).
+        # send content (never blank an existing page's body). Also carry over any
+        # editor-uploaded repeater sub-fields (icons/images) the payload doesn't
+        # set, so a republish can't wipe them.
+        _preserve_unmanaged_subfields(existing, payload)
         result = client.update_post(page.post_type, existing["id"], payload)
         created = False
     else:
@@ -114,6 +117,71 @@ def publish_page(
         created=created,
         warnings=warnings,
     )
+
+
+def _preserve_unmanaged_subfields(existing: dict, payload: dict) -> None:
+    """Keep editor-managed repeater sub-fields across a republish.
+
+    The generated payload rebuilds each repeater from the document, which would
+    otherwise blank sub-fields the engine never sets — e.g. an icon or image the
+    editor uploaded in WordPress. For every repeater the payload sends, match each
+    new row to the live row by its managed content and copy over any sub-field the
+    new row omits. Fully site-agnostic: it never names a specific field.
+    """
+    old_acf = (existing or {}).get("acf") or {}
+    new_acf = payload.get("acf")
+    if not isinstance(new_acf, dict) or not isinstance(old_acf, dict):
+        return
+    for field, new_rows in new_acf.items():
+        old_rows = old_acf.get(field)
+        if not _is_row_list(new_rows) or not _is_row_list(old_rows):
+            continue
+        used: set[int] = set()
+        for new_row in new_rows:
+            idx = _match_row(new_row, old_rows, used)
+            if idx is None:
+                continue
+            used.add(idx)
+            for key, value in old_rows[idx].items():
+                if key not in new_row and not _is_blank(value):
+                    new_row[key] = _as_acf_value(value)
+
+
+def _is_row_list(value) -> bool:
+    return isinstance(value, list) and len(value) > 0 and all(isinstance(r, dict) for r in value)
+
+
+def _is_blank(value) -> bool:
+    return value in (None, "", False, 0, [], {})
+
+
+def _norm(value) -> str:
+    return " ".join(str(value).split()).strip().lower()
+
+
+def _as_acf_value(value):
+    """An image/file sub-field may come back from REST as an object; ACF's update
+    accepts the attachment ID, so reduce {id: N, …} -> N."""
+    if isinstance(value, dict) and "id" in value:
+        return value["id"]
+    return value
+
+
+def _match_row(new_row: dict, old_rows: list, used: set) -> int | None:
+    """Find the live row for a new row: prefer an all-managed-fields match, then
+    fall back to matching on the row's first managed field (its identity/label)."""
+    keys = [k for k in new_row if not _is_blank(new_row[k])]
+    if not keys:
+        return None
+    fallback = None
+    for i, old in enumerate(old_rows):
+        if i in used:
+            continue
+        if all(k in old and _norm(old[k]) == _norm(new_row[k]) for k in keys):
+            return i
+        if fallback is None and keys[0] in old and _norm(old[keys[0]]) == _norm(new_row[keys[0]]):
+            fallback = i
+    return fallback
 
 
 def _resolve_parent(client: WordPressClient, page: RenderedPage, payload: dict) -> str | None:
