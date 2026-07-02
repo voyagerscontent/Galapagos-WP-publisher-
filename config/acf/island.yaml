@@ -68,6 +68,9 @@ island:
     button_label: button_label
     button_url: button_url
 
+  # "Plan Your Visit" heading + intro that sit above the CTA blocks.
+  cta_title: cta_title
+  cta_intro: cta_intro
   cta:
     field: cta
     audience: audience

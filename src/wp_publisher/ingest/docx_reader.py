@@ -311,9 +311,11 @@ _TRADE_MARK_RE = re.compile(
     r"industry partner|group program|travel trade",
     re.IGNORECASE,
 )
+# Audience label ("DIRECT TRAVELERS", "TRAVEL TRADE"…) up to its separator, which
+# may be a colon OR an em/en dash ("DIRECT TRAVELERS — Book with…").
 _AUD_SPLIT_RE = re.compile(
-    r"(INDEPENDENT TRAVELLERS?|DIRECT TRAVEL\w*|TRAVEL AGENTS?[^\n:]*|"
-    r"TRAVEL TRADE|TRADE (?:&|AND)[^\n:]*)\s*:",
+    r"(INDEPENDENT TRAVELLERS?|DIRECT TRAVEL\w*|TRAVEL AGENTS?|TRAVEL TRADE|TRADE\b)"
+    r"[^\n:—–]*[:—–]",
     re.IGNORECASE,
 )
 _FIELD_PREFIX_RE = re.compile(r"^(website|email|web|tel|phone|button)\s*:\s*", re.IGNORECASE)
@@ -358,11 +360,12 @@ def _cta_from_text(cell: str) -> dict:
     if aud_prefix:
         cell_wo = cell_wo[aud_prefix.end():].strip()
     lines = [ln.strip() for ln in cell_wo.split("\n") if ln.strip()]
-    # One line after stripping the label = body only; multi-line = headline + body.
-    if aud_prefix or len(lines) <= 1:
-        title, rest = "", lines
-    else:
+    # After the audience label: if more copy follows, the first line is the
+    # headline ("DIRECT TRAVELERS — Book with Voyagers…"); a lone line is body.
+    if len(lines) > 1:
         title, rest = lines[0], lines[1:]
+    else:
+        title, rest = "", lines
     url = btn.group(2).strip() if btn else ""
     label = btn.group(1).strip().rstrip("→ ").strip() if btn else ""
     body: list[str] = []
@@ -374,12 +377,14 @@ def _cta_from_text(cell: str) -> dict:
             url = url or _norm_url(urls[-1])  # prefer the absolute (last) URL
             label = label or bm.group(1).strip()
             continue
-        # A trailing bare-domain URL (no scheme, no arrow): pull it as the button.
+        # A trailing bare-domain URL (no scheme, no arrow): pull it as the button,
+        # but only when it sits at the END of the line — not when it opens a
+        # sentence ("GalapagosIslands.travel is maintained by…").
         if not url and not _URL_RE.search(ln):
             dm = _BARE_DOMAIN_RE.search(ln)
-            if dm:
+            if dm and dm.end() >= len(ln.rstrip()):
                 url = _norm_url(dm.group(1))
-                ln = (ln[: dm.start()] + ln[dm.end():]).strip()
+                ln = ln[: dm.start()].strip()
                 if not ln:
                     continue
         if not url:
@@ -455,14 +460,19 @@ _CTA_KEYWORDS = (
     "book", "contact", "voyager", "latin trails", "travel company", "dmc",
     "itinerary", "plan your", "specialist", "enquir", "inquir", "trade",
 )
+# SEO / editorial scaffolding that sometimes carries a URL but is never a CTA.
+_CTA_JUNK = (
+    "title tag", "meta description", "focus keyword", "canonical", "url slug",
+    "slug:", "h1 tag", "schema", "og:", "alt text", "internal link",
+)
 
 
 def _cta_is_real(b: dict) -> bool:
-    """Reject scaffolding rows (separators, publisher notes) posing as CTAs."""
+    """Reject scaffolding rows (separators, publisher/SEO notes) posing as CTAs."""
     blob = " ".join(
         [b.get("title") or "", b.get("text") or "", b.get("button_label") or ""]
     ).strip().lower()
-    if any(m in blob for m in _INSTR_MARKERS):
+    if any(m in blob for m in _INSTR_MARKERS) or any(m in blob for m in _CTA_JUNK):
         return False
     if b.get("button_url"):
         return True

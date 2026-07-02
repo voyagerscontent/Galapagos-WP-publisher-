@@ -143,7 +143,11 @@
         ]
       },
 
-      { "key": "tab_cta", "label": "CTA", "name": "", "type": "tab" },
+      { "key": "tab_cta", "label": "Plan Your Visit", "name": "", "type": "tab" },
+      { "key": "cta_title", "label": "Plan Your Visit — Heading", "name": "cta_title", "type": "text",
+        "instructions": "Section heading above the CTAs (e.g. 'Plan Your Visit'). Populated from the doc's 'Plan Your Visit' section." },
+      { "key": "cta_intro", "label": "Plan Your Visit — Intro", "name": "cta_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
+        "instructions": "Lead text under the heading, above the CTA blocks." },
       {
         "key": "cta", "label": "CTA Blocks", "name": "cta", "type": "repeater",
         "instructions": "Supports more than one CTA (e.g. direct travelers + travel trade / DMC).",

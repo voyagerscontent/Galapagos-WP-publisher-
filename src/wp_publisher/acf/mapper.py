@@ -341,6 +341,13 @@ def build_acf_island(
                     elif v:
                         travel[k] = (travel[k] + "\n" + v) if travel.get(k) else v
                 continue
+            # "Plan Your Visit" always leads into the CTA — fold it into the CTA
+            # section's heading + intro instead of keeping a separate feature.
+            if m.get("cta_intro") and _is_plan_visit(heading):
+                if m.get("cta_title"):
+                    out.setdefault(m["cta_title"], heading)
+                out.setdefault(m["cta_intro"], d.get("content", ""))
+                continue
             if _should_skip_feature(heading):
                 continue  # sources / related-links footer -> dedicated fields
             # The lead paragraph (no heading, before any titled section) is the
@@ -477,6 +484,10 @@ def _split_trailing_link(html: str) -> tuple[str, str, str]:
     if not m:
         return html, "", ""
     return html[: m.start()].rstrip(), _plain_text(m.group(2)), m.group(1).strip()
+
+
+def _is_plan_visit(heading: str) -> bool:
+    return "plan your visit" in heading.strip().lower()
 
 
 def _should_skip_feature(heading: str) -> bool:
