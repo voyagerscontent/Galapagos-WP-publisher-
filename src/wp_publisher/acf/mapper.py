@@ -503,10 +503,12 @@ def _cta_block_row(cf: dict, b: dict) -> dict:
     row: dict[str, Any] = {}
     if cf.get("audience"):
         row[cf["audience"]] = b.get("audience", "Direct travelers")
-    if cf.get("title"):
-        row[cf["title"]] = b.get("title", "")
-    if cf.get("text"):
-        row[cf["text"]] = inline_md(b.get("text", ""))  # WYSIWYG -> keep links
+    # Omit an empty title/text so a manually-entered one survives a republish
+    # (the preservation step only restores sub-fields the payload doesn't set).
+    if cf.get("title") and b.get("title"):
+        row[cf["title"]] = b["title"]
+    if cf.get("text") and b.get("text"):
+        row[cf["text"]] = inline_md(b["text"])  # WYSIWYG -> keep links
     if cf.get("button_label") and b.get("button_label"):
         row[cf["button_label"]] = b["button_label"]
     if cf.get("button_url") and b.get("button_url"):
