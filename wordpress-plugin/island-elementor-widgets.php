@@ -777,7 +777,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .vt-tag{align-self:flex-start;margin-top:8px;display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:20px;border:1px solid transparent}
               {{WRAPPER}} .vt-tag.lan{color:#3f6b46;background:rgba(63,107,70,.10);border-color:rgba(63,107,70,.28)}
               {{WRAPPER}} .vt-tag.cru{color:#3a5a8c;background:rgba(58,90,140,.10);border-color:rgba(58,90,140,.28)}
-              {{WRAPPER}} .vt-head,{{WRAPPER}} .vt-row{grid-template-columns:' . $tpl . '}
               @media(max-width:640px){{{WRAPPER}} .vt-wrap{min-width:560px}}
             </style>';
 
@@ -790,8 +789,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '<div class="vs-intro">' . wp_kses_post($introC) . '</div>';
             }
 
+            $gtc = ' style="grid-template-columns:' . esc_attr($tpl) . '"';
             echo '<div class="vt-scroll"><div class="vt-wrap">';
-            echo '<div class="vt-head">' . implode('', $head) . '</div>';
+            echo '<div class="vt-head"' . $gtc . '>' . implode('', $head) . '</div>';
             foreach ($rows as $r) {
                 $img = island_ew_image_src($r['image'] ?? '');
                 $thumb = $img
@@ -802,7 +802,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     $cls = ($r['access_type'] === 'Cruise-only') ? 'cru' : 'lan';
                     $badge = '<span class="vt-tag ' . $cls . '">' . esc_html($r['access_type']) . '</span>';
                 }
-                echo '<div class="vt-row"><div class="vt-site">' . $thumb
+                echo '<div class="vt-row"' . $gtc . '><div class="vt-site">' . $thumb
                     . '<span class="vt-nm"><' . $title_tag . ' class="vt-name">' . esc_html($r['site_name'] ?? '') . '</' . $title_tag . '>'
                     . $badge . '</span></div>';
                 if ($show_access) {
