@@ -914,15 +914,27 @@ def read_docx(path: str | Path) -> Document:
             break
 
     # A "Wildlife" section with H3 species sub-headings -> title + intro + species.
+    # Match "wildlife" as a whole word anywhere in the heading so free-form
+    # titles ("The Wildlife", "Christmas Iguanas and Other Wildlife") still
+    # qualify. When several sections mention wildlife, keep the one that yields
+    # the most species rows (so we don't stop on a passing mention that has none).
+    best: tuple[int, Section, str, list[dict]] | None = None
     for s in doc.sections:
-        if s.slug.startswith("wildlife") or s.title.lower().startswith("wildlife"):
-            doc.metadata["wildlife_title"] = s.title
-            intro, wildlife = _extract_wildlife(s)
-            if intro:
-                doc.metadata["wildlife_intro"] = intro
-            if wildlife:
-                doc.metadata["wildlife"] = wildlife
-            break
+        if not re.search(r"\bwildlife\b", s.slug) and not re.search(
+            r"\bwildlife\b", s.title.lower()
+        ):
+            continue
+        intro, wildlife = _extract_wildlife(s)
+        if not wildlife:
+            continue
+        if best is None or len(wildlife) > best[0]:
+            best = (len(wildlife), s, intro, wildlife)
+    if best is not None:
+        _, s, intro, wildlife = best
+        doc.metadata["wildlife_title"] = s.title
+        if intro:
+            doc.metadata["wildlife_intro"] = intro
+        doc.metadata["wildlife"] = wildlife
 
     # "Visitor Sites" sections -> the title + prose-based sites (H3 sub-headings).
     # (A table-based extraction may already have filled visitor_sites upstream.)

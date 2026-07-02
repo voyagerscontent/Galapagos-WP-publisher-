@@ -122,3 +122,25 @@ def test_generic_wildlife_routes_by_search_volume():
     high.metadata["search_volume"] = "5400"
     key, _ = detect_page_type(high, registry)
     assert key == "wildlife_tier1"
+
+
+CONTENT = Path(__file__).resolve().parents[1] / "content"
+
+
+def test_freeform_wildlife_title_extracts_species():
+    """A section titled "The Wildlife" (not starting with "Wildlife") must
+    still populate the wildlife repeater from its H3 species sub-headings."""
+    doc = read_file(CONTENT / "genovesa-island.docx")
+    wildlife = doc.metadata.get("wildlife") or []
+    assert len(wildlife) >= 3
+    assert doc.metadata.get("wildlife_title") == "The Wildlife"
+    assert any("boob" in (r.get("common_name") or "").lower() for r in wildlife)
+
+
+def test_wildlife_picks_section_with_most_species():
+    """When several headings mention "wildlife", keep the one that actually
+    yields species rows rather than the first passing mention."""
+    doc = read_file(CONTENT / "fernandina-island.docx")
+    wildlife = doc.metadata.get("wildlife") or []
+    assert len(wildlife) >= 4
+    assert "Punta Espinoza" in (doc.metadata.get("wildlife_title") or "")
