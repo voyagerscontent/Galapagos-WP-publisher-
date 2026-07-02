@@ -649,6 +649,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             /* TABLE (only relevant when the Table layout renders) */
             $this->start_controls_section('tablestyle', ['label' => 'Table', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
                 'condition' => ['layout!' => 'cards']]);
+            $this->add_control('t_icons_head', ['label' => 'Header icons (pick your own, blank = default)', 'type' => \Elementor\Controls_Manager::HEADING]);
+            $this->add_control('t_icon_site', ['label' => 'Visitor Site icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
+            $this->add_control('t_icon_access', ['label' => 'Access icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
+            $this->add_control('t_icon_wild', ['label' => 'Key Wildlife icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
+            $this->add_control('t_icon_notes', ['label' => 'Notes icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
+            $this->add_control('t_icon_size', ['label' => 'Header icon size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 10, 'max' => 44]],
+                'default' => ['size' => 16, 'unit' => 'px'],
+                'selectors' => [
+                    '{{WRAPPER}} .vt-hc svg,{{WRAPPER}} .vt-hc img.vt-ic' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .vt-hc i' => 'font-size:{{SIZE}}{{UNIT}}',
+                ]]);
+            $this->add_control('t_icon_color', ['label' => 'Header icon color', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .vt-hc svg' => 'stroke:{{VALUE}}', '{{WRAPPER}} .vt-hc i,{{WRAPPER}} .vt-hc svg[fill]' => 'color:{{VALUE}};fill:{{VALUE}}']]);
             $this->add_control('t_border', ['label' => 'Outer border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .vt-wrap' => 'border-color:{{VALUE}}']]);
             $this->add_control('t_radius', ['label' => 'Outer radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
@@ -734,6 +747,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . $meta . $desc . $btn . '</div></article>';
         }
 
+        private function hdr_icon($setting, $fallback)
+        {
+            if (is_array($setting) && !empty($setting['value']) && class_exists('\Elementor\Icons_Manager')) {
+                ob_start();
+                \Elementor\Icons_Manager::render_icon($setting, ['aria-hidden' => 'true', 'class' => 'vt-ic']);
+                $out = ob_get_clean();
+                if (trim($out) !== '') {
+                    return $out;
+                }
+            }
+            return $fallback;
+        }
+
         private function render_table($rows, $s, $pid)
         {
             $title_tag = $this->tag($s['title_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h4');
@@ -743,21 +769,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $note = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>';
 
             $cols = ['minmax(190px,1.4fr)'];
-            $head = ['<div class="vt-hc">' . $pin . ' Visitor Site</div>'];
+            $head = ['<div class="vt-hc">' . $this->hdr_icon($s['t_icon_site'] ?? '', $pin) . ' Visitor Site</div>'];
             $show_access = $s['show_access'] === 'yes';
             $show_wild = $s['show_wildlife'] === 'yes';
             $show_notes = $s['show_desc'] === 'yes';
             if ($show_access) {
                 $cols[] = '1fr';
-                $head[] = '<div class="vt-hc">' . $walk . ' Access</div>';
+                $head[] = '<div class="vt-hc">' . $this->hdr_icon($s['t_icon_access'] ?? '', $walk) . ' Access</div>';
             }
             if ($show_wild) {
                 $cols[] = '1.3fr';
-                $head[] = '<div class="vt-hc">' . $paw . ' Key Wildlife</div>';
+                $head[] = '<div class="vt-hc">' . $this->hdr_icon($s['t_icon_wild'] ?? '', $paw) . ' Key Wildlife</div>';
             }
             if ($show_notes) {
                 $cols[] = '1fr';
-                $head[] = '<div class="vt-hc">' . $note . ' Notes</div>';
+                $head[] = '<div class="vt-hc">' . $this->hdr_icon($s['t_icon_notes'] ?? '', $note) . ' Notes</div>';
             }
             $tpl = implode(' ', $cols);
 
