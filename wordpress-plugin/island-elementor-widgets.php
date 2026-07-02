@@ -334,6 +334,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('show_detail', [
                 'label' => 'Show detail line', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
             ]);
+            $rep = new \Elementor\Repeater();
+            $rep->add_control('ic', ['label' => 'Icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
+            $this->add_control('row_icons', [
+                'label' => 'Row icons (Font Awesome or SVG)', 'type' => \Elementor\Controls_Manager::REPEATER,
+                'fields' => $rep->get_controls(), 'prevent_empty' => false, 'title_field' => 'Icon {{{ _id }}}',
+                'description' => 'Optional. Each item overrides the ACF icon of that row, in order (1st item = 1st fact). Leave a row empty to keep its uploaded SVG.',
+            ]);
             $this->end_controls_section();
 
             /* CARD */
@@ -391,7 +398,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('icon_color', [
                 'label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EAE4',
                 'condition' => ['icon_recolor' => 'yes'],
-                'selectors' => ['{{WRAPPER}} .qf-glyph' => 'background-color:{{VALUE}}'],
+                'selectors' => [
+                    '{{WRAPPER}} .qf-glyph' => 'background-color:{{VALUE}}',
+                    '{{WRAPPER}} .qf-ic i,{{WRAPPER}} .qf-ic svg' => 'color:{{VALUE}};fill:{{VALUE}}',
+                ],
             ]);
             $this->add_responsive_control('icon_circle', [
                 'label' => 'Circle size', 'type' => \Elementor\Controls_Manager::SLIDER,
@@ -401,7 +411,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('icon_glyph', [
                 'label' => 'Icon size', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 12, 'max' => 50]], 'default' => ['size' => 22, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .qf-ic img,{{WRAPPER}} .qf-glyph' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}'],
+                'selectors' => [
+                    '{{WRAPPER}} .qf-ic img,{{WRAPPER}} .qf-glyph,{{WRAPPER}} .qf-ic svg' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .qf-ic i' => 'font-size:{{SIZE}}{{UNIT}}',
+                ],
             ]);
             $this->end_controls_section();
 
@@ -447,6 +460,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .qf-span .qf-tx{flex:0 1 auto;max-width:340px}
               {{WRAPPER}} .qf-ic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;background:#64402C;display:flex;align-items:center;justify-content:center}
               {{WRAPPER}} .qf-ic img{width:22px;height:22px;object-fit:contain}
+              {{WRAPPER}} .qf-ic i{font-size:22px;line-height:1;color:#F1EAE4}
+              {{WRAPPER}} .qf-ic svg{width:22px;height:22px;fill:#F1EAE4;color:#F1EAE4}
               {{WRAPPER}} .qf-glyph{display:inline-block;width:22px;height:22px;background-color:#F1EAE4}
               {{WRAPPER}} .qf-tx{flex:1;min-width:0}
               {{WRAPPER}} .qf-l{margin:0 0 3px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px}
@@ -459,18 +474,28 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '<div class="qf-card">';
             }
             echo '<div class="qf-grid ' . ($panel ? 'qf-panel' : 'qf-cards') . '">';
+            $overrides = is_array($s['row_icons'] ?? null) ? $s['row_icons'] : [];
             $i = 0;
             foreach ($rows as $r) {
                 $i++;
                 [$title, $detail] = island_ew_split($r['value'] ?? '');
-                $icon = island_ew_image_src($r['icon'] ?? '');
                 $glyph = '';
-                if ($icon) {
-                    if ($s['icon_recolor'] === 'yes') {
-                        $m = "url('" . esc_url($icon) . "') center/contain no-repeat";
-                        $glyph = '<span class="qf-glyph" style="-webkit-mask:' . esc_attr($m) . ';mask:' . esc_attr($m) . '"></span>';
-                    } else {
-                        $glyph = '<img src="' . esc_url($icon) . '" alt="">';
+                $ov = $overrides[$i - 1]['ic'] ?? null;
+                if (is_array($ov) && !empty($ov['value']) && class_exists('\Elementor\Icons_Manager')) {
+                    // Widget-chosen icon (Font Awesome or SVG) overrides the ACF icon.
+                    ob_start();
+                    \Elementor\Icons_Manager::render_icon($ov, ['aria-hidden' => 'true']);
+                    $glyph = ob_get_clean();
+                }
+                if ($glyph === '') {
+                    $icon = island_ew_image_src($r['icon'] ?? '');
+                    if ($icon) {
+                        if ($s['icon_recolor'] === 'yes') {
+                            $m = "url('" . esc_url($icon) . "') center/contain no-repeat";
+                            $glyph = '<span class="qf-glyph" style="-webkit-mask:' . esc_attr($m) . ';mask:' . esc_attr($m) . '"></span>';
+                        } else {
+                            $glyph = '<img src="' . esc_url($icon) . '" alt="">';
+                        }
                     }
                 }
                 // In panel mode, a lone item on the last row spans + centers.
