@@ -8,7 +8,7 @@ from wp_publisher.ingest.cms import looks_like_cms
 from wp_publisher.pipeline import BuildContext, build_page
 from wp_publisher.rendering.template import load_registry
 
-DOC = Path(__file__).resolve().parents[1] / "content" / "santa-fe-island.docx"
+DOC = Path(__file__).resolve().parents[1] / "content" / "docdepruebainicial.docx"
 
 
 def _ctx():

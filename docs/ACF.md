@@ -64,8 +64,8 @@ them automatically — no re-layout per page.
 ## 4. Preview & publish
 
 ```bash
-wp-publish preview content/santa-fe-island.docx     # writes output/<slug>/acf.json
-wp-publish publish  content/santa-fe-island.docx     # POSTs the flat acf payload (draft)
+wp-publish preview content/docdepruebainicial.docx     # writes output/<slug>/acf.json
+wp-publish publish  content/docdepruebainicial.docx     # POSTs the flat acf payload (draft)
 ```
 
 `acf.json` is exactly what gets sent as the post's `acf` object — inspect it to

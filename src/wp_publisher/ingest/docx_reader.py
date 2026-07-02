@@ -28,22 +28,37 @@ def _clean_byline(text: str) -> str:
     return re.split(r"\s+[—–-]\s+", s, maxsplit=1)[0].strip()
 
 
+# Strong "internal / do-not-publish" markers. Scanned across the WHOLE table
+# because these blocks often lead with a separator rule, pushing the real marker
+# into a later row. Kept CTA-agnostic (no 'Voyagers'/'Latin Trails') so real CTA
+# tables are never dropped.
+_INSTR_HEAD_CHARS = ("⚠", "▶", "■", "⬛", "⚑", "🟩", "🟢", "🛑")
+_INSTR_MARKERS = (
+    "do not publish", "internal cms", "cms use only", "internal use only",
+    "cms editor", "publisher header", "webmaster", "green box",
+    "internal instruction", "requires editorial review", "version footer",
+    "verify items", "access note", "for internal use",
+)
+
+
 def _is_instruction_table(rows: list[list[str]]) -> bool:
     """Internal-instruction / explainer tables (green boxes) are not content."""
-    head = " ".join(rows[0]).strip() if rows else ""
-    low = head.lower()
-    return (
-        head.startswith(("⚠", "▶", "■"))
-        or "internal instruction" in low
-        or "what this is" in low
-        or low.startswith("this green box")
-        or "publisher header" in low
-        or "access note" in low
-        or "verify items" in low
-        or "verify —" in low or "verify -" in low
-        or "requires editorial review" in low
-        or "version footer" in low
+    if not rows:
+        return False
+    head = " ".join(rows[0]).strip()
+    full = " ".join(c for row in rows for c in row).lower()
+    looks_internal = (
+        head.startswith(_INSTR_HEAD_CHARS)
+        or "what this is" in full
+        or any(m in full for m in _INSTR_MARKERS)
     )
+    if not looks_internal:
+        return False
+    # Some docs pack the real dual-CTA inside the same green box as the notes.
+    # Keep those so the CTA path (which dedupes to 2) can mine them.
+    if _AUD_SPLIT_RE.search(full) or re.search(r"\bcta\s*\d", full):
+        return False
+    return True
 
 
 def _is_sources_table(rows: list[list[str]]) -> bool:
@@ -436,6 +451,43 @@ def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
     return out
 
 
+_CTA_KEYWORDS = (
+    "book", "contact", "voyager", "latin trails", "travel company", "dmc",
+    "itinerary", "plan your", "specialist", "enquir", "inquir", "trade",
+)
+
+
+def _cta_is_real(b: dict) -> bool:
+    """Reject scaffolding rows (separators, publisher notes) posing as CTAs."""
+    blob = " ".join(
+        [b.get("title") or "", b.get("text") or "", b.get("button_label") or ""]
+    ).strip().lower()
+    if any(m in blob for m in _INSTR_MARKERS):
+        return False
+    if b.get("button_url"):
+        return True
+    if not blob or _is_separator(blob):
+        return False
+    return any(k in blob for k in _CTA_KEYWORDS)
+
+
+def _dedupe_ctas(blocks: list[dict]) -> list[dict]:
+    """Reduce the raw CTA candidates to the two canonical ones (best Direct +
+    best Trade), dropping junk. A block with a real button and more copy wins."""
+    best: dict[str, tuple] = {}
+    for b in blocks:
+        if not _cta_is_real(b):
+            continue
+        aud = b.get("audience") or "Direct travelers"
+        score = (1 if b.get("button_url") else 0, len(b.get("text") or "") + len(b.get("title") or ""))
+        if aud not in best or score > best[aud][0]:
+            best[aud] = (score, b)
+    order = ["Direct travelers", "Travel trade"]
+    out = [best[a][1] for a in order if a in best]
+    out += [v[1] for a, v in best.items() if a not in order]
+    return out
+
+
 def _extract_sources(section: Section) -> list[dict]:
     """Citations -> [{label, url}]. Requires a URL; supports one-line
     ('Label — desc. URL') and multi-line ('1. Label' / 'URL' / 'desc') styles."""
@@ -806,6 +858,11 @@ def read_docx(path: str | Path) -> Document:
                 continue
         target = doc.sections[-1] if doc.sections else current
         target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
+
+    # Collapse the raw CTA candidates to the two canonical CTAs (drops any
+    # scaffolding that leaked through a mixed green box).
+    if doc.metadata.get("cta_blocks"):
+        doc.metadata["cta_blocks"] = _dedupe_ctas(doc.metadata["cta_blocks"])
 
     # Citations / sources section -> structured metadata ('sources',
     # 'sources-citations', 'sources & citations'…).

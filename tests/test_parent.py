@@ -9,7 +9,7 @@ from wp_publisher.pipeline import BuildContext, build_page
 from wp_publisher.rendering.template import load_registry
 from wp_publisher.wordpress.publisher import publish_page
 
-DESTINATION_DOC = Path(__file__).resolve().parents[1] / "content" / "santa-fe-island.docx"
+DESTINATION_DOC = Path(__file__).resolve().parents[1] / "content" / "docdepruebainicial.docx"
 
 
 def _ctx():
