@@ -438,21 +438,29 @@ def _parse_cta_instruction(cell: str) -> list[dict]:
 
 
 def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
-    """Parse the two formal CTAs (Voyagers + Latin Trails) across house formats."""
+    """Parse the two formal CTAs (Voyagers + Latin Trails) across house formats.
+
+    The whole table is joined first, because a CTA is often spread across cells:
+    the audience+headline ("DIRECT TRAVELERS — Book with Voyagers…") in one cell,
+    the body and contact lines in others. Joining lets the headline become the
+    CTA title instead of being mistaken for body copy.
+    """
+    joined = "\n".join(c.strip() for row in rows for c in row if c.strip())
+    if re.search(r"call to action|CTA\s*\d+\s*[—–-]", joined, re.IGNORECASE):
+        blocks = _parse_cta_instruction(joined)
+        if blocks:
+            return blocks
+    segments = _split_audience_segments(joined)  # "INDEPENDENT…:" / "DIRECT… —" …
+    if len(segments) >= 2:
+        return [_cta_from_text(seg) for seg in segments]
+    if _AUD_SPLIT_RE.match(joined):  # a single-audience CTA table (e.g. Floreana)
+        return [_cta_from_text(joined)]
+    # Fallback: simple tables with one contact/CTA block per cell.
     out: list[dict] = []
     for row in rows:
         for cell in row:
-            cell = cell.strip()
-            if not cell:
-                continue
-            if re.search(r"call to action|CTA\s*\d+\s*[—–-]", cell, re.IGNORECASE):
-                out.extend(_parse_cta_instruction(cell))  # "CTA 1 — …: Headline/Body"
-                continue
-            segments = _split_audience_segments(cell)  # "INDEPENDENT…:" / "TRADE…:"
-            if len(segments) >= 2:
-                out.extend(_cta_from_text(seg) for seg in segments)
-                continue
-            out.append(_cta_from_text(cell))  # one contact/CTA block per cell
+            if cell.strip():
+                out.append(_cta_from_text(cell.strip()))
     return out
 
 
