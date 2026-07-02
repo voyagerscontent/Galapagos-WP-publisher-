@@ -665,12 +665,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .vt-name' => 'color:{{VALUE}}']]);
             $this->add_control('t_cell_color', ['label' => 'Cell text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a4636',
                 'selectors' => ['{{WRAPPER}} .vt-cell' => 'color:{{VALUE}}']]);
-            $this->add_control('t_land_color', ['label' => 'Land badge text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9c7b4e',
+            $this->add_control('t_land_color', ['label' => 'Land badge color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3f6b46',
                 'selectors' => ['{{WRAPPER}} .vt-tag.lan' => 'color:{{VALUE}}']]);
-            $this->add_control('t_cruise_color', ['label' => 'Cruise badge text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a5a8c',
+            $this->add_control('t_land_bg', ['label' => 'Land badge fill', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(63,107,70,.10)',
+                'selectors' => ['{{WRAPPER}} .vt-tag.lan' => 'background:{{VALUE}}']]);
+            $this->add_control('t_cruise_color', ['label' => 'Cruise badge color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a5a8c',
                 'selectors' => ['{{WRAPPER}} .vt-tag.cru' => 'color:{{VALUE}}']]);
+            $this->add_control('t_cruise_bg', ['label' => 'Cruise badge fill', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(58,90,140,.10)',
+                'selectors' => ['{{WRAPPER}} .vt-tag.cru' => 'background:{{VALUE}}']]);
             $this->add_control('t_thumb', ['label' => 'Thumbnail size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 120]],
-                'default' => ['size' => 60, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vt-thumb' => 'width:{{SIZE}}{{UNIT}};height:calc({{SIZE}}{{UNIT}} * .82)']]);
+                'default' => ['size' => 72, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vt-thumb' => 'width:{{SIZE}}{{UNIT}};height:calc({{SIZE}}{{UNIT}} * .82)']]);
             $this->end_controls_section();
         }
 
@@ -760,17 +764,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}} .vs-intro{margin:0 0 16px}{{WRAPPER}} .vs-intro :first-child{margin-top:0}{{WRAPPER}} .vs-intro :last-child{margin-bottom:0}
               {{WRAPPER}} .vt-scroll{overflow-x:auto}
-              {{WRAPPER}} .vt-wrap{min-width:640px;border:1px solid #DBCEC4;border-radius:9px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(60,40,25,.06)}
-              {{WRAPPER}} .vt-head{display:grid;background:#64402C;color:#FCFAF9;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px}
-              {{WRAPPER}} .vt-head .vt-hc{padding:15px 18px;display:flex;align-items:center;gap:9px}
-              {{WRAPPER}} .vt-row{display:grid;background:#fff;border-top:1px solid #ece5de}
-              {{WRAPPER}} .vt-cell{padding:16px 18px;font-size:13.5px;line-height:1.5;color:#5a4636}
-              {{WRAPPER}} .vt-site{display:flex;gap:13px;align-items:flex-start;padding:16px 18px}
-              {{WRAPPER}} .vt-thumb{flex:0 0 auto;width:60px;height:49px;border-radius:6px;object-fit:cover;display:block;background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 8px,#d8c8b8 8px,#d8c8b8 16px)}
+              {{WRAPPER}} .vt-wrap{min-width:700px;border:1px solid #DBCEC4;border-radius:11px;overflow:hidden;background:#fff;box-shadow:0 6px 20px rgba(60,40,25,.08)}
+              {{WRAPPER}} .vt-head{display:grid;background:#64402C;color:#FCFAF9}
+              {{WRAPPER}} .vt-head .vt-hc{padding:17px 20px;display:flex;align-items:center;gap:10px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:15px}
+              {{WRAPPER}} .vt-row{display:grid;background:#faf9f7;border-top:1px solid #ece5de}
+              {{WRAPPER}} .vt-row:nth-child(even){background:#fff}
+              {{WRAPPER}} .vt-cell{padding:17px 20px;font-size:14px;line-height:1.55;color:#5a4636}
+              {{WRAPPER}} .vt-site{display:flex;gap:14px;align-items:flex-start;padding:17px 20px}
+              {{WRAPPER}} .vt-thumb{flex:0 0 auto;width:72px;height:59px;border-radius:8px;object-fit:cover;display:block;box-shadow:0 2px 6px rgba(60,40,25,.16);background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 8px,#d8c8b8 8px,#d8c8b8 16px)}
               {{WRAPPER}} .vt-nm{display:flex;flex-direction:column}
-              {{WRAPPER}} .vt-name{margin:0;font-family:Merriweather,Georgia,serif;font-weight:700;font-size:15px;color:#202020;line-height:1.3}
-              {{WRAPPER}} .vt-tag{margin-top:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9c7b4e}
-              {{WRAPPER}} .vt-tag.cru{color:#3a5a8c}
+              {{WRAPPER}} .vt-name{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:15px;color:#202020;line-height:1.3}
+              {{WRAPPER}} .vt-tag{align-self:flex-start;margin-top:8px;display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:20px;border:1px solid transparent}
+              {{WRAPPER}} .vt-tag.lan{color:#3f6b46;background:rgba(63,107,70,.10);border-color:rgba(63,107,70,.28)}
+              {{WRAPPER}} .vt-tag.cru{color:#3a5a8c;background:rgba(58,90,140,.10);border-color:rgba(58,90,140,.28)}
               {{WRAPPER}} .vt-head,{{WRAPPER}} .vt-row{grid-template-columns:' . $tpl . '}
               @media(max-width:640px){{{WRAPPER}} .vt-wrap{min-width:560px}}
             </style>';
