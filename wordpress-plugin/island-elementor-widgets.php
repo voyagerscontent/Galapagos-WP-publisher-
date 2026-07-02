@@ -316,6 +316,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'options' => ['1' => '1', '2' => '2', '3' => '3'],
                 'selectors' => ['{{WRAPPER}} .qf-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
             ]);
+            $this->add_control('layout', [
+                'label' => 'Layout', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'panel',
+                'options' => ['panel' => 'Single panel (lines)', 'cards' => 'Separate cards'],
+            ]);
             $this->add_control('show_detail', [
                 'label' => 'Show detail line', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
             ]);
@@ -324,18 +328,35 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             /* CARD */
             $this->start_controls_section('card', ['label' => 'Card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_responsive_control('gap', [
-                'label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'label' => 'Gap (cards mode)', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 50]], 'default' => ['size' => 16, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .qf-grid' => 'gap:{{SIZE}}{{UNIT}}'],
+                'condition' => ['layout' => 'cards'],
+                'selectors' => ['{{WRAPPER}} .qf-cards' => 'gap:{{SIZE}}{{UNIT}}'],
             ]);
             $this->add_control('card_bg', [
-                'label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EAE4',
+                'label' => 'Item background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EAE4',
                 'selectors' => ['{{WRAPPER}} .qf-item' => 'background:{{VALUE}}'],
             ]);
             $this->add_control('card_radius', [
                 'label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 40]], 'default' => ['size' => 9, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .qf-item' => 'border-radius:{{SIZE}}{{UNIT}}'],
+                'selectors' => ['{{WRAPPER}} .qf-card,{{WRAPPER}} .qf-cards .qf-item' => 'border-radius:{{SIZE}}{{UNIT}}'],
+            ]);
+            $this->add_control('border_color', [
+                'label' => 'Panel border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
+                'condition' => ['layout' => 'panel'],
+                'selectors' => ['{{WRAPPER}} .qf-card' => 'border-color:{{VALUE}}'],
+            ]);
+            $this->add_control('border_width', [
+                'label' => 'Panel border width', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 8, 'step' => 0.5]], 'default' => ['size' => 1.5, 'unit' => 'px'],
+                'condition' => ['layout' => 'panel'],
+                'selectors' => ['{{WRAPPER}} .qf-card' => 'border-width:{{SIZE}}{{UNIT}}'],
+            ]);
+            $this->add_control('divider_color', [
+                'label' => 'Divider color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
+                'condition' => ['layout' => 'panel'],
+                'selectors' => ['{{WRAPPER}} .qf-card,{{WRAPPER}} .qf-panel' => 'background-color:{{VALUE}}'],
             ]);
             $this->add_responsive_control('card_pad', [
                 'label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
@@ -404,19 +425,32 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (!$rows) {
                 return;
             }
+            $panel = ($s['layout'] ?? 'panel') === 'panel';
             echo '<style>
-              {{WRAPPER}} .qf-grid{display:grid;gap:16px}
-              {{WRAPPER}} .qf-item{display:flex;gap:16px;align-items:flex-start;background:#F1EAE4;border-radius:9px;padding:20px 22px}
+              {{WRAPPER}} .qf-grid{display:grid}
+              {{WRAPPER}} .qf-cards{gap:16px}
+              {{WRAPPER}} .qf-card{background:#faf9f7;border:1.5px solid #D3BAA3;border-radius:9px;overflow:hidden}
+              {{WRAPPER}} .qf-panel{gap:1px;background:#faf9f7}
+              {{WRAPPER}} .qf-item{display:flex;gap:18px;align-items:flex-start;background:#F1EAE4;padding:22px 26px}
+              {{WRAPPER}} .qf-span{grid-column:1 / -1;justify-content:center}
+              {{WRAPPER}} .qf-span .qf-tx{flex:0 1 auto;max-width:340px}
               {{WRAPPER}} .qf-ic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;background:#64402C;display:flex;align-items:center;justify-content:center}
               {{WRAPPER}} .qf-ic img{width:22px;height:22px;object-fit:contain}
               {{WRAPPER}} .qf-glyph{display:inline-block;width:22px;height:22px;background-color:#F1EAE4}
               {{WRAPPER}} .qf-tx{flex:1;min-width:0}
-              {{WRAPPER}} .qf-l{margin:0 0 3px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
-              {{WRAPPER}} .qf-t{margin:0 0 4px;font-weight:700;font-size:18px}
+              {{WRAPPER}} .qf-l{margin:0 0 3px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px}
+              {{WRAPPER}} .qf-t{margin:0 0 3px;font-weight:700;font-size:15px;color:#3a2c22}
               {{WRAPPER}} .qf-d{margin:0;font-size:14px;line-height:1.5}
             </style>';
-            echo '<div class="qf-grid">';
+            $cols = (int) ($s['columns'] ?? 2) ?: 2;
+            $n = count($rows);
+            if ($panel) {
+                echo '<div class="qf-card">';
+            }
+            echo '<div class="qf-grid ' . ($panel ? 'qf-panel' : 'qf-cards') . '">';
+            $i = 0;
             foreach ($rows as $r) {
+                $i++;
                 [$title, $detail] = island_ew_split($r['value'] ?? '');
                 $icon = island_ew_image_src($r['icon'] ?? '');
                 $glyph = '';
@@ -428,7 +462,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                         $glyph = '<img src="' . esc_url($icon) . '" alt="">';
                     }
                 }
-                echo '<div class="qf-item">';
+                // In panel mode, a lone item on the last row spans + centers.
+                $span = $panel && $i === $n && ($n % $cols) === 1 && $cols > 1;
+                echo '<div class="qf-item' . ($span ? ' qf-span' : '') . '">';
                 echo '<span class="qf-ic">' . $glyph . '</span>';
                 echo '<div class="qf-tx">';
                 echo '<p class="qf-l">' . esc_html($r['label'] ?? '') . '</p>';
@@ -439,6 +475,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div></div>';
             }
             echo '</div>';
+            if ($panel) {
+                echo '</div>';
+            }
         }
     }
 
