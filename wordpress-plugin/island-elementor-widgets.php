@@ -530,10 +530,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             /* CONTENT */
             $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('layout', [
+                'label' => 'Layout', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'auto',
+                'options' => [
+                    'auto' => 'Auto (detect by data)',
+                    'table' => 'Table (short Access / Wildlife / Notes)',
+                    'cards' => 'Cards (long description + button)',
+                ],
+                'description' => 'Auto = table when rows carry short Access/Key Wildlife/Notes columns (Santa Cruz), cards when rows carry long descriptions + buttons (Isabela, etc).',
+            ]);
             $this->add_responsive_control('columns', [
-                'label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT,
+                'label' => 'Columns (cards)', 'type' => \Elementor\Controls_Manager::SELECT,
                 'default' => '3', 'tablet_default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
+                'condition' => ['layout!' => 'table'],
                 'selectors' => ['{{WRAPPER}} .vs-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
             ]);
             $this->add_control('show_headings', ['label' => 'Show group headings', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
@@ -635,6 +645,54 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .vs-btn' => 'border-color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'btn_typo', 'selector' => '{{WRAPPER}} .vs-btn']);
             $this->end_controls_section();
+
+            /* TABLE (only relevant when the Table layout renders) */
+            $this->start_controls_section('tablestyle', ['label' => 'Table', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
+                'condition' => ['layout!' => 'cards']]);
+            $this->add_control('t_border', ['label' => 'Outer border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
+                'selectors' => ['{{WRAPPER}} .vt-wrap' => 'border-color:{{VALUE}}']]);
+            $this->add_control('t_radius', ['label' => 'Outer radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
+                'default' => ['size' => 9, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vt-wrap' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('t_head_bg', ['label' => 'Header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .vt-head' => 'background:{{VALUE}}']]);
+            $this->add_control('t_head_color', ['label' => 'Header text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCFAF9',
+                'selectors' => ['{{WRAPPER}} .vt-head' => 'color:{{VALUE}}']]);
+            $this->add_control('t_row_bg', ['label' => 'Row background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .vt-row' => 'background:{{VALUE}}']]);
+            $this->add_control('t_divider', ['label' => 'Row divider', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ece5de',
+                'selectors' => ['{{WRAPPER}} .vt-row' => 'border-top-color:{{VALUE}}']]);
+            $this->add_control('t_name_color', ['label' => 'Site name', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#202020',
+                'selectors' => ['{{WRAPPER}} .vt-name' => 'color:{{VALUE}}']]);
+            $this->add_control('t_cell_color', ['label' => 'Cell text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a4636',
+                'selectors' => ['{{WRAPPER}} .vt-cell' => 'color:{{VALUE}}']]);
+            $this->add_control('t_land_color', ['label' => 'Land badge text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9c7b4e',
+                'selectors' => ['{{WRAPPER}} .vt-tag.lan' => 'color:{{VALUE}}']]);
+            $this->add_control('t_cruise_color', ['label' => 'Cruise badge text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a5a8c',
+                'selectors' => ['{{WRAPPER}} .vt-tag.cru' => 'color:{{VALUE}}']]);
+            $this->add_control('t_thumb', ['label' => 'Thumbnail size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 120]],
+                'default' => ['size' => 60, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vt-thumb' => 'width:{{SIZE}}{{UNIT}};height:calc({{SIZE}}{{UNIT}} * .82)']]);
+            $this->end_controls_section();
+        }
+
+        private function is_tabular($rows)
+        {
+            $n = count($rows);
+            if (!$n) {
+                return false;
+            }
+            $structured = 0;
+            $buttons = 0;
+            $len = 0;
+            foreach ($rows as $r) {
+                if (!empty($r['access']) || !empty($r['species_seen'])) {
+                    $structured++;
+                }
+                if (!empty($r['button_url'])) {
+                    $buttons++;
+                }
+                $len += mb_strlen(wp_strip_all_tags($r['description'] ?? ''));
+            }
+            return $structured >= $n * 0.6 && ($len / $n) < 160 && $buttons === 0;
         }
 
         private function card($r, $s)
@@ -672,6 +730,89 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . $meta . $desc . $btn . '</div></article>';
         }
 
+        private function render_table($rows, $s, $pid)
+        {
+            $title_tag = $this->tag($s['title_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h4');
+            $pin = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s6-5 6-10a6 6 0 10-12 0c0 5 6 10 6 10z"/><circle cx="12" cy="11" r="2"/></svg>';
+            $walk = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="13" cy="4" r="1.6"/><path d="M13 8l-3 4 2 2 1 5M13 12l3 2M10 12l-3 6"/></svg>';
+            $paw = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><circle cx="6" cy="11" r="2"/><circle cx="10" cy="7.5" r="2"/><circle cx="14" cy="7.5" r="2"/><circle cx="18" cy="11" r="2"/><path d="M8.5 14c-2 1.5-2 4 .5 4 1 0 1.8-.5 3-.5s2 .5 3 .5c2.5 0 2.5-2.5.5-4-1-.8-2.2-1.5-3.5-1.5S9.5 13.2 8.5 14z"/></svg>';
+            $note = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>';
+
+            $cols = ['minmax(190px,1.4fr)'];
+            $head = ['<div class="vt-hc">' . $pin . ' Visitor Site</div>'];
+            $show_access = $s['show_access'] === 'yes';
+            $show_wild = $s['show_wildlife'] === 'yes';
+            $show_notes = $s['show_desc'] === 'yes';
+            if ($show_access) {
+                $cols[] = '1fr';
+                $head[] = '<div class="vt-hc">' . $walk . ' Access</div>';
+            }
+            if ($show_wild) {
+                $cols[] = '1.3fr';
+                $head[] = '<div class="vt-hc">' . $paw . ' Key Wildlife</div>';
+            }
+            if ($show_notes) {
+                $cols[] = '1fr';
+                $head[] = '<div class="vt-hc">' . $note . ' Notes</div>';
+            }
+            $tpl = implode(' ', $cols);
+
+            echo '<style>
+              {{WRAPPER}} .vs-intro{margin:0 0 16px}{{WRAPPER}} .vs-intro :first-child{margin-top:0}{{WRAPPER}} .vs-intro :last-child{margin-bottom:0}
+              {{WRAPPER}} .vt-scroll{overflow-x:auto}
+              {{WRAPPER}} .vt-wrap{min-width:640px;border:1px solid #DBCEC4;border-radius:9px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(60,40,25,.06)}
+              {{WRAPPER}} .vt-head{display:grid;background:#64402C;color:#FCFAF9;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px}
+              {{WRAPPER}} .vt-head .vt-hc{padding:15px 18px;display:flex;align-items:center;gap:9px}
+              {{WRAPPER}} .vt-row{display:grid;background:#fff;border-top:1px solid #ece5de}
+              {{WRAPPER}} .vt-cell{padding:16px 18px;font-size:13.5px;line-height:1.5;color:#5a4636}
+              {{WRAPPER}} .vt-site{display:flex;gap:13px;align-items:flex-start;padding:16px 18px}
+              {{WRAPPER}} .vt-thumb{flex:0 0 auto;width:60px;height:49px;border-radius:6px;object-fit:cover;display:block;background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 8px,#d8c8b8 8px,#d8c8b8 16px)}
+              {{WRAPPER}} .vt-nm{display:flex;flex-direction:column}
+              {{WRAPPER}} .vt-name{margin:0;font-family:Merriweather,Georgia,serif;font-weight:700;font-size:15px;color:#202020;line-height:1.3}
+              {{WRAPPER}} .vt-tag{margin-top:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9c7b4e}
+              {{WRAPPER}} .vt-tag.cru{color:#3a5a8c}
+              {{WRAPPER}} .vt-head,{{WRAPPER}} .vt-row{grid-template-columns:' . $tpl . '}
+              @media(max-width:640px){{{WRAPPER}} .vt-wrap{min-width:560px}}
+            </style>';
+
+            $introL = get_field('visitor_sites_intro', $pid);
+            $introC = get_field('visitor_sites_intro_cruise', $pid);
+            if ($introL) {
+                echo '<div class="vs-intro">' . wp_kses_post($introL) . '</div>';
+            }
+            if ($introC) {
+                echo '<div class="vs-intro">' . wp_kses_post($introC) . '</div>';
+            }
+
+            echo '<div class="vt-scroll"><div class="vt-wrap">';
+            echo '<div class="vt-head">' . implode('', $head) . '</div>';
+            foreach ($rows as $r) {
+                $img = island_ew_image_src($r['image'] ?? '');
+                $thumb = $img
+                    ? '<img class="vt-thumb" src="' . esc_url($img) . '" alt="' . esc_attr($r['site_name'] ?? '') . '">'
+                    : '<span class="vt-thumb"></span>';
+                $badge = '';
+                if ($s['show_badge'] === 'yes' && !empty($r['access_type'])) {
+                    $cls = ($r['access_type'] === 'Cruise-only') ? 'cru' : 'lan';
+                    $badge = '<span class="vt-tag ' . $cls . '">' . esc_html($r['access_type']) . '</span>';
+                }
+                echo '<div class="vt-row"><div class="vt-site">' . $thumb
+                    . '<span class="vt-nm"><' . $title_tag . ' class="vt-name">' . esc_html($r['site_name'] ?? '') . '</' . $title_tag . '>'
+                    . $badge . '</span></div>';
+                if ($show_access) {
+                    echo '<div class="vt-cell">' . esc_html(wp_strip_all_tags($r['access'] ?? '')) . '</div>';
+                }
+                if ($show_wild) {
+                    echo '<div class="vt-cell">' . esc_html(wp_strip_all_tags($r['species_seen'] ?? '')) . '</div>';
+                }
+                if ($show_notes) {
+                    echo '<div class="vt-cell">' . esc_html(wp_strip_all_tags($r['description'] ?? '')) . '</div>';
+                }
+                echo '</div>';
+            }
+            echo '</div></div>';
+        }
+
         protected function render()
         {
             if (!function_exists('get_field')) {
@@ -681,6 +822,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
             $rows = get_field('visitor_sites', $pid) ?: [];
             if (!$rows) {
+                return;
+            }
+            $layout = in_array($s['layout'] ?? 'auto', ['auto', 'table', 'cards'], true) ? $s['layout'] : 'auto';
+            if ($layout === 'auto') {
+                $layout = $this->is_tabular($rows) ? 'table' : 'cards';
+            }
+            if ($layout === 'table') {
+                $this->render_table($rows, $s, $pid);
                 return;
             }
             $land = array_filter($rows, fn($r) => ($r['access_type'] ?? '') !== 'Cruise-only');
