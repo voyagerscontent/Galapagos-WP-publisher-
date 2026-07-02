@@ -129,6 +129,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('show_desc', ['label' => 'Show description', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->add_control('show_btn', ['label' => 'Show button', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->add_control('btn_text', ['label' => 'Button fallback text', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Read more']);
+            $rep = new \Elementor\Repeater();
+            $rep->add_control('ic', ['label' => 'Icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
+            $this->add_control('row_icons', [
+                'label' => 'Species icons (Font Awesome or SVG)', 'type' => \Elementor\Controls_Manager::REPEATER,
+                'fields' => $rep->get_controls(), 'prevent_empty' => false, 'title_field' => 'Icon {{{ _id }}}',
+                'description' => 'Optional accent icon shown above each species name, in order (1st item = 1st species). Font Awesome or your own SVG. Leave empty for none.',
+            ]);
             $this->end_controls_section();
 
             /* CARD */
@@ -155,7 +162,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             /* TEXT */
             $this->start_controls_section('txt', ['label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('h_name', ['label' => 'Name', 'type' => \Elementor\Controls_Manager::HEADING]);
+            $this->add_control('h_icon', ['label' => 'Species icon', 'type' => \Elementor\Controls_Manager::HEADING]);
+            $this->add_control('icon_color', ['label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-ic i,{{WRAPPER}} .iw2-ic svg' => 'color:{{VALUE}};fill:{{VALUE}}']]);
+            $this->add_responsive_control('icon_size', ['label' => 'Icon size', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 12, 'max' => 60]], 'default' => ['size' => 24, 'unit' => 'px'],
+                'selectors' => [
+                    '{{WRAPPER}} .iw2-ic i' => 'font-size:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .iw2-ic svg,{{WRAPPER}} .iw2-ic img' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}',
+                ]]);
+            $this->add_control('h_name', ['label' => 'Name', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('name_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .iw2-name' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'name_typo', 'selector' => '{{WRAPPER}} .iw2-name']);
@@ -206,6 +222,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}} .iw2-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
               {{WRAPPER}} .iw2-list{display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-ic{display:flex;align-items:center;margin:0 0 8px}{{WRAPPER}} .iw2-ic i{font-size:24px;line-height:1;color:#64402c}{{WRAPPER}} .iw2-ic svg,{{WRAPPER}} .iw2-ic img{width:24px;height:24px}
+              {{WRAPPER}} .iw2-ov .iw2-ic i,{{WRAPPER}} .iw2-ov .iw2-ic svg{color:#f3e9df;fill:#f3e9df}
               {{WRAPPER}} .iw2-name{font-family:Merriweather,Georgia,serif;font-style:italic;margin:0 0 6px;font-size:20px;line-height:1.25;color:#64402c}
               {{WRAPPER}} .iw2-tag{align-self:flex-start;display:inline-block;font-style:italic;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid rgba(211,186,163,.7);background:rgba(211,186,163,.28);color:#6b4832;margin-bottom:9px}
               {{WRAPPER}} .iw2-sci{display:block;font-style:italic;font-size:12.5px;color:#8a7058;margin:-2px 0 7px}
@@ -239,6 +257,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:96px 1fr;gap:14px}{{WRAPPER}} .iw2-ed .iw2-num{display:none}}
             </style>';
 
+            $icons = is_array($s['row_icons'] ?? null) ? $s['row_icons'] : [];
             $i = 0;
             $isgrid = ($style !== 'editorial');
             echo '<div class="iw2 ' . ($isgrid ? 'iw2-grid' : 'iw2-list') . '">';
@@ -248,6 +267,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $bg = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
                 $common = esc_html($w['common_name'] ?? '');
                 $sci = trim($w['scientific_name'] ?? '');
+                $ico = '';
+                $iv = $icons[$i - 1]['ic'] ?? null;
+                if (is_array($iv) && !empty($iv['value']) && class_exists('\Elementor\Icons_Manager')) {
+                    ob_start();
+                    \Elementor\Icons_Manager::render_icon($iv, ['aria-hidden' => 'true']);
+                    $g = ob_get_clean();
+                    if (trim($g) !== '') {
+                        $ico = '<span class="iw2-ic">' . $g . '</span>';
+                    }
+                }
                 $name = '<' . $tag . ' class="iw2-name">' . $common . '</' . $tag . '>';
                 $tagEl = ($s['show_sci'] === 'yes' && $sci) ? '<span class="iw2-tag">' . esc_html($sci) . '</span>' : '';
                 $sciU = ($s['show_sci'] === 'yes' && $sci) ? '<span class="iw2-sci">' . esc_html($sci) . '</span>' : '';
@@ -273,14 +302,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
                 if ($style === 'overlay') {
                     echo '<article class="iw2-ov' . $rev . '"' . $bg . '><div class="iw2-tx">'
-                        . $tagEl . $name . $desc . $meta . $btn . '</div></article>';
+                        . $ico . $tagEl . $name . $desc . $meta . $btn . '</div></article>';
                 } elseif ($style === 'offset') {
                     echo '<article class="iw2-of' . $rev . '"><div class="iw2-ph"' . $bg . '></div>'
-                        . '<div class="iw2-ofc">' . $tagEl . $name . $sciU . $desc . $meta . $btn . '</div></article>';
+                        . '<div class="iw2-ofc">' . $ico . $tagEl . $name . $sciU . $desc . $meta . $btn . '</div></article>';
                 } else {
                     echo '<article class="iw2-ed' . $rev . '"><span class="iw2-num">' . sprintf('%02d', $i) . '</span>'
                         . '<div class="iw2-ph"' . $bg . '></div>'
-                        . '<div class="iw2-tx">' . $tagEl . $name . $sciU . $desc . $meta . $btn . '</div></article>';
+                        . '<div class="iw2-tx">' . $ico . $tagEl . $name . $sciU . $desc . $meta . $btn . '</div></article>';
                 }
             }
             echo '</div>';
