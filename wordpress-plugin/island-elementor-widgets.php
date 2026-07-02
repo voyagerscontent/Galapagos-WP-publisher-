@@ -110,6 +110,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '3',
                 'tablet_default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
+                'condition' => ['card_style!' => 'editorial'],
                 'selectors' => ['{{WRAPPER}} .iw2-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
             ]);
             $this->add_control('reveal', [
@@ -118,9 +119,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'Reveal shows a teaser; the full text opens on hover (desktop) or tap (mobile).',
             ]);
             $this->add_control('teaser_lines', [
-                'label' => 'Teaser lines', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 3, 'min' => 1, 'max' => 12,
+                'label' => 'Teaser lines', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 3, 'min' => 1, 'max' => 20,
                 'condition' => ['reveal' => 'expand'],
-                'selectors' => ['{{WRAPPER}} .iw2-desc' => '-webkit-line-clamp:{{VALUE}}'],
+                'selectors' => ['{{WRAPPER}} .iw2-desc.clip' => '--tl:{{VALUE}}'],
             ]);
             $this->add_control('title_tag', ['label' => 'Name tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h4', 'options' => $tags]);
             $this->add_control('show_sci', ['label' => 'Show scientific name', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
@@ -137,19 +138,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-grid' => 'gap:{{SIZE}}{{UNIT}}'],
             ]);
             $this->add_responsive_control('card_h', [
-                'label' => 'Card / image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 160, 'max' => 620]],
-                'default' => ['size' => 360, 'unit' => 'px'],
+                'label' => 'Photo height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 620]],
+                'default' => ['size' => 340, 'unit' => 'px'],
                 'selectors' => [
-                    '{{WRAPPER}} .iw2-overlay' => 'height:{{SIZE}}{{UNIT}}',
-                    '{{WRAPPER}} .iw2-offset .iw2-ph,{{WRAPPER}} .iw2-editorial .iw2-ph' => 'height:calc({{SIZE}}{{UNIT}} * .55)',
+                    '{{WRAPPER}} .iw2-ov' => 'min-height:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .iw2-of .iw2-ph,{{WRAPPER}} .iw2-ed .iw2-ph' => 'height:calc({{SIZE}}{{UNIT}} * .6)',
                 ],
             ]);
             $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
-                'selectors' => ['{{WRAPPER}} .iw2-editorial .iw2-tx,{{WRAPPER}} .iw2-offset .iw2-card' => 'background:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .iw2-ed .iw2-tx,{{WRAPPER}} .iw2-ofc' => 'background:{{VALUE}};--fade:{{VALUE}}']]);
             $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
-                'selectors' => ['{{WRAPPER}} .iw2-offset .iw2-card' => 'border-color:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .iw2-ofc' => 'border-color:{{VALUE}}', '{{WRAPPER}} .iw2-ed' => 'border-bottom-color:{{VALUE}}']]);
             $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
-                'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-card,{{WRAPPER}} .iw2-ph,{{WRAPPER}} .iw2-overlay' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+                'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-ph,{{WRAPPER}} .iw2-ov,{{WRAPPER}} .iw2-ofc' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
 
             /* TEXT */
@@ -203,42 +204,44 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $tag = $this->tag($s['title_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h4');
             $expand = ($s['reveal'] ?? 'expand') === 'expand';
             echo '<style>
-              {{WRAPPER}} .iw2-grid{display:grid;gap:18px}
-              {{WRAPPER}} .iw2-name{font-family:Merriweather,Georgia,serif;font-style:italic;margin:0 0 6px;font-size:20px;color:#64402c}
-              {{WRAPPER}} .iw2-tag{display:inline-block;font-style:italic;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid rgba(211,186,163,.6);background:rgba(211,186,163,.28);margin-bottom:8px}
-              {{WRAPPER}} .iw2-sci{display:block;font-style:italic;font-size:12.5px;color:#8a7058;font-weight:400;margin:-2px 0 6px}
-              {{WRAPPER}} .iw2-desc{font-size:13.5px;line-height:1.55}
+              {{WRAPPER}} .iw2-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+              {{WRAPPER}} .iw2-list{display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-name{font-family:Merriweather,Georgia,serif;font-style:italic;margin:0 0 6px;font-size:20px;line-height:1.25;color:#64402c}
+              {{WRAPPER}} .iw2-tag{align-self:flex-start;display:inline-block;font-style:italic;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid rgba(211,186,163,.7);background:rgba(211,186,163,.28);color:#6b4832;margin-bottom:9px}
+              {{WRAPPER}} .iw2-sci{display:block;font-style:italic;font-size:12.5px;color:#8a7058;margin:-2px 0 7px}
+              {{WRAPPER}} .iw2-desc{--tl:3;--fade:#faf9f7;font-size:13.5px;line-height:1.62;color:#333}
               {{WRAPPER}} .iw2-desc p{margin:0 0 8px}{{WRAPPER}} .iw2-desc :last-child{margin-bottom:0}
-              {{WRAPPER}} .iw2-desc.clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-              {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:8px 0 0;font-size:13px;color:#5a4636}
-              {{WRAPPER}} .iw2-btn{align-self:flex-start;display:inline-block;color:#64402c;background:transparent;border:1px solid #D3BAA3;font-weight:600;text-decoration:none;font-size:13px;margin-top:10px;padding:7px 13px;border-radius:6px}
-              {{WRAPPER}} .iw2-ph{background:repeating-linear-gradient(45deg,#7c5640,#7c5640 14px,#6b4832 14px,#6b4832 28px);background-size:cover;background-position:center}
-              /* OVERLAY */
-              {{WRAPPER}} .iw2-overlay{position:relative;overflow:hidden;background-size:cover;background-position:center;box-shadow:0 6px 18px rgba(60,40,25,.18)}
-              {{WRAPPER}} .iw2-overlay .iw2-tx{position:absolute;left:0;right:0;bottom:0;max-height:62%;overflow:hidden;padding:18px;color:#fff;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(24,15,8,.92) 45%);transition:max-height .35s ease,background .35s ease}
-              {{WRAPPER}} .iw2-overlay .iw2-name{color:#fff}
-              {{WRAPPER}} .iw2-overlay .iw2-sci{color:#e9d9c8}
-              {{WRAPPER}} .iw2-overlay .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
-              {{WRAPPER}} .iw2-overlay.rev:hover .iw2-tx,{{WRAPPER}} .iw2-overlay.rev.is-open .iw2-tx{max-height:100%;background:rgba(24,15,8,.94);overflow-y:auto}
-              {{WRAPPER}} .iw2-overlay.rev:hover .iw2-desc,{{WRAPPER}} .iw2-overlay.rev.is-open .iw2-desc{-webkit-line-clamp:unset;overflow:visible;display:block}
-              /* EDITORIAL */
-              {{WRAPPER}} .iw2-editorial{display:flex;flex-direction:column;gap:2px}
-              {{WRAPPER}} .iw2-ed{position:relative;display:grid;grid-template-columns:130px 1fr;gap:22px;align-items:center;padding:22px 6px;border-bottom:1px solid #D3BAA3}
-              {{WRAPPER}} .iw2-ed .iw2-num{position:absolute;left:-4px;top:2px;font-family:Merriweather,serif;font-size:58px;color:#e0d3c6;font-weight:700;z-index:0;line-height:1}
-              {{WRAPPER}} .iw2-ed .iw2-ph{position:relative;z-index:1;border-radius:10px}
+              /* Paragraph-safe clamp: max-height on the whole block + a fade, opens on hover/tap. */
+              {{WRAPPER}} .iw2-desc.clip{position:relative;max-height:calc(var(--tl) * 1.62em);overflow:hidden;transition:max-height .45s ease}
+              {{WRAPPER}} .iw2-desc.clip::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none;transition:opacity .3s ease}
+              {{WRAPPER}} .rev.is-open .iw2-desc.clip,{{WRAPPER}} .rev:hover .iw2-desc.clip{max-height:2000px}
+              {{WRAPPER}} .rev.is-open .iw2-desc.clip::after,{{WRAPPER}} .rev:hover .iw2-desc.clip::after{opacity:0}
+              {{WRAPPER}} .rev{cursor:pointer}
+              {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:9px 0 0;font-size:13px;color:#5a4636}{{WRAPPER}} .iw2-meta li{margin:0 0 2px}
+              {{WRAPPER}} .iw2-btn{align-self:flex-start;display:inline-block;color:#64402c;background:transparent;border:1px solid #D3BAA3;font-weight:600;text-decoration:none;font-size:13px;margin-top:12px;padding:7px 14px;border-radius:6px}
+              {{WRAPPER}} .iw2-ph{background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 12px,#d8c8b8 12px,#d8c8b8 24px) center/cover no-repeat}
+              /* OVERLAY — image bg, text in normal flow at the bottom so expanding grows the card DOWN */
+              {{WRAPPER}} .iw2-ov{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:340px;overflow:hidden;background:#6b4832 center/cover no-repeat;box-shadow:0 6px 18px rgba(60,40,25,.18)}
+              {{WRAPPER}} .iw2-ov .iw2-tx{position:relative;padding:20px 18px 16px;color:#fff;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(24,15,8,.55) 30%,rgba(24,15,8,.93));display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-ov .iw2-name{color:#fff}
+              {{WRAPPER}} .iw2-ov .iw2-desc{--fade:rgba(24,15,8,.93);color:#f3e9df}
+              {{WRAPPER}} .iw2-ov .iw2-meta{color:#e6d5c4}
+              {{WRAPPER}} .iw2-ov .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
+              /* EDITORIAL — numbered index rows */
+              {{WRAPPER}} .iw2-ed{position:relative;display:grid;grid-template-columns:150px 1fr;gap:22px;align-items:start;padding:24px 6px;border-bottom:1px solid #D3BAA3}
+              {{WRAPPER}} .iw2-ed .iw2-num{position:absolute;left:-2px;top:6px;font-family:Merriweather,serif;font-size:54px;color:#e7dbcf;font-weight:700;z-index:0;line-height:1}
+              {{WRAPPER}} .iw2-ed .iw2-ph{position:relative;z-index:1;height:150px;border-radius:10px}
               {{WRAPPER}} .iw2-ed .iw2-tx{position:relative;z-index:1;display:flex;flex-direction:column}
-              {{WRAPPER}} .iw2-ed.rev:hover .iw2-desc,{{WRAPPER}} .iw2-ed.rev.is-open .iw2-desc{-webkit-line-clamp:unset;overflow:visible;display:block}
-              /* OFFSET */
-              {{WRAPPER}} .iw2-offset .iw2-item{display:flex;flex-direction:column}
-              {{WRAPPER}} .iw2-offset .iw2-ph{border-radius:12px}
-              {{WRAPPER}} .iw2-offset .iw2-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:12px;padding:18px 20px;margin:-44px 18px 0;position:relative;box-shadow:0 6px 16px rgba(60,40,25,.12);display:flex;flex-direction:column}
-              {{WRAPPER}} .iw2-offset .iw2-item.rev:hover .iw2-desc,{{WRAPPER}} .iw2-offset .iw2-item.rev.is-open .iw2-desc{-webkit-line-clamp:unset;overflow:visible;display:block}
-              @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:90px 1fr}}
+              /* OFFSET — card overlaps the photo */
+              {{WRAPPER}} .iw2-of{display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-of .iw2-ph{height:200px;border-radius:12px}
+              {{WRAPPER}} .iw2-ofc{background:#faf9f7;--fade:#faf9f7;border:1px solid #D3BAA3;border-radius:12px;padding:18px 20px;margin:-46px 16px 0;position:relative;z-index:1;box-shadow:0 6px 16px rgba(60,40,25,.12);display:flex;flex-direction:column}
+              @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:96px 1fr;gap:14px}{{WRAPPER}} .iw2-ed .iw2-num{display:none}}
             </style>';
 
             $i = 0;
             $isgrid = ($style !== 'editorial');
-            echo '<div class="iw2 iw2-' . esc_attr($style) . ' ' . ($isgrid ? 'iw2-grid' : '') . '">';
+            echo '<div class="iw2 ' . ($isgrid ? 'iw2-grid' : 'iw2-list') . '">';
             foreach ($rows as $w) {
                 $i++;
                 $img = island_ew_image_src($w['image'] ?? '');
@@ -248,7 +251,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $name = '<' . $tag . ' class="iw2-name">' . $common . '</' . $tag . '>';
                 $tagEl = ($s['show_sci'] === 'yes' && $sci) ? '<span class="iw2-tag">' . esc_html($sci) . '</span>' : '';
                 $sciU = ($s['show_sci'] === 'yes' && $sci) ? '<span class="iw2-sci">' . esc_html($sci) . '</span>' : '';
-                $descClass = 'iw2-desc' . ($expand ? ' clamp' : '');
+                $descClass = 'iw2-desc' . ($expand ? ' clip' : '');
                 $desc = ($s['show_desc'] === 'yes' && !empty($w['description']))
                     ? '<div class="' . $descClass . '">' . wp_kses_post($w['description']) . '</div>' : '';
                 $meta = '';
@@ -269,15 +272,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $rev = $expand ? ' rev' : '';
 
                 if ($style === 'overlay') {
-                    echo '<article class="iw2-overlay' . $rev . '"' . $bg . '><div class="iw2-tx">'
+                    echo '<article class="iw2-ov' . $rev . '"' . $bg . '><div class="iw2-tx">'
                         . $tagEl . $name . $desc . $meta . $btn . '</div></article>';
                 } elseif ($style === 'offset') {
-                    echo '<article class="iw2-item' . $rev . '"><div class="iw2-ph"' . $bg . '></div>'
-                        . '<div class="iw2-card">' . $name . $sciU . $desc . $meta . $btn . '</div></article>';
+                    echo '<article class="iw2-of' . $rev . '"><div class="iw2-ph"' . $bg . '></div>'
+                        . '<div class="iw2-ofc">' . $tagEl . $name . $sciU . $desc . $meta . $btn . '</div></article>';
                 } else {
                     echo '<article class="iw2-ed' . $rev . '"><span class="iw2-num">' . sprintf('%02d', $i) . '</span>'
                         . '<div class="iw2-ph"' . $bg . '></div>'
-                        . '<div class="iw2-tx">' . $name . $sciU . $desc . $meta . $btn . '</div></article>';
+                        . '<div class="iw2-tx">' . $tagEl . $name . $sciU . $desc . $meta . $btn . '</div></article>';
                 }
             }
             echo '</div>';
