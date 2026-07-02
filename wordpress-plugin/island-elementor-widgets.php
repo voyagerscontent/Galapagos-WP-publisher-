@@ -350,6 +350,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'label' => 'Circle color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .qf-ic' => 'background:{{VALUE}}'],
             ]);
+            $this->add_control('icon_recolor', [
+                'label' => 'Recolor icon',
+                'type' => \Elementor\Controls_Manager::SWITCHER,
+                'default' => 'yes',
+                'description' => 'On: the icon takes the color below (best for single-color SVGs). Off: keep the SVG\'s own colors.',
+            ]);
+            $this->add_control('icon_color', [
+                'label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EAE4',
+                'condition' => ['icon_recolor' => 'yes'],
+                'selectors' => ['{{WRAPPER}} .qf-glyph' => 'background-color:{{VALUE}}'],
+            ]);
             $this->add_responsive_control('icon_circle', [
                 'label' => 'Circle size', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 30, 'max' => 90]], 'default' => ['size' => 46, 'unit' => 'px'],
@@ -358,7 +369,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('icon_glyph', [
                 'label' => 'Icon size', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 12, 'max' => 50]], 'default' => ['size' => 22, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .qf-ic img' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}'],
+                'selectors' => ['{{WRAPPER}} .qf-ic img,{{WRAPPER}} .qf-glyph' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}'],
             ]);
             $this->end_controls_section();
 
@@ -398,6 +409,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .qf-item{display:flex;gap:16px;align-items:flex-start;background:#F1EAE4;border-radius:9px;padding:20px 22px}
               {{WRAPPER}} .qf-ic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;background:#64402C;display:flex;align-items:center;justify-content:center}
               {{WRAPPER}} .qf-ic img{width:22px;height:22px;object-fit:contain}
+              {{WRAPPER}} .qf-glyph{display:inline-block;width:22px;height:22px;background-color:#F1EAE4}
               {{WRAPPER}} .qf-tx{flex:1;min-width:0}
               {{WRAPPER}} .qf-l{margin:0 0 3px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
               {{WRAPPER}} .qf-t{margin:0 0 4px;font-weight:700;font-size:18px}
@@ -407,8 +419,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             foreach ($rows as $r) {
                 [$title, $detail] = island_ew_split($r['value'] ?? '');
                 $icon = island_ew_image_src($r['icon'] ?? '');
+                $glyph = '';
+                if ($icon) {
+                    if ($s['icon_recolor'] === 'yes') {
+                        $m = "url('" . esc_url($icon) . "') center/contain no-repeat";
+                        $glyph = '<span class="qf-glyph" style="-webkit-mask:' . esc_attr($m) . ';mask:' . esc_attr($m) . '"></span>';
+                    } else {
+                        $glyph = '<img src="' . esc_url($icon) . '" alt="">';
+                    }
+                }
                 echo '<div class="qf-item">';
-                echo '<span class="qf-ic">' . ($icon ? '<img src="' . esc_url($icon) . '" alt="">' : '') . '</span>';
+                echo '<span class="qf-ic">' . $glyph . '</span>';
                 echo '<div class="qf-tx">';
                 echo '<p class="qf-l">' . esc_html($r['label'] ?? '') . '</p>';
                 echo '<p class="qf-t">' . esc_html($title) . '</p>';
