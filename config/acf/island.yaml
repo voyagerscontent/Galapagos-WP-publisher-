@@ -55,6 +55,7 @@ island:
 
   visitor_sites_title: visitor_sites_title
   visitor_sites_intro: visitor_sites_intro
+  visitor_sites_intro_cruise: visitor_sites_intro_cruise
   visitor_sites:
     field: visitor_sites
     site_name: site_name

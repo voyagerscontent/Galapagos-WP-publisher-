@@ -556,11 +556,11 @@ def _extract_cards(section: Section) -> tuple[str, list[tuple[str, list[str]]]]:
     return "\n\n".join(intro).strip(), cards
 
 
-def _extract_visitor_sites_prose(section: Section) -> list[dict]:
-    """Visitor sites written as H3 sub-headings + prose (not a table)."""
+def _extract_visitor_sites_prose(section: Section) -> tuple[str, list[dict]]:
+    """Visitor sites as H3 sub-headings + prose. Returns (section intro, sites)."""
     tl = section.title.lower()
     access = "Cruise-only" if "cruise" in tl else ("Land-based" if "land" in tl else "")
-    _intro, cards = _extract_cards(section)
+    intro, cards = _extract_cards(section)
     out: list[dict] = []
     for name, paras in cards:
         paras, button = _split_off_button(paras)
@@ -573,7 +573,7 @@ def _extract_visitor_sites_prose(section: Section) -> list[dict]:
             row["button_label"] = button["label"]
             row["button_url"] = button["url"]
         out.append(row)
-    return out
+    return intro, out
 
 
 def _extract_wildlife(section: Section) -> tuple[str, list[dict]]:
@@ -856,7 +856,15 @@ def read_docx(path: str | Path) -> Document:
             doc.metadata.setdefault(
                 "visitor_sites_title", re.split(r"\s+[—–-]\s+", s.title, maxsplit=1)[0].strip()
             )
-            prose_sites = _extract_visitor_sites_prose(s)
+            intro, prose_sites = _extract_visitor_sites_prose(s)
+            # Land-Based and Cruise-Only sections keep their own lead text.
+            if intro:
+                key = (
+                    "visitor_sites_intro_cruise"
+                    if "cruise" in s.title.lower()
+                    else "visitor_sites_intro"
+                )
+                doc.metadata.setdefault(key, intro)
             if prose_sites:
                 doc.metadata.setdefault("visitor_sites", []).extend(prose_sites)
 

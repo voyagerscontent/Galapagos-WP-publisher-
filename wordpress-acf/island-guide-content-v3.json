@@ -59,8 +59,10 @@
       { "key": "tab_sites", "label": "Visitor Sites", "name": "", "type": "tab" },
       { "key": "visitor_sites_title", "label": "Visitor Sites — Title", "name": "visitor_sites_title", "type": "text",
         "instructions": "Section heading, e.g. 'Visitor Sites on Santa Cruz'." },
-      { "key": "visitor_sites_intro", "label": "Visitor Sites — Intro", "name": "visitor_sites_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
-        "instructions": "Intro/overview for the Visitor Sites section (the H2 lead text)." },
+      { "key": "visitor_sites_intro", "label": "Visitor Sites — Intro (Land-Based)", "name": "visitor_sites_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
+        "instructions": "Lead text for the Land-Based visitor sites (or the single Visitor Sites section)." },
+      { "key": "vs_intro_cruise", "label": "Visitor Sites — Intro (Cruise-Only)", "name": "visitor_sites_intro_cruise", "type": "wysiwyg", "tabs": "all", "media_upload": 0,
+        "instructions": "Lead text for the Cruise-Only visitor sites section, when the island has a separate one (e.g. Isabela)." },
       {
         "key": "visitor_sites", "label": "Visitor Sites", "name": "visitor_sites", "type": "repeater",
         "instructions": "Place-by-place catalog. 'Species Seen' is only a short pointer — the full species profile lives in the Wildlife tab.",

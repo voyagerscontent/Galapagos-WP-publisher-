@@ -44,6 +44,7 @@ def build_acf(
     wildlife: list | None = None,
     wildlife_intro: str = "",
     visitor_sites_intro: str = "",
+    visitor_sites_intro_cruise: str = "",
     quick_facts_title: str = "",
     quick_facts_intro: str = "",
     wildlife_title: str = "",
@@ -59,6 +60,7 @@ def build_acf(
             cta_blocks=cta_blocks, sources=sources, related_links=related_links,
             wildlife=wildlife, wildlife_intro=wildlife_intro,
             visitor_sites_intro=visitor_sites_intro,
+            visitor_sites_intro_cruise=visitor_sites_intro_cruise,
             quick_facts_title=quick_facts_title, quick_facts_intro=quick_facts_intro,
             wildlife_title=wildlife_title, visitor_sites_title=visitor_sites_title,
         )
@@ -236,6 +238,7 @@ def build_acf_island(
     wildlife: list | None = None,
     wildlife_intro: str = "",
     visitor_sites_intro: str = "",
+    visitor_sites_intro_cruise: str = "",
     quick_facts_title: str = "",
     quick_facts_intro: str = "",
     wildlife_title: str = "",
@@ -277,6 +280,8 @@ def build_acf_island(
         out[m["visitor_sites_title"]] = visitor_sites_title
     if visitor_sites_intro and m.get("visitor_sites_intro"):
         out[m["visitor_sites_intro"]] = md_to_html(visitor_sites_intro)
+    if visitor_sites_intro_cruise and m.get("visitor_sites_intro_cruise"):
+        out[m["visitor_sites_intro_cruise"]] = md_to_html(visitor_sites_intro_cruise)
     if quick_facts_title and m.get("quick_facts_title"):
         out[m["quick_facts_title"]] = quick_facts_title
     if quick_facts_intro and m.get("quick_facts_intro"):
