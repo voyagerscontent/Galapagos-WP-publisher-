@@ -670,7 +670,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $htag = $this->tag($s['heading_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h3');
             echo '<style>
               {{WRAPPER}} .vs-gh{margin:22px 0 6px}
-              {{WRAPPER}} .vs-intro{margin:0 0 16px;max-width:82ch}
+              {{WRAPPER}} .vs-intro{margin:0 0 16px}
               {{WRAPPER}} .vs-intro :first-child{margin-top:0}{{WRAPPER}} .vs-intro :last-child{margin-bottom:0}
               {{WRAPPER}} .vs-grid{display:grid;gap:18px}
               {{WRAPPER}} .vs-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
