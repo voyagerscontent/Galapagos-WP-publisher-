@@ -76,7 +76,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
         public function get_icon()
         {
-            return 'eicon-post-list';
+            return 'eicon-image-box';
         }
 
         public function get_categories()
@@ -84,141 +84,105 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             return ['general'];
         }
 
+        private function tag($v, $allowed, $default)
+        {
+            return in_array($v, $allowed, true) ? $v : $default;
+        }
+
         protected function register_controls()
         {
-            /* ---------- CONTENT ---------- */
-            $this->start_controls_section('content', [
-                'label' => 'Content',
-                'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
-            ]);
-            $this->add_control('source_id', [
-                'label'       => 'Page ID (blank = current)',
-                'type'        => \Elementor\Controls_Manager::NUMBER,
-                'description' => 'Leave empty to read the island being viewed.',
+            $tags = ['h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'div' => 'div'];
+            $align = [
+                'left' => ['title' => 'Left', 'icon' => 'eicon-text-align-left'],
+                'center' => ['title' => 'Center', 'icon' => 'eicon-text-align-center'],
+                'right' => ['title' => 'Right', 'icon' => 'eicon-text-align-right'],
+                'justify' => ['title' => 'Justify', 'icon' => 'eicon-text-align-justify'],
+            ];
+
+            /* CONTENT */
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('card_style', [
+                'label' => 'Card design', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'overlay',
+                'options' => ['overlay' => 'Overlay (photo-forward)', 'editorial' => 'Editorial (index)', 'offset' => 'Offset (card over photo)'],
             ]);
             $this->add_responsive_control('columns', [
-                'label'          => 'Columns',
-                'type'           => \Elementor\Controls_Manager::SELECT,
-                'default'        => '2',
-                'tablet_default' => '2',
-                'mobile_default' => '1',
-                'options'        => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
-                'selectors'      => ['{{WRAPPER}} .iw-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
+                'label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '3',
+                'tablet_default' => '2', 'mobile_default' => '1',
+                'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
+                'selectors' => ['{{WRAPPER}} .iw2-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
             ]);
-            $this->add_control('show_sci', [
-                'label' => 'Show scientific name', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            $this->add_control('excerpt', [
+                'label' => 'Excerpt length (chars, 0 = full)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 0,
             ]);
-            $this->add_control('show_meta', [
-                'label' => 'Show where / season', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-            ]);
-            $this->add_control('show_btn', [
-                'label' => 'Show button', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-            ]);
+            $this->add_control('title_tag', ['label' => 'Name tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h4', 'options' => $tags]);
+            $this->add_control('show_sci', ['label' => 'Show scientific name', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_meta', ['label' => 'Show where / season', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_desc', ['label' => 'Show description', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_btn', ['label' => 'Show button', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('btn_text', ['label' => 'Button fallback text', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Read more']);
             $this->end_controls_section();
 
-            /* ---------- CARD STYLE ---------- */
-            $this->start_controls_section('card_style', [
-                'label' => 'Card',
-                'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
-            ]);
+            /* CARD */
+            $this->start_controls_section('card', ['label' => 'Card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_responsive_control('gap', [
-                'label'      => 'Gap',
-                'type'       => \Elementor\Controls_Manager::SLIDER,
-                'range'      => ['px' => ['min' => 0, 'max' => 60]],
-                'default'    => ['size' => 24, 'unit' => 'px'],
-                'selectors'  => ['{{WRAPPER}} .iw-grid' => 'gap:{{SIZE}}{{UNIT}}'],
+                'label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
+                'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-grid' => 'gap:{{SIZE}}{{UNIT}}'],
             ]);
-            $this->add_control('card_bg', [
-                'label'     => 'Background',
-                'type'      => \Elementor\Controls_Manager::COLOR,
-                'default'   => '#faf9f7',
-                'selectors' => ['{{WRAPPER}} .iw-card' => 'background:{{VALUE}}'],
-            ]);
-            $this->add_control('card_border', [
-                'label'     => 'Border color',
-                'type'      => \Elementor\Controls_Manager::COLOR,
-                'default'   => '#DBCEC4',
-                'selectors' => ['{{WRAPPER}} .iw-card' => 'border-color:{{VALUE}}'],
-            ]);
-            $this->add_control('card_radius', [
-                'label'      => 'Border radius',
-                'type'       => \Elementor\Controls_Manager::SLIDER,
-                'range'      => ['px' => ['min' => 0, 'max' => 40]],
-                'default'    => ['size' => 12, 'unit' => 'px'],
-                'selectors'  => ['{{WRAPPER}} .iw-card' => 'border-radius:{{SIZE}}{{UNIT}}'],
-            ]);
-            $this->add_responsive_control('card_pad', [
-                'label'      => 'Body padding',
-                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
-                'default'    => ['top' => 20, 'right' => 22, 'bottom' => 20, 'left' => 22, 'unit' => 'px'],
-                'selectors'  => ['{{WRAPPER}} .iw-body' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}'],
-            ]);
+            $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
+                'selectors' => ['{{WRAPPER}} .iw2-editorial .iw2-tx,{{WRAPPER}} .iw2-offset .iw2-card' => 'background:{{VALUE}}']]);
+            $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
+                'selectors' => ['{{WRAPPER}} .iw2-offset .iw2-card' => 'border-color:{{VALUE}}']]);
+            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-card,{{WRAPPER}} .iw2-ph,{{WRAPPER}} .iw2-overlay' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 100, 'max' => 480]],
+                'default' => ['size' => 200, 'unit' => 'px'], 'selectors' => [
+                    '{{WRAPPER}} .iw2-editorial .iw2-ph,{{WRAPPER}} .iw2-offset .iw2-ph' => 'height:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .iw2-overlay' => 'min-height:{{SIZE}}{{UNIT}}',
+                ]]);
+            $this->add_control('scrim', ['label' => 'Overlay darkness (%)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 0, 'max' => 100]],
+                'default' => ['size' => 82, 'unit' => '%'], 'condition' => ['card_style' => 'overlay'],
+                'selectors' => ['{{WRAPPER}} .iw2-scrim' => 'opacity:calc({{SIZE}}/100)']]);
             $this->end_controls_section();
 
-            /* ---------- IMAGE ---------- */
-            $this->start_controls_section('img_style', [
-                'label' => 'Image', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
-            ]);
-            $this->add_responsive_control('img_h', [
-                'label'      => 'Height',
-                'type'       => \Elementor\Controls_Manager::SLIDER,
-                'range'      => ['px' => ['min' => 80, 'max' => 400]],
-                'default'    => ['size' => 170, 'unit' => 'px'],
-                'selectors'  => ['{{WRAPPER}} .iw-img,{{WRAPPER}} .iw-ph' => 'height:{{SIZE}}{{UNIT}}'],
-            ]);
+            /* TEXT */
+            $this->start_controls_section('txt', ['label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('h_name', ['label' => 'Name', 'type' => \Elementor\Controls_Manager::HEADING]);
+            $this->add_control('name_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-name' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'name_typo', 'selector' => '{{WRAPPER}} .iw2-name']);
+            $this->add_control('h_sci', ['label' => 'Scientific name', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('sci_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-sci' => 'color:{{VALUE}}']]);
+            $this->add_control('h_desc', ['label' => 'Description', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('desc_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-desc,{{WRAPPER}} .iw2-desc p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'desc_typo', 'selector' => '{{WRAPPER}} .iw2-desc,{{WRAPPER}} .iw2-desc p']);
+            $this->add_responsive_control('desc_align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => $align,
+                'selectors' => ['{{WRAPPER}} .iw2-desc,{{WRAPPER}} .iw2-desc p' => 'text-align:{{VALUE}}']]);
+            $this->add_control('h_meta', ['label' => 'Meta', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('meta_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-meta' => 'color:{{VALUE}}']]);
             $this->end_controls_section();
 
-            /* ---------- TITLE ---------- */
-            $this->start_controls_section('title_style', [
-                'label' => 'Title', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
-            ]);
-            $this->add_control('title_color', [
-                'label'     => 'Color',
-                'type'      => \Elementor\Controls_Manager::COLOR,
-                'default'   => '#64402c',
-                'selectors' => ['{{WRAPPER}} .iw-title' => 'color:{{VALUE}}'],
-            ]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), [
-                'name'     => 'title_typo',
-                'selector' => '{{WRAPPER}} .iw-title',
-            ]);
+            /* BUTTON */
+            $this->start_controls_section('btn', ['label' => 'Button', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('btn_color', ['label' => 'Text', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-btn' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'btn_typo', 'selector' => '{{WRAPPER}} .iw2-btn']);
             $this->end_controls_section();
+        }
 
-            /* ---------- TEXT ---------- */
-            $this->start_controls_section('text_style', [
-                'label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
-            ]);
-            $this->add_control('text_color', [
-                'label'     => 'Body color',
-                'type'      => \Elementor\Controls_Manager::COLOR,
-                'default'   => '#202020',
-                'selectors' => ['{{WRAPPER}} .iw-desc,{{WRAPPER}} .iw-meta' => 'color:{{VALUE}}'],
-            ]);
-            $this->end_controls_section();
-
-            /* ---------- BUTTON ---------- */
-            $this->start_controls_section('btn_style', [
-                'label' => 'Button', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
-            ]);
-            $this->add_control('btn_color', [
-                'label'     => 'Text color',
-                'type'      => \Elementor\Controls_Manager::COLOR,
-                'default'   => '#64402c',
-                'selectors' => ['{{WRAPPER}} .iw-btn' => 'color:{{VALUE}}'],
-            ]);
-            $this->add_control('btn_bg', [
-                'label'     => 'Background',
-                'type'      => \Elementor\Controls_Manager::COLOR,
-                'default'   => 'rgba(0,0,0,0)',
-                'selectors' => ['{{WRAPPER}} .iw-btn' => 'background:{{VALUE}}'],
-            ]);
-            $this->add_control('btn_bd', [
-                'label'     => 'Border color',
-                'type'      => \Elementor\Controls_Manager::COLOR,
-                'default'   => '#D3BAA3',
-                'selectors' => ['{{WRAPPER}} .iw-btn' => 'border-color:{{VALUE}}'],
-            ]);
-            $this->end_controls_section();
+        private function excerpt($html, $n)
+        {
+            if ($n <= 0) {
+                return $html;  // full HTML
+            }
+            $txt = trim(wp_strip_all_tags($html));
+            if (mb_strlen($txt) <= $n) {
+                return esc_html($txt);
+            }
+            return esc_html(rtrim(mb_substr($txt, 0, $n)) . '…');
         }
 
         protected function render()
@@ -232,52 +196,83 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (!$rows) {
                 return;
             }
+            $style = in_array($s['card_style'], ['overlay', 'editorial', 'offset'], true) ? $s['card_style'] : 'overlay';
+            $tag = $this->tag($s['title_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h4');
+            $n = (int) ($s['excerpt'] ?? 0);
             echo '<style>
-              {{WRAPPER}} .iw-grid{display:grid;gap:24px}
-              {{WRAPPER}} .iw-card{border:1px solid #DBCEC4;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
-              {{WRAPPER}} .iw-img,{{WRAPPER}} .iw-ph{width:100%;object-fit:cover;display:block}
-              {{WRAPPER}} .iw-ph{background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 12px,#dccdbb 12px,#dccdbb 24px);display:flex;align-items:center;justify-content:center;color:#8a7058;font-size:13px}
-              {{WRAPPER}} .iw-body{display:flex;flex-direction:column;gap:10px}
-              {{WRAPPER}} .iw-title{margin:0;font-size:20px;font-style:italic}
-              {{WRAPPER}} .iw-sci{display:block;font-style:italic;font-size:13px;color:#8a7058;font-weight:400}
-              {{WRAPPER}} .iw-meta{list-style:none;padding:0;margin:4px 0 0;font-size:13.5px}
-              {{WRAPPER}} .iw-btn{align-self:flex-start;text-decoration:none;padding:9px 16px;border-radius:6px;font-size:14px;font-weight:600;border:1px solid #D3BAA3}
+              {{WRAPPER}} .iw2-grid{display:grid;gap:18px}
+              {{WRAPPER}} .iw2-name{font-family:Merriweather,Georgia,serif;font-style:italic;margin:0;font-size:20px;color:#64402c}
+              {{WRAPPER}} .iw2-sci{display:block;font-style:italic;font-size:12.5px;color:#8a7058;font-weight:400}
+              {{WRAPPER}} .iw2-desc{font-size:13.5px;line-height:1.55}
+              {{WRAPPER}} .iw2-desc p{margin:0 0 8px}{{WRAPPER}} .iw2-desc :last-child{margin-bottom:0}
+              {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:6px 0 0;font-size:13px;color:#5a4636}
+              {{WRAPPER}} .iw2-btn{display:inline-block;color:#64402c;font-weight:700;text-decoration:none;font-size:13px;margin-top:8px}
+              {{WRAPPER}} .iw2-ph{background:repeating-linear-gradient(45deg,#7c5640,#7c5640 14px,#6b4832 14px,#6b4832 28px);background-size:cover;background-position:center}
+              /* overlay */
+              {{WRAPPER}} .iw2-overlay{position:relative;overflow:hidden;display:flex;align-items:flex-end;background-size:cover;background-position:center;box-shadow:0 6px 18px rgba(60,40,25,.18)}
+              {{WRAPPER}} .iw2-overlay .iw2-imgbg{position:absolute;inset:0;background:inherit;background-size:cover;background-position:center}
+              {{WRAPPER}} .iw2-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(30,18,10,1))}
+              {{WRAPPER}} .iw2-overlay .iw2-tx{position:relative;padding:18px;color:#fff}
+              {{WRAPPER}} .iw2-overlay .iw2-name{color:#fff}{{WRAPPER}} .iw2-overlay .iw2-btn{color:#f0d9c4}
+              {{WRAPPER}} .iw2-overlay .iw2-sci{color:#e9d9c8;opacity:.9}
+              /* editorial */
+              {{WRAPPER}} .iw2-editorial{display:flex;flex-direction:column;gap:2px}
+              {{WRAPPER}} .iw2-ed{position:relative;display:grid;grid-template-columns:130px 1fr;gap:22px;align-items:center;padding:22px 6px;border-bottom:1px solid #D3BAA3}
+              {{WRAPPER}} .iw2-ed .iw2-num{position:absolute;left:-4px;top:2px;font-family:Merriweather,serif;font-size:58px;color:#e0d3c6;font-weight:700;z-index:0;line-height:1}
+              {{WRAPPER}} .iw2-ed .iw2-ph{position:relative;z-index:1;height:130px;border-radius:10px}
+              {{WRAPPER}} .iw2-ed .iw2-tx{position:relative;z-index:1}
+              /* offset */
+              {{WRAPPER}} .iw2-offset .iw2-item{display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-offset .iw2-ph{height:190px;border-radius:12px}
+              {{WRAPPER}} .iw2-offset .iw2-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:12px;padding:18px 20px;margin:-44px 18px 0;position:relative;box-shadow:0 6px 16px rgba(60,40,25,.12)}
+              @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:90px 1fr}}
             </style>';
-            echo '<div class="iw-grid">';
+
+            $i = 0;
+            $wrapclass = 'iw2 iw2-' . $style;
+            $isgrid = ($style !== 'editorial');
+            echo '<div class="' . esc_attr($wrapclass) . ' ' . ($isgrid ? 'iw2-grid' : '') . '">';
             foreach ($rows as $w) {
-                echo '<article class="iw-card">';
-                $src = island_ew_image_src($w['image'] ?? '');
-                if ($src) {
-                    echo '<img class="iw-img" src="' . esc_url($src) . '" alt="' . esc_attr($w['common_name'] ?? '') . '">';
-                } else {
-                    echo '<div class="iw-ph"><span>Image</span></div>';
-                }
-                echo '<div class="iw-body">';
+                $i++;
+                $img = island_ew_image_src($w['image'] ?? '');
+                $imgstyle = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
                 $sci = ($s['show_sci'] === 'yes' && !empty($w['scientific_name']))
-                    ? '<span class="iw-sci">' . esc_html($w['scientific_name']) . '</span>' : '';
-                echo '<h3 class="iw-title">' . esc_html($w['common_name'] ?? '') . ' ' . $sci . '</h3>';
-                echo '<div class="iw-desc">' . wp_kses_post($w['description'] ?? '') . '</div>';
+                    ? '<span class="iw2-sci">' . esc_html($w['scientific_name']) . '</span>' : '';
+                $name = '<' . $tag . ' class="iw2-name">' . esc_html($w['common_name'] ?? '') . ' ' . $sci . '</' . $tag . '>';
+                $desc = ($s['show_desc'] === 'yes' && !empty($w['description']))
+                    ? '<div class="iw2-desc">' . $this->excerpt($w['description'], $n) . '</div>' : '';
+                $meta = '';
                 if ($s['show_meta'] === 'yes') {
-                    $meta = '';
                     if (!empty($w['where_seen'])) {
                         $meta .= '<li><b>Where:</b> ' . esc_html($w['where_seen']) . '</li>';
                     }
                     if (!empty($w['best_season'])) {
                         $meta .= '<li><b>Season:</b> ' . esc_html($w['best_season']) . '</li>';
                     }
-                    if ($meta) {
-                        echo '<ul class="iw-meta">' . $meta . '</ul>';
-                    }
+                    $meta = $meta ? '<ul class="iw2-meta">' . $meta . '</ul>' : '';
                 }
+                $btn = '';
                 if ($s['show_btn'] === 'yes' && !empty($w['button_url'])) {
-                    echo '<a class="iw-btn" href="' . esc_url($w['button_url']) . '">'
-                        . esc_html($w['button_label'] ?: 'Learn more') . ' &rarr;</a>';
+                    $btn = '<a class="iw2-btn" href="' . esc_url($w['button_url']) . '">'
+                        . esc_html($w['button_label'] ?: $s['btn_text']) . ' &rarr;</a>';
                 }
-                echo '</div></article>';
+
+                if ($style === 'overlay') {
+                    echo '<article class="iw2-overlay"' . $imgstyle . '><div class="iw2-scrim"></div>'
+                        . '<div class="iw2-tx">' . $name . $desc . $meta . $btn . '</div></article>';
+                } elseif ($style === 'offset') {
+                    echo '<article class="iw2-item"><div class="iw2-ph"' . $imgstyle . '></div>'
+                        . '<div class="iw2-card">' . $name . $desc . $meta . $btn . '</div></article>';
+                } else { // editorial
+                    echo '<article class="iw2-ed"><span class="iw2-num">' . sprintf('%02d', $i) . '</span>'
+                        . '<div class="iw2-ph"' . $imgstyle . '></div>'
+                        . '<div class="iw2-tx">' . $name . $desc . $meta . $btn . '</div></article>';
+                }
             }
             echo '</div>';
         }
     }
+
 
     /* ===================================================================
      *  ISLAND QUICK FACTS — icon (your own SVG) + label + value(title/detail)
