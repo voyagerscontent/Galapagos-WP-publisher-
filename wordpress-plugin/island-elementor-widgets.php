@@ -578,26 +578,40 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             /* TEXT STYLES — heading / intro / title / meta / desc / button */
             $this->start_controls_section('txt', ['label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $align = [
+                'left' => ['title' => 'Left', 'icon' => 'eicon-text-align-left'],
+                'center' => ['title' => 'Center', 'icon' => 'eicon-text-align-center'],
+                'right' => ['title' => 'Right', 'icon' => 'eicon-text-align-right'],
+                'justify' => ['title' => 'Justify', 'icon' => 'eicon-text-align-justify'],
+            ];
             $this->add_control('h_head', ['label' => 'Group heading', 'type' => \Elementor\Controls_Manager::HEADING]);
             $this->add_control('head_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .vs-gh' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'head_typo', 'selector' => '{{WRAPPER}} .vs-gh']);
+            $this->add_responsive_control('head_align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => $align,
+                'selectors' => ['{{WRAPPER}} .vs-gh' => 'text-align:{{VALUE}}']]);
             $this->add_control('h_intro', ['label' => 'Intro', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('intro_color', ['label' => 'Intro color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#4a3a2c',
-                'selectors' => ['{{WRAPPER}} .vs-intro' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'intro_typo', 'selector' => '{{WRAPPER}} .vs-intro']);
+                'selectors' => ['{{WRAPPER}} .vs-intro,{{WRAPPER}} .vs-intro p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'intro_typo', 'selector' => '{{WRAPPER}} .vs-intro,{{WRAPPER}} .vs-intro p']);
+            $this->add_responsive_control('intro_align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => $align,
+                'selectors' => ['{{WRAPPER}} .vs-intro,{{WRAPPER}} .vs-intro p' => 'text-align:{{VALUE}}']]);
             $this->add_control('h_title', ['label' => 'Site title', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('title_color', ['label' => 'Title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .vs-title' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .vs-title']);
+            $this->add_responsive_control('title_align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => $align,
+                'selectors' => ['{{WRAPPER}} .vs-title' => 'text-align:{{VALUE}}']]);
             $this->add_control('h_meta', ['label' => 'Meta (Access / Wildlife)', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('meta_color', ['label' => 'Meta color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#4a3a2c',
                 'selectors' => ['{{WRAPPER}} .vs-meta' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'meta_typo', 'selector' => '{{WRAPPER}} .vs-meta']);
             $this->add_control('h_desc', ['label' => 'Description', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('desc_color', ['label' => 'Description color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#333333',
-                'selectors' => ['{{WRAPPER}} .vs-desc' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'desc_typo', 'selector' => '{{WRAPPER}} .vs-desc']);
+                'selectors' => ['{{WRAPPER}} .vs-desc,{{WRAPPER}} .vs-desc p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'desc_typo', 'selector' => '{{WRAPPER}} .vs-desc,{{WRAPPER}} .vs-desc p']);
+            $this->add_responsive_control('desc_align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => $align,
+                'selectors' => ['{{WRAPPER}} .vs-desc,{{WRAPPER}} .vs-desc p' => 'text-align:{{VALUE}}']]);
             $this->end_controls_section();
 
             /* BUTTON */
