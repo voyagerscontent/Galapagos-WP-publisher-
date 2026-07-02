@@ -112,8 +112,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
                 'selectors' => ['{{WRAPPER}} .iw2-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
             ]);
-            $this->add_control('excerpt', [
-                'label' => 'Excerpt length (chars, 0 = full)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 0,
+            $this->add_control('reveal', [
+                'label' => 'Long text', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'expand',
+                'options' => ['expand' => 'Clamp + reveal (hover / tap)', 'full' => 'Always show full'],
+                'description' => 'Reveal shows a teaser; the full text opens on hover (desktop) or tap (mobile).',
+            ]);
+            $this->add_control('teaser_lines', [
+                'label' => 'Teaser lines', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 3, 'min' => 1, 'max' => 12,
+                'condition' => ['reveal' => 'expand'],
+                'selectors' => ['{{WRAPPER}} .iw2-desc' => '-webkit-line-clamp:{{VALUE}}'],
             ]);
             $this->add_control('title_tag', ['label' => 'Name tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h4', 'options' => $tags]);
             $this->add_control('show_sci', ['label' => 'Show scientific name', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
@@ -129,20 +136,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
                 'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-grid' => 'gap:{{SIZE}}{{UNIT}}'],
             ]);
+            $this->add_responsive_control('card_h', [
+                'label' => 'Card / image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 160, 'max' => 620]],
+                'default' => ['size' => 360, 'unit' => 'px'],
+                'selectors' => [
+                    '{{WRAPPER}} .iw2-overlay' => 'height:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .iw2-offset .iw2-ph,{{WRAPPER}} .iw2-editorial .iw2-ph' => 'height:calc({{SIZE}}{{UNIT}} * .55)',
+                ],
+            ]);
             $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
                 'selectors' => ['{{WRAPPER}} .iw2-editorial .iw2-tx,{{WRAPPER}} .iw2-offset .iw2-card' => 'background:{{VALUE}}']]);
             $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
                 'selectors' => ['{{WRAPPER}} .iw2-offset .iw2-card' => 'border-color:{{VALUE}}']]);
             $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-card,{{WRAPPER}} .iw2-ph,{{WRAPPER}} .iw2-overlay' => 'border-radius:{{SIZE}}{{UNIT}}']]);
-            $this->add_responsive_control('img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 100, 'max' => 480]],
-                'default' => ['size' => 200, 'unit' => 'px'], 'selectors' => [
-                    '{{WRAPPER}} .iw2-editorial .iw2-ph,{{WRAPPER}} .iw2-offset .iw2-ph' => 'height:{{SIZE}}{{UNIT}}',
-                    '{{WRAPPER}} .iw2-overlay' => 'min-height:{{SIZE}}{{UNIT}}',
-                ]]);
-            $this->add_control('scrim', ['label' => 'Overlay darkness (%)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 0, 'max' => 100]],
-                'default' => ['size' => 82, 'unit' => '%'], 'condition' => ['card_style' => 'overlay'],
-                'selectors' => ['{{WRAPPER}} .iw2-scrim' => 'opacity:calc({{SIZE}}/100)']]);
             $this->end_controls_section();
 
             /* TEXT */
@@ -151,9 +158,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('name_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .iw2-name' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'name_typo', 'selector' => '{{WRAPPER}} .iw2-name']);
-            $this->add_control('h_sci', ['label' => 'Scientific name', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
-            $this->add_control('sci_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
-                'selectors' => ['{{WRAPPER}} .iw2-sci' => 'color:{{VALUE}}']]);
+            $this->add_control('h_sci', ['label' => 'Scientific tag', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('sci_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-tag,{{WRAPPER}} .iw2-sci' => 'color:{{VALUE}}']]);
+            $this->add_control('sci_bg', ['label' => 'Tag background', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-tag' => 'background:{{VALUE}}']]);
+            $this->add_control('sci_bd', ['label' => 'Tag border', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-tag' => 'border-color:{{VALUE}}']]);
             $this->add_control('h_desc', ['label' => 'Description', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('desc_color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .iw2-desc,{{WRAPPER}} .iw2-desc p' => 'color:{{VALUE}}']]);
@@ -169,20 +180,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('btn', ['label' => 'Button', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('btn_color', ['label' => 'Text', 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .iw2-btn' => 'color:{{VALUE}}']]);
+            $this->add_control('btn_bg', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-btn' => 'background:{{VALUE}}']]);
+            $this->add_control('btn_bd', ['label' => 'Border', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iw2-btn' => 'border-color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'btn_typo', 'selector' => '{{WRAPPER}} .iw2-btn']);
             $this->end_controls_section();
-        }
-
-        private function excerpt($html, $n)
-        {
-            if ($n <= 0) {
-                return $html;  // full HTML
-            }
-            $txt = trim(wp_strip_all_tags($html));
-            if (mb_strlen($txt) <= $n) {
-                return esc_html($txt);
-            }
-            return esc_html(rtrim(mb_substr($txt, 0, $n)) . '…');
         }
 
         protected function render()
@@ -198,49 +201,56 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             $style = in_array($s['card_style'], ['overlay', 'editorial', 'offset'], true) ? $s['card_style'] : 'overlay';
             $tag = $this->tag($s['title_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h4');
-            $n = (int) ($s['excerpt'] ?? 0);
+            $expand = ($s['reveal'] ?? 'expand') === 'expand';
             echo '<style>
               {{WRAPPER}} .iw2-grid{display:grid;gap:18px}
-              {{WRAPPER}} .iw2-name{font-family:Merriweather,Georgia,serif;font-style:italic;margin:0;font-size:20px;color:#64402c}
-              {{WRAPPER}} .iw2-sci{display:block;font-style:italic;font-size:12.5px;color:#8a7058;font-weight:400}
+              {{WRAPPER}} .iw2-name{font-family:Merriweather,Georgia,serif;font-style:italic;margin:0 0 6px;font-size:20px;color:#64402c}
+              {{WRAPPER}} .iw2-tag{display:inline-block;font-style:italic;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid rgba(211,186,163,.6);background:rgba(211,186,163,.28);margin-bottom:8px}
+              {{WRAPPER}} .iw2-sci{display:block;font-style:italic;font-size:12.5px;color:#8a7058;font-weight:400;margin:-2px 0 6px}
               {{WRAPPER}} .iw2-desc{font-size:13.5px;line-height:1.55}
               {{WRAPPER}} .iw2-desc p{margin:0 0 8px}{{WRAPPER}} .iw2-desc :last-child{margin-bottom:0}
-              {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:6px 0 0;font-size:13px;color:#5a4636}
-              {{WRAPPER}} .iw2-btn{display:inline-block;color:#64402c;font-weight:700;text-decoration:none;font-size:13px;margin-top:8px}
+              {{WRAPPER}} .iw2-desc.clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+              {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:8px 0 0;font-size:13px;color:#5a4636}
+              {{WRAPPER}} .iw2-btn{align-self:flex-start;display:inline-block;color:#64402c;background:transparent;border:1px solid #D3BAA3;font-weight:600;text-decoration:none;font-size:13px;margin-top:10px;padding:7px 13px;border-radius:6px}
               {{WRAPPER}} .iw2-ph{background:repeating-linear-gradient(45deg,#7c5640,#7c5640 14px,#6b4832 14px,#6b4832 28px);background-size:cover;background-position:center}
-              /* overlay */
-              {{WRAPPER}} .iw2-overlay{position:relative;overflow:hidden;display:flex;align-items:flex-end;background-size:cover;background-position:center;box-shadow:0 6px 18px rgba(60,40,25,.18)}
-              {{WRAPPER}} .iw2-overlay .iw2-imgbg{position:absolute;inset:0;background:inherit;background-size:cover;background-position:center}
-              {{WRAPPER}} .iw2-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(30,18,10,1))}
-              {{WRAPPER}} .iw2-overlay .iw2-tx{position:relative;padding:18px;color:#fff}
-              {{WRAPPER}} .iw2-overlay .iw2-name{color:#fff}{{WRAPPER}} .iw2-overlay .iw2-btn{color:#f0d9c4}
-              {{WRAPPER}} .iw2-overlay .iw2-sci{color:#e9d9c8;opacity:.9}
-              /* editorial */
+              /* OVERLAY */
+              {{WRAPPER}} .iw2-overlay{position:relative;overflow:hidden;background-size:cover;background-position:center;box-shadow:0 6px 18px rgba(60,40,25,.18)}
+              {{WRAPPER}} .iw2-overlay .iw2-tx{position:absolute;left:0;right:0;bottom:0;max-height:62%;overflow:hidden;padding:18px;color:#fff;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(24,15,8,.92) 45%);transition:max-height .35s ease,background .35s ease}
+              {{WRAPPER}} .iw2-overlay .iw2-name{color:#fff}
+              {{WRAPPER}} .iw2-overlay .iw2-sci{color:#e9d9c8}
+              {{WRAPPER}} .iw2-overlay .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
+              {{WRAPPER}} .iw2-overlay.rev:hover .iw2-tx,{{WRAPPER}} .iw2-overlay.rev.is-open .iw2-tx{max-height:100%;background:rgba(24,15,8,.94);overflow-y:auto}
+              {{WRAPPER}} .iw2-overlay.rev:hover .iw2-desc,{{WRAPPER}} .iw2-overlay.rev.is-open .iw2-desc{-webkit-line-clamp:unset;overflow:visible;display:block}
+              /* EDITORIAL */
               {{WRAPPER}} .iw2-editorial{display:flex;flex-direction:column;gap:2px}
               {{WRAPPER}} .iw2-ed{position:relative;display:grid;grid-template-columns:130px 1fr;gap:22px;align-items:center;padding:22px 6px;border-bottom:1px solid #D3BAA3}
               {{WRAPPER}} .iw2-ed .iw2-num{position:absolute;left:-4px;top:2px;font-family:Merriweather,serif;font-size:58px;color:#e0d3c6;font-weight:700;z-index:0;line-height:1}
-              {{WRAPPER}} .iw2-ed .iw2-ph{position:relative;z-index:1;height:130px;border-radius:10px}
-              {{WRAPPER}} .iw2-ed .iw2-tx{position:relative;z-index:1}
-              /* offset */
+              {{WRAPPER}} .iw2-ed .iw2-ph{position:relative;z-index:1;border-radius:10px}
+              {{WRAPPER}} .iw2-ed .iw2-tx{position:relative;z-index:1;display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-ed.rev:hover .iw2-desc,{{WRAPPER}} .iw2-ed.rev.is-open .iw2-desc{-webkit-line-clamp:unset;overflow:visible;display:block}
+              /* OFFSET */
               {{WRAPPER}} .iw2-offset .iw2-item{display:flex;flex-direction:column}
-              {{WRAPPER}} .iw2-offset .iw2-ph{height:190px;border-radius:12px}
-              {{WRAPPER}} .iw2-offset .iw2-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:12px;padding:18px 20px;margin:-44px 18px 0;position:relative;box-shadow:0 6px 16px rgba(60,40,25,.12)}
+              {{WRAPPER}} .iw2-offset .iw2-ph{border-radius:12px}
+              {{WRAPPER}} .iw2-offset .iw2-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:12px;padding:18px 20px;margin:-44px 18px 0;position:relative;box-shadow:0 6px 16px rgba(60,40,25,.12);display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-offset .iw2-item.rev:hover .iw2-desc,{{WRAPPER}} .iw2-offset .iw2-item.rev.is-open .iw2-desc{-webkit-line-clamp:unset;overflow:visible;display:block}
               @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:90px 1fr}}
             </style>';
 
             $i = 0;
-            $wrapclass = 'iw2 iw2-' . $style;
             $isgrid = ($style !== 'editorial');
-            echo '<div class="' . esc_attr($wrapclass) . ' ' . ($isgrid ? 'iw2-grid' : '') . '">';
+            echo '<div class="iw2 iw2-' . esc_attr($style) . ' ' . ($isgrid ? 'iw2-grid' : '') . '">';
             foreach ($rows as $w) {
                 $i++;
                 $img = island_ew_image_src($w['image'] ?? '');
-                $imgstyle = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
-                $sci = ($s['show_sci'] === 'yes' && !empty($w['scientific_name']))
-                    ? '<span class="iw2-sci">' . esc_html($w['scientific_name']) . '</span>' : '';
-                $name = '<' . $tag . ' class="iw2-name">' . esc_html($w['common_name'] ?? '') . ' ' . $sci . '</' . $tag . '>';
+                $bg = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
+                $common = esc_html($w['common_name'] ?? '');
+                $sci = trim($w['scientific_name'] ?? '');
+                $name = '<' . $tag . ' class="iw2-name">' . $common . '</' . $tag . '>';
+                $tagEl = ($s['show_sci'] === 'yes' && $sci) ? '<span class="iw2-tag">' . esc_html($sci) . '</span>' : '';
+                $sciU = ($s['show_sci'] === 'yes' && $sci) ? '<span class="iw2-sci">' . esc_html($sci) . '</span>' : '';
+                $descClass = 'iw2-desc' . ($expand ? ' clamp' : '');
                 $desc = ($s['show_desc'] === 'yes' && !empty($w['description']))
-                    ? '<div class="iw2-desc">' . $this->excerpt($w['description'], $n) . '</div>' : '';
+                    ? '<div class="' . $descClass . '">' . wp_kses_post($w['description']) . '</div>' : '';
                 $meta = '';
                 if ($s['show_meta'] === 'yes') {
                     if (!empty($w['where_seen'])) {
@@ -256,23 +266,26 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     $btn = '<a class="iw2-btn" href="' . esc_url($w['button_url']) . '">'
                         . esc_html($w['button_label'] ?: $s['btn_text']) . ' &rarr;</a>';
                 }
+                $rev = $expand ? ' rev' : '';
 
                 if ($style === 'overlay') {
-                    echo '<article class="iw2-overlay"' . $imgstyle . '><div class="iw2-scrim"></div>'
-                        . '<div class="iw2-tx">' . $name . $desc . $meta . $btn . '</div></article>';
+                    echo '<article class="iw2-overlay' . $rev . '"' . $bg . '><div class="iw2-tx">'
+                        . $tagEl . $name . $desc . $meta . $btn . '</div></article>';
                 } elseif ($style === 'offset') {
-                    echo '<article class="iw2-item"><div class="iw2-ph"' . $imgstyle . '></div>'
-                        . '<div class="iw2-card">' . $name . $desc . $meta . $btn . '</div></article>';
-                } else { // editorial
-                    echo '<article class="iw2-ed"><span class="iw2-num">' . sprintf('%02d', $i) . '</span>'
-                        . '<div class="iw2-ph"' . $imgstyle . '></div>'
-                        . '<div class="iw2-tx">' . $name . $desc . $meta . $btn . '</div></article>';
+                    echo '<article class="iw2-item' . $rev . '"><div class="iw2-ph"' . $bg . '></div>'
+                        . '<div class="iw2-card">' . $name . $sciU . $desc . $meta . $btn . '</div></article>';
+                } else {
+                    echo '<article class="iw2-ed' . $rev . '"><span class="iw2-num">' . sprintf('%02d', $i) . '</span>'
+                        . '<div class="iw2-ph"' . $bg . '></div>'
+                        . '<div class="iw2-tx">' . $name . $sciU . $desc . $meta . $btn . '</div></article>';
                 }
             }
             echo '</div>';
+            // Mobile / click: tap a card to toggle its expanded state (bound once).
+            echo '<script>if(!window.__iw2tap){window.__iw2tap=1;document.addEventListener("click",function(e){'
+                . 'if(e.target.closest(".iw2 a"))return;var c=e.target.closest(".iw2 .rev");if(c)c.classList.toggle("is-open");});}</script>';
         }
     }
-
 
     /* ===================================================================
      *  ISLAND QUICK FACTS — icon (your own SVG) + label + value(title/detail)
