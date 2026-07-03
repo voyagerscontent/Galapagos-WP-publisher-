@@ -144,3 +144,24 @@ def test_wildlife_picks_section_with_most_species():
     wildlife = doc.metadata.get("wildlife") or []
     assert len(wildlife) >= 4
     assert "Punta Espinoza" in (doc.metadata.get("wildlife_title") or "")
+
+
+def test_wildlife_calendar_extracted():
+    """A seasonal 'what to see when' table (Santiago) fills wildlife_calendar."""
+    doc = read_file(CONTENT / "santiago-island.docx")
+    cal = doc.metadata.get("wildlife_calendar") or []
+    assert len(cal) >= 3
+    periods = [r["period"] for r in cal]
+    assert any("January" in p for p in periods)
+    assert any(r.get("label") for r in cal)          # e.g. "Warm / Wet Season"
+    assert all(r.get("highlights") for r in cal)
+
+
+def test_wildlife_calendar_maps_to_acf():
+    doc = read_file(CONTENT / "santiago-island.docx")
+    doc.metadata["type"] = "destination"
+    page, _t, _ = build_page(doc, _ctx())
+    rows = page.acf.get("wildlife_calendar")
+    assert isinstance(rows, list) and len(rows) >= 3
+    assert rows[0].get("period")
+    assert "<p>" in rows[0].get("highlights", "")     # WYSIWYG HTML

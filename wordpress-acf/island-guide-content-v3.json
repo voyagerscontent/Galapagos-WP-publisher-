@@ -105,6 +105,16 @@
           { "key": "w_btn_url", "label": "Button URL", "name": "button_url", "type": "url" }
         ]
       },
+      {
+        "key": "wildlife_calendar", "label": "Wildlife Calendar (season → highlights)", "name": "wildlife_calendar", "type": "repeater",
+        "instructions": "Seasonal 'what to see when' calendar (e.g. Santiago). Each row is a period with its wildlife highlights.",
+        "layout": "block", "button_label": "Add season",
+        "sub_fields": [
+          { "key": "wc_period", "label": "Period", "name": "period", "type": "text", "instructions": "e.g. 'January – April' or 'Year-Round'." },
+          { "key": "wc_label", "label": "Label", "name": "label", "type": "text", "instructions": "Optional, e.g. 'Warm / Wet Season'." },
+          { "key": "wc_hl", "label": "Wildlife Highlights", "name": "highlights", "type": "wysiwyg", "tabs": "all", "media_upload": 0 }
+        ]
+      },
 
       { "key": "tab_travel", "label": "Travel Information", "name": "", "type": "tab" },
       {

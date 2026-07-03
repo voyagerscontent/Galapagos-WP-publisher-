@@ -91,6 +91,14 @@ island:
     button_label: button_label
     button_url: button_url
 
+  # Seasonal "what to see when" calendar (e.g. Santiago). period + optional
+  # label (Warm/Wet…) + highlights prose.
+  wildlife_calendar:
+    field: wildlife_calendar
+    period: period
+    label: label
+    highlights: highlights
+
   travel_information:
     field: travel_information
     getting_there_title: getting_there_title

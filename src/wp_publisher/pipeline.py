@@ -109,6 +109,7 @@ def build_page(
         related_links=doc.metadata.get("related_links") or None,
         wildlife=doc.metadata.get("wildlife") or None,
         wildlife_intro=str(doc.metadata.get("wildlife_intro") or ""),
+        wildlife_calendar=doc.metadata.get("wildlife_calendar") or None,
         visitor_sites_intro=str(doc.metadata.get("visitor_sites_intro") or ""),
         visitor_sites_intro_cruise=str(doc.metadata.get("visitor_sites_intro_cruise") or ""),
         quick_facts_title=str(doc.metadata.get("quick_facts_title") or ""),

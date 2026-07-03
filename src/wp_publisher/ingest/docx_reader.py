@@ -153,6 +153,44 @@ def _is_quick_facts_table(rows: list[list[str]]) -> bool:
     return bool(labels) and all(len(label) <= 40 for label in labels)
 
 
+# A seasonal wildlife/what-to-see calendar: 2 columns, a "season/period/month"
+# header on the left and a "wildlife/highlights/conditions" header on the right.
+_CAL_SEASON_HEAD = ("season", "period", "month", "when to", "time of year")
+_CAL_HL_HEAD = ("wildlife", "highlight", "condition", "what to see", "activity", "to see")
+
+
+def _is_wildlife_calendar_table(rows: list[list[str]]) -> bool:
+    if _ncols(rows) < 2 or len(rows) < 2:
+        return False
+    h0 = rows[0][0].lower()
+    h1 = " ".join(rows[0][1:]).lower()
+    return any(k in h0 for k in _CAL_SEASON_HEAD) and any(k in h1 for k in _CAL_HL_HEAD)
+
+
+def _extract_wildlife_calendar(rows: list[list[str]]) -> list[dict]:
+    """Season → highlights. The left cell may carry a parenthetical label,
+    e.g. 'January – April (Warm / Wet Season)' -> period + label."""
+    out: list[dict] = []
+    for r in rows[1:]:
+        if len(r) < 2:
+            continue
+        season = (r[0] or "").strip()
+        highlights = (r[1] or "").strip()
+        if not season and not highlights:
+            continue
+        label = ""
+        m = re.search(r"\(([^)]*)\)", season)
+        if m:
+            label = m.group(1).strip()
+            season = (season[: m.start()] + season[m.end():]).strip()
+        period = re.sub(r"\s+", " ", season.replace("\n", " ")).strip(" —–-")
+        highlights = re.sub(r"\[VERIFY[^\]]*\]", "", highlights).strip()
+        highlights = re.sub(r"\s+", " ", highlights.replace("\n", " ")).strip()
+        if period or highlights:
+            out.append({"period": period, "label": label, "highlights": highlights})
+    return out
+
+
 def _infer_access_type(access: str) -> str:
     a = access.lower()
     if "cruise" in a:
@@ -863,6 +901,11 @@ def read_docx(path: str | Path) -> Document:
             srcs = _extract_sources_table(rows)
             if srcs:
                 doc.metadata.setdefault("sources", []).extend(srcs)
+                continue
+        if _is_wildlife_calendar_table(rows):
+            cal = _extract_wildlife_calendar(rows)
+            if cal:
+                doc.metadata.setdefault("wildlife_calendar", []).extend(cal)
                 continue
         if _is_quick_facts_table(rows):
             facts = _extract_quick_facts(rows)

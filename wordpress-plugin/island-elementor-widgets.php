@@ -1133,8 +1133,137 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /* ===================================================================
+     *  ISLAND WILDLIFE CALENDAR — seasonal "what to see when" season cards
+     *  (period + optional label + highlights). Reusable for any island that
+     *  has a wildlife_calendar repeater (e.g. Santiago).
+     * =================================================================== */
+    class Island_WildlifeCalendar_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_wildlife_calendar';
+        }
+
+        public function get_title()
+        {
+            return 'Island Wildlife Calendar';
+        }
+
+        public function get_icon()
+        {
+            return 'eicon-calendar';
+        }
+
+        public function get_categories()
+        {
+            return ['general'];
+        }
+
+        private function tag($v, $allowed, $default)
+        {
+            return in_array($v, $allowed, true) ? $v : $default;
+        }
+
+        protected function register_controls()
+        {
+            $tags = ['h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'div' => 'div'];
+
+            /* CONTENT */
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_responsive_control('columns', [
+                'label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2',
+                'tablet_default' => '2', 'mobile_default' => '1',
+                'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
+                'selectors' => ['{{WRAPPER}} .wcal-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
+            ]);
+            $this->add_control('period_tag', ['label' => 'Period tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
+            $this->add_control('show_label', ['label' => 'Show season label', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->end_controls_section();
+
+            /* CARD */
+            $this->start_controls_section('card', ['label' => 'Card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_responsive_control('gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
+                'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wcal-grid' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('card_bg', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
+                'selectors' => ['{{WRAPPER}} .wcal-card' => 'background:{{VALUE}}']]);
+            $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
+                'selectors' => ['{{WRAPPER}} .wcal-card' => 'border-color:{{VALUE}}']]);
+            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 10, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wcal-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('accent_w', ['label' => 'Accent bar width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 14]],
+                'default' => ['size' => 5, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wcal-card' => 'border-left-width:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('card_pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'default' => ['top' => 18, 'right' => 20, 'bottom' => 18, 'left' => 20, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .wcal-card' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->end_controls_section();
+
+            /* ACCENTS — cycle by row */
+            $this->start_controls_section('accents', ['label' => 'Season accents (cycle by row)', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('acc1', ['label' => 'Accent 1', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#c0703a']);
+            $this->add_control('acc2', ['label' => 'Accent 2', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#4f7d52']);
+            $this->add_control('acc3', ['label' => 'Accent 3', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3f6b86']);
+            $this->add_control('acc4', ['label' => 'Accent 4', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#8a6d3b']);
+            $this->add_control('label_text', ['label' => 'Label text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .wcal-label' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+
+            /* TEXT */
+            $this->start_controls_section('text', ['label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('period_color', ['label' => 'Period color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .wcal-period' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'period_typo', 'selector' => '{{WRAPPER}} .wcal-period']);
+            $this->add_control('hl_color', ['label' => 'Highlights color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a2c22',
+                'selectors' => ['{{WRAPPER}} .wcal-hl,{{WRAPPER}} .wcal-hl p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'hl_typo', 'selector' => '{{WRAPPER}} .wcal-hl,{{WRAPPER}} .wcal-hl p']);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $rows = get_field('wildlife_calendar', $pid) ?: [];
+            if (!$rows) {
+                return;
+            }
+            $ptag = $this->tag($s['period_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h3');
+            $acc = [$s['acc1'] ?: '#64402c', $s['acc2'] ?: '#64402c', $s['acc3'] ?: '#64402c', $s['acc4'] ?: '#64402c'];
+            echo '<style>
+              {{WRAPPER}} .wcal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+              {{WRAPPER}} .wcal-card{background:#faf9f7;border:1px solid #DBCEC4;border-left:5px solid #64402c;border-radius:10px;padding:18px 20px;box-shadow:0 4px 14px rgba(60,40,25,.06)}
+              {{WRAPPER}} .wcal-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+              {{WRAPPER}} .wcal-period{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:18px;color:#64402C}
+              {{WRAPPER}} .wcal-label{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:20px;color:#fff}
+              {{WRAPPER}} .wcal-hl{margin:0;font-size:13.7px;line-height:1.6;color:#3a2c22}{{WRAPPER}} .wcal-hl p{margin:0 0 8px}{{WRAPPER}} .wcal-hl :last-child{margin-bottom:0}
+              @media(max-width:680px){{{WRAPPER}} .wcal-grid{grid-template-columns:1fr!important}}
+            </style>';
+            echo '<div class="wcal-grid">';
+            $i = 0;
+            foreach ($rows as $r) {
+                $c = $acc[$i % 4];
+                $i++;
+                $period = $r['period'] ?? '';
+                $label = '';
+                if ($s['show_label'] === 'yes' && !empty($r['label'])) {
+                    $label = '<span class="wcal-label" style="background:' . esc_attr($c) . '">' . esc_html($r['label']) . '</span>';
+                }
+                $hl = !empty($r['highlights']) ? '<div class="wcal-hl">' . wp_kses_post($r['highlights']) . '</div>' : '';
+                echo '<article class="wcal-card" style="border-left-color:' . esc_attr($c) . '">'
+                    . '<div class="wcal-top"><' . $ptag . ' class="wcal-period">' . esc_html($period) . '</' . $ptag . '>' . $label . '</div>'
+                    . $hl . '</article>';
+            }
+            echo '</div>';
+        }
+    }
+
     $widgets_manager->register(new Island_Wildlife_Widget());
     $widgets_manager->register(new Island_QuickFacts_Widget());
     $widgets_manager->register(new Island_VisitorSites_Widget());
     $widgets_manager->register(new Island_SitesCarousel_Widget());
+    $widgets_manager->register(new Island_WildlifeCalendar_Widget());
 });

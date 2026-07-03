@@ -43,6 +43,7 @@ def build_acf(
     related_links: list | None = None,
     wildlife: list | None = None,
     wildlife_intro: str = "",
+    wildlife_calendar: list | None = None,
     visitor_sites_intro: str = "",
     visitor_sites_intro_cruise: str = "",
     quick_facts_title: str = "",
@@ -59,6 +60,7 @@ def build_acf(
             quick_facts=quick_facts, visitor_sites=visitor_sites,
             cta_blocks=cta_blocks, sources=sources, related_links=related_links,
             wildlife=wildlife, wildlife_intro=wildlife_intro,
+            wildlife_calendar=wildlife_calendar,
             visitor_sites_intro=visitor_sites_intro,
             visitor_sites_intro_cruise=visitor_sites_intro_cruise,
             quick_facts_title=quick_facts_title, quick_facts_intro=quick_facts_intro,
@@ -237,6 +239,7 @@ def build_acf_island(
     related_links: list | None = None,
     wildlife: list | None = None,
     wildlife_intro: str = "",
+    wildlife_calendar: list | None = None,
     visitor_sites_intro: str = "",
     visitor_sites_intro_cruise: str = "",
     quick_facts_title: str = "",
@@ -272,6 +275,19 @@ def build_acf_island(
         ]
     if wildlife and m.get("wildlife"):
         out[m["wildlife"]["field"]] = [_wildlife_row(m["wildlife"], r) for r in wildlife]
+    if wildlife_calendar and m.get("wildlife_calendar"):
+        wc = m["wildlife_calendar"]
+        rows_out = []
+        for r in wildlife_calendar:
+            row: dict[str, Any] = {}
+            if wc.get("period"):
+                row[wc["period"]] = r.get("period", "")
+            if wc.get("label") and r.get("label"):
+                row[wc["label"]] = r["label"]
+            if wc.get("highlights"):
+                row[wc["highlights"]] = md_to_html(r.get("highlights", ""))
+            rows_out.append(row)
+        out[wc["field"]] = rows_out
     if wildlife_title and m.get("wildlife_title"):
         out[m["wildlife_title"]] = wildlife_title
     if wildlife_intro and m.get("wildlife_intro"):
