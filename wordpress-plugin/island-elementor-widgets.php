@@ -145,8 +145,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     '{{WRAPPER}} .iw2-of .iw2-ph,{{WRAPPER}} .iw2-ed .iw2-ph' => 'height:calc({{SIZE}}{{UNIT}} * .6)',
                 ],
             ]);
-            $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
-                'selectors' => ['{{WRAPPER}} .iw2-ed .iw2-tx,{{WRAPPER}} .iw2-ofc' => 'background:{{VALUE}};--fade:{{VALUE}}']]);
+            $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => [
+                    '{{WRAPPER}} .iw2-ofc' => 'background:{{VALUE}}',
+                    '{{WRAPPER}} .iw2-ofc .iw2-desc' => '--fade:{{VALUE}}',
+                ]]);
             $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
                 'selectors' => ['{{WRAPPER}} .iw2-ofc' => 'border-color:{{VALUE}}', '{{WRAPPER}} .iw2-ed' => 'border-bottom-color:{{VALUE}}']]);
             $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
@@ -232,10 +235,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .iw2-ed .iw2-num{position:absolute;left:-2px;top:6px;font-family:Merriweather,serif;font-size:54px;color:#e7dbcf;font-weight:700;z-index:0;line-height:1}
               {{WRAPPER}} .iw2-ed .iw2-ph{position:relative;z-index:1;height:150px;border-radius:10px}
               {{WRAPPER}} .iw2-ed .iw2-tx{position:relative;z-index:1;display:flex;flex-direction:column}
-              /* OFFSET — card overlaps the photo */
+              /* OFFSET — card overlaps the photo (secondary/brown card, light text) */
               {{WRAPPER}} .iw2-of{display:flex;flex-direction:column}
               {{WRAPPER}} .iw2-of .iw2-ph{height:200px;border-radius:12px}
-              {{WRAPPER}} .iw2-ofc{background:#faf9f7;--fade:#faf9f7;border:1px solid #D3BAA3;border-radius:12px;padding:18px 20px;margin:-46px 16px 0;position:relative;z-index:1;box-shadow:0 6px 16px rgba(60,40,25,.12);display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-ofc{background:#64402c;--fade:#64402c;border:1px solid rgba(240,217,196,.35);border-radius:12px;padding:18px 20px;margin:-46px 16px 0;position:relative;z-index:1;box-shadow:0 6px 16px rgba(60,40,25,.22);display:flex;flex-direction:column}
+              {{WRAPPER}} .iw2-ofc .iw2-name{color:#fff}
+              {{WRAPPER}} .iw2-ofc .iw2-sci{color:#e9d9c8}
+              {{WRAPPER}} .iw2-ofc .iw2-desc{color:#f3e9df;--fade:#64402c}
+              {{WRAPPER}} .iw2-ofc .iw2-meta{color:#e6d5c4}
+              {{WRAPPER}} .iw2-ofc .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
               @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:96px 1fr;gap:14px}{{WRAPPER}} .iw2-ed .iw2-num{display:none}}
             </style>';
 
