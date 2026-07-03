@@ -764,6 +764,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .vcar-card' => 'background:{{VALUE}}']]);
             $this->add_control('car_border', ['label' => 'Card border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .vcar-card' => 'border-color:{{VALUE}}']]);
+            $this->add_control('car_badge_pos', [
+                'label' => 'Badge position', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'text',
+                'options' => ['text' => 'With text (right)', 'image' => 'Over image'],
+                'description' => 'Land-Based / Cruise-Only badge next to the text (readable) or over the photo.',
+            ]);
             $this->add_control('car_h_nav', ['label' => 'Navigation', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('car_show_arrows', ['label' => 'Show arrows', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->add_control('car_show_dots', ['label' => 'Show dots', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
@@ -873,7 +878,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .vcar-bd .vs-meta{margin:0 0 10px;font-size:12.5px;color:#8a7058;display:flex;gap:14px;flex-wrap:wrap;align-items:baseline}
               {{WRAPPER}} .vcar-bd .vs-desc{font-size:14px;line-height:1.62;color:#333}{{WRAPPER}} .vcar-bd .vs-desc p{margin:0 0 8px}{{WRAPPER}} .vcar-bd .vs-desc :last-child{margin-bottom:0}
               {{WRAPPER}} .vcar-bd .vs-btn{align-self:flex-start;margin-top:16px;display:inline-block;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px;background:#fff}
-              {{WRAPPER}} .vcar .vs-badge{position:absolute;top:14px;left:14px;padding:5px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:700;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+              {{WRAPPER}} .vcar .vs-badge{padding:5px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:700;color:#fff}
+              {{WRAPPER}} .vcar-img .vs-badge{position:absolute;top:14px;left:14px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+              {{WRAPPER}} .vcar-bd .vs-badge{align-self:flex-start;margin:0 0 10px}
               {{WRAPPER}} .vcar-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px}
               {{WRAPPER}} .vcar-arw{width:42px;height:42px;border-radius:50%;border:1px solid #D3BAA3;background:#fff;color:#64402C;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(60,40,25,.10);transition:background .2s,color .2s}
               {{WRAPPER}} .vcar-dots{display:flex;gap:8px}
@@ -914,9 +921,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 if (!empty($r['button_url'])) {
                     $btn = '<a class="vs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Learn more') . ' &rarr;</a>';
                 }
+                $badge_over = ($s['car_badge_pos'] ?? 'text') === 'image';
                 echo '<div class="vcar-slide"><article class="vcar-card">'
-                    . '<div class="vcar-img"' . $bg . '>' . $badge . '</div>'
-                    . '<div class="vcar-bd"><' . $title_tag . ' class="vs-title">' . esc_html($r['site_name'] ?? '') . '</' . $title_tag . '>'
+                    . '<div class="vcar-img"' . $bg . '>' . ($badge_over ? $badge : '') . '</div>'
+                    . '<div class="vcar-bd">' . ($badge_over ? '' : $badge)
+                    . '<' . $title_tag . ' class="vs-title">' . esc_html($r['site_name'] ?? '') . '</' . $title_tag . '>'
                     . $meta . $desc . $btn . '</div></article></div>';
             }
             echo '</div>';
