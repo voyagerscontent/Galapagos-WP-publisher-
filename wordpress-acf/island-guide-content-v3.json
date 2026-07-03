@@ -46,13 +46,13 @@
         "instructions": "Editorial / thematic stories (geology, history, conservation, what makes this island special). NOT the place-by-place catalog — that is Visitor Sites.",
         "layout": "block", "button_label": "Add section",
         "sub_fields": [
-          { "key": "hl_title", "label": "Title", "name": "title", "type": "text" },
-          { "key": "hl_subtitle", "label": "Subtitle", "name": "subtitle", "type": "text" },
-          { "key": "hl_content", "label": "Content", "name": "content", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-          { "key": "hl_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
-          { "key": "hl_alt", "label": "Image Alt", "name": "image_alt", "type": "text" },
-          { "key": "hl_btn_label", "label": "Button Label", "name": "button_label", "type": "text" },
-          { "key": "hl_btn_url", "label": "Button URL", "name": "button_url", "type": "url" }
+          { "key": "fs_title", "label": "Title", "name": "title", "type": "text" },
+          { "key": "fs_subtitle", "label": "Subtitle", "name": "subtitle", "type": "text" },
+          { "key": "fs_content", "label": "Content", "name": "content", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+          { "key": "fs_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
+          { "key": "fs_alt", "label": "Image Alt", "name": "image_alt", "type": "text" },
+          { "key": "fs_btn_label", "label": "Button Label", "name": "button_label", "type": "text" },
+          { "key": "fs_btn_url", "label": "Button URL", "name": "button_url", "type": "url" }
         ]
       },
 
