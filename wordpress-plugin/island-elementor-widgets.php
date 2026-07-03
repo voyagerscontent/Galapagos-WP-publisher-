@@ -1024,7 +1024,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (!$rows) {
                 return;
             }
-            $layout = in_array($s['layout'] ?? 'auto', ['auto', 'table', 'cards'], true) ? $s['layout'] : 'auto';
+            $layout = in_array($s['layout'] ?? 'auto', ['auto', 'table', 'cards', 'carousel'], true) ? $s['layout'] : 'auto';
             if ($layout === 'auto') {
                 $layout = $this->is_tabular($rows) ? 'table' : 'cards';
             }
@@ -1079,7 +1079,41 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /* ===================================================================
+     *  ISLAND SITES CAROUSEL — the Visitor Sites carousel as its own
+     *  identifiable widget (image left / text right). Reuses everything
+     *  from Island Visitor Sites but always renders the carousel layout.
+     * =================================================================== */
+    class Island_SitesCarousel_Widget extends Island_VisitorSites_Widget
+    {
+        public function get_name()
+        {
+            return 'island_sites_carousel';
+        }
+
+        public function get_title()
+        {
+            return 'Island Sites Carousel';
+        }
+
+        public function get_icon()
+        {
+            return 'eicon-slider-push';
+        }
+
+        protected function register_controls()
+        {
+            parent::register_controls();
+            // Lock this widget to the carousel layout and hide the selector.
+            $this->update_control('layout', [
+                'type' => \Elementor\Controls_Manager::HIDDEN,
+                'default' => 'carousel',
+            ]);
+        }
+    }
+
     $widgets_manager->register(new Island_Wildlife_Widget());
     $widgets_manager->register(new Island_QuickFacts_Widget());
     $widgets_manager->register(new Island_VisitorSites_Widget());
+    $widgets_manager->register(new Island_SitesCarousel_Widget());
 });
