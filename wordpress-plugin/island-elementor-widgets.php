@@ -861,13 +861,80 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             return $fallback;
         }
 
+        private function carousel_card($r, $s, $title_tag)
+        {
+            $img = island_ew_image_src($r['image'] ?? '');
+            $bg = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
+            $badge = '';
+            if ($s['show_badge'] === 'yes' && !empty($r['access_type'])) {
+                $cls = ($r['access_type'] === 'Cruise-only') ? 'cru' : 'lan';
+                $badge = '<span class="vs-badge ' . $cls . '">' . esc_html($r['access_type']) . '</span>';
+            }
+            $meta = '';
+            if ($s['show_access'] === 'yes' && !empty($r['access'])) {
+                $meta .= '<span><b>Access:</b> ' . esc_html(wp_strip_all_tags($r['access'])) . '</span>';
+            }
+            if ($s['show_wildlife'] === 'yes' && !empty($r['species_seen'])) {
+                $meta .= '<span><b>Wildlife:</b> ' . esc_html(wp_strip_all_tags($r['species_seen'])) . '</span>';
+            }
+            $meta = $meta ? '<p class="vs-meta">' . $meta . '</p>' : '';
+            $desc = ($s['show_desc'] === 'yes' && !empty($r['description']))
+                ? '<div class="vs-desc">' . wp_kses_post($r['description']) . '</div>' : '';
+            $btn = '';
+            if (!empty($r['button_url'])) {
+                $btn = '<a class="vs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Learn more') . ' &rarr;</a>';
+            }
+            $badge_over = ($s['car_badge_pos'] ?? 'text') === 'image';
+            return '<div class="vcar-slide"><article class="vcar-card">'
+                . '<div class="vcar-img"' . $bg . '>' . ($badge_over ? $badge : '') . '</div>'
+                . '<div class="vcar-bd">' . ($badge_over ? '' : $badge)
+                . '<' . $title_tag . ' class="vs-title">' . esc_html($r['site_name'] ?? '') . '</' . $title_tag . '>'
+                . $meta . $desc . $btn . '</div></article></div>';
+        }
+
+        private function carousel_block($rows, $s, $title_tag, $cid)
+        {
+            echo '<div class="vcar"><div class="vcar-track" id="' . esc_attr($cid) . '">';
+            foreach ($rows as $r) {
+                echo $this->carousel_card($r, $s, $title_tag);
+            }
+            echo '</div>';
+            $arrows = $s['car_show_arrows'] === 'yes';
+            $dots = $s['car_show_dots'] === 'yes';
+            if ($arrows || $dots) {
+                echo '<div class="vcar-nav">';
+                if ($arrows) {
+                    echo '<button class="vcar-arw" data-vcar="prev" aria-label="Previous"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>';
+                }
+                if ($dots) {
+                    echo '<div class="vcar-dots"></div>';
+                }
+                if ($arrows) {
+                    echo '<button class="vcar-arw" data-vcar="next" aria-label="Next"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>';
+                }
+                echo '</div>';
+            }
+            echo '</div>';
+            $auto = ($s['car_autoplay'] === 'yes') ? max(1500, (int) ($s['car_autoplay_ms'] ?: 5000)) : 0;
+            echo '<script>(function(){var t=document.getElementById(' . json_encode($cid) . ');if(!t||t.dataset.init)return;t.dataset.init=1;'
+                . 'var car=t.closest(".vcar"),sl=t.children,n=sl.length,cur=0,dw=car.querySelector(".vcar-dots"),ap=' . $auto . ';'
+                . 'if(dw){for(var i=0;i<n;i++){(function(i){var b=document.createElement("button");b.className="vcar-dot"+(i?"":" on");b.onclick=function(){go(i)};dw.appendChild(b);})(i);}}'
+                . 'function go(i){cur=Math.max(0,Math.min(n-1,i));sl[cur].scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});paint();}'
+                . 'function paint(){if(!dw)return;var d=dw.children;for(var i=0;i<n;i++)d[i].className="vcar-dot"+(i===cur?" on":"");}'
+                . 'car.querySelectorAll("[data-vcar]").forEach(function(b){b.onclick=function(){go(cur+(b.dataset.vcar==="next"?1:-1));};});'
+                . 't.addEventListener("scroll",function(){var i=Math.round(t.scrollLeft/t.clientWidth);if(i!==cur){cur=i;paint();}});'
+                . 'if(ap){setInterval(function(){go(cur+1>=n?0:cur+1);},ap);}'
+                . '})();</script>';
+        }
+
         private function render_carousel($rows, $s, $pid)
         {
             $title_tag = $this->tag($s['title_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h4');
-            $cid = 'vcar-' . $this->get_id();
+            $htag = $this->tag($s['heading_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h3');
             echo '<style>
+              {{WRAPPER}} .vs-gh{margin:22px 0 6px}
               {{WRAPPER}} .vs-intro{margin:0 0 16px}{{WRAPPER}} .vs-intro :first-child{margin-top:0}{{WRAPPER}} .vs-intro :last-child{margin-bottom:0}
-              {{WRAPPER}} .vcar{position:relative}
+              {{WRAPPER}} .vcar{position:relative;margin-bottom:8px}
               {{WRAPPER}} .vcar-track{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 2px 8px;scrollbar-width:none}
               {{WRAPPER}} .vcar-track::-webkit-scrollbar{display:none}
               {{WRAPPER}} .vcar-slide{scroll-snap-align:center;flex:0 0 100%;min-width:0}
@@ -889,73 +956,26 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(max-width:680px){{{WRAPPER}} .vcar-card{grid-template-columns:1fr}{{WRAPPER}} .vcar-img{height:190px}}
             </style>';
 
-            $introL = get_field('visitor_sites_intro', $pid);
-            $introC = get_field('visitor_sites_intro_cruise', $pid);
-            if ($introL) {
-                echo '<div class="vs-intro">' . wp_kses_post($introL) . '</div>';
+            // Keep the Land-Based / Cruise-Only structure: a heading + its intro
+            // and its own carousel per group (same as the Cards layout).
+            $land = array_filter($rows, fn($r) => ($r['access_type'] ?? '') !== 'Cruise-only');
+            $cruise = array_filter($rows, fn($r) => ($r['access_type'] ?? '') === 'Cruise-only');
+            $groups = [];
+            if ($land) {
+                $groups[] = [$s['heading_land'], get_field('visitor_sites_intro', $pid), $land, 'l'];
             }
-            if ($introC) {
-                echo '<div class="vs-intro">' . wp_kses_post($introC) . '</div>';
+            if ($cruise) {
+                $groups[] = [$s['heading_cruise'], get_field('visitor_sites_intro_cruise', $pid), $cruise, 'c'];
             }
-
-            echo '<div class="vcar"><div class="vcar-track" id="' . esc_attr($cid) . '">';
-            foreach ($rows as $r) {
-                $img = island_ew_image_src($r['image'] ?? '');
-                $bg = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
-                $badge = '';
-                if ($s['show_badge'] === 'yes' && !empty($r['access_type'])) {
-                    $cls = ($r['access_type'] === 'Cruise-only') ? 'cru' : 'lan';
-                    $badge = '<span class="vs-badge ' . $cls . '">' . esc_html($r['access_type']) . '</span>';
+            foreach ($groups as [$label, $intro, $grows, $suf]) {
+                if ($s['show_headings'] === 'yes' && $label) {
+                    echo '<' . $htag . ' class="vs-gh">' . esc_html($label) . '</' . $htag . '>';
                 }
-                $meta = '';
-                if ($s['show_access'] === 'yes' && !empty($r['access'])) {
-                    $meta .= '<span><b>Access:</b> ' . esc_html(wp_strip_all_tags($r['access'])) . '</span>';
+                if ($intro) {
+                    echo '<div class="vs-intro">' . wp_kses_post($intro) . '</div>';
                 }
-                if ($s['show_wildlife'] === 'yes' && !empty($r['species_seen'])) {
-                    $meta .= '<span><b>Wildlife:</b> ' . esc_html(wp_strip_all_tags($r['species_seen'])) . '</span>';
-                }
-                $meta = $meta ? '<p class="vs-meta">' . $meta . '</p>' : '';
-                $desc = ($s['show_desc'] === 'yes' && !empty($r['description']))
-                    ? '<div class="vs-desc">' . wp_kses_post($r['description']) . '</div>' : '';
-                $btn = '';
-                if (!empty($r['button_url'])) {
-                    $btn = '<a class="vs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Learn more') . ' &rarr;</a>';
-                }
-                $badge_over = ($s['car_badge_pos'] ?? 'text') === 'image';
-                echo '<div class="vcar-slide"><article class="vcar-card">'
-                    . '<div class="vcar-img"' . $bg . '>' . ($badge_over ? $badge : '') . '</div>'
-                    . '<div class="vcar-bd">' . ($badge_over ? '' : $badge)
-                    . '<' . $title_tag . ' class="vs-title">' . esc_html($r['site_name'] ?? '') . '</' . $title_tag . '>'
-                    . $meta . $desc . $btn . '</div></article></div>';
+                $this->carousel_block($grows, $s, $title_tag, 'vcar-' . $this->get_id() . '-' . $suf);
             }
-            echo '</div>';
-            $arrows = $s['car_show_arrows'] === 'yes';
-            $dots = $s['car_show_dots'] === 'yes';
-            if ($arrows || $dots) {
-                echo '<div class="vcar-nav">';
-                if ($arrows) {
-                    echo '<button class="vcar-arw" data-vcar="prev" aria-label="Previous"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>';
-                }
-                if ($dots) {
-                    echo '<div class="vcar-dots"></div>';
-                }
-                if ($arrows) {
-                    echo '<button class="vcar-arw" data-vcar="next" aria-label="Next"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>';
-                }
-                echo '</div>';
-            }
-            echo '</div>';
-
-            $auto = ($s['car_autoplay'] === 'yes') ? max(1500, (int) ($s['car_autoplay_ms'] ?: 5000)) : 0;
-            echo '<script>(function(){var t=document.getElementById(' . json_encode($cid) . ');if(!t||t.dataset.init)return;t.dataset.init=1;'
-                . 'var car=t.closest(".vcar"),sl=t.children,n=sl.length,cur=0,dw=car.querySelector(".vcar-dots"),ap=' . $auto . ';'
-                . 'if(dw){for(var i=0;i<n;i++){(function(i){var b=document.createElement("button");b.className="vcar-dot"+(i?"":" on");b.onclick=function(){go(i)};dw.appendChild(b);})(i);}}'
-                . 'function go(i){cur=Math.max(0,Math.min(n-1,i));sl[cur].scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});paint();}'
-                . 'function paint(){if(!dw)return;var d=dw.children;for(var i=0;i<n;i++)d[i].className="vcar-dot"+(i===cur?" on":"");}'
-                . 'car.querySelectorAll("[data-vcar]").forEach(function(b){b.onclick=function(){go(cur+(b.dataset.vcar==="next"?1:-1));};});'
-                . 't.addEventListener("scroll",function(){var i=Math.round(t.scrollLeft/t.clientWidth);if(i!==cur){cur=i;paint();}});'
-                . 'if(ap){setInterval(function(){go(cur+1>=n?0:cur+1);},ap);}'
-                . '})();</script>';
         }
 
         private function render_table($rows, $s, $pid)
