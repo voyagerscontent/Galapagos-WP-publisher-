@@ -568,8 +568,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     'auto' => 'Auto (detect by data)',
                     'table' => 'Table (short Access / Wildlife / Notes)',
                     'cards' => 'Cards (long description + button)',
+                    'carousel' => 'Carousel (image left, text right)',
                 ],
-                'description' => 'Auto = table when rows carry short Access/Key Wildlife/Notes columns (Santa Cruz), cards when rows carry long descriptions + buttons (Isabela, etc).',
+                'description' => 'Auto = table when rows carry short Access/Key Wildlife/Notes columns (Santa Cruz), cards when rows carry long descriptions + buttons (Isabela, etc). Carousel = one site at a time, image left / text right.',
             ]);
             $this->add_responsive_control('columns', [
                 'label' => 'Columns (cards)', 'type' => \Elementor\Controls_Manager::SELECT,
@@ -721,6 +722,48 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('t_thumb', ['label' => 'Thumbnail size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 120]],
                 'default' => ['size' => 72, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vt-thumb' => 'width:{{SIZE}}{{UNIT}};height:calc({{SIZE}}{{UNIT}} * .82)']]);
             $this->end_controls_section();
+
+            /* CAROUSEL (only relevant when the Carousel layout renders) */
+            $this->start_controls_section('carstyle', ['label' => 'Carousel', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
+                'condition' => ['layout' => 'carousel']]);
+            $this->add_responsive_control('car_img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 20, 'max' => 70]],
+                'default' => ['size' => 44, 'unit' => '%'], 'tablet_default' => ['size' => 44, 'unit' => '%'],
+                'selectors' => ['{{WRAPPER}} .vcar-card' => 'grid-template-columns:{{SIZE}}{{UNIT}} 1fr']]);
+            $this->add_responsive_control('car_minh', ['label' => 'Card min height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 180, 'max' => 560]],
+                'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vcar-card' => 'min-height:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('car_peek', ['label' => 'Slide width (%)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 60, 'max' => 100]],
+                'default' => ['size' => 100, 'unit' => '%'], 'tablet_default' => ['size' => 100, 'unit' => '%'],
+                'description' => 'Below 100% shows a peek of the next slide.',
+                'selectors' => ['{{WRAPPER}} .vcar-slide' => 'flex-basis:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('car_gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
+                'default' => ['size' => 20, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vcar-track' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('car_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 14, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vcar-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('car_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
+                'selectors' => ['{{WRAPPER}} .vcar-card' => 'background:{{VALUE}}']]);
+            $this->add_control('car_border', ['label' => 'Card border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
+                'selectors' => ['{{WRAPPER}} .vcar-card' => 'border-color:{{VALUE}}']]);
+            $this->add_control('car_h_nav', ['label' => 'Navigation', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('car_show_arrows', ['label' => 'Show arrows', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('car_show_dots', ['label' => 'Show dots', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('car_arrow_c', ['label' => 'Arrow color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .vcar-arw' => 'color:{{VALUE}}']]);
+            $this->add_control('car_arrow_bg', ['label' => 'Arrow background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .vcar-arw' => 'background:{{VALUE}}']]);
+            $this->add_control('car_arrow_bd', ['label' => 'Arrow border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
+                'selectors' => ['{{WRAPPER}} .vcar-arw' => 'border-color:{{VALUE}}']]);
+            $this->add_control('car_arrow_hc', ['label' => 'Arrow hover color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .vcar-arw:hover' => 'color:{{VALUE}}']]);
+            $this->add_control('car_arrow_hbg', ['label' => 'Arrow hover background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .vcar-arw:hover' => 'background:{{VALUE}};border-color:{{VALUE}}']]);
+            $this->add_control('car_dot', ['label' => 'Dot color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
+                'selectors' => ['{{WRAPPER}} .vcar-dot' => 'background:{{VALUE}}']]);
+            $this->add_control('car_dot_on', ['label' => 'Active dot color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .vcar-dot.on' => 'background:{{VALUE}}']]);
+            $this->add_control('car_autoplay', ['label' => 'Autoplay', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '']);
+            $this->add_control('car_autoplay_ms', ['label' => 'Autoplay delay (ms)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5000, 'min' => 1500, 'max' => 15000,
+                'condition' => ['car_autoplay' => 'yes']]);
+            $this->end_controls_section();
         }
 
         private function is_tabular($rows)
@@ -790,6 +833,99 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 }
             }
             return $fallback;
+        }
+
+        private function render_carousel($rows, $s, $pid)
+        {
+            $title_tag = $this->tag($s['title_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h4');
+            $cid = 'vcar-' . $this->get_id();
+            echo '<style>
+              {{WRAPPER}} .vs-intro{margin:0 0 16px}{{WRAPPER}} .vs-intro :first-child{margin-top:0}{{WRAPPER}} .vs-intro :last-child{margin-bottom:0}
+              {{WRAPPER}} .vcar{position:relative}
+              {{WRAPPER}} .vcar-track{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 2px 8px;scrollbar-width:none}
+              {{WRAPPER}} .vcar-track::-webkit-scrollbar{display:none}
+              {{WRAPPER}} .vcar-slide{scroll-snap-align:center;flex:0 0 100%;min-width:0}
+              {{WRAPPER}} .vcar-card{display:grid;grid-template-columns:44% 1fr;background:#faf9f7;border:1px solid #DBCEC4;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(60,40,25,.10);min-height:300px}
+              {{WRAPPER}} .vcar-img{position:relative;background:#cbb89b center/cover no-repeat;min-height:180px}
+              {{WRAPPER}} .vcar-bd{padding:28px 30px;display:flex;flex-direction:column;justify-content:center}
+              {{WRAPPER}} .vcar-bd .vs-title{margin:0 0 6px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:23px;color:#64402C}
+              {{WRAPPER}} .vcar-bd .vs-meta{margin:0 0 10px;font-size:12.5px;color:#8a7058;display:flex;gap:14px;flex-wrap:wrap;align-items:baseline}
+              {{WRAPPER}} .vcar-bd .vs-desc{font-size:14px;line-height:1.62;color:#333}{{WRAPPER}} .vcar-bd .vs-desc p{margin:0 0 8px}{{WRAPPER}} .vcar-bd .vs-desc :last-child{margin-bottom:0}
+              {{WRAPPER}} .vcar-bd .vs-btn{align-self:flex-start;margin-top:16px;display:inline-block;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px;background:#fff}
+              {{WRAPPER}} .vcar .vs-badge{position:absolute;top:14px;left:14px;padding:5px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:700;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+              {{WRAPPER}} .vcar-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px}
+              {{WRAPPER}} .vcar-arw{width:42px;height:42px;border-radius:50%;border:1px solid #D3BAA3;background:#fff;color:#64402C;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(60,40,25,.10);transition:background .2s,color .2s}
+              {{WRAPPER}} .vcar-dots{display:flex;gap:8px}
+              {{WRAPPER}} .vcar-dot{width:9px;height:9px;border-radius:50%;background:#D3BAA3;border:none;cursor:pointer;padding:0;transition:width .2s,background .2s}
+              {{WRAPPER}} .vcar-dot.on{background:#64402C;width:24px;border-radius:20px}
+              @media(max-width:680px){{{WRAPPER}} .vcar-card{grid-template-columns:1fr}{{WRAPPER}} .vcar-img{height:190px}}
+            </style>';
+
+            $introL = get_field('visitor_sites_intro', $pid);
+            $introC = get_field('visitor_sites_intro_cruise', $pid);
+            if ($introL) {
+                echo '<div class="vs-intro">' . wp_kses_post($introL) . '</div>';
+            }
+            if ($introC) {
+                echo '<div class="vs-intro">' . wp_kses_post($introC) . '</div>';
+            }
+
+            echo '<div class="vcar"><div class="vcar-track" id="' . esc_attr($cid) . '">';
+            foreach ($rows as $r) {
+                $img = island_ew_image_src($r['image'] ?? '');
+                $bg = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
+                $badge = '';
+                if ($s['show_badge'] === 'yes' && !empty($r['access_type'])) {
+                    $cls = ($r['access_type'] === 'Cruise-only') ? 'cru' : 'lan';
+                    $badge = '<span class="vs-badge ' . $cls . '">' . esc_html($r['access_type']) . '</span>';
+                }
+                $meta = '';
+                if ($s['show_access'] === 'yes' && !empty($r['access'])) {
+                    $meta .= '<span><b>Access:</b> ' . esc_html(wp_strip_all_tags($r['access'])) . '</span>';
+                }
+                if ($s['show_wildlife'] === 'yes' && !empty($r['species_seen'])) {
+                    $meta .= '<span><b>Wildlife:</b> ' . esc_html(wp_strip_all_tags($r['species_seen'])) . '</span>';
+                }
+                $meta = $meta ? '<p class="vs-meta">' . $meta . '</p>' : '';
+                $desc = ($s['show_desc'] === 'yes' && !empty($r['description']))
+                    ? '<div class="vs-desc">' . wp_kses_post($r['description']) . '</div>' : '';
+                $btn = '';
+                if (!empty($r['button_url'])) {
+                    $btn = '<a class="vs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Learn more') . ' &rarr;</a>';
+                }
+                echo '<div class="vcar-slide"><article class="vcar-card">'
+                    . '<div class="vcar-img"' . $bg . '>' . $badge . '</div>'
+                    . '<div class="vcar-bd"><' . $title_tag . ' class="vs-title">' . esc_html($r['site_name'] ?? '') . '</' . $title_tag . '>'
+                    . $meta . $desc . $btn . '</div></article></div>';
+            }
+            echo '</div>';
+            $arrows = $s['car_show_arrows'] === 'yes';
+            $dots = $s['car_show_dots'] === 'yes';
+            if ($arrows || $dots) {
+                echo '<div class="vcar-nav">';
+                if ($arrows) {
+                    echo '<button class="vcar-arw" data-vcar="prev" aria-label="Previous"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>';
+                }
+                if ($dots) {
+                    echo '<div class="vcar-dots"></div>';
+                }
+                if ($arrows) {
+                    echo '<button class="vcar-arw" data-vcar="next" aria-label="Next"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>';
+                }
+                echo '</div>';
+            }
+            echo '</div>';
+
+            $auto = ($s['car_autoplay'] === 'yes') ? max(1500, (int) ($s['car_autoplay_ms'] ?: 5000)) : 0;
+            echo '<script>(function(){var t=document.getElementById(' . json_encode($cid) . ');if(!t||t.dataset.init)return;t.dataset.init=1;'
+                . 'var car=t.closest(".vcar"),sl=t.children,n=sl.length,cur=0,dw=car.querySelector(".vcar-dots"),ap=' . $auto . ';'
+                . 'if(dw){for(var i=0;i<n;i++){(function(i){var b=document.createElement("button");b.className="vcar-dot"+(i?"":" on");b.onclick=function(){go(i)};dw.appendChild(b);})(i);}}'
+                . 'function go(i){cur=Math.max(0,Math.min(n-1,i));sl[cur].scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});paint();}'
+                . 'function paint(){if(!dw)return;var d=dw.children;for(var i=0;i<n;i++)d[i].className="vcar-dot"+(i===cur?" on":"");}'
+                . 'car.querySelectorAll("[data-vcar]").forEach(function(b){b.onclick=function(){go(cur+(b.dataset.vcar==="next"?1:-1));};});'
+                . 't.addEventListener("scroll",function(){var i=Math.round(t.scrollLeft/t.clientWidth);if(i!==cur){cur=i;paint();}});'
+                . 'if(ap){setInterval(function(){go(cur+1>=n?0:cur+1);},ap);}'
+                . '})();</script>';
         }
 
         private function render_table($rows, $s, $pid)
@@ -894,6 +1030,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             if ($layout === 'table') {
                 $this->render_table($rows, $s, $pid);
+                return;
+            }
+            if ($layout === 'carousel') {
+                $this->render_carousel($rows, $s, $pid);
                 return;
             }
             $land = array_filter($rows, fn($r) => ($r['access_type'] ?? '') !== 'Cruise-only');
