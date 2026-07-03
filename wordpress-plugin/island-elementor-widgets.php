@@ -390,17 +390,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .qf-ic' => 'background:{{VALUE}}'],
             ]);
             $this->add_control('icon_recolor', [
-                'label' => 'Recolor icon',
+                'label' => 'Recolor uploaded SVG',
                 'type' => \Elementor\Controls_Manager::SWITCHER,
                 'default' => 'yes',
-                'description' => 'On: the icon takes the color below (best for single-color SVGs). Off: keep the SVG\'s own colors.',
+                'description' => 'Affects uploaded SVGs only. On: the SVG takes the Icon color (best for single-color SVGs). Off: keep the SVG\'s own colors. Font Awesome icons always use the Icon color.',
             ]);
             $this->add_control('icon_color', [
                 'label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EAE4',
-                'condition' => ['icon_recolor' => 'yes'],
                 'selectors' => [
                     '{{WRAPPER}} .qf-glyph' => 'background-color:{{VALUE}}',
-                    '{{WRAPPER}} .qf-ic i,{{WRAPPER}} .qf-ic svg' => 'color:{{VALUE}};fill:{{VALUE}}',
+                    '{{WRAPPER}} .qf-ic i' => 'color:{{VALUE}}',
+                    '{{WRAPPER}} .qf-ic svg' => 'color:{{VALUE}};fill:{{VALUE}}',
                 ],
             ]);
             $this->add_responsive_control('icon_circle', [
@@ -459,10 +459,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .qf-span{grid-column:1 / -1;justify-content:center}
               {{WRAPPER}} .qf-span .qf-tx{flex:0 1 auto;max-width:340px}
               {{WRAPPER}} .qf-ic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;background:#64402C;display:flex;align-items:center;justify-content:center}
-              {{WRAPPER}} .qf-ic img{width:22px;height:22px;object-fit:contain}
-              {{WRAPPER}} .qf-ic i{font-size:22px;line-height:1;color:#F1EAE4}
-              {{WRAPPER}} .qf-ic svg{width:22px;height:22px;fill:#F1EAE4;color:#F1EAE4}
-              {{WRAPPER}} .qf-glyph{display:inline-block;width:22px;height:22px;background-color:#F1EAE4}
+              {{WRAPPER}} .qf-ic img{object-fit:contain}
+              {{WRAPPER}} .qf-ic i{line-height:1}
+              {{WRAPPER}} .qf-glyph{display:inline-block}
               {{WRAPPER}} .qf-tx{flex:1;min-width:0}
               {{WRAPPER}} .qf-l{margin:0 0 3px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px}
               {{WRAPPER}} .qf-t{margin:0 0 3px;font-weight:700;font-size:15px;color:#3a2c22}
