@@ -42,7 +42,7 @@
 
       { "key": "tab_highlights", "label": "Feature Sections", "name": "", "type": "tab" },
       {
-        "key": "highlights", "label": "Feature Sections", "name": "feature_sections", "type": "repeater",
+        "key": "feature_sections", "label": "Feature Sections", "name": "feature_sections", "type": "repeater",
         "instructions": "Editorial / thematic stories (geology, history, conservation, what makes this island special). NOT the place-by-place catalog — that is Visitor Sites.",
         "layout": "block", "button_label": "Add section",
         "sub_fields": [
