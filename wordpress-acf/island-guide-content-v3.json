@@ -42,7 +42,7 @@
 
       { "key": "tab_highlights", "label": "Feature Sections", "name": "", "type": "tab" },
       {
-        "key": "highlights", "label": "Feature Sections", "name": "feature_sections", "type": "repeater",
+        "key": "ig_feature_sections", "label": "Feature Sections", "name": "feature_sections", "type": "repeater",
         "instructions": "Editorial / thematic stories (geology, history, conservation, what makes this island special). NOT the place-by-place catalog — that is Visitor Sites.",
         "layout": "block", "button_label": "Add section",
         "sub_fields": [
@@ -168,7 +168,7 @@
             "choices": { "Direct travelers": "Direct travelers", "Travel trade": "Travel trade" },
             "default_value": "Direct travelers", "allow_null": 1, "ui": 1, "return_format": "value"
           },
-          { "key": "cta_title", "label": "Title", "name": "title", "type": "text" },
+          { "key": "cta_row_title", "label": "Title", "name": "title", "type": "text" },
           { "key": "cta_text", "label": "Text", "name": "text", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "cta_button", "label": "Button Label", "name": "button_label", "type": "text" },
           { "key": "cta_url", "label": "Button URL", "name": "button_url", "type": "url" }
