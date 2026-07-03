@@ -155,37 +155,55 @@ def _is_quick_facts_table(rows: list[list[str]]) -> bool:
 
 # A seasonal wildlife/what-to-see calendar: 2 columns, a "season/period/month"
 # header on the left and a "wildlife/highlights/conditions" header on the right.
-_CAL_SEASON_HEAD = ("season", "period", "month", "when to", "time of year")
-_CAL_HL_HEAD = ("wildlife", "highlight", "condition", "what to see", "activity", "to see")
+_CAL_SEASON_HEAD = ("season", "when to", "time of year")
+_CAL_MONTH_HEAD = ("month", "period", "dates")
+_CAL_HL_HEAD = (
+    "wildlife", "highlight", "condition", "what to see", "activity",
+    "to see", "prioritize", "what to",
+)
 
 
 def _is_wildlife_calendar_table(rows: list[list[str]]) -> bool:
     if _ncols(rows) < 2 or len(rows) < 2:
         return False
     h0 = rows[0][0].lower()
-    h1 = " ".join(rows[0][1:]).lower()
-    return any(k in h0 for k in _CAL_SEASON_HEAD) and any(k in h1 for k in _CAL_HL_HEAD)
+    rest = " ".join(rows[0][1:]).lower()
+    has_season = any(k in h0 for k in _CAL_SEASON_HEAD) or any(k in h0 for k in _CAL_MONTH_HEAD)
+    return has_season and any(k in rest for k in _CAL_HL_HEAD)
+
+
+def _norm_ws(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "").replace("\n", " ")).strip()
 
 
 def _extract_wildlife_calendar(rows: list[list[str]]) -> list[dict]:
-    """Season → highlights. The left cell may carry a parenthetical label,
-    e.g. 'January – April (Warm / Wet Season)' -> period + label."""
+    """Season → highlights, column-aware. Handles both a 2-column
+    'Season | Wildlife Highlights' table and a wider 'Season | Months |
+    Conditions | What to Prioritize' one, mapping period/label/highlights by
+    their header. A parenthetical in the season cell becomes the label."""
+    header = [c.lower() for c in rows[0]]
+    season_idx = [i for i, h in enumerate(header) if any(k in h for k in _CAL_SEASON_HEAD)]
+    month_idx = [i for i, h in enumerate(header) if any(k in h for k in _CAL_MONTH_HEAD)]
+    hl_idx = [i for i, h in enumerate(header) if any(k in h for k in _CAL_HL_HEAD)]
+    period_cols = month_idx or season_idx or [0]
+    label_cols = season_idx if month_idx else []
+    if not hl_idx:
+        hl_idx = [i for i in range(1, len(header)) if i not in period_cols and i not in label_cols]
+
+    def cell(row: list[str], i: int) -> str:
+        return (row[i] or "").strip() if i < len(row) else ""
+
     out: list[dict] = []
     for r in rows[1:]:
-        if len(r) < 2:
-            continue
-        season = (r[0] or "").strip()
-        highlights = (r[1] or "").strip()
-        if not season and not highlights:
-            continue
-        label = ""
-        m = re.search(r"\(([^)]*)\)", season)
-        if m:
+        period = " ".join(v for i in period_cols if (v := cell(r, i)))
+        label = " ".join(v for i in label_cols if (v := cell(r, i)))
+        m = re.search(r"\(([^)]*)\)", period)
+        if m and not label:
             label = m.group(1).strip()
-            season = (season[: m.start()] + season[m.end():]).strip()
-        period = re.sub(r"\s+", " ", season.replace("\n", " ")).strip(" —–-")
-        highlights = re.sub(r"\[VERIFY[^\]]*\]", "", highlights).strip()
-        highlights = re.sub(r"\s+", " ", highlights.replace("\n", " ")).strip()
+            period = (period[: m.start()] + period[m.end():]).strip()
+        highlights = " ".join(v for i in hl_idx if (v := cell(r, i)))
+        highlights = re.sub(r"\[VERIFY[^\]]*\]", "", highlights)
+        period, label, highlights = _norm_ws(period).strip(" —–-"), _norm_ws(label), _norm_ws(highlights)
         if period or highlights:
             out.append({"period": period, "label": label, "highlights": highlights})
     return out

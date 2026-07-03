@@ -62,6 +62,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         return;
     }
 
+    // Declare the widget classes only once. Elementor can fire this hook more
+    // than once per request (editor + preview, etc.); re-declaring a class is a
+    // compile-time fatal ("Cannot redeclare class") that white-screens the site.
+    if (!class_exists('Island_Wildlife_Widget')) {
+
     class Island_Wildlife_Widget extends \Elementor\Widget_Base
     {
         public function get_name()
@@ -1289,6 +1294,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '</div>';
         }
     }
+
+    } // end: declare widget classes once
 
     $widgets_manager->register(new Island_Wildlife_Widget());
     $widgets_manager->register(new Island_QuickFacts_Widget());
