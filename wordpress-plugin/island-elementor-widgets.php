@@ -145,6 +145,27 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     '{{WRAPPER}} .iw2-of .iw2-ph,{{WRAPPER}} .iw2-ed .iw2-ph' => 'height:calc({{SIZE}}{{UNIT}} * .6)',
                 ],
             ]);
+            $this->add_control('img_fit', [
+                'label' => 'Image fit', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'cover',
+                'options' => ['cover' => 'Cover (fill)', 'contain' => 'Contain (fit)', 'auto' => 'Auto (original)'],
+                'selectors' => [
+                    '{{WRAPPER}} .iw2-ov' => 'background-size:{{VALUE}}',
+                    '{{WRAPPER}} .iw2-ph' => 'background-size:{{VALUE}}',
+                ],
+            ]);
+            $this->add_responsive_control('img_pos', [
+                'label' => 'Image position', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'center center',
+                'options' => [
+                    'center center' => 'Center', 'top center' => 'Top', 'bottom center' => 'Bottom',
+                    'center left' => 'Left', 'center right' => 'Right',
+                    'top left' => 'Top left', 'top right' => 'Top right',
+                    'bottom left' => 'Bottom left', 'bottom right' => 'Bottom right',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .iw2-ov' => 'background-position:{{VALUE}}',
+                    '{{WRAPPER}} .iw2-ph' => 'background-position:{{VALUE}}',
+                ],
+            ]);
             $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => [
                     '{{WRAPPER}} .iw2-ofc' => 'background:{{VALUE}}',
@@ -222,9 +243,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .rev{cursor:pointer}
               {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:9px 0 0;font-size:13px;color:#5a4636}{{WRAPPER}} .iw2-meta li{margin:0 0 2px}
               {{WRAPPER}} .iw2-btn{align-self:flex-start;display:inline-block;color:#64402c;background:transparent;border:1px solid #D3BAA3;font-weight:600;text-decoration:none;font-size:13px;margin-top:12px;padding:7px 14px;border-radius:6px}
-              {{WRAPPER}} .iw2-ph{background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 12px,#d8c8b8 12px,#d8c8b8 24px) center/cover no-repeat}
+              {{WRAPPER}} .iw2-ph{background-image:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 12px,#d8c8b8 12px,#d8c8b8 24px);background-repeat:no-repeat}
               /* OVERLAY — image bg, text in normal flow at the bottom so expanding grows the card DOWN */
-              {{WRAPPER}} .iw2-ov{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:340px;overflow:hidden;background:#6b4832 center/cover no-repeat;box-shadow:0 6px 18px rgba(60,40,25,.18)}
+              {{WRAPPER}} .iw2-ov{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:340px;overflow:hidden;background-color:#6b4832;background-repeat:no-repeat;box-shadow:0 6px 18px rgba(60,40,25,.18)}
               {{WRAPPER}} .iw2-ov .iw2-tx{position:relative;padding:20px 18px 16px;color:#fff;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(24,15,8,.55) 30%,rgba(24,15,8,.93));display:flex;flex-direction:column}
               {{WRAPPER}} .iw2-ov .iw2-name{color:#fff}
               {{WRAPPER}} .iw2-ov .iw2-desc{--fade:rgba(24,15,8,.93);color:#f3e9df}
