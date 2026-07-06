@@ -371,9 +371,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $rep = new \Elementor\Repeater();
             $rep->add_control('ic', ['label' => 'Icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
             $this->add_control('row_icons', [
-                'label' => 'Row icons (Font Awesome or SVG)', 'type' => \Elementor\Controls_Manager::REPEATER,
+                'label' => 'Fallback row icons (shared by all pages)', 'type' => \Elementor\Controls_Manager::REPEATER,
                 'fields' => $rep->get_controls(), 'prevent_empty' => false, 'title_field' => 'Icon {{{ _id }}}',
-                'description' => 'Optional. Each item overrides the ACF icon of that row, in order (1st item = 1st fact). Leave a row empty to keep its uploaded SVG.',
+                'description' => 'Optional and SHARED across every island (this is one template). Each page\'s own icon always wins: first its Font Awesome class field, then its uploaded SVG/image. These fallback icons only fill rows where the page set no icon at all. To vary icons per island, set them on the page, not here.',
             ]);
             $this->end_controls_section();
 
@@ -513,13 +513,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
                 [$title, $detail] = island_ew_split($r['value'] ?? '');
                 $glyph = '';
-                $ov = $overrides[$i - 1]['ic'] ?? null;
-                if (is_array($ov) && !empty($ov['value']) && class_exists('\Elementor\Icons_Manager')) {
-                    // Widget-chosen icon (Font Awesome or SVG) overrides the ACF icon.
-                    ob_start();
-                    \Elementor\Icons_Manager::render_icon($ov, ['aria-hidden' => 'true']);
-                    $glyph = ob_get_clean();
+                // 1) Per-page Font Awesome class typed on this page's fact row
+                //    (e.g. "fa-solid fa-location-dot"). Varies per island.
+                $fa = trim((string) ($r['icon_fa'] ?? ''));
+                if ($fa !== '') {
+                    $glyph = '<i class="' . esc_attr($fa) . '" aria-hidden="true"></i>';
                 }
+                // 2) Per-page uploaded SVG / image icon. Also varies per island.
                 if ($glyph === '') {
                     $icon = island_ew_image_src($r['icon'] ?? '');
                     if ($icon) {
@@ -529,6 +529,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                         } else {
                             $glyph = '<img src="' . esc_url($icon) . '" alt="">';
                         }
+                    }
+                }
+                // 3) Fallback only: an icon chosen in the widget (shared by every
+                //    island via the single template). Used when the page has none.
+                if ($glyph === '') {
+                    $ov = $overrides[$i - 1]['ic'] ?? null;
+                    if (is_array($ov) && !empty($ov['value']) && class_exists('\Elementor\Icons_Manager')) {
+                        ob_start();
+                        \Elementor\Icons_Manager::render_icon($ov, ['aria-hidden' => 'true']);
+                        $glyph = ob_get_clean();
                     }
                 }
                 // In panel mode, a lone item on the last row spans + centers.
@@ -628,8 +638,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .vs-card' => 'border-color:{{VALUE}}']]);
             $this->add_control('card_bw', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]],
                 'default' => ['size' => 1, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vs-card' => 'border-width:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
-                'default' => ['size' => 9, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vs-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('card_radius', ['label' => 'Radius (per corner)', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'], 'default' => ['top' => 9, 'right' => 9, 'bottom' => 9, 'left' => 9, 'unit' => 'px', 'isLinked' => true],
+                'selectors' => ['{{WRAPPER}} .vs-card' => 'border-radius:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
             $this->add_responsive_control('card_pad', ['label' => 'Body padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'default' => ['top' => 16, 'right' => 18, 'bottom' => 16, 'left' => 18, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .vs-bd' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
@@ -641,8 +652,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 150, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vs-ph' => 'height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('img_fit', ['label' => 'Fit', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'cover',
                 'options' => ['cover' => 'Cover', 'contain' => 'Contain'], 'selectors' => ['{{WRAPPER}} .vs-img' => 'object-fit:{{VALUE}}']]);
-            $this->add_control('img_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
-                'default' => ['size' => 0, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vs-ph' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('img_radius', ['label' => 'Radius (per corner)', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'], 'default' => ['top' => 0, 'right' => 0, 'bottom' => 0, 'left' => 0, 'unit' => 'px', 'isLinked' => true],
+                'description' => 'Round each corner independently (unlink the chain to set different values).',
+                'selectors' => ['{{WRAPPER}} .vs-ph' => 'border-radius:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
             $this->end_controls_section();
 
             /* BADGE */
@@ -1105,10 +1118,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .vs-gh{margin:22px 0 6px}
               {{WRAPPER}} .vs-intro{margin:0 0 16px}
               {{WRAPPER}} .vs-intro :first-child{margin-top:0}{{WRAPPER}} .vs-intro :last-child{margin-bottom:0}
-              {{WRAPPER}} .vs-grid{display:grid;gap:18px}
-              {{WRAPPER}} .vs-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
-              {{WRAPPER}} .vs-ph{position:relative;height:150px;overflow:hidden;background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 10px,#d8c8b8 10px,#d8c8b8 20px);display:flex;align-items:center;justify-content:center}
-              {{WRAPPER}} .vs-img{width:100%;height:100%;object-fit:cover;display:block}
+              .vs-grid{display:grid;gap:18px}
+              .vs-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
+              .vs-ph{position:relative;height:150px;overflow:hidden;background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 10px,#d8c8b8 10px,#d8c8b8 20px);display:flex;align-items:center;justify-content:center}
+              .vs-img{width:100%;height:100%;object-fit:cover;display:block}
               {{WRAPPER}} .vs-noimg{color:#8a7058;font-size:13px}
               {{WRAPPER}} .vs-badge{position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
               {{WRAPPER}} .vs-bd{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
@@ -1785,20 +1798,57 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('show_meta', ['label' => 'Show duration / difficulty', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->end_controls_section();
 
-            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $align = [
+                'left' => ['title' => 'Left', 'icon' => 'eicon-text-align-left'],
+                'center' => ['title' => 'Center', 'icon' => 'eicon-text-align-center'],
+                'right' => ['title' => 'Right', 'icon' => 'eicon-text-align-right'],
+                'justify' => ['title' => 'Justify', 'icon' => 'eicon-text-align-justify'],
+            ];
+            /* BLOCK box */
+            $this->start_controls_section('s', ['label' => 'Block', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_responsive_control('gap', ['label' => 'Space between blocks', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 60]],
+                'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .itr' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_control('block_bg', ['label' => 'Block background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
                 'selectors' => ['{{WRAPPER}} .itr-block' => 'background:{{VALUE}}']]);
             $this->add_control('block_bd', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .itr-block' => 'border-color:{{VALUE}}']]);
-            $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+            $this->add_control('block_bw', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]],
+                'default' => ['size' => 1, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .itr-block' => 'border-width:{{SIZE}}{{UNIT}};border-style:solid']]);
+            $this->add_responsive_control('block_radius', ['label' => 'Radius (per corner)', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'], 'default' => ['top' => 11, 'right' => 11, 'bottom' => 11, 'left' => 11, 'unit' => 'px', 'isLinked' => true],
+                'selectors' => ['{{WRAPPER}} .itr-block' => 'border-radius:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->add_responsive_control('block_pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'default' => ['top' => 22, 'right' => 24, 'bottom' => 22, 'left' => 24, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .itr-block' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->end_controls_section();
+
+            /* TITLE */
+            $this->start_controls_section('s_title', ['label' => 'Block title', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('h_color', ['label' => 'Title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .itr-h' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'h_typo', 'selector' => '{{WRAPPER}} .itr-h']);
+            $this->add_responsive_control('h_size', ['label' => 'Title size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 48]],
+                'default' => ['size' => 19, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .itr-h' => 'font-size:{{SIZE}}{{UNIT}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'h_typo', 'selector' => '{{WRAPPER}} .itr-h',
+                'description' => 'Font family, weight, style, letter-spacing… (the quick Size slider above is the easiest way to change size).']);
+            $this->add_responsive_control('h_align', ['label' => 'Title alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => $align,
+                'selectors' => ['{{WRAPPER}} .itr-h' => 'text-align:{{VALUE}}']]);
+            $this->end_controls_section();
+
+            /* BODY + BUTTON */
+            $this->start_controls_section('s_body', ['label' => 'Text & button', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('body_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#333333',
                 'selectors' => ['{{WRAPPER}} .itr-body,{{WRAPPER}} .itr-body p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'body_typo', 'selector' => '{{WRAPPER}} .itr-body,{{WRAPPER}} .itr-body p']);
+            $this->add_responsive_control('body_align', ['label' => 'Text alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => $align,
+                'selectors' => ['{{WRAPPER}} .itr-body,{{WRAPPER}} .itr-body p' => 'text-align:{{VALUE}}']]);
+            $this->add_control('btn_h', ['label' => 'Button', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .itr-btn' => 'color:{{VALUE}}']]);
+            $this->add_control('btn_bg', ['label' => 'Button background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(0,0,0,0)',
+                'selectors' => ['{{WRAPPER}} .itr-btn' => 'background:{{VALUE}}']]);
             $this->add_control('btn_bd', ['label' => 'Button border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
                 'selectors' => ['{{WRAPPER}} .itr-btn' => 'border-color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'btn_typo', 'selector' => '{{WRAPPER}} .itr-btn']);
             $this->end_controls_section();
         }
         private function block($title, $html, $blabel, $burl)
@@ -1832,13 +1882,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             echo '<style>
-              {{WRAPPER}} .itr{display:flex;flex-direction:column;gap:16px}
-              {{WRAPPER}} .itr-block{background:#faf9f7;border:1px solid #DBCEC4;border-radius:11px;padding:22px 24px}
-              {{WRAPPER}} .itr-h{margin:0 0 10px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#64402C}
-              {{WRAPPER}} .itr-body{font-size:14.5px;line-height:1.65;color:#333}{{WRAPPER}} .itr-body p{margin:0 0 10px}{{WRAPPER}} .itr-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .itr-btn{display:inline-block;margin-top:12px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px}
-              {{WRAPPER}} .itr-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
-              {{WRAPPER}} .itr-chip{background:#ECE5DE;border-radius:20px;padding:6px 14px;font-size:13px;color:#64402C}{{WRAPPER}} .itr-chip b{font-weight:700}
+              .itr{display:flex;flex-direction:column;gap:16px}
+              .itr-block{background:#faf9f7;border:1px solid #DBCEC4;border-radius:11px;padding:22px 24px}
+              .itr-h{margin:0 0 10px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#64402C}
+              .itr-body{font-size:14.5px;line-height:1.65;color:#333}.itr-body p{margin:0 0 10px}.itr-body :last-child{margin-bottom:0}
+              .itr-btn{display:inline-block;margin-top:12px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px}
+              .itr-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+              .itr-chip{background:#ECE5DE;border-radius:20px;padding:6px 14px;font-size:13px;color:#64402C}.itr-chip b{font-weight:700}
             </style>';
             $meta = '';
             if ($s['show_meta'] === 'yes' && (!empty($t['recommended_duration']) || !empty($t['difficulty']))) {
