@@ -1295,6 +1295,488 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /* ===================================================================
+     *  ISLAND FEATURE SECTIONS — editorial stories (zig-zag image/text)
+     * =================================================================== */
+    class Island_FeatureSections_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_feature_sections';
+        }
+        public function get_title()
+        {
+            return 'Island Feature Sections';
+        }
+        public function get_icon()
+        {
+            return 'eicon-post-content';
+        }
+        public function get_categories()
+        {
+            return ['general'];
+        }
+        private function tg($v, $a, $d)
+        {
+            return in_array($v, $a, true) ? $v : $d;
+        }
+        protected function register_controls()
+        {
+            $tags = ['h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'div' => 'div'];
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
+            $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_img', ['label' => 'Show image', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 100]],
+                'default' => ['size' => 48, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 65]],
+                'default' => ['size' => 45, 'unit' => '%'], 'selectors' => ['{{WRAPPER}} .ifs-row' => 'grid-template-columns:{{SIZE}}% 1fr']]);
+            $this->add_control('img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 560]],
+                'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-img' => 'height:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('eyebrow_color', ['label' => 'Subtitle color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9c7b4e',
+                'selectors' => ['{{WRAPPER}} .ifs-eyebrow' => 'color:{{VALUE}}']]);
+            $this->add_control('title_color', ['label' => 'Title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .ifs-title' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .ifs-title']);
+            $this->add_control('body_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#333333',
+                'selectors' => ['{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'body_typo', 'selector' => '{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p']);
+            $this->add_control('btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .ifs-btn' => 'color:{{VALUE}}']]);
+            $this->add_control('btn_bd', ['label' => 'Button border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
+                'selectors' => ['{{WRAPPER}} .ifs-btn' => 'border-color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $rows = get_field('feature_sections', $pid) ?: [];
+            if (!$rows) {
+                return;
+            }
+            $tag = $this->tg($s['title_tag'], ['h2', 'h3', 'h4', 'div'], 'h3');
+            $alt = $s['alternate'] === 'yes';
+            $showimg = $s['show_img'] === 'yes';
+            echo '<style>
+              {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:48px}
+              {{WRAPPER}} .ifs-row{display:grid;grid-template-columns:45% 1fr;gap:34px;align-items:center}
+              {{WRAPPER}} .ifs-row.noimg{grid-template-columns:1fr}
+              {{WRAPPER}} .ifs-row.rev .ifs-img{order:2}
+              {{WRAPPER}} .ifs-img{height:300px;border-radius:12px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 8px 22px rgba(60,40,25,.12)}
+              {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
+              {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
+              {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#333}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .ifs-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:10px 18px}
+              @media(max-width:760px){{{WRAPPER}} .ifs-row{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-img{order:0}}
+            </style>';
+            echo '<div class="ifs">';
+            $i = 0;
+            foreach ($rows as $r) {
+                $img = $showimg ? island_ew_image_src($r['image'] ?? '') : '';
+                $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
+                $noimg = $img ? '' : ' noimg';
+                echo '<article class="ifs-row' . $rev . $noimg . '">';
+                if ($img) {
+                    echo '<div class="ifs-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
+                }
+                echo '<div class="ifs-tx">';
+                if (!empty($r['subtitle'])) {
+                    echo '<p class="ifs-eyebrow">' . esc_html($r['subtitle']) . '</p>';
+                }
+                echo '<' . $tag . ' class="ifs-title">' . esc_html($r['title'] ?? '') . '</' . $tag . '>';
+                if (!empty($r['content'])) {
+                    echo '<div class="ifs-body">' . wp_kses_post($r['content']) . '</div>';
+                }
+                if (!empty($r['button_url'])) {
+                    echo '<a class="ifs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>';
+                }
+                echo '</div></article>';
+                $i++;
+            }
+            echo '</div>';
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND FAQS — accordion
+     * =================================================================== */
+    class Island_FAQs_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_faqs';
+        }
+        public function get_title()
+        {
+            return 'Island FAQs';
+        }
+        public function get_icon()
+        {
+            return 'eicon-help-o';
+        }
+        public function get_categories()
+        {
+            return ['general'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('first_open', ['label' => 'Open first item', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
+                'default' => ['size' => 10, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifaq' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('item_bg', ['label' => 'Item background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
+                'selectors' => ['{{WRAPPER}} .ifaq-item' => 'background:{{VALUE}}']]);
+            $this->add_control('item_bd', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
+                'selectors' => ['{{WRAPPER}} .ifaq-item' => 'border-color:{{VALUE}}']]);
+            $this->add_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
+                'default' => ['size' => 9, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifaq-item' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('q_color', ['label' => 'Question color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .ifaq-q' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'q_typo', 'selector' => '{{WRAPPER}} .ifaq-q']);
+            $this->add_control('a_color', ['label' => 'Answer color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#333333',
+                'selectors' => ['{{WRAPPER}} .ifaq-a,{{WRAPPER}} .ifaq-a p' => 'color:{{VALUE}}']]);
+            $this->add_control('icon_color', ['label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9c7b4e',
+                'selectors' => ['{{WRAPPER}} .ifaq-q::after' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $rows = get_field('faqs', $pid) ?: [];
+            if (!$rows) {
+                return;
+            }
+            echo '<style>
+              {{WRAPPER}} .ifaq{display:flex;flex-direction:column;gap:10px}
+              {{WRAPPER}} .ifaq-item{background:#faf9f7;border:1px solid #DBCEC4;border-radius:9px;overflow:hidden}
+              {{WRAPPER}} .ifaq-q{margin:0;cursor:pointer;padding:16px 46px 16px 18px;position:relative;font-weight:700;font-size:15.5px;color:#64402C;list-style:none}
+              {{WRAPPER}} .ifaq-q::-webkit-details-marker{display:none}
+              {{WRAPPER}} .ifaq-q::after{content:"+";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:#9c7b4e;transition:transform .2s}
+              {{WRAPPER}} details[open] .ifaq-q::after{content:"\2013"}
+              {{WRAPPER}} .ifaq-a{padding:0 18px 16px;font-size:14.5px;line-height:1.65;color:#333}{{WRAPPER}} .ifaq-a p{margin:0 0 10px}{{WRAPPER}} .ifaq-a :last-child{margin-bottom:0}
+            </style>';
+            echo '<div class="ifaq">';
+            $i = 0;
+            foreach ($rows as $r) {
+                $open = ($s['first_open'] === 'yes' && $i === 0) ? ' open' : '';
+                echo '<details class="ifaq-item"' . $open . '><summary class="ifaq-q">' . esc_html($r['question'] ?? '') . '</summary>'
+                    . '<div class="ifaq-a">' . wp_kses_post($r['answer'] ?? '') . '</div></details>';
+                $i++;
+            }
+            echo '</div>';
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND PLAN YOUR VISIT / CTA — heading + intro + audience cards
+     * =================================================================== */
+    class Island_CTA_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_cta';
+        }
+        public function get_title()
+        {
+            return 'Island Plan Your Visit (CTA)';
+        }
+        public function get_icon()
+        {
+            return 'eicon-call-to-action';
+        }
+        public function get_categories()
+        {
+            return ['general'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'mobile_default' => '1',
+                'options' => ['1' => '1', '2' => '2', '3' => '3'], 'selectors' => ['{{WRAPPER}} .icta-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+            $this->add_control('show_badge', ['label' => 'Show audience badge', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('head_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .icta-head' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'head_typo', 'selector' => '{{WRAPPER}} .icta-head']);
+            $this->add_control('intro_color', ['label' => 'Intro color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#4a3a2c',
+                'selectors' => ['{{WRAPPER}} .icta-intro,{{WRAPPER}} .icta-intro p' => 'color:{{VALUE}}']]);
+            $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .icta-card' => 'background:{{VALUE}}']]);
+            $this->add_control('card_title', ['label' => 'Card title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .icta-t' => 'color:{{VALUE}}']]);
+            $this->add_control('card_text', ['label' => 'Card text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f3e9df',
+                'selectors' => ['{{WRAPPER}} .icta-x,{{WRAPPER}} .icta-x p' => 'color:{{VALUE}}']]);
+            $this->add_control('btn_bg', ['label' => 'Button background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ECE5DE',
+                'selectors' => ['{{WRAPPER}} .icta-btn' => 'background:{{VALUE}}']]);
+            $this->add_control('btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .icta-btn' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $title = get_field('cta_title', $pid);
+            $intro = get_field('cta_intro', $pid);
+            $rows = get_field('cta', $pid) ?: [];
+            if (!$title && !$intro && !$rows) {
+                return;
+            }
+            echo '<style>
+              {{WRAPPER}} .icta-head{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:24px;color:#64402C}
+              {{WRAPPER}} .icta-intro{margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a3a2c;max-width:70ch}
+              {{WRAPPER}} .icta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+              {{WRAPPER}} .icta-card{background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
+              {{WRAPPER}} .icta-badge{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ECE5DE;border:1px solid rgba(236,229,222,.4);padding:3px 10px;border-radius:20px;margin-bottom:12px}
+              {{WRAPPER}} .icta-t{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#fff}
+              {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
+              {{WRAPPER}} .icta-btn{align-self:flex-start;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
+              @media(max-width:680px){{{WRAPPER}} .icta-grid{grid-template-columns:1fr!important}}
+            </style>';
+            if ($title) {
+                echo '<h2 class="icta-head">' . esc_html($title) . '</h2>';
+            }
+            if ($intro) {
+                echo '<div class="icta-intro">' . wp_kses_post($intro) . '</div>';
+            }
+            if ($rows) {
+                echo '<div class="icta-grid">';
+                foreach ($rows as $r) {
+                    echo '<article class="icta-card">';
+                    if ($s['show_badge'] === 'yes' && !empty($r['audience'])) {
+                        echo '<span class="icta-badge">' . esc_html($r['audience']) . '</span>';
+                    }
+                    if (!empty($r['title'])) {
+                        echo '<h3 class="icta-t">' . esc_html($r['title']) . '</h3>';
+                    }
+                    if (!empty($r['text'])) {
+                        echo '<div class="icta-x">' . wp_kses_post($r['text']) . '</div>';
+                    }
+                    if (!empty($r['button_url'])) {
+                        echo '<a class="icta-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Book now') . ' &rarr;</a>';
+                    }
+                    echo '</article>';
+                }
+                echo '</div>';
+            }
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND TRAVEL INFORMATION — getting there / when / accommodation
+     * =================================================================== */
+    class Island_Travel_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_travel';
+        }
+        public function get_title()
+        {
+            return 'Island Travel Information';
+        }
+        public function get_icon()
+        {
+            return 'eicon-map-pin';
+        }
+        public function get_categories()
+        {
+            return ['general'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('show_meta', ['label' => 'Show duration / difficulty', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('block_bg', ['label' => 'Block background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
+                'selectors' => ['{{WRAPPER}} .itr-block' => 'background:{{VALUE}}']]);
+            $this->add_control('block_bd', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
+                'selectors' => ['{{WRAPPER}} .itr-block' => 'border-color:{{VALUE}}']]);
+            $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .itr-h' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'h_typo', 'selector' => '{{WRAPPER}} .itr-h']);
+            $this->add_control('body_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#333333',
+                'selectors' => ['{{WRAPPER}} .itr-body,{{WRAPPER}} .itr-body p' => 'color:{{VALUE}}']]);
+            $this->add_control('btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .itr-btn' => 'color:{{VALUE}}']]);
+            $this->add_control('btn_bd', ['label' => 'Button border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
+                'selectors' => ['{{WRAPPER}} .itr-btn' => 'border-color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        private function block($title, $html, $blabel, $burl)
+        {
+            if (!$html && !$title) {
+                return '';
+            }
+            $out = '<div class="itr-block">';
+            if ($title) {
+                $out .= '<h3 class="itr-h">' . esc_html($title) . '</h3>';
+            }
+            if ($html) {
+                $out .= '<div class="itr-body">' . wp_kses_post($html) . '</div>';
+            }
+            if ($burl) {
+                $out .= '<a class="itr-btn" href="' . esc_url($burl) . '">' . esc_html($blabel ?: 'Learn more') . ' &rarr;</a>';
+            }
+            return $out . '</div>';
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $t = get_field('travel_information', $pid);
+            if (!$t || !is_array($t)) {
+                return;
+            }
+            echo '<style>
+              {{WRAPPER}} .itr{display:flex;flex-direction:column;gap:16px}
+              {{WRAPPER}} .itr-block{background:#faf9f7;border:1px solid #DBCEC4;border-radius:11px;padding:22px 24px}
+              {{WRAPPER}} .itr-h{margin:0 0 10px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#64402C}
+              {{WRAPPER}} .itr-body{font-size:14.5px;line-height:1.65;color:#333}{{WRAPPER}} .itr-body p{margin:0 0 10px}{{WRAPPER}} .itr-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .itr-btn{display:inline-block;margin-top:12px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px}
+              {{WRAPPER}} .itr-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+              {{WRAPPER}} .itr-chip{background:#ECE5DE;border-radius:20px;padding:6px 14px;font-size:13px;color:#64402C}{{WRAPPER}} .itr-chip b{font-weight:700}
+            </style>';
+            echo '<div class="itr">';
+            if ($s['show_meta'] === 'yes' && (!empty($t['recommended_duration']) || !empty($t['difficulty']))) {
+                echo '<div class="itr-meta">';
+                if (!empty($t['recommended_duration'])) {
+                    echo '<span class="itr-chip"><b>Duration:</b> ' . esc_html($t['recommended_duration']) . '</span>';
+                }
+                if (!empty($t['difficulty'])) {
+                    echo '<span class="itr-chip"><b>Difficulty:</b> ' . esc_html($t['difficulty']) . '</span>';
+                }
+                echo '</div>';
+            }
+            echo $this->block($t['getting_there_title'] ?? 'Getting There', $t['getting_there'] ?? '', $t['getting_there_button_label'] ?? '', $t['getting_there_button_url'] ?? '');
+            echo $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '');
+            echo $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '');
+            echo $this->block($t['travel_notes'] ? 'Good to Know' : '', $t['travel_notes'] ?? '', '', '');
+            echo '</div>';
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND SOURCES & LINKS — sources + related links
+     * =================================================================== */
+    class Island_Sources_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_sources';
+        }
+        public function get_title()
+        {
+            return 'Island Sources & Links';
+        }
+        public function get_icon()
+        {
+            return 'eicon-editor-link';
+        }
+        public function get_categories()
+        {
+            return ['general'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('sources_title', ['label' => 'Sources heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Sources & Citations']);
+            $this->add_control('related_title', ['label' => 'Related heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Explore More']);
+            $this->add_control('show_related', ['label' => 'Show related links', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'mobile_default' => '1',
+                'options' => ['1' => '1', '2' => '2', '3' => '3'], 'selectors' => ['{{WRAPPER}} .isrc-list' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .isrc-h' => 'color:{{VALUE}}']]);
+            $this->add_control('link_color', ['label' => 'Link color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a5a8c',
+                'selectors' => ['{{WRAPPER}} .isrc-list a' => 'color:{{VALUE}}']]);
+            $this->add_control('text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a4636',
+                'selectors' => ['{{WRAPPER}} .isrc-list li' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        private function links($rows, $heading)
+        {
+            if (!$rows) {
+                return;
+            }
+            echo '<div class="isrc-block">';
+            if ($heading) {
+                echo '<h3 class="isrc-h">' . esc_html($heading) . '</h3>';
+            }
+            echo '<ul class="isrc-list">';
+            foreach ($rows as $r) {
+                $label = $r['label'] ?? '';
+                $url = $r['url'] ?? '';
+                if (!$label && !$url) {
+                    continue;
+                }
+                if ($url) {
+                    echo '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label ?: $url) . '</a></li>';
+                } else {
+                    echo '<li>' . esc_html($label) . '</li>';
+                }
+            }
+            echo '</ul></div>';
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $sources = get_field('sources', $pid) ?: [];
+            $related = ($s['show_related'] === 'yes') ? (get_field('related_links', $pid) ?: []) : [];
+            if (!$sources && !$related) {
+                return;
+            }
+            echo '<style>
+              {{WRAPPER}} .isrc-block{margin-bottom:22px}
+              {{WRAPPER}} .isrc-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;color:#64402C}
+              {{WRAPPER}} .isrc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:8px 26px}
+              {{WRAPPER}} .isrc-list li{font-size:14px;line-height:1.5;color:#5a4636;padding-left:16px;position:relative}
+              {{WRAPPER}} .isrc-list li::before{content:"\2192";position:absolute;left:0;color:#9c7b4e}
+              {{WRAPPER}} .isrc-list a{color:#3a5a8c;text-decoration:none}{{WRAPPER}} .isrc-list a:hover{text-decoration:underline}
+              @media(max-width:680px){{{WRAPPER}} .isrc-list{grid-template-columns:1fr!important}}
+            </style>';
+            $this->links($sources, $s['sources_title']);
+            $this->links($related, $s['related_title']);
+        }
+    }
+
     } // end: declare widget classes once
 
     $widgets_manager->register(new Island_Wildlife_Widget());
@@ -1302,4 +1784,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     $widgets_manager->register(new Island_VisitorSites_Widget());
     $widgets_manager->register(new Island_SitesCarousel_Widget());
     $widgets_manager->register(new Island_WildlifeCalendar_Widget());
+    $widgets_manager->register(new Island_FeatureSections_Widget());
+    $widgets_manager->register(new Island_FAQs_Widget());
+    $widgets_manager->register(new Island_CTA_Widget());
+    $widgets_manager->register(new Island_Travel_Widget());
+    $widgets_manager->register(new Island_Sources_Widget());
 });
