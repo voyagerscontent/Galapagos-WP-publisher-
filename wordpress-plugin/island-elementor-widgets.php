@@ -1726,6 +1726,28 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'options' => ['center center' => 'Center', 'top center' => 'Top', 'bottom center' => 'Bottom', 'center left' => 'Left', 'center right' => 'Right'],
                 'selectors' => ['{{WRAPPER}} .icta-bg' => 'background-position:{{VALUE}}']]);
             $this->end_controls_section();
+
+            /* PER-CARD colors — override the shared colors above for card 1
+             * (left) and card 2 (right) independently. Blank = use the shared
+             * color. Cards beyond 2 keep the shared colors. */
+            $this->start_controls_section('percard', ['label' => 'Per-card colors', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            foreach ([['c1', 'Card 1 (left)'], ['c2', 'Card 2 (right)']] as [$p, $lbl]) {
+                $sel = '{{WRAPPER}} .icta-' . $p;
+                $this->add_control($p . '_h', ['label' => $lbl, 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+                $this->add_control($p . '_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel => 'background:{{VALUE}}']]);
+                $this->add_control($p . '_title', ['label' => 'Title color', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel . ' .icta-t' => 'color:{{VALUE}}']]);
+                $this->add_control($p . '_text', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel . ' .icta-x' => 'color:{{VALUE}}', $sel . ' .icta-x p' => 'color:{{VALUE}}']]);
+                $this->add_control($p . '_badge', ['label' => 'Badge color', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel . ' .icta-badge' => 'color:{{VALUE}};border-color:{{VALUE}}']]);
+                $this->add_control($p . '_btn_bg', ['label' => 'Button background', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel . ' .icta-btn' => 'background:{{VALUE}}']]);
+                $this->add_control($p . '_btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel . ' .icta-btn' => 'color:{{VALUE}}']]);
+            }
+            $this->end_controls_section();
         }
         protected function render()
         {
@@ -1786,9 +1808,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             if ($rows) {
                 echo '<div class="icta-grid">';
+                $ci = 0;
                 foreach ($rows as $r) {
+                    $ci++;
                     $has_bg = !empty($r['image']);
-                    echo '<article class="icta-card' . ($has_bg ? ' has-bg' : '') . '">';
+                    echo '<article class="icta-card icta-c' . $ci . ($has_bg ? ' has-bg' : '') . '">';
                     if ($has_bg) {
                         echo '<div class="icta-bg" style="background-image:url(\'' . esc_url($r['image']) . '\')"></div>';
                     }
