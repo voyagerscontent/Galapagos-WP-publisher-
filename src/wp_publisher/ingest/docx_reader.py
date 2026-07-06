@@ -345,8 +345,15 @@ def _clean_markers(text: str) -> str:
     it back to the label (they can't hold links). Either way the URL is kept here.
     """
     text = _DESIGN_NOTE_RE.sub("", text)
+    # Drop inline editorial "verify this fact" notes, e.g. "[VERIFY 2026 fee]".
+    # These are internal flags and must never reach the published page.
+    text = _INLINE_VERIFY_RE.sub("", text)
     text = _INTERNAL_LINK_RE.sub(r"[\1](\2)", text)
     return _arrow_links_to_md(text)
+
+
+# Inline "[VERIFY …]" editorial note anywhere in a line (with any leading space).
+_INLINE_VERIFY_RE = re.compile(r"\s*\[VERIFY[^\]]*\]", re.IGNORECASE)
 
 
 _CTA_SIGNALS = (

@@ -165,3 +165,21 @@ def test_wildlife_calendar_maps_to_acf():
     assert isinstance(rows, list) and len(rows) >= 3
     assert rows[0].get("period")
     assert "<p>" in rows[0].get("highlights", "")     # WYSIWYG HTML
+
+
+def test_inline_verify_markers_stripped():
+    """Editorial [VERIFY ...] notes must never reach published fields."""
+    import re
+    for name in ("baltra-island.docx", "fernandina-island.docx", "floreana-island.docx"):
+        doc = read_file(CONTENT / name)
+
+        def has_verify(v):
+            if isinstance(v, str):
+                return bool(re.search(r"\[VERIFY", v, re.I))
+            if isinstance(v, list):
+                return any(has_verify(x) for x in v)
+            if isinstance(v, dict):
+                return any(has_verify(x) for x in v.values())
+            return False
+
+        assert not any(has_verify(v) for v in doc.metadata.values()), name
