@@ -1442,7 +1442,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#333}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .55s cubic-bezier(.22,.61,.36,1)}
+              {{WRAPPER}} .ifs.hx .ifs-row{align-items:start}
+              {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .6s cubic-bezier(.22,.61,.36,1)}
               {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#efe7dd));pointer-events:none;transition:opacity .4s ease}
               {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body{max-height:1600px}
               {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after{opacity:0}
@@ -1741,6 +1742,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('img_pos', ['label' => 'Image position', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'center center',
                 'options' => ['center center' => 'Center', 'top center' => 'Top', 'bottom center' => 'Bottom', 'center left' => 'Left', 'center right' => 'Right'],
                 'selectors' => ['{{WRAPPER}} .icta-bg' => 'background-position:{{VALUE}}']]);
+            $this->add_control('ov_color', ['label' => 'Overlay color (over the photo)', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .icta-card' => '--ov:{{VALUE}}'],
+                'description' => 'A colour laid over the photo (for readable text). Leave blank for none; use the opacity below to control strength.']);
+            $this->add_responsive_control('ov_opacity', ['label' => 'Overlay opacity', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 0, 'max' => 100]],
+                'default' => ['size' => 100, 'unit' => '%'], 'selectors' => ['{{WRAPPER}} .icta-card' => '--ovo:calc({{SIZE}}/100)']]);
             $this->end_controls_section();
 
             /* PER-CARD colors — override the shared colors above for card 1
@@ -1811,8 +1817,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-intro{margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a3a2c;max-width:70ch}
               {{WRAPPER}} .icta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
               {{WRAPPER}} .icta-card{position:relative;overflow:hidden;background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
-              {{WRAPPER}} .icta-card>:not(.icta-bg){position:relative;z-index:1}
-              {{WRAPPER}} .icta-bg{position:absolute;inset:0;z-index:0;background:center/cover no-repeat}
+              {{WRAPPER}} .icta-card>:not(.icta-bg):not(.icta-ov){position:relative;z-index:1}
+              {{WRAPPER}} .icta-bg{position:absolute;inset:0;z-index:0;width:100%;height:100%;background:center/cover no-repeat}
+              {{WRAPPER}} .icta-ov{position:absolute;inset:0;z-index:0;pointer-events:none;background:var(--ov,transparent);opacity:var(--ovo,1)}
               {{WRAPPER}} .icta-badge{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ECE5DE;border:1px solid rgba(236,229,222,.4);padding:3px 10px;border-radius:20px;margin-bottom:12px}
               {{WRAPPER}} .icta-t{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#fff}
               {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
@@ -1837,6 +1844,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo '<article class="icta-card icta-c' . $ci . ($has_bg ? ' has-bg' : '') . '">';
                     if ($has_bg) {
                         echo '<div class="icta-bg" style="background-image:url(\'' . esc_url($imgurl) . '\')"></div>';
+                        echo '<div class="icta-ov"></div>';
                     }
                     if ($s['show_badge'] === 'yes' && !empty($r['audience'])) {
                         echo '<span class="icta-badge">' . esc_html($r['audience']) . '</span>';
