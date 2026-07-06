@@ -611,6 +611,32 @@ def _extract_related_links(section: Section) -> list[dict]:
     return out
 
 
+def _extract_related_link_groups(section: Section) -> list[dict]:
+    """Grouped 'Explore More' links: each in-section sub-heading (HEADING block)
+    starts a new group whose links are the '• Label → /url/' lines under it.
+    Returns ``[{"title": str, "links": [{"label","url"}, ...]}, ...]``."""
+    groups: list[dict] = []
+    current: dict | None = None
+    for b in section.blocks:
+        if b.type == BlockType.HEADING and b.text.strip():
+            current = {"title": b.text.strip(), "links": []}
+            groups.append(current)
+            continue
+        lines = list(b.items) if b.items else ([b.text] if b.text else [])
+        for line in lines:
+            m = _REL_LINK_RE.match(line.strip())
+            if not m:
+                continue
+            label, url = m.group(1).strip(), m.group(2).strip()
+            if not (label and url.startswith(("/", "http"))):
+                continue
+            if current is None:  # links before any sub-heading -> untitled group
+                current = {"title": "", "links": []}
+                groups.append(current)
+            current["links"].append({"label": label, "url": url})
+    return [g for g in groups if g["links"]]
+
+
 def _visual_heading_level(para) -> int:
     """Infer a heading level for docs that style headings by bold + font size
     rather than Word heading styles. 0 means 'not a heading'."""
@@ -959,12 +985,16 @@ def read_docx(path: str | Path) -> Document:
                 doc.metadata.setdefault("sources", []).extend(srcs)
             break
 
-    # "Explore More" footer -> related internal links.
+    # "Explore More" footer -> related internal links (flat list + grouped by
+    # sub-heading, e.g. "Santa Cruz Essentials", "Plan Your Santa Cruz Visit").
     for s in doc.sections:
         if "explore" in s.slug or "footer" in s.slug:
             related = _extract_related_links(s)
             if related:
                 doc.metadata["related_links"] = related
+            groups = _extract_related_link_groups(s)
+            if groups:
+                doc.metadata["related_link_groups"] = groups
             break
 
     # "At a Glance" / "Quick Facts" section -> the quick-facts heading + intro.
