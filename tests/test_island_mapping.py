@@ -85,6 +85,18 @@ def test_no_seo_schema_field_in_island_output():
     assert "seo_schema" not in acf
 
 
+def test_geo_answer_inline_quick_answer():
+    """A 'QUICK ANSWER: <prose>' box (marker + answer on one line, Baltra-style)
+    yields the answer; a header-only 'AIO / GEO BLOCK' line does not."""
+    from wp_publisher.ingest.docx_reader import _extract_geo_answer
+
+    ans = _extract_geo_answer([["QUICK ANSWER: Baltra Island is the main air "
+                                "gateway to the Galápagos and has little to see."]])
+    assert ans.startswith("Baltra Island is the main air gateway")
+    # A header-only marker with trailing header tokens must not be captured.
+    assert _extract_geo_answer([["AIO / GEO BLOCK — internal answer extraction"]]) == ""
+
+
 def test_santa_cruz_doc_extracts_geo_and_faqs():
     """Layer 2a: the GEO block -> geo_answer, and Q:/A: pairs -> faqs."""
     doc = read_file(SANTA_CRUZ)

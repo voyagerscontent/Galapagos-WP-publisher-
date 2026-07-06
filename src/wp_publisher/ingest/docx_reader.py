@@ -116,14 +116,31 @@ def _extract_geo_answer(rows: list[list[str]]) -> str:
             if ans:
                 return ans
 
-    # Case 2: AIO / GEO header, answer is the first prose after the marker.
+    # Case 2: AIO / GEO / "Quick Answer" header, answer is the first prose after
+    # the marker. The marker may sit on its own line (answer follows) or inline
+    # with the answer on the same line ("QUICK ANSWER: <answer>").
     if not _GEO_MARKER_RE.search(text[:160]):
         return ""
     out: list[str] = []
     started = False
     for line in lines:
         if not started:
-            started = bool(_GEO_MARKER_RE.search(line))
+            m = _GEO_MARKER_RE.search(line)
+            if not m:
+                continue
+            started = True
+            # Inline answer only when the marker is directly followed by
+            # ": <prose>" (e.g. "QUICK ANSWER: Baltra …"), not when trailing
+            # header tokens follow (e.g. "AIO / GEO BLOCK …").
+            inline = re.match(r"\s*[:–—-]\s*(.+)", line[m.end():])
+            if inline:
+                rest = inline.group(1).strip()
+                if (
+                    len(rest.split()) >= 6
+                    and not _GEO_EXPLAINER_RE.match(rest)
+                    and not _GEO_STOP_RE.match(rest)
+                ):
+                    out.append(rest)
             continue
         if _GEO_STOP_RE.match(line):
             break
