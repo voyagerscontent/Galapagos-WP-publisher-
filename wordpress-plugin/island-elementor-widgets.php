@@ -1341,9 +1341,26 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $tags = ['h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'div' => 'div'];
             $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('layout', [
+                'label' => 'Layout', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'rows',
+                'options' => ['rows' => 'Rows (zig-zag)', 'carousel' => 'Carousel (image + text, one at a time)'],
+                'description' => 'Rows stacks every feature as a zig-zag block. Carousel shows one feature at a time (image on one side, text on the other) with arrows/dots.',
+            ]);
             $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
-            $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['layout' => 'rows']]);
             $this->add_control('show_img', ['label' => 'Show image', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+
+            $this->add_control('car_img_side', [
+                'label' => 'Image side', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'left',
+                'options' => ['left' => 'Left', 'right' => 'Right'], 'condition' => ['layout' => 'carousel'],
+            ]);
+            $this->add_control('car_show_arrows', ['label' => 'Show arrows', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['layout' => 'carousel']]);
+            $this->add_control('car_show_dots', ['label' => 'Show dots', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['layout' => 'carousel']]);
+            $this->add_control('car_autoplay', ['label' => 'Autoplay', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'condition' => ['layout' => 'carousel']]);
+            $this->add_control('car_autoplay_ms', [
+                'label' => 'Autoplay delay (ms)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5000,
+                'condition' => ['layout' => 'carousel', 'car_autoplay' => 'yes'],
+            ]);
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -1378,6 +1395,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
             $rows = get_field('feature_sections', $pid) ?: [];
             if (!$rows) {
+                return;
+            }
+            if (($s['layout'] ?? 'rows') === 'carousel') {
+                $this->render_carousel($rows, $s);
                 return;
             }
             $tag = $this->tg($s['title_tag'], ['h2', 'h3', 'h4', 'div'], 'h3');
@@ -1420,6 +1441,89 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
             }
             echo '</div>';
+        }
+
+        /* Carousel layout: one feature per slide, image on one side / text on
+         * the other — same interaction as the Sites Carousel, but driven by
+         * the feature_sections repeater (subtitle/title/content/button). */
+        private function render_carousel($rows, $s)
+        {
+            $tag = $this->tg($s['title_tag'], ['h2', 'h3', 'h4', 'div'], 'h3');
+            $showimg = $s['show_img'] === 'yes';
+            $imgright = ($s['car_img_side'] ?? 'left') === 'right';
+            $cid = 'ifsc-' . $this->get_id();
+            echo '<style>
+              {{WRAPPER}} .ifsc{position:relative;margin-bottom:8px}
+              {{WRAPPER}} .ifsc-track{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 2px 8px;scrollbar-width:none}
+              {{WRAPPER}} .ifsc-track::-webkit-scrollbar{display:none}
+              {{WRAPPER}} .ifsc-slide{scroll-snap-align:center;flex:0 0 100%;min-width:0}
+              {{WRAPPER}} .ifsc-card{display:grid;grid-template-columns:45% 1fr;background:#faf9f7;border:1px solid #DBCEC4;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(60,40,25,.10);min-height:300px}
+              {{WRAPPER}} .ifsc-card.rev .ifsc-img{order:2}
+              {{WRAPPER}} .ifsc-img{position:relative;background:#cbb89b center/cover no-repeat;min-height:200px}
+              {{WRAPPER}} .ifsc-card.noimg{grid-template-columns:1fr}
+              {{WRAPPER}} .ifsc-bd{padding:28px 30px;display:flex;flex-direction:column;justify-content:center}
+              {{WRAPPER}} .ifsc-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
+              {{WRAPPER}} .ifsc-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:24px;line-height:1.2;color:#64402C}
+              {{WRAPPER}} .ifsc-body{font-size:14.5px;line-height:1.66;color:#333}{{WRAPPER}} .ifsc-body p{margin:0 0 10px}{{WRAPPER}} .ifsc-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .ifsc-btn{align-self:flex-start;margin-top:16px;display:inline-block;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px;background:#fff}
+              {{WRAPPER}} .ifsc-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px}
+              {{WRAPPER}} .ifsc-arw{width:42px;height:42px;border-radius:50%;border:1px solid #D3BAA3;background:#fff;color:#64402C;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(60,40,25,.10);transition:background .2s,color .2s}
+              {{WRAPPER}} .ifsc-arw:hover{background:#64402C;color:#fff}
+              {{WRAPPER}} .ifsc-dots{display:flex;gap:8px}
+              {{WRAPPER}} .ifsc-dot{width:9px;height:9px;border-radius:50%;background:#D3BAA3;border:none;cursor:pointer;padding:0;transition:width .2s,background .2s}
+              {{WRAPPER}} .ifsc-dot.on{background:#64402C;width:24px;border-radius:20px}
+              @media(max-width:680px){{{WRAPPER}} .ifsc-card{grid-template-columns:1fr}{{WRAPPER}} .ifsc-card.rev .ifsc-img{order:0}{{WRAPPER}} .ifsc-img{height:200px}}
+            </style>';
+            echo '<div class="ifsc"><div class="ifsc-track" id="' . esc_attr($cid) . '">';
+            foreach ($rows as $r) {
+                $img = $showimg ? island_ew_image_src($r['image'] ?? '') : '';
+                $bg = $img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '';
+                $rev = ($img && $imgright) ? ' rev' : '';
+                $noimg = $img ? '' : ' noimg';
+                echo '<div class="ifsc-slide"><article class="ifsc-card' . $rev . $noimg . '">';
+                if ($img) {
+                    echo '<div class="ifsc-img"' . $bg . '></div>';
+                }
+                echo '<div class="ifsc-bd">';
+                if (!empty($r['subtitle'])) {
+                    echo '<p class="ifsc-eyebrow">' . esc_html($r['subtitle']) . '</p>';
+                }
+                echo '<' . $tag . ' class="ifsc-title">' . esc_html($r['title'] ?? '') . '</' . $tag . '>';
+                if (!empty($r['content'])) {
+                    echo '<div class="ifsc-body">' . wp_kses_post($r['content']) . '</div>';
+                }
+                if (!empty($r['button_url'])) {
+                    echo '<a class="ifsc-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>';
+                }
+                echo '</div></article></div>';
+            }
+            echo '</div>';
+            $arrows = $s['car_show_arrows'] === 'yes';
+            $dots = $s['car_show_dots'] === 'yes';
+            if ($arrows || $dots) {
+                echo '<div class="ifsc-nav">';
+                if ($arrows) {
+                    echo '<button class="ifsc-arw" data-ifsc="prev" aria-label="Previous"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>';
+                }
+                if ($dots) {
+                    echo '<div class="ifsc-dots"></div>';
+                }
+                if ($arrows) {
+                    echo '<button class="ifsc-arw" data-ifsc="next" aria-label="Next"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>';
+                }
+                echo '</div>';
+            }
+            echo '</div>';
+            $auto = ($s['car_autoplay'] === 'yes') ? max(1500, (int) ($s['car_autoplay_ms'] ?: 5000)) : 0;
+            echo '<script>(function(){var t=document.getElementById(' . json_encode($cid) . ');if(!t||t.dataset.init)return;t.dataset.init=1;'
+                . 'var car=t.closest(".ifsc"),sl=t.children,n=sl.length,cur=0,dw=car.querySelector(".ifsc-dots"),ap=' . $auto . ';'
+                . 'if(dw){for(var i=0;i<n;i++){(function(i){var b=document.createElement("button");b.className="ifsc-dot"+(i?"":" on");b.onclick=function(){go(i)};dw.appendChild(b);})(i);}}'
+                . 'function go(i){cur=Math.max(0,Math.min(n-1,i));sl[cur].scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});paint();}'
+                . 'function paint(){if(!dw)return;var d=dw.children;for(var i=0;i<n;i++)d[i].className="ifsc-dot"+(i===cur?" on":"");}'
+                . 'car.querySelectorAll("[data-ifsc]").forEach(function(b){b.onclick=function(){go(cur+(b.dataset.ifsc==="next"?1:-1));};});'
+                . 't.addEventListener("scroll",function(){var i=Math.round(t.scrollLeft/t.clientWidth);if(i!==cur){cur=i;paint();}});'
+                . 'if(ap){setInterval(function(){go(cur+1>=n?0:cur+1);},ap);}'
+                . '})();</script>';
         }
     }
 
