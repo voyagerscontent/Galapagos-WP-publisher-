@@ -1648,7 +1648,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         private function block($title, $html, $blabel, $burl)
         {
-            if (!$html && !$title) {
+            // Only render a block that actually has content — a fallback title
+            // alone must never produce an empty box (also treat "<p></p>" as empty).
+            if (!$html || trim(wp_strip_all_tags($html)) === '') {
                 return '';
             }
             $out = '<div class="itr-block">';
@@ -1683,22 +1685,27 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .itr-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
               {{WRAPPER}} .itr-chip{background:#ECE5DE;border-radius:20px;padding:6px 14px;font-size:13px;color:#64402C}{{WRAPPER}} .itr-chip b{font-weight:700}
             </style>';
-            echo '<div class="itr">';
+            $meta = '';
             if ($s['show_meta'] === 'yes' && (!empty($t['recommended_duration']) || !empty($t['difficulty']))) {
-                echo '<div class="itr-meta">';
+                $meta .= '<div class="itr-meta">';
                 if (!empty($t['recommended_duration'])) {
-                    echo '<span class="itr-chip"><b>Duration:</b> ' . esc_html($t['recommended_duration']) . '</span>';
+                    $meta .= '<span class="itr-chip"><b>Duration:</b> ' . esc_html($t['recommended_duration']) . '</span>';
                 }
                 if (!empty($t['difficulty'])) {
-                    echo '<span class="itr-chip"><b>Difficulty:</b> ' . esc_html($t['difficulty']) . '</span>';
+                    $meta .= '<span class="itr-chip"><b>Difficulty:</b> ' . esc_html($t['difficulty']) . '</span>';
                 }
-                echo '</div>';
+                $meta .= '</div>';
             }
-            echo $this->block($t['getting_there_title'] ?? 'Getting There', $t['getting_there'] ?? '', $t['getting_there_button_label'] ?? '', $t['getting_there_button_url'] ?? '');
-            echo $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '');
-            echo $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '');
-            echo $this->block($t['travel_notes'] ? 'Good to Know' : '', $t['travel_notes'] ?? '', '', '');
-            echo '</div>';
+            $blocks = $meta
+                . $this->block($t['getting_there_title'] ?? 'Getting There', $t['getting_there'] ?? '', $t['getting_there_button_label'] ?? '', $t['getting_there_button_url'] ?? '')
+                . $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '')
+                . $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '')
+                . $this->block('Good to Know', $t['travel_notes'] ?? '', '', '');
+            // Nothing to show -> render nothing (no empty wrapper).
+            if (trim($blocks) === '') {
+                return;
+            }
+            echo '<div class="itr">' . $blocks . '</div>';
         }
     }
 
