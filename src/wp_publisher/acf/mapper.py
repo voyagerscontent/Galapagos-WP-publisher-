@@ -260,6 +260,14 @@ def build_acf_island(
     features: list[dict] = []
     travel: dict[str, str] = {}
     used: set[str] = set()
+    # Sections already pulled into a dedicated repeater (e.g. the wildlife section
+    # 'The Wildlife') must not also appear as a Feature Section. Match by the exact
+    # extracted title so unrelated sections that merely mention 'wildlife' stay.
+    _extracted_titles = {
+        t.strip().lower()
+        for t in (wildlife_title, visitor_sites_title)
+        if t and t.strip()
+    }
 
     # Table-derived repeaters (extracted upstream from the doc's tables).
     if quick_facts and m.get("quick_facts"):
@@ -364,8 +372,8 @@ def build_acf_island(
                     out.setdefault(m["cta_title"], heading)
                 out.setdefault(m["cta_intro"], d.get("content", ""))
                 continue
-            if _should_skip_feature(heading):
-                continue  # sources / related-links footer -> dedicated fields
+            if _should_skip_feature(heading) or heading.strip().lower() in _extracted_titles:
+                continue  # dedicated repeaters (wildlife/visitor sites) / footer fields
             # The lead paragraph (no heading, before any titled section) is the
             # island intro/overview -> its own field, not a title-less card.
             if m.get("intro") and not heading.strip() and m["intro"] not in out and not features:
