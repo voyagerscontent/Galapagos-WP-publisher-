@@ -373,7 +373,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('row_icons', [
                 'label' => 'Fallback row icons (shared by all pages)', 'type' => \Elementor\Controls_Manager::REPEATER,
                 'fields' => $rep->get_controls(), 'prevent_empty' => false, 'title_field' => 'Icon {{{ _id }}}',
-                'description' => 'Optional and SHARED across every island (this is one template). Each page\'s own icon always wins: first its Font Awesome class field, then its uploaded SVG/image. These fallback icons only fill rows where the page set no icon at all. To vary icons per island, set them on the page, not here.',
+                'description' => 'Optional and SHARED across every island (this is one template). Each page\'s own uploaded icon (the SVG/Image field on that fact row) always wins; these fallback icons only fill rows where the page set no icon. To vary icons per island, upload them on the page — every Font Awesome icon can be downloaded as an SVG and uploaded there.',
             ]);
             $this->end_controls_section();
 
