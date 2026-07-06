@@ -170,6 +170,9 @@
           },
           { "key": "cta_card_title", "label": "Title", "name": "title", "type": "text" },
           { "key": "cta_text", "label": "Text", "name": "text", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
+          { "key": "cta_image", "label": "Background image (optional)", "name": "image", "type": "image", "return_format": "id",
+            "preview_size": "medium", "library": "all",
+            "instructions": "Per-island background photo for this card. The text stays over the card colour and the photo fades in from the side. Leave blank for a solid-colour card." },
           { "key": "cta_button", "label": "Button Label", "name": "button_label", "type": "text" },
           { "key": "cta_url", "label": "Button URL", "name": "button_url", "type": "url" }
         ]

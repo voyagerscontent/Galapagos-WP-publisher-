@@ -1712,6 +1712,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .icta-btn' => 'background:{{VALUE}}']]);
             $this->add_control('btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .icta-btn' => 'color:{{VALUE}}']]);
+
+            /* Background image (per card) — the photo fades in from one side. */
+            $this->add_control('bg_h', ['label' => 'Background image (per card)', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('img_side', ['label' => 'Photo side', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'right',
+                'options' => ['right' => 'Right', 'left' => 'Left'],
+                'description' => 'Which side the photo shows on; the text stays on the opposite side over the card colour.']);
+            $this->add_responsive_control('card_minh', ['label' => 'Card min height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 640]],
+                'default' => ['size' => 0, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .icta-card' => 'min-height:{{SIZE}}{{UNIT}}'],
+                'description' => 'Give the cards a taller minimum height so the photo has room to show.']);
+            $this->add_control('fade_start', ['label' => 'Photo reveal (%)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 20, 'max' => 85]],
+                'default' => ['size' => 45, 'unit' => '%'],
+                'description' => 'How much of the card the photo covers before fading into the colour.',
+                'selectors' => ['{{WRAPPER}} .icta-card.bgright .icta-bg' => '-webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent {{SIZE}}%,#000 100%);mask-image:linear-gradient(90deg,transparent 0%,transparent {{SIZE}}%,#000 100%)',
+                    '{{WRAPPER}} .icta-card.bgleft .icta-bg' => '-webkit-mask-image:linear-gradient(270deg,transparent 0%,transparent {{SIZE}}%,#000 100%);mask-image:linear-gradient(270deg,transparent 0%,transparent {{SIZE}}%,#000 100%)']]);
             $this->end_controls_section();
         }
         protected function render()
@@ -1756,9 +1770,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-head{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:24px;color:#64402C}
               {{WRAPPER}} .icta-intro{margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a3a2c;max-width:70ch}
               {{WRAPPER}} .icta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-              {{WRAPPER}} .icta-card{background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
+              {{WRAPPER}} .icta-card{position:relative;overflow:hidden;background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
+              {{WRAPPER}} .icta-card>:not(.icta-bg){position:relative;z-index:1}
+              {{WRAPPER}} .icta-bg{position:absolute;inset:0;z-index:0;background:center/cover no-repeat}
+              {{WRAPPER}} .icta-card.bgright .icta-bg{-webkit-mask-image:linear-gradient(90deg,transparent 0%,transparent 45%,#000 100%);mask-image:linear-gradient(90deg,transparent 0%,transparent 45%,#000 100%)}
+              {{WRAPPER}} .icta-card.bgleft .icta-bg{-webkit-mask-image:linear-gradient(270deg,transparent 0%,transparent 45%,#000 100%);mask-image:linear-gradient(270deg,transparent 0%,transparent 45%,#000 100%)}
+              {{WRAPPER}} .icta-card.has-bg>:not(.icta-bg){max-width:62%}
+              {{WRAPPER}} .icta-card.has-bg.bgleft>:not(.icta-bg){align-self:flex-end;text-align:right}
+              @media(max-width:760px){{{WRAPPER}} .icta-card.has-bg>:not(.icta-bg){max-width:100%}{{WRAPPER}} .icta-card.has-bg .icta-bg{opacity:.32}}
               {{WRAPPER}} .icta-badge{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ECE5DE;border:1px solid rgba(236,229,222,.4);padding:3px 10px;border-radius:20px;margin-bottom:12px}
-              {{WRAPPER}} .icta-img{height:150px;border-radius:9px;background:#cbb89b center/cover no-repeat;margin-bottom:14px}
               {{WRAPPER}} .icta-t{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#fff}
               {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
               {{WRAPPER}} .icta-btn{align-self:flex-start;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
@@ -1772,13 +1792,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             if ($rows) {
                 echo '<div class="icta-grid">';
+                $side = ($s['img_side'] ?? 'right') === 'left' ? 'bgleft' : 'bgright';
                 foreach ($rows as $r) {
-                    echo '<article class="icta-card">';
+                    $has_bg = !empty($r['image']);
+                    echo '<article class="icta-card' . ($has_bg ? ' has-bg ' . $side : '') . '">';
+                    if ($has_bg) {
+                        echo '<div class="icta-bg" style="background-image:url(\'' . esc_url($r['image']) . '\')"></div>';
+                    }
                     if ($s['show_badge'] === 'yes' && !empty($r['audience'])) {
                         echo '<span class="icta-badge">' . esc_html($r['audience']) . '</span>';
-                    }
-                    if (!empty($r['image'])) {
-                        echo '<div class="icta-img" style="background-image:url(\'' . esc_url($r['image']) . '\')"></div>';
                     }
                     if (!empty($r['title'])) {
                         echo '<h3 class="icta-t">' . esc_html($r['title']) . '</h3>';
