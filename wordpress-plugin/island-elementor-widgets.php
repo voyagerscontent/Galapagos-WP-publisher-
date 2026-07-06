@@ -1558,8 +1558,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
                 'default' => ['size' => 10, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifaq' => 'gap:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('item_bg', ['label' => 'Item background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
-                'selectors' => ['{{WRAPPER}} .ifaq-item' => 'background:{{VALUE}}']]);
+            $this->add_control('item_bg', ['label' => 'Question / header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f1ebe4',
+                'selectors' => ['{{WRAPPER}} .ifaq-q' => 'background:{{VALUE}}']]);
+            $this->add_control('a_bg', ['label' => 'Answer background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .ifaq-a' => 'background:{{VALUE}}']]);
+            $this->add_control('sep_color', ['label' => 'Separator color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#e4dace',
+                'selectors' => ['{{WRAPPER}} .ifaq-a' => 'border-top-color:{{VALUE}}']]);
             $this->add_control('item_bd', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .ifaq-item' => 'border-color:{{VALUE}}']]);
             $this->add_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
@@ -1586,12 +1590,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '<style>
               {{WRAPPER}} .ifaq{display:flex;flex-direction:column;gap:10px}
-              {{WRAPPER}} .ifaq-item{background:#faf9f7;border:1px solid #DBCEC4;border-radius:9px;overflow:hidden}
-              {{WRAPPER}} .ifaq-q{margin:0;cursor:pointer;padding:16px 46px 16px 18px;position:relative;font-weight:700;font-size:15.5px;color:#64402C;list-style:none}
+              {{WRAPPER}} .ifaq-item{background:#fff;border:1px solid #DBCEC4;border-radius:9px;overflow:hidden}
+              {{WRAPPER}} .ifaq-q{margin:0;cursor:pointer;padding:16px 46px 16px 18px;position:relative;font-weight:700;font-size:15.5px;color:#64402C;list-style:none;background:#f1ebe4}
               {{WRAPPER}} .ifaq-q::-webkit-details-marker{display:none}
               {{WRAPPER}} .ifaq-q::after{content:"+";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:#9c7b4e;transition:transform .2s}
               {{WRAPPER}} details[open] .ifaq-q::after{content:"\2013"}
-              {{WRAPPER}} .ifaq-a{padding:0 18px 16px;font-size:14.5px;line-height:1.65;color:#333}{{WRAPPER}} .ifaq-a p{margin:0 0 10px}{{WRAPPER}} .ifaq-a :last-child{margin-bottom:0}
+              {{WRAPPER}} .ifaq-a{padding:16px 18px;background:#fff;border-top:1px solid #e4dace;font-size:14.5px;line-height:1.65;color:#333}{{WRAPPER}} .ifaq-a p{margin:0 0 10px}{{WRAPPER}} .ifaq-a :last-child{margin-bottom:0}
             </style>';
             echo '<div class="ifaq">';
             $i = 0;
