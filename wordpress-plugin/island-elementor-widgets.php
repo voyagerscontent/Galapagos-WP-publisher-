@@ -1673,6 +1673,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'placeholder' => 'Blank = this page’s Plan Your Visit heading',
                 'description' => 'Leave blank to use each island\'s own heading (varies per page). Type here to force a heading — but that text is SHARED by every island in this template.',
                 'condition' => ['show_title' => 'yes', 'content_source' => 'auto']]);
+            $this->add_control('show_intro', ['label' => 'Show intro / description', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Turn OFF to keep this widget as CTA cards only (no title, no description) — use it when you already placed the heading/description above with other widgets, so nothing is duplicated.']);
 
             /* Manual content — used only when Content source = Manual. */
             $this->add_control('m_heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
@@ -1782,6 +1784,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             if (($s['show_title'] ?? 'yes') !== 'yes') {
                 $title = '';
+            }
+            if (($s['show_intro'] ?? 'yes') !== 'yes') {
+                $intro = '';
             }
             $htag = in_array($s['title_tag'] ?? 'h2', ['h2', 'h3', 'h4', 'div'], true) ? $s['title_tag'] : 'h2';
             if (!$title && !$intro && !$rows) {
