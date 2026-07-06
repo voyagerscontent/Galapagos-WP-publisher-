@@ -1816,10 +1816,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $ci = 0;
                 foreach ($rows as $r) {
                     $ci++;
-                    $has_bg = !empty($r['image']);
+                    // Automatic mode returns the image as an attachment ID; Manual
+                    // already resolved it. Resolve both to a URL here.
+                    $imgurl = island_ew_image_src($r['image'] ?? '');
+                    $has_bg = $imgurl !== '';
                     echo '<article class="icta-card icta-c' . $ci . ($has_bg ? ' has-bg' : '') . '">';
                     if ($has_bg) {
-                        echo '<div class="icta-bg" style="background-image:url(\'' . esc_url($r['image']) . '\')"></div>';
+                        echo '<div class="icta-bg" style="background-image:url(\'' . esc_url($imgurl) . '\')"></div>';
                     }
                     if ($s['show_badge'] === 'yes' && !empty($r['audience'])) {
                         echo '<span class="icta-badge">' . esc_html($r['audience']) . '</span>';
