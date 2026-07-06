@@ -94,7 +94,17 @@ def publish_page(
         # send content (never blank an existing page's body). Also carry over any
         # editor-uploaded repeater sub-fields (icons/images) the payload doesn't
         # set, so a republish can't wipe them.
-        _preserve_unmanaged_subfields(existing, payload)
+        #
+        # The slug lookup uses the list endpoint, whose ACF payload can be
+        # incomplete (context 'view' drops repeater sub-fields). Re-read the post
+        # with context=edit so the preserve step sees the real, full ACF.
+        try:
+            full = client.get_post(page.post_type, existing["id"], context="edit")
+            if isinstance(full, dict) and full.get("acf"):
+                existing = full
+        except WordPressError:
+            pass  # fall back to the list-endpoint copy we already have
+        _preserve_unmanaged_subfields(existing, payload, page.warnings)
         result = client.update_post(page.post_type, existing["id"], payload)
         created = False
     else:
@@ -119,7 +129,7 @@ def publish_page(
     )
 
 
-def _preserve_unmanaged_subfields(existing: dict, payload: dict) -> None:
+def _preserve_unmanaged_subfields(existing: dict, payload: dict, warnings: list | None = None) -> None:
     """Keep editor-managed repeater sub-fields across a republish.
 
     The generated payload rebuilds each repeater from the document, which would
@@ -127,10 +137,27 @@ def _preserve_unmanaged_subfields(existing: dict, payload: dict) -> None:
     editor uploaded in WordPress. For every repeater the payload sends, match each
     new row to the live row by its managed content and copy over any sub-field the
     new row omits. Fully site-agnostic: it never names a specific field.
+
+    Fail-safe: if the live ACF could not be read at all (empty), a republish
+    cannot know which media to carry over — so rather than blank every repeater,
+    the repeaters are dropped from the payload (left untouched on the page) and a
+    warning is recorded. Better to skip a content update than to wipe uploads.
     """
-    old_acf = (existing or {}).get("acf") or {}
     new_acf = payload.get("acf")
-    if not isinstance(new_acf, dict) or not isinstance(old_acf, dict):
+    if not isinstance(new_acf, dict):
+        return
+    old_acf = (existing or {}).get("acf")
+    if not isinstance(old_acf, dict) or not old_acf:
+        dropped = [f for f, rows in new_acf.items() if _is_row_list(rows)]
+        for field in dropped:
+            del new_acf[field]
+        if dropped and warnings is not None:
+            warnings.append(
+                "Could not read the live page's ACF, so repeater fields "
+                f"({', '.join(dropped)}) were left untouched to avoid wiping "
+                "editor-uploaded images/icons. Re-run once ACF is readable to "
+                "update them."
+            )
         return
     for field, new_rows in new_acf.items():
         old_rows = old_acf.get(field)

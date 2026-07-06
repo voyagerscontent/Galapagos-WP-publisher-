@@ -58,3 +58,19 @@ def test_no_acf_is_safe():
     payload = {"title": "x"}
     _preserve_unmanaged_subfields({"acf": {}}, payload)  # no throw
     assert payload == {"title": "x"}
+
+
+def test_unreadable_live_acf_drops_repeaters_instead_of_wiping():
+    """If the live ACF can't be read, repeaters are removed from the payload
+    (left untouched on the page) and a warning is recorded — never wiped."""
+    warnings: list[str] = []
+    payload = {"acf": {
+        "quick_facts": [{"label": "Area", "value": "986 km²"}],
+        "feature_sections": [{"title": "Wildlife", "content": "..."}],
+        "geo_answer": "a scalar field is still updated",
+    }}
+    _preserve_unmanaged_subfields({"acf": {}}, payload, warnings)
+    assert "quick_facts" not in payload["acf"]      # repeater left untouched
+    assert "feature_sections" not in payload["acf"]
+    assert payload["acf"]["geo_answer"] == "a scalar field is still updated"
+    assert warnings and "quick_facts" in warnings[0]
