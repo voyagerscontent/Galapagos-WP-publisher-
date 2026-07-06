@@ -1656,6 +1656,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'options' => ['1' => '1', '2' => '2', '3' => '3'], 'selectors' => ['{{WRAPPER}} .icta-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
             $this->add_control('show_badge', ['label' => 'Show audience badge', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
 
+            /* Heading — show/hide + optional override, so you can control the
+             * title from the widget without editing ACF. */
+            $this->add_control('show_title', ['label' => 'Show heading', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'separator' => 'before']);
+            $this->add_control('title_tag', ['label' => 'Heading tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h2',
+                'options' => ['h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'div' => 'div'], 'condition' => ['show_title' => 'yes']]);
+            $this->add_control('title_text', ['label' => 'Heading text (override)', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
+                'placeholder' => 'Blank = this page’s Plan Your Visit heading',
+                'description' => 'Leave blank to use each island\'s own heading (varies per page). Type here to force a heading — but that text is SHARED by every island in this template.',
+                'condition' => ['show_title' => 'yes', 'content_source' => 'auto']]);
+
             /* Manual content — used only when Content source = Manual. */
             $this->add_control('m_heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
                 'default' => 'Plan Your Visit', 'condition' => ['content_source' => 'manual']]);
@@ -1723,6 +1734,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $intro = get_field('cta_intro', $pid);
                 $rows = get_field('cta', $pid) ?: [];
             }
+            // Widget-level heading override (shared across islands) + show/hide.
+            if (($s['content_source'] ?? 'auto') === 'auto' && !empty($s['title_text'])) {
+                $title = $s['title_text'];
+            }
+            if (($s['show_title'] ?? 'yes') !== 'yes') {
+                $title = '';
+            }
+            $htag = in_array($s['title_tag'] ?? 'h2', ['h2', 'h3', 'h4', 'div'], true) ? $s['title_tag'] : 'h2';
             if (!$title && !$intro && !$rows) {
                 return;
             }
@@ -1739,7 +1758,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(max-width:680px){{{WRAPPER}} .icta-grid{grid-template-columns:1fr!important}}
             </style>';
             if ($title) {
-                echo '<h2 class="icta-head">' . esc_html($title) . '</h2>';
+                echo '<' . $htag . ' class="icta-head">' . esc_html($title) . '</' . $htag . '>';
             }
             if ($intro) {
                 echo '<div class="icta-intro">' . wp_kses_post($intro) . '</div>';
