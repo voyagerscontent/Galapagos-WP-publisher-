@@ -168,7 +168,7 @@
             "choices": { "Direct travelers": "Direct travelers", "Travel trade": "Travel trade" },
             "default_value": "Direct travelers", "allow_null": 1, "ui": 1, "return_format": "value"
           },
-          { "key": "cta_title", "label": "Title", "name": "title", "type": "text" },
+          { "key": "cta_card_title", "label": "Title", "name": "title", "type": "text" },
           { "key": "cta_text", "label": "Text", "name": "text", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
           { "key": "cta_button", "label": "Button Label", "name": "button_label", "type": "text" },
           { "key": "cta_url", "label": "Button URL", "name": "button_url", "type": "url" }
