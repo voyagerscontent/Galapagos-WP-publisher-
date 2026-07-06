@@ -1206,6 +1206,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             /* CONTENT */
             $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('show_title', ['label' => 'Show section title', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('title_text', [
+                'label' => 'Section title', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Wildlife Calendar',
+                'placeholder' => 'Wildlife Calendar', 'condition' => ['show_title' => 'yes'],
+                'description' => 'Single heading for this section (one source, no duplicate). The widget only shows when the island has calendar data, so this title appears only there.',
+            ]);
+            $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h2',
+                'options' => $tags, 'condition' => ['show_title' => 'yes']]);
             $this->add_responsive_control('columns', [
                 'label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2',
                 'tablet_default' => '2', 'mobile_default' => '1',
@@ -1245,6 +1253,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             /* TEXT */
             $this->start_controls_section('text', ['label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('title_color', ['label' => 'Section title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .wcal-h' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .wcal-h']);
             $this->add_control('period_color', ['label' => 'Period color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .wcal-period' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'period_typo', 'selector' => '{{WRAPPER}} .wcal-period']);
@@ -1266,8 +1277,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             $ptag = $this->tag($s['period_tag'], ['h2', 'h3', 'h4', 'h5', 'div'], 'h3');
+            $htag = $this->tag($s['title_tag'] ?? 'h2', ['h2', 'h3', 'h4', 'h5', 'div'], 'h2');
             $acc = [$s['acc1'] ?: '#64402c', $s['acc2'] ?: '#64402c', $s['acc3'] ?: '#64402c', $s['acc4'] ?: '#64402c'];
             echo '<style>
+              {{WRAPPER}} .wcal-h{margin:0 0 16px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:24px;color:#64402C}
               {{WRAPPER}} .wcal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
               {{WRAPPER}} .wcal-card{background:#faf9f7;border:1px solid #DBCEC4;border-left:5px solid #64402c;border-radius:10px;padding:18px 20px;box-shadow:0 4px 14px rgba(60,40,25,.06)}
               {{WRAPPER}} .wcal-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
@@ -1276,6 +1289,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wcal-hl{margin:0;font-size:13.7px;line-height:1.6;color:#3a2c22}{{WRAPPER}} .wcal-hl p{margin:0 0 8px}{{WRAPPER}} .wcal-hl :last-child{margin-bottom:0}
               @media(max-width:680px){{{WRAPPER}} .wcal-grid{grid-template-columns:1fr!important}}
             </style>';
+            if (($s['show_title'] ?? 'yes') === 'yes' && !empty($s['title_text'])) {
+                echo '<' . $htag . ' class="wcal-h">' . esc_html($s['title_text']) . '</' . $htag . '>';
+            }
             echo '<div class="wcal-grid">';
             $i = 0;
             foreach ($rows as $r) {
