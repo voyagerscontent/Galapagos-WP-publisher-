@@ -1369,6 +1369,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
             $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['layout' => 'rows']]);
             $this->add_control('show_img', ['label' => 'Show image', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'condition' => ['layout' => 'rows'],
+                'description' => 'Show a few lines by default; the full text opens on hover (tap on mobile) and closes on leave. A brown bottom border hints there is more.']);
+            $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
+                'condition' => ['layout' => 'rows', 'hover_expand' => 'yes'],
+                'selectors' => ['{{WRAPPER}} .ifs' => '--cl:{{VALUE}}']]);
 
             $this->add_control('car_img_side', [
                 'label' => 'Image side', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'left',
@@ -1384,6 +1390,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('more_border', ['label' => '“More” bottom border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--mb:{{VALUE}}']]);
             $this->add_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 100]],
                 'default' => ['size' => 48, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 65]],
@@ -1433,16 +1441,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#333}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .ifs.hx .ifs-body{max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;padding-bottom:12px;border-bottom:2px solid var(--mb,#64402C);transition:max-height .45s ease}
+              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body{max-height:1600px}
               {{WRAPPER}} .ifs-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:10px 18px}
               @media(max-width:760px){{{WRAPPER}} .ifs-row{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-img{order:0}}
             </style>';
-            echo '<div class="ifs">';
+            $hx = ($s['hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
+            echo '<div class="ifs' . $hx . '">';
             $i = 0;
             foreach ($rows as $r) {
                 $img = $showimg ? island_ew_image_src($r['image'] ?? '') : '';
                 $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
                 $noimg = $img ? '' : ' noimg';
-                echo '<article class="ifs-row' . $rev . $noimg . '">';
+                echo '<article class="ifs-row' . $rev . $noimg . '" tabindex="0">';
                 if ($img) {
                     echo '<div class="ifs-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
                 }
