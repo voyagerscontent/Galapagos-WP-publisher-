@@ -1225,6 +1225,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'placeholder' => 'Wildlife Calendar', 'condition' => ['show_title' => 'yes'],
                 'description' => 'Single heading for this section (one source, no duplicate). The widget only shows when the island has calendar data, so this title appears only there.',
             ]);
+            $this->add_control('hide_on_ids', [
+                'label' => 'Hide title on these page IDs', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
+                'placeholder' => 'e.g. 1197, 1205', 'condition' => ['show_title' => 'yes'],
+                'description' => 'Comma-separated island page IDs where this widget title should NOT show — use it for islands whose content already has its own calendar heading (e.g. Santiago, Isabela), so it is not duplicated. Other islands keep the title.',
+            ]);
             $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h2',
                 'options' => $tags, 'condition' => ['show_title' => 'yes']]);
             $this->add_responsive_control('columns', [
@@ -1302,7 +1307,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wcal-hl{margin:0;font-size:13.7px;line-height:1.6;color:#3a2c22}{{WRAPPER}} .wcal-hl p{margin:0 0 8px}{{WRAPPER}} .wcal-hl :last-child{margin-bottom:0}
               @media(max-width:680px){{{WRAPPER}} .wcal-grid{grid-template-columns:1fr!important}}
             </style>';
-            if (($s['show_title'] ?? 'yes') === 'yes' && !empty($s['title_text'])) {
+            $hidden = array_filter(array_map('intval', preg_split('/[\s,]+/', (string) ($s['hide_on_ids'] ?? ''))));
+            $show_title = ($s['show_title'] ?? 'yes') === 'yes' && !in_array((int) $pid, $hidden, true);
+            if ($show_title && !empty($s['title_text'])) {
                 echo '<' . $htag . ' class="wcal-h">' . esc_html($s['title_text']) . '</' . $htag . '>';
             }
             echo '<div class="wcal-grid">';
