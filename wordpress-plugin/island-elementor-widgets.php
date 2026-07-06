@@ -1629,10 +1629,36 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         protected function register_controls()
         {
             $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
-            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('content_source', [
+                'label' => 'Content source', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'auto',
+                'options' => ['auto' => 'Automatic (from page)', 'manual' => 'Manual (type it here)'],
+                'description' => 'Automatic reads the CTA title / intro / cards from this page\'s fields. Manual lets you write your own heading, intro, cards and images right here (ignores the page fields).',
+            ]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER, 'condition' => ['content_source' => 'auto']]);
             $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2', '3' => '3'], 'selectors' => ['{{WRAPPER}} .icta-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
             $this->add_control('show_badge', ['label' => 'Show audience badge', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+
+            /* Manual content — used only when Content source = Manual. */
+            $this->add_control('m_heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
+                'default' => 'Plan Your Visit', 'condition' => ['content_source' => 'manual']]);
+            $this->add_control('m_intro', ['label' => 'Intro', 'type' => \Elementor\Controls_Manager::TEXTAREA, 'rows' => 3,
+                'condition' => ['content_source' => 'manual']]);
+            $card = new \Elementor\Repeater();
+            $card->add_control('audience', ['label' => 'Badge', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Direct Travelers']);
+            $card->add_control('title', ['label' => 'Title', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true]);
+            $card->add_control('text', ['label' => 'Text', 'type' => \Elementor\Controls_Manager::TEXTAREA, 'rows' => 3]);
+            $card->add_control('image', ['label' => 'Image (optional)', 'type' => \Elementor\Controls_Manager::MEDIA]);
+            $card->add_control('button_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Book now']);
+            $card->add_control('button_url', ['label' => 'Button URL', 'type' => \Elementor\Controls_Manager::URL, 'default' => ['url' => '']]);
+            $this->add_control('m_cards', [
+                'label' => 'Cards', 'type' => \Elementor\Controls_Manager::REPEATER, 'fields' => $card->get_controls(),
+                'title_field' => '{{{ audience }}} — {{{ title }}}', 'condition' => ['content_source' => 'manual'],
+                'default' => [
+                    ['audience' => 'Direct Travelers', 'title' => '', 'button_label' => 'Plan My Trip'],
+                    ['audience' => 'Travel Trade', 'title' => '', 'button_label' => 'Partner With Us'],
+                ],
+            ]);
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -1659,10 +1685,27 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             $s = $this->get_settings_for_display();
-            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
-            $title = get_field('cta_title', $pid);
-            $intro = get_field('cta_intro', $pid);
-            $rows = get_field('cta', $pid) ?: [];
+            if (($s['content_source'] ?? 'auto') === 'manual') {
+                $title = $s['m_heading'] ?? '';
+                $intro = $s['m_intro'] ?? '';
+                $rows = [];
+                foreach (($s['m_cards'] ?? []) as $c) {
+                    $rows[] = [
+                        'audience' => $c['audience'] ?? '',
+                        'title' => $c['title'] ?? '',
+                        'text' => !empty($c['text']) ? wpautop($c['text']) : '',
+                        'image' => island_ew_image_src($c['image'] ?? ''),
+                        'button_label' => $c['button_label'] ?? '',
+                        'button_url' => is_array($c['button_url'] ?? '') ? ($c['button_url']['url'] ?? '') : ($c['button_url'] ?? ''),
+                    ];
+                }
+                $intro = $intro ? wpautop($intro) : '';
+            } else {
+                $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+                $title = get_field('cta_title', $pid);
+                $intro = get_field('cta_intro', $pid);
+                $rows = get_field('cta', $pid) ?: [];
+            }
             if (!$title && !$intro && !$rows) {
                 return;
             }
@@ -1672,6 +1715,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
               {{WRAPPER}} .icta-card{background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
               {{WRAPPER}} .icta-badge{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ECE5DE;border:1px solid rgba(236,229,222,.4);padding:3px 10px;border-radius:20px;margin-bottom:12px}
+              {{WRAPPER}} .icta-img{height:150px;border-radius:9px;background:#cbb89b center/cover no-repeat;margin-bottom:14px}
               {{WRAPPER}} .icta-t{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#fff}
               {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
               {{WRAPPER}} .icta-btn{align-self:flex-start;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
@@ -1689,6 +1733,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo '<article class="icta-card">';
                     if ($s['show_badge'] === 'yes' && !empty($r['audience'])) {
                         echo '<span class="icta-badge">' . esc_html($r['audience']) . '</span>';
+                    }
+                    if (!empty($r['image'])) {
+                        echo '<div class="icta-img" style="background-image:url(\'' . esc_url($r['image']) . '\')"></div>';
                     }
                     if (!empty($r['title'])) {
                         echo '<h3 class="icta-t">' . esc_html($r['title']) . '</h3>';
