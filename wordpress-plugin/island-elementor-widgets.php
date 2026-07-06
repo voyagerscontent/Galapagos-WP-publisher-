@@ -1390,8 +1390,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('more_border', ['label' => '“More” bottom border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
-                'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--mb:{{VALUE}}']]);
+            $this->add_control('fade_color', ['label' => 'Fade color (hint of “more”)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
+                'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--fade:{{VALUE}}'],
+                'description' => 'Set this to the page/section background so the text fades softly into it (elegant “there’s more” cue instead of a hard line).']);
             $this->add_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 100]],
                 'default' => ['size' => 48, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 65]],
@@ -1441,8 +1442,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#333}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .ifs.hx .ifs-body{max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;padding-bottom:12px;border-bottom:2px solid var(--mb,#64402C);transition:max-height .45s ease}
+              {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .55s cubic-bezier(.22,.61,.36,1)}
+              {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#efe7dd));pointer-events:none;transition:opacity .4s ease}
               {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body{max-height:1600px}
+              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after{opacity:0}
               {{WRAPPER}} .ifs-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:10px 18px}
               @media(max-width:760px){{{WRAPPER}} .ifs-row{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-img{order:0}}
             </style>';
