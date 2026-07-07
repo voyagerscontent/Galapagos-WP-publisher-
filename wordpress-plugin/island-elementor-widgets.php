@@ -2455,6 +2455,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .irl-orn-i' => 'font-size:{{SIZE}}{{UNIT}}', '{{WRAPPER}} .irl-orn-i svg' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('orn_line', ['label' => 'Ornament line color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(243,234,217,.55)',
                 'selectors' => ['{{WRAPPER}} .irl-line' => 'background:{{VALUE}}']]);
+            $this->add_control('orn_line_thick', ['label' => 'Ornament line thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 1, 'max' => 8]], 'default' => ['size' => 1, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .irl-line' => 'height:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('orn_line_len', ['label' => 'Ornament line length', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 40, 'max' => 400]], 'default' => ['size' => 190, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .irl-line' => 'max-width:{{SIZE}}{{UNIT}}']]);
             $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1', 'separator' => 'before',
                 'selectors' => ['{{WRAPPER}} .irl-h' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'h_typo', 'selector' => '{{WRAPPER}} .irl-h']);
@@ -2498,6 +2504,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .irl-ct-h' => 'color:{{VALUE}}']]);
             $this->add_control('ct_text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#d9cebc',
                 'selectors' => ['{{WRAPPER}} .irl-ct-t' => 'color:{{VALUE}}']]);
+            $this->add_control('ct_accent_color', ['label' => 'Heading underline accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.7)',
+                'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'background:{{VALUE}}']]);
+            $this->add_control('ct_accent_w', ['label' => 'Accent width', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 160]], 'default' => ['size' => 64, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'width:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('ct_accent_h', ['label' => 'Accent thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 1, 'max' => 8]], 'default' => ['size' => 2, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('ct_btn_color', ['label' => 'Button text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1',
                 'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'color:{{VALUE}}']]);
             $this->add_control('ct_btn_border', ['label' => 'Button border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.9)',
