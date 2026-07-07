@@ -193,6 +193,8 @@
         "instructions": "Internal linking block ('Explore More'). Optional — can also be handled in the Elementor template.",
         "layout": "table", "button_label": "Add link",
         "sub_fields": [
+          { "key": "rl_group", "label": "Group heading", "name": "group", "type": "text",
+            "instructions": "Column heading, e.g. 'Santa Cruz Essentials'. Links sharing the same heading render together as one column." },
           { "key": "rl_label", "label": "Label", "name": "label", "type": "text" },
           { "key": "rl_url", "label": "URL", "name": "url", "type": "text" }
         ]

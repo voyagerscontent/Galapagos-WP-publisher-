@@ -85,6 +85,25 @@ def test_no_seo_schema_field_in_island_output():
     assert "seo_schema" not in acf
 
 
+def test_related_link_groups_flatten_with_group_column():
+    """Grouped 'Explore More' links map to related_links rows that each carry
+    their group heading, so the widget can render one titled column per group."""
+    acf, _ = build_acf([], _cfg(), related_link_groups=[
+        {"title": "Santa Cruz Essentials", "links": [
+            {"label": "Giant Tortoise Guide", "url": "/wildlife/giant-tortoise/"},
+            {"label": "Isabela Island", "url": "/islands/isabela/"},
+        ]},
+        {"title": "Plan Your Visit", "links": [{"label": "Cruises", "url": "/cruises/"}]},
+    ])
+    rl = acf["related_links"]
+    assert len(rl) == 3
+    assert rl[0]["group"] == "Santa Cruz Essentials"
+    assert rl[0]["label"] == "Giant Tortoise Guide"
+    assert rl[2]["group"] == "Plan Your Visit"
+    # distinct group headings present
+    assert {r["group"] for r in rl} == {"Santa Cruz Essentials", "Plan Your Visit"}
+
+
 def test_geo_answer_inline_quick_answer():
     """A 'QUICK ANSWER: <prose>' box (marker + answer on one line, Baltra-style)
     yields the answer; a header-only 'AIO / GEO BLOCK' line does not."""

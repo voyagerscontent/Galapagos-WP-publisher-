@@ -2226,7 +2226,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('related_title', ['label' => 'Related heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Explore More']);
             $this->add_control('show_related', ['label' => 'Show related links', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'mobile_default' => '1',
-                'options' => ['1' => '1', '2' => '2', '3' => '3'], 'selectors' => ['{{WRAPPER}} .isrc-list' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+                'options' => ['1' => '1', '2' => '2', '3' => '3'],
+                'selectors' => ['{{WRAPPER}} .isrc-list,{{WRAPPER}} .isrc-groups' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+            $this->add_control('gh_color', ['label' => 'Group heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .isrc-gh' => 'color:{{VALUE}}']]);
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -2262,6 +2265,55 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '</ul></div>';
         }
+        private function has_groups($rows)
+        {
+            foreach ((array) $rows as $r) {
+                if (trim((string) ($r['group'] ?? '')) !== '') {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private function grouped_links($rows, $heading)
+        {
+            // Bucket the links by their "group" heading, preserving first-seen order.
+            $groups = [];
+            $order = [];
+            foreach ($rows as $r) {
+                $g = trim((string) ($r['group'] ?? ''));
+                if (!isset($groups[$g])) {
+                    $groups[$g] = [];
+                    $order[] = $g;
+                }
+                $groups[$g][] = $r;
+            }
+            echo '<div class="isrc-block">';
+            if ($heading) {
+                echo '<h3 class="isrc-h">' . esc_html($heading) . '</h3>';
+            }
+            echo '<div class="isrc-groups">';
+            foreach ($order as $g) {
+                echo '<div class="isrc-group">';
+                if ($g !== '') {
+                    echo '<h4 class="isrc-gh">' . esc_html($g) . '</h4>';
+                }
+                echo '<ul>';
+                foreach ($groups[$g] as $r) {
+                    $label = $r['label'] ?? '';
+                    $url = $r['url'] ?? '';
+                    if (!$label && !$url) {
+                        continue;
+                    }
+                    if ($url) {
+                        echo '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label ?: $url) . '</a></li>';
+                    } else {
+                        echo '<li>' . esc_html($label) . '</li>';
+                    }
+                }
+                echo '</ul></div>';
+            }
+            echo '</div></div>';
+        }
         protected function render()
         {
             if (!function_exists('get_field')) {
@@ -2281,10 +2333,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .isrc-list li{font-size:14px;line-height:1.5;color:#5a4636;padding-left:16px;position:relative}
               {{WRAPPER}} .isrc-list li::before{content:"\2192";position:absolute;left:0;color:#9c7b4e}
               {{WRAPPER}} .isrc-list a{color:#3a5a8c;text-decoration:none}{{WRAPPER}} .isrc-list a:hover{text-decoration:underline}
-              @media(max-width:680px){{{WRAPPER}} .isrc-list{grid-template-columns:1fr!important}}
+              {{WRAPPER}} .isrc-groups{display:grid;grid-template-columns:repeat(2,1fr);gap:26px 40px}
+              {{WRAPPER}} .isrc-gh{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;color:#64402C}
+              {{WRAPPER}} .isrc-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+              {{WRAPPER}} .isrc-group li{font-size:14px;line-height:1.5;color:#5a4636;padding-left:16px;position:relative}
+              {{WRAPPER}} .isrc-group li::before{content:"\2192";position:absolute;left:0;color:#9c7b4e}
+              {{WRAPPER}} .isrc-group a{color:#3a5a8c;text-decoration:none}{{WRAPPER}} .isrc-group a:hover{text-decoration:underline}
+              @media(max-width:680px){{{WRAPPER}} .isrc-list,{{WRAPPER}} .isrc-groups{grid-template-columns:1fr!important}}
             </style>';
             $this->links($sources, $s['sources_title']);
-            $this->links($related, $s['related_title']);
+            if ($this->has_groups($related)) {
+                $this->grouped_links($related, $s['related_title']);
+            } else {
+                $this->links($related, $s['related_title']);
+            }
         }
     }
 

@@ -122,3 +122,4 @@ island:
     field: related_links
     label: label
     url: url
+    group: group

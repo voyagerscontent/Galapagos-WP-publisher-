@@ -107,6 +107,7 @@ def build_page(
         cta_blocks=doc.metadata.get("cta_blocks") or None,
         sources=doc.metadata.get("sources") or None,
         related_links=doc.metadata.get("related_links") or None,
+        related_link_groups=doc.metadata.get("related_link_groups") or None,
         wildlife=doc.metadata.get("wildlife") or None,
         wildlife_intro=str(doc.metadata.get("wildlife_intro") or ""),
         wildlife_calendar=doc.metadata.get("wildlife_calendar") or None,

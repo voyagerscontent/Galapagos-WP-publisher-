@@ -41,6 +41,7 @@ def build_acf(
     cta_blocks: list | None = None,
     sources: list | None = None,
     related_links: list | None = None,
+    related_link_groups: list | None = None,
     wildlife: list | None = None,
     wildlife_intro: str = "",
     wildlife_calendar: list | None = None,
@@ -59,6 +60,7 @@ def build_acf(
             geo_answer=geo_answer, author=author,
             quick_facts=quick_facts, visitor_sites=visitor_sites,
             cta_blocks=cta_blocks, sources=sources, related_links=related_links,
+            related_link_groups=related_link_groups,
             wildlife=wildlife, wildlife_intro=wildlife_intro,
             wildlife_calendar=wildlife_calendar,
             visitor_sites_intro=visitor_sites_intro,
@@ -237,6 +239,7 @@ def build_acf_island(
     cta_blocks: list | None = None,
     sources: list | None = None,
     related_links: list | None = None,
+    related_link_groups: list | None = None,
     wildlife: list | None = None,
     wildlife_intro: str = "",
     wildlife_calendar: list | None = None,
@@ -398,11 +401,22 @@ def build_acf_island(
     if m.get("travel_information") and travel:
         ti = m["travel_information"]
         out[ti["field"]] = {ti[k]: v for k, v in travel.items() if ti.get(k)}
-    if related_links and m.get("related_links"):
+    if m.get("related_links"):
         rl = m["related_links"]
-        out[rl["field"]] = [
-            {rl["label"]: r.get("label", ""), rl["url"]: r.get("url", "")} for r in related_links
-        ]
+        rows: list[dict] = []
+        if related_link_groups:
+            # Grouped "Explore More": each link carries its group heading so the
+            # widget can render one titled column per group.
+            for grp in related_link_groups:
+                for link in grp.get("links", []):
+                    row = {rl["label"]: link.get("label", ""), rl["url"]: link.get("url", "")}
+                    if rl.get("group"):
+                        row[rl["group"]] = grp.get("title", "")
+                    rows.append(row)
+        elif related_links:
+            rows = [{rl["label"]: r.get("label", ""), rl["url"]: r.get("url", "")} for r in related_links]
+        if rows:
+            out[rl["field"]] = rows
     # GEO/AI answer: prefer the doc's extracted GEO block, else a tagline/subtitle.
     if m.get("geo_answer") and (geo_answer or subtitle):
         out[m["geo_answer"]] = geo_answer or subtitle
