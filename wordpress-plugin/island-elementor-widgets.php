@@ -45,6 +45,16 @@ if (!function_exists('island_ew_image_src')) {
 if (!function_exists('island_ew_hide_section')) {
     function island_ew_hide_section()
     {
+        // Never collapse inside the Elementor editor/preview — the fields read
+        // empty there (template context), which would wrongly hide the section
+        // while you're building it.
+        if (class_exists('\Elementor\Plugin')) {
+            $p = \Elementor\Plugin::$instance;
+            if ((isset($p->editor) && $p->editor->is_edit_mode())
+                || (isset($p->preview) && $p->preview->is_preview_mode())) {
+                return '';
+            }
+        }
         return '<i class="island-ew-empty" hidden></i>'
             . '<style>.elementor-section:has(>.elementor-container .island-ew-empty),'
             . '.e-con:has(.island-ew-empty),.elementor-widget:has(.island-ew-empty){display:none!important}</style>'
@@ -2023,6 +2033,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'Comma-separated island page IDs where this whole block should NOT show.']);
             $this->add_control('hide_empty_section', ['label' => 'Also hide the whole section when empty', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'When there is nothing to show, also collapse the Elementor section that wraps it (e.g. a decorative divider above), so no empty band or lone divider is left.']);
+
+            /* Link the "When to Visit" block to the on-page Wildlife Calendar
+             * (the seasonal table lives in that widget). */
+            $this->add_control('wc_h', ['label' => 'Wildlife Calendar link', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('show_wc_link', ['label' => 'Add a button to the wildlife calendar', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Shown in "When to Visit" only when this island actually has a wildlife calendar.']);
+            $this->add_control('wc_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'See the seasonal wildlife calendar',
+                'condition' => ['show_wc_link' => 'yes']]);
+            $this->add_control('wc_anchor', ['label' => 'Wildlife Calendar anchor ID', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'wildlife-calendar',
+                'condition' => ['show_wc_link' => 'yes'],
+                'description' => 'Set this same ID as the CSS ID / anchor on your Wildlife Calendar section (Elementor → Advanced → CSS ID).']);
             $this->end_controls_section();
 
             $align = [
@@ -2090,7 +2111,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'btn_typo', 'selector' => '{{WRAPPER}} .itr-btn']);
             $this->end_controls_section();
         }
-        private function block($title, $html, $blabel, $burl)
+        private function block($title, $html, $blabel, $burl, $extra = '')
         {
             // Only render a block that actually has content — a fallback title
             // alone must never produce an empty box (also treat "<p></p>" as empty).
@@ -2107,7 +2128,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if ($burl) {
                 $out .= '<a class="itr-btn" href="' . esc_url($burl) . '">' . esc_html($blabel ?: 'Learn more') . ' &rarr;</a>';
             }
-            return $out . '</div>';
+            return $out . $extra . '</div>';
         }
         protected function render()
         {
@@ -2152,9 +2173,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 }
                 $meta .= '</div>';
             }
+            // A button into the on-page Wildlife Calendar, shown in When-to-Visit
+            // only when this island actually has calendar data.
+            $wc_link = '';
+            if (($s['show_wc_link'] ?? 'yes') === 'yes' && get_field('wildlife_calendar', $pid)) {
+                $anchor = ltrim(trim((string) ($s['wc_anchor'] ?? 'wildlife-calendar')), '#');
+                if ($anchor !== '') {
+                    $wc_link = '<a class="itr-btn itr-wc" href="#' . esc_attr($anchor) . '">'
+                        . esc_html($s['wc_label'] ?: 'See the seasonal wildlife calendar') . ' &darr;</a>';
+                }
+            }
             $blocks = $meta
                 . (($s['show_getting'] ?? 'yes') === 'yes' ? $this->block($t['getting_there_title'] ?? 'Getting There', $t['getting_there'] ?? '', $t['getting_there_button_label'] ?? '', $t['getting_there_button_url'] ?? '') : '')
-                . (($s['show_best'] ?? 'yes') === 'yes' ? $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '') : '')
+                . (($s['show_best'] ?? 'yes') === 'yes' ? $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '', $wc_link) : '')
                 . (($s['show_stay'] ?? 'yes') === 'yes' ? $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '') : '')
                 . (($s['show_notes'] ?? 'yes') === 'yes' ? $this->block('Good to Know', $t['travel_notes'] ?? '', '', '') : '');
             // Nothing to show -> render nothing (no empty wrapper) and collapse
