@@ -1375,6 +1375,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
                 'condition' => ['layout' => 'rows', 'hover_expand' => 'yes'],
                 'selectors' => ['{{WRAPPER}} .ifs' => '--cl:{{VALUE}}']]);
+            $this->add_control('open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 300, 'max' => 2000]],
+                'default' => ['size' => 900, 'unit' => 'px'], 'condition' => ['layout' => 'rows', 'hover_expand' => 'yes'],
+                'description' => 'Max height when opened on hover. Lower = snappier close; raise it if a long section gets cut off.',
+                'selectors' => ['{{WRAPPER}} .ifs' => '--open:{{SIZE}}{{UNIT}}']]);
 
             $this->add_control('car_img_side', [
                 'label' => 'Image side', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'left',
@@ -1487,10 +1491,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .6s cubic-bezier(.22,.61,.36,1)}
-              {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .4s ease}
-              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body{max-height:1600px}
+              {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
+              {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
+              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body{max-height:var(--open,900px)}
               {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after{opacity:0}
+              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .ifs.hx .ifs-body{transition:none}{{WRAPPER}} .ifs.hx .ifs-body::after{transition:none}}
               {{WRAPPER}} .ifs-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:10px 18px}
               {{WRAPPER}} .ifs-tbl{overflow-x:auto;margin:16px 28px 26px;border:1px solid rgba(100,64,44,.14);border-radius:12px}
               {{WRAPPER}} .ifs-tbl table{border-collapse:collapse;width:100%;min-width:520px;font-size:13px}
