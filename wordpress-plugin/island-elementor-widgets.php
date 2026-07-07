@@ -1561,12 +1561,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
             }
             echo '</div>';
-            // Opens on hover (CSS). Tap/click also toggles it open — same as the
-            // Wildlife cards — so it works on touch and inside the editor too.
+            // Open on hover. Driven by JS (mouseenter/leave) so it never depends
+            // on the CSS :hover firing — which Elementor's editor overlay can
+            // swallow. Touch: tap toggles it (and :focus-within via tabindex).
             if ($hx) {
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w)return;w.addEventListener("click",function(e){if(e.target.closest("a"))return;'
-                    . 'var c=e.target.closest(".ifs-row");if(c)c.classList.toggle("is-open");});})();</script>';
+                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".ifs-row").forEach(function(c){'
+                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
+                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
             }
         }
 
