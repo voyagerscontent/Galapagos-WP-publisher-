@@ -1480,7 +1480,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $alt = $s['alternate'] === 'yes';
             $showimg = $s['show_img'] === 'yes';
             echo '<style>
-              {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:40px}
+              {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:40px;--open:900px}
               {{WRAPPER}} .ifs-row{background:#FBF8F4;border:1px solid rgba(100,64,44,.14);border-radius:16px;box-shadow:0 10px 30px rgba(60,40,25,.10);overflow:hidden;display:flex;flex-direction:column}
               {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;gap:32px;align-items:center;padding:28px}
               {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%}
@@ -1493,8 +1493,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
               {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
               {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body{max-height:var(--open,900px)}
-              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after{opacity:0}
+              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
+              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body::after{opacity:0}
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .ifs.hx .ifs-body{transition:none}{{WRAPPER}} .ifs.hx .ifs-body::after{transition:none}}
               {{WRAPPER}} .ifs-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:10px 18px}
               {{WRAPPER}} .ifs-tbl{overflow-x:auto;margin:16px 28px 26px;border:1px solid rgba(100,64,44,.14);border-radius:12px}
@@ -1561,6 +1561,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
             }
             echo '</div>';
+            // Opens on hover (CSS). Tap/click also toggles it open — same as the
+            // Wildlife cards — so it works on touch and inside the editor too.
+            if ($hx) {
+                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
+                    . 'if(!w)return;w.addEventListener("click",function(e){if(e.target.closest("a"))return;'
+                    . 'var c=e.target.closest(".ifs-row");if(c)c.classList.toggle("is-open");});})();</script>';
+            }
         }
 
         /* Carousel layout: one feature per slide, image on one side / text on
