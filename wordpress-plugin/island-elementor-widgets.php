@@ -39,29 +39,6 @@ if (!function_exists('island_ew_image_src')) {
     }
 }
 
-/** Markup a widget can emit when it has nothing to show, to collapse the whole
- * Elementor section/container that wraps it (so a lone decorative divider or an
- * empty band doesn't remain). Uses :has() where available, with a JS fallback. */
-if (!function_exists('island_ew_hide_section')) {
-    function island_ew_hide_section()
-    {
-        // Never collapse inside the Elementor editor/preview — the fields read
-        // empty there (template context), which would wrongly hide the section
-        // while you're building it.
-        if (class_exists('\Elementor\Plugin')) {
-            $p = \Elementor\Plugin::$instance;
-            if ((isset($p->editor) && $p->editor->is_edit_mode())
-                || (isset($p->preview) && $p->preview->is_preview_mode())) {
-                return '';
-            }
-        }
-        return '<i class="island-ew-empty" hidden></i>'
-            . '<style>.elementor-section:has(>.elementor-container .island-ew-empty),'
-            . '.e-con:has(.island-ew-empty),.elementor-widget:has(.island-ew-empty){display:none!important}</style>'
-            . '<script>(function(){var e=document.currentScript;if(!e||!e.closest)return;'
-            . 'var s=e.closest(".elementor-section,.e-con");if(s)s.style.display="none";})();</script>';
-    }
-}
 
 /** Split a quick-fact "value" into (title, detail): "Cerro Crocker, 864 m" -> ["Cerro Crocker","864 m"]. */
 if (!function_exists('island_ew_split')) {
@@ -2031,8 +2008,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('hide_on_ids', ['label' => 'Hide on these page IDs', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
                 'placeholder' => 'e.g. 12482, 1197',
                 'description' => 'Comma-separated island page IDs where this whole block should NOT show.']);
-            $this->add_control('hide_empty_section', ['label' => 'Also hide the whole section when empty', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
-                'description' => 'Off by default. Turn on ONLY on a section whose only content is this block (+ its divider): when there is nothing to show it collapses that whole Elementor section, so no empty band or lone divider is left. Leave off if the section holds other widgets too.']);
 
             /* Link the "When to Visit" block to the on-page Wildlife Calendar
              * (the seasonal table lives in that widget). */
