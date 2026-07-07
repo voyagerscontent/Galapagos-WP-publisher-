@@ -39,6 +39,20 @@ if (!function_exists('island_ew_image_src')) {
     }
 }
 
+/** True inside the Elementor editor or its preview — used to skip front-end-only
+ * behaviour (like hiding an empty section) so blocks stay visible while editing. */
+if (!function_exists('island_ew_is_editing')) {
+    function island_ew_is_editing()
+    {
+        if (!class_exists('\Elementor\Plugin')) {
+            return false;
+        }
+        $p = \Elementor\Plugin::$instance;
+        return (isset($p->editor) && $p->editor->is_edit_mode())
+            || (isset($p->preview) && $p->preview->is_preview_mode());
+    }
+}
+
 
 /** Split a quick-fact "value" into (title, detail): "Cerro Crocker, 864 m" -> ["Cerro Crocker","864 m"]. */
 if (!function_exists('island_ew_split')) {
@@ -2008,6 +2022,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('hide_on_ids', ['label' => 'Hide on these page IDs', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
                 'placeholder' => 'e.g. 12482, 1197',
                 'description' => 'Comma-separated island page IDs where this whole block should NOT show.']);
+            $this->add_control('hide_section_id', ['label' => 'Hide this section ID when empty', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
+                'placeholder' => 'e.g. travel-section',
+                'description' => 'Optional. Put the SAME id on the wrapping section (Advanced → CSS ID). When this island has no travel info, only that one section is hidden — precise, no page-wide effect. Leave blank to just render nothing.']);
 
             /* Link the "When to Visit" block to the on-page Wildlife Calendar
              * (the seasonal table lives in that widget). */
@@ -2111,26 +2128,28 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             $s = $this->get_settings_for_display();
-            $dbg = static function ($msg) {
-                return '<div style="margin:8px 0;padding:10px 14px;border:1px dashed #b45309;'
-                    . 'background:#fff7ed;color:#9a3412;font:13px/1.5 -apple-system,sans-serif;border-radius:8px">'
-                    . '⚠ TRAVEL DEBUG — ' . esc_html($msg) . '</div>';
-            };
+            // When empty, optionally hide one specific section by its CSS ID
+            // (the user sets the same ID on the section → Advanced → CSS ID).
+            // Precise: one element, no :has(), no ancestor guessing. Never in
+            // the editor so the section stays editable.
+            $hide = '';
+            $hid = preg_replace('/[^A-Za-z0-9_-]/', '', ltrim((string) ($s['hide_section_id'] ?? ''), '#'));
+            if ($hid !== '' && !island_ew_is_editing()) {
+                $hide = '<style>#' . $hid . '{display:none!important}</style>';
+            }
             if (($s['show_block'] ?? 'yes') !== 'yes') {
-                echo $dbg('"Show this block" is OFF');
+                echo $hide;
                 return;
             }
-            $sid = !empty($s['source_id']) ? (int) $s['source_id'] : 0;
-            $pid = $sid ?: (int) get_the_ID();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
             $hidden = array_filter(array_map('intval', preg_split('/[\s,]+/', (string) ($s['hide_on_ids'] ?? ''))));
             if (in_array((int) $pid, $hidden, true)) {
-                echo $dbg('hidden by "Hide on these page IDs" (pid ' . $pid . ')');
+                echo $hide;
                 return;
             }
             $t = get_field('travel_information', $pid);
             if (!$t || !is_array($t)) {
-                echo $dbg('get_field(travel_information) is EMPTY. pid=' . $pid
-                    . ', source_id=' . ($sid ?: 'blank/current') . ', get_the_ID=' . (int) get_the_ID());
+                echo $hide;
                 return;
             }
             echo '<style>
@@ -2170,8 +2189,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . (($s['show_stay'] ?? 'yes') === 'yes' ? $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '') : '')
                 . (($s['show_notes'] ?? 'yes') === 'yes' ? $this->block('Good to Know', $t['travel_notes'] ?? '', '', '') : '');
             if (trim($blocks) === '') {
-                echo $dbg('data exists but all sub-blocks are empty (getting_there/best_time/'
-                    . 'accommodation/travel_notes all blank) for pid ' . $pid);
+                echo $hide;
                 return;
             }
             echo '<div class="itr">' . $blocks . '</div>';
