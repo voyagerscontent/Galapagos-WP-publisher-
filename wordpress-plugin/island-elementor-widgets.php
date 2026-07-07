@@ -1842,6 +1842,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'A colour laid over the photo (for readable text). Leave blank for none; use the opacity below to control strength.']);
             $this->add_responsive_control('ov_opacity', ['label' => 'Overlay opacity', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 0, 'max' => 100]],
                 'default' => ['size' => 100, 'unit' => '%'], 'selectors' => ['{{WRAPPER}} .icta-card' => '--ovo:calc({{SIZE}}/100)']]);
+            $this->add_responsive_control('content_w', ['label' => 'Text max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 30, 'max' => 100]],
+                'default' => ['size' => 58, 'unit' => '%'], 'selectors' => ['{{WRAPPER}} .icta-card' => '--cw:{{SIZE}}%'],
+                'description' => 'Keeps the badge/title/text/button on one side so long copy never runs over the photo. Lower = narrower text column.']);
+            $this->add_control('txt_side', ['label' => 'Text side', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'left',
+                'options' => ['left' => 'Left', 'right' => 'Right'],
+                'description' => 'Which side the text column sits on (put the photo’s subject on the opposite side).']);
             $this->end_controls_section();
 
             /* PER-CARD colors — override the shared colors above for card 1
@@ -1912,7 +1918,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-intro{margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a3a2c;max-width:70ch}
               {{WRAPPER}} .icta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
               {{WRAPPER}} .icta-card{position:relative;overflow:hidden;background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
-              {{WRAPPER}} .icta-card>:not(.icta-bg):not(.icta-ov){position:relative;z-index:1}
+              {{WRAPPER}} .icta-card>:not(.icta-bg):not(.icta-ov){position:relative;z-index:1;max-width:var(--cw,100%)}
+              {{WRAPPER}} .icta-card.txt-right>:not(.icta-bg):not(.icta-ov){margin-left:auto;text-align:right}
               {{WRAPPER}} .icta-bg{position:absolute;inset:0;z-index:0;width:100%;height:100%;background:center/cover no-repeat}
               {{WRAPPER}} .icta-ov{position:absolute;inset:0;z-index:0;pointer-events:none;background:var(--ov,transparent);opacity:var(--ovo,1)}
               {{WRAPPER}} .icta-badge{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ECE5DE;border:1px solid rgba(236,229,222,.4);padding:3px 10px;border-radius:20px;margin-bottom:12px}
@@ -1936,7 +1943,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     // already resolved it. Resolve both to a URL here.
                     $imgurl = island_ew_image_src($r['image'] ?? '');
                     $has_bg = $imgurl !== '';
-                    echo '<article class="icta-card icta-c' . $ci . ($has_bg ? ' has-bg' : '') . '">';
+                    $tside = ($s['txt_side'] ?? 'left') === 'right' ? ' txt-right' : '';
+                    echo '<article class="icta-card icta-c' . $ci . ($has_bg ? ' has-bg' : '') . $tside . '">';
                     if ($has_bg) {
                         echo '<div class="icta-bg" style="background-image:url(\'' . esc_url($imgurl) . '\')"></div>';
                         echo '<div class="icta-ov"></div>';
