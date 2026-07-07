@@ -2421,11 +2421,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'condition' => ['show_contact' => 'yes']]);
             $this->add_control('contact_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Contact Us',
                 'condition' => ['show_contact' => 'yes']]);
+            $this->add_control('contact_form_shortcode', ['label' => 'Form shortcode (opens a modal)', 'type' => \Elementor\Controls_Manager::TEXTAREA, 'rows' => 2,
+                'placeholder' => '[contact_form_vue form="contact"]',
+                'description' => 'Paste a form shortcode here and the button opens it in a built-in modal (no Elementor Pro needed). Highest priority.',
+                'condition' => ['show_contact' => 'yes']]);
+            $this->add_control('contact_modal_title', ['label' => 'Modal title', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Contact Us',
+                'condition' => ['show_contact' => 'yes', 'contact_form_shortcode!' => '']]);
             $this->add_control('popup_id', ['label' => 'Elementor Popup ID (modal)', 'type' => \Elementor\Controls_Manager::NUMBER,
-                'description' => 'When set, the button opens this Elementor popup as a modal (put your form inside it). Overrides the URL below.',
+                'description' => 'Alternative to the shortcode: open this Elementor popup. Used only when no shortcode is set.',
                 'condition' => ['show_contact' => 'yes']]);
             $this->add_control('contact_btn_url', ['label' => 'Button URL (fallback)', 'type' => \Elementor\Controls_Manager::URL, 'default' => ['url' => '/contact/'],
-                'description' => 'Used only when no Popup ID is set.', 'condition' => ['show_contact' => 'yes']]);
+                'description' => 'Used only when neither a shortcode nor a Popup ID is set.', 'condition' => ['show_contact' => 'yes']]);
             $this->end_controls_section();
 
             /* ─── STYLE: layout ─── */
@@ -2620,11 +2626,27 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '<p class="irl-ct-t">' . esc_html($s['contact_text']) . '</p>';
             }
 
-            // Button: an Elementor popup (modal) when a Popup ID is set, else the URL.
+            // Button. Priority: form shortcode (built-in modal) > Elementor popup > URL.
             $label = trim((string) ($s['contact_btn_label'] ?? ''));
             if ($label !== '') {
+                $shortcode = trim((string) ($s['contact_form_shortcode'] ?? ''));
                 $popup = trim((string) ($s['popup_id'] ?? ''));
-                if ($popup !== '') {
+                if ($shortcode !== '') {
+                    $mid = 'irl-modal-' . $this->get_id();
+                    echo '<button type="button" class="irl-ct-btn irl-open" data-irl-open="' . esc_attr($mid) . '">'
+                        . esc_html($label) . ' <span class="irl-ct-arw">&rarr;</span></button>';
+                    $mtitle = trim((string) ($s['contact_modal_title'] ?? ''));
+                    echo '<div class="irl-modal" id="' . esc_attr($mid) . '" hidden>'
+                        . '<div class="irl-modal-ov" data-irl-close="' . esc_attr($mid) . '"></div>'
+                        . '<div class="irl-modal-box" role="dialog" aria-modal="true">'
+                        . '<button type="button" class="irl-modal-x" data-irl-close="' . esc_attr($mid) . '" aria-label="Close">&times;</button>';
+                    if ($mtitle !== '') {
+                        echo '<h4 class="irl-modal-h">' . esc_html($mtitle) . '</h4>';
+                    }
+                    echo '<div class="irl-modal-body">' . do_shortcode($shortcode) . '</div>'
+                        . '</div></div>';
+                    $this->modal_script();
+                } elseif ($popup !== '') {
                     // Elementor Pro popup trigger: #elementor-action ... settings is
                     // base64 of {"id":"<popup>","toggle":false}.
                     $settings = base64_encode(wp_json_encode(['id' => $popup, 'toggle' => false]));
@@ -2643,6 +2665,24 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 }
             }
             echo '</div>';
+        }
+
+        /** Print the tiny open/close modal script once per request. */
+        private function modal_script()
+        {
+            static $done = false;
+            if ($done) {
+                return;
+            }
+            $done = true;
+            echo '<script>(function(){if(window.__irlModal)return;window.__irlModal=1;'
+                . 'function set(m,open){if(!m)return;m.hidden=!open;document.body.style.overflow=open?"hidden":"";}'
+                . 'document.addEventListener("click",function(e){'
+                . 'var o=e.target.closest("[data-irl-open]");if(o){e.preventDefault();set(document.getElementById(o.getAttribute("data-irl-open")),true);return;}'
+                . 'var c=e.target.closest("[data-irl-close]");if(c){e.preventDefault();set(document.getElementById(c.getAttribute("data-irl-close")),false);}'
+                . '});'
+                . 'document.addEventListener("keydown",function(e){if(e.key==="Escape"){document.querySelectorAll(".irl-modal:not([hidden])").forEach(function(m){set(m,false);});}});'
+                . '})();</script>';
         }
 
         protected function render()
@@ -2695,10 +2735,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .irl-contact .irl-ct-i svg{width:32px;height:32px;fill:currentColor}
               {{WRAPPER}} .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
               {{WRAPPER}} .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
-              {{WRAPPER}} .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid rgba(201,169,126,.9);border-radius:4px;font-weight:600;font-size:15px;color:#f7efe1;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
+              {{WRAPPER}} .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid rgba(201,169,126,.9);border-radius:4px;font-weight:600;font-size:15px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
               {{WRAPPER}} .irl-ct-btn:hover{background:#c9a97e;border-color:#c9a97e;color:#3a2a1e}
               {{WRAPPER}} .irl-ct-btn .irl-ct-arw{transition:transform .2s ease}
               {{WRAPPER}} .irl-ct-btn:hover .irl-ct-arw{transform:translateX(3px)}
+              {{WRAPPER}} .irl-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
+              {{WRAPPER}} .irl-modal[hidden]{display:none}
+              {{WRAPPER}} .irl-modal-ov{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+              {{WRAPPER}} .irl-modal-box{position:relative;width:100%;max-width:540px;max-height:88vh;overflow:auto;background:#fff;color:#3a2a1e;border-radius:8px;padding:34px 30px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+              {{WRAPPER}} .irl-modal-h{margin:0 0 16px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#3a2a1e}
+              {{WRAPPER}} .irl-modal-x{position:absolute;top:8px;right:14px;width:auto;padding:4px;border:0;background:none;font-size:28px;line-height:1;color:#8a7a6a;cursor:pointer}
+              {{WRAPPER}} .irl-modal-x:hover{color:#3a2a1e}
               @media(max-width:900px){{{WRAPPER}} .irl-cols{grid-template-columns:1fr 1fr}}
               @media(max-width:600px){{{WRAPPER}} .irl-cols{grid-template-columns:1fr!important}{{WRAPPER}} .irl-line{max-width:90px}}
             </style>';
