@@ -472,6 +472,12 @@ def _cta_from_text(cell: str) -> dict:
             url = url or _norm_url(urls[-1])  # prefer the absolute (last) URL
             label = label or bm.group(1).strip()
             continue
+        # A "→ <call to action>" line with no URL is the button LABEL (the URL
+        # was given separately, e.g. a bare domain on another line) — not body.
+        am = re.match(r"^\s*(?:→|->)\s*(.+)$", ln)
+        if am and not _ANY_URL_RE.search(ln):
+            label = label or am.group(1).strip()
+            continue
         # A trailing bare-domain URL (no scheme, no arrow): pull it as the button,
         # but only when it sits at the END of the line — not when it opens a
         # sentence ("GalapagosIslands.travel is maintained by…").
