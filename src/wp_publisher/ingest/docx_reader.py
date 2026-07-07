@@ -61,6 +61,21 @@ def _is_instruction_table(rows: list[list[str]]) -> bool:
     return True
 
 
+_SCAFFOLD_RE = re.compile(r"(?i)^(publish at|publish url|place under|slug\b|version\b|do not publish)")
+
+
+def _table_target(table, body_order: dict, section_start_pos: list, doc, current):
+    """The section a stray table belongs to: the one whose heading most recently
+    precedes it in document order (not just the last section parsed)."""
+    tpos = body_order.get(table._tbl, 1 << 30)
+    target = current if not doc.sections else doc.sections[-1]
+    best_pos = -2
+    for pos, sec in section_start_pos:
+        if pos <= tpos and pos > best_pos:
+            best_pos, target = pos, sec
+    return target
+
+
 def _is_sources_table(rows: list[list[str]]) -> bool:
     """A 2-column citations table whose rows carry URLs."""
     if _ncols(rows) < 2 or len(rows) < 2:
@@ -835,6 +850,10 @@ def read_docx(path: str | Path) -> Document:
     core_title = (docx.core_properties.title or "").strip()
 
     current = Section(title="", level=1, slug="_lead")
+    # Document-order position of each block element, so an (unrecognized) table
+    # can be attached to the section it actually sits under — not the last one.
+    body_order = {el: i for i, el in enumerate(docx.element.body)}
+    section_start_pos: list[tuple[int, Section]] = [(-1, current)]
     list_items: list[str] = []
     list_ordered = False
     seen_body = False
@@ -908,6 +927,7 @@ def read_docx(path: str | Path) -> Document:
             if current.blocks or current.title:
                 doc.sections.append(current)
             current = Section(title=text, level=level, slug=section_slug(text))
+            section_start_pos.append((body_order.get(para._p, -1), current))
             raw_lines.extend(["", "#" * max(2, level) + " " + text])
             seen_body = True
             continue
@@ -960,6 +980,18 @@ def read_docx(path: str | Path) -> Document:
             continue  # the GEO block is scaffolding, not body content
         if _is_instruction_table(rows):
             continue
+        # Single-cell boxes: scaffolding/placeholders are dropped; a prose box is
+        # a pull-quote/callout, not a full-width data table.
+        if _ncols(rows) == 1 and len(rows) == 1:
+            one = rows[0][0].strip()
+            if not one:
+                continue
+            if one.startswith("[") or _SCAFFOLD_RE.match(one):
+                continue  # [PHOTO/INFOGRAPHIC PLACEHOLDER], PUBLISH AT/URL, SLUG…
+            _table_target(table, body_order, section_start_pos, doc, current).blocks.append(
+                ContentBlock(type=BlockType.PARAGRAPH, text=one)
+            )
+            continue
         if _is_visitor_sites_table(rows):
             sites = _extract_visitor_sites(rows)
             if sites:
@@ -985,7 +1017,10 @@ def read_docx(path: str | Path) -> Document:
             if blocks:
                 doc.metadata.setdefault("cta_blocks", []).extend(blocks)
                 continue
-        target = doc.sections[-1] if doc.sections else current
+        # Attach to the section active at this table's document position, so a
+        # fees/comparison table lands under its own heading (not dumped into the
+        # last section, e.g. "Sources").
+        target = _table_target(table, body_order, section_start_pos, doc, current)
         target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
 
     # Collapse the raw CTA candidates to the two canonical CTAs (drops any

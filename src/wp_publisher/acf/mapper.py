@@ -375,9 +375,12 @@ def build_acf_island(
             if _should_skip_feature(heading) or heading.strip().lower() in _extracted_titles:
                 continue  # dedicated repeaters (wildlife/visitor sites) / footer fields
             # The lead paragraph (no heading, before any titled section) is the
-            # island intro/overview -> its own field, not a title-less card.
+            # island intro/overview -> its own field, not a title-less card. Skip
+            # bare table labels ("DATA SNAPSHOT", "AT A GLANCE") that sit above the
+            # quick-facts table — they are not an intro.
             if m.get("intro") and not heading.strip() and m["intro"] not in out and not features:
-                out[m["intro"]] = d.get("content", "")
+                if not _is_table_label(_plain_text(d.get("content", ""))):
+                    out[m["intro"]] = d.get("content", "")
                 continue
             body, btn_label, btn_url = _split_feature_button(d.get("content", ""))
             features.append(_feature_row(m["feature_sections"], title=heading,
@@ -512,6 +515,19 @@ def _split_trailing_link(html: str) -> tuple[str, str, str]:
 
 def _is_plan_visit(heading: str) -> bool:
     return "plan your visit" in heading.strip().lower()
+
+
+_TABLE_LABELS = {"data snapshot", "at a glance", "quick facts", "fast facts", "key facts", "key data"}
+
+
+def _is_table_label(text: str) -> bool:
+    """A short heading that labels the quick-facts table rather than real prose,
+    e.g. 'DATA SNAPSHOT' — should never become the island intro."""
+    t = text.strip()
+    if t.lower() in _TABLE_LABELS:
+        return True
+    words = t.split()
+    return bool(words) and len(words) <= 4 and t == t.upper() and not t.endswith((".", "?", "!"))
 
 
 def _should_skip_feature(heading: str) -> bool:
