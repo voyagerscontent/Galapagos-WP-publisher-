@@ -2421,8 +2421,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'condition' => ['show_contact' => 'yes']]);
             $this->add_control('contact_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Contact Us',
                 'condition' => ['show_contact' => 'yes']]);
-            $this->add_control('contact_btn_url', ['label' => 'Button URL', 'type' => \Elementor\Controls_Manager::URL, 'default' => ['url' => '/contact/'],
+            $this->add_control('popup_id', ['label' => 'Elementor Popup ID (modal)', 'type' => \Elementor\Controls_Manager::NUMBER,
+                'description' => 'When set, the button opens this Elementor popup as a modal (put your form inside it). Overrides the URL below.',
                 'condition' => ['show_contact' => 'yes']]);
+            $this->add_control('contact_btn_url', ['label' => 'Button URL (fallback)', 'type' => \Elementor\Controls_Manager::URL, 'default' => ['url' => '/contact/'],
+                'description' => 'Used only when no Popup ID is set.', 'condition' => ['show_contact' => 'yes']]);
             $this->end_controls_section();
 
             /* ─── STYLE: layout ─── */
@@ -2495,10 +2498,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .irl-ct-h' => 'color:{{VALUE}}']]);
             $this->add_control('ct_text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#d9cebc',
                 'selectors' => ['{{WRAPPER}} .irl-ct-t' => 'color:{{VALUE}}']]);
-            $this->add_control('ct_btn_color', ['label' => 'Button color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1',
+            $this->add_control('ct_btn_color', ['label' => 'Button text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1',
                 'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'color:{{VALUE}}']]);
-            $this->add_control('ct_btn_hover', ['label' => 'Button hover color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#c9a97e',
+            $this->add_control('ct_btn_border', ['label' => 'Button border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.9)',
+                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-color:{{VALUE}}']]);
+            $this->add_control('ct_btn_bw', ['label' => 'Button border width', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 4]], 'default' => ['size' => 1.5, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-width:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('ct_btn_radius', ['label' => 'Button radius', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 40]], 'default' => ['size' => 4, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('ct_btn_hover', ['label' => 'Button hover text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a2a1e',
                 'selectors' => ['{{WRAPPER}} .irl-ct-btn:hover' => 'color:{{VALUE}}']]);
+            $this->add_control('ct_btn_hover_bg', ['label' => 'Button hover background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#c9a97e',
+                'selectors' => ['{{WRAPPER}} .irl-ct-btn:hover' => 'background:{{VALUE}};border-color:{{VALUE}}']]);
             $this->end_controls_section();
         }
 
@@ -2569,11 +2582,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (($s['show_contact'] ?? '') !== 'yes') {
                 return;
             }
-            $link = $s['contact_btn_url'] ?? [];
-            $href = trim((string) ($link['url'] ?? ''));
-            $target = !empty($link['is_external']) ? ' target="_blank"' : '';
-            $nofollow = !empty($link['nofollow']) ? ' rel="nofollow noopener"' : '';
-
             $icon = '';
             if (!empty($s['contact_icon']['value'])) {
                 ob_start();
@@ -2581,18 +2589,44 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $icon = ob_get_clean();
             }
             echo '<div class="irl-group irl-contact">';
-            if ($icon) {
-                echo '<span class="irl-ct-i">' . $icon . '</span>';
-            }
-            if (trim((string) ($s['contact_title'] ?? '')) !== '') {
-                echo '<h4 class="irl-ct-h">' . esc_html($s['contact_title']) . '</h4>';
+
+            // Icon + heading share one row (icon left, heading right).
+            $title = trim((string) ($s['contact_title'] ?? ''));
+            if ($icon || $title !== '') {
+                echo '<div class="irl-ct-head">';
+                if ($icon) {
+                    echo '<span class="irl-ct-i">' . $icon . '</span>';
+                }
+                if ($title !== '') {
+                    echo '<h4 class="irl-ct-h">' . esc_html($title) . '</h4>';
+                }
+                echo '</div>';
             }
             if (trim((string) ($s['contact_text'] ?? '')) !== '') {
                 echo '<p class="irl-ct-t">' . esc_html($s['contact_text']) . '</p>';
             }
-            if (trim((string) ($s['contact_btn_label'] ?? '')) !== '' && $href !== '') {
-                echo '<a class="irl-ct-btn" href="' . esc_url($href) . '"' . $target . $nofollow . '>'
-                    . esc_html($s['contact_btn_label']) . ' <span class="irl-ct-arw">&rarr;</span></a>';
+
+            // Button: an Elementor popup (modal) when a Popup ID is set, else the URL.
+            $label = trim((string) ($s['contact_btn_label'] ?? ''));
+            if ($label !== '') {
+                $popup = trim((string) ($s['popup_id'] ?? ''));
+                if ($popup !== '') {
+                    // Elementor Pro popup trigger: #elementor-action ... settings is
+                    // base64 of {"id":"<popup>","toggle":false}.
+                    $settings = base64_encode(wp_json_encode(['id' => $popup, 'toggle' => false]));
+                    $href = '#elementor-action:action=popup:open&settings=' . $settings;
+                    echo '<a class="irl-ct-btn" href="' . esc_attr($href) . '">'
+                        . esc_html($label) . ' <span class="irl-ct-arw">&rarr;</span></a>';
+                } else {
+                    $link = $s['contact_btn_url'] ?? [];
+                    $href = trim((string) ($link['url'] ?? ''));
+                    if ($href !== '') {
+                        $target = !empty($link['is_external']) ? ' target="_blank"' : '';
+                        $nofollow = !empty($link['nofollow']) ? ' rel="nofollow noopener"' : '';
+                        echo '<a class="irl-ct-btn" href="' . esc_url($href) . '"' . $target . $nofollow . '>'
+                            . esc_html($label) . ' <span class="irl-ct-arw">&rarr;</span></a>';
+                    }
+                }
             }
             echo '</div>';
         }
@@ -2641,13 +2675,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .irl-item::before{content:"\203A";position:absolute;left:2px;top:-1px;color:#c9a97e;font-size:16px}
               {{WRAPPER}} .irl-item a{color:#ece2d1;text-decoration:' . $ul_base . ';transition:color .18s ease}
               {{WRAPPER}} .irl-item a:hover{color:#fff;text-decoration:' . $ul_hover . '}
-              {{WRAPPER}} .irl-contact .irl-ct-i{display:inline-flex;font-size:34px;color:#f3ead9;margin-bottom:14px}
-              {{WRAPPER}} .irl-contact .irl-ct-i svg{width:34px;height:34px;fill:currentColor}
-              {{WRAPPER}} .irl-ct-h{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
-              {{WRAPPER}} .irl-ct-h::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:rgba(201,169,126,.7)}
-              {{WRAPPER}} .irl-ct-t{margin:0 0 18px;font-size:15px;line-height:1.6;color:#d9cebc}
-              {{WRAPPER}} .irl-ct-btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:#f7efe1;text-decoration:none;transition:color .18s ease}
-              {{WRAPPER}} .irl-ct-btn:hover{color:#c9a97e}
+              {{WRAPPER}} .irl-ct-head{display:flex;align-items:center;gap:14px;position:relative;padding-bottom:14px;margin-bottom:18px}
+              {{WRAPPER}} .irl-ct-head::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:rgba(201,169,126,.7)}
+              {{WRAPPER}} .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:32px;color:#f3ead9}
+              {{WRAPPER}} .irl-contact .irl-ct-i svg{width:32px;height:32px;fill:currentColor}
+              {{WRAPPER}} .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
+              {{WRAPPER}} .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
+              {{WRAPPER}} .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid rgba(201,169,126,.9);border-radius:4px;font-weight:600;font-size:15px;color:#f7efe1;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
+              {{WRAPPER}} .irl-ct-btn:hover{background:#c9a97e;border-color:#c9a97e;color:#3a2a1e}
+              {{WRAPPER}} .irl-ct-btn .irl-ct-arw{transition:transform .2s ease}
+              {{WRAPPER}} .irl-ct-btn:hover .irl-ct-arw{transform:translateX(3px)}
               @media(max-width:900px){{{WRAPPER}} .irl-cols{grid-template-columns:1fr 1fr}}
               @media(max-width:600px){{{WRAPPER}} .irl-cols{grid-template-columns:1fr!important}{{WRAPPER}} .irl-line{max-width:90px}}
             </style>';
