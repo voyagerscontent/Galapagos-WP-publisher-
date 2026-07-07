@@ -2158,7 +2158,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .itr-h{margin:0 0 10px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#64402C}
               .itr-body{font-size:14.5px;line-height:1.65;color:#333}.itr-body p{margin:0 0 10px}.itr-body :last-child{margin-bottom:0}
               .itr-body h2,.itr-body h3,.itr-body h4,.itr-body h5,.itr-body h6{margin:14px 0 6px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:16px;line-height:1.3;color:#64402C}
-              .itr-btn{display:inline-block;margin-top:12px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px}
+              .itr-btn{display:inline-block;margin:12px 10px 0 0;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:9px 16px}
+              .itr-wc{border-color:#64402C}
               .itr-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
               .itr-chip{background:#ECE5DE;border-radius:20px;padding:6px 14px;font-size:13px;color:#64402C}.itr-chip b{font-weight:700}
             </style>';
