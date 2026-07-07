@@ -2136,20 +2136,26 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             $s = $this->get_settings_for_display();
-            $collapse = ($s['hide_empty_section'] ?? '') === 'yes' ? island_ew_hide_section() : '';
+            $dbg = static function ($msg) {
+                return '<div style="margin:8px 0;padding:10px 14px;border:1px dashed #b45309;'
+                    . 'background:#fff7ed;color:#9a3412;font:13px/1.5 -apple-system,sans-serif;border-radius:8px">'
+                    . '⚠ TRAVEL DEBUG — ' . esc_html($msg) . '</div>';
+            };
             if (($s['show_block'] ?? 'yes') !== 'yes') {
-                echo '<!-- island-travel: show_block off -->' . $collapse;
+                echo $dbg('"Show this block" is OFF');
                 return;
             }
-            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $sid = !empty($s['source_id']) ? (int) $s['source_id'] : 0;
+            $pid = $sid ?: (int) get_the_ID();
             $hidden = array_filter(array_map('intval', preg_split('/[\s,]+/', (string) ($s['hide_on_ids'] ?? ''))));
             if (in_array((int) $pid, $hidden, true)) {
-                echo '<!-- island-travel: hidden on id ' . (int) $pid . ' -->' . $collapse;
+                echo $dbg('hidden by "Hide on these page IDs" (pid ' . $pid . ')');
                 return;
             }
             $t = get_field('travel_information', $pid);
             if (!$t || !is_array($t)) {
-                echo '<!-- island-travel: no travel_information for pid ' . (int) $pid . ' -->' . $collapse;
+                echo $dbg('get_field(travel_information) is EMPTY. pid=' . $pid
+                    . ', source_id=' . ($sid ?: 'blank/current') . ', get_the_ID=' . (int) get_the_ID());
                 return;
             }
             echo '<style>
@@ -2188,10 +2194,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . (($s['show_best'] ?? 'yes') === 'yes' ? $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '', $wc_link) : '')
                 . (($s['show_stay'] ?? 'yes') === 'yes' ? $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '') : '')
                 . (($s['show_notes'] ?? 'yes') === 'yes' ? $this->block('Good to Know', $t['travel_notes'] ?? '', '', '') : '');
-            // Nothing to show -> render nothing (no empty wrapper) and collapse
-            // the wrapping section if asked.
             if (trim($blocks) === '') {
-                echo '<!-- island-travel: blocks empty for pid ' . (int) $pid . ' -->' . $collapse;
+                echo $dbg('data exists but all sub-blocks are empty (getting_there/best_time/'
+                    . 'accommodation/travel_notes all blank) for pid ' . $pid);
                 return;
             }
             echo '<div class="itr">' . $blocks . '</div>';
