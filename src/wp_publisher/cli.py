@@ -204,15 +204,32 @@ def publish(
     update: bool = typer.Option(
         False, "--update", help="Allow overwriting an existing post with the same slug."
     ),
+    only_fields: Optional[str] = typer.Option(
+        None,
+        "--only-fields",
+        help="Surgical update: write ONLY these ACF fields (comma-separated, e.g. "
+        "'related_links'); leave every other field on the page untouched. Only "
+        "patches an existing post — never creates one.",
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
 ) -> None:
     """Build and publish a document to WordPress."""
     from .wordpress.client import WordPressError
 
+    only_acf_fields = (
+        [f.strip() for f in only_fields.split(",") if f.strip()] if only_fields else None
+    )
+
     doc = read_file(file)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
     _apply_slug(page, slug, test)
     _summary(doc, page, template, reason)
+    if only_acf_fields is not None:
+        console.print(
+            f"[cyan]Surgical update:[/cyan] only ACF field(s) "
+            f"[bold]{', '.join(only_acf_fields)}[/bold] will be written; "
+            "everything else on the page is left untouched."
+        )
 
     if page.status == "publish" and not yes:
         typer.confirm(
@@ -225,7 +242,8 @@ def publish(
 
     try:
         result = publish_page(
-            client, page, settings, seo_plugin=plugin, update_existing=update
+            client, page, settings, seo_plugin=plugin, update_existing=update,
+            only_acf_fields=only_acf_fields,
         )
     except WordPressError as exc:
         console.print(f"[red]Refused:[/red] {exc}")

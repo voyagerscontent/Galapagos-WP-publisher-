@@ -46,6 +46,7 @@ def publish_page(
     *,
     seo_plugin: str = "none",
     update_existing: bool = False,
+    only_acf_fields: list[str] | None = None,
 ) -> PublishResult:
     """Create a post, or update one with the same slug.
 
@@ -54,33 +55,52 @@ def publish_page(
     overwriting an unrelated live page that happens to share the slug. Even when
     updating, we never change the existing post's ``status`` and never blank its
     ``content``, so an existing page can't be unpublished or emptied by a run.
+
+    ``only_acf_fields`` enables a **surgical** update: only those ACF fields are
+    written and nothing else on the post is touched (no title, excerpt, featured
+    image or SEO meta). Because a surgical run carries almost no page, it also
+    **refuses to create** a new post — it can only patch a post that already
+    exists — so it can never leave a near-empty page behind.
     """
     defaults = settings.defaults
+    surgical = only_acf_fields is not None
 
     # Fields safe to set on both create and update.
-    payload: dict = {
-        "title": page.title,
-        "slug": page.slug,
-        "excerpt": page.excerpt or page.meta_description,
-    }
+    payload: dict = {"slug": page.slug}
+    if not surgical:
+        payload["title"] = page.title
+        payload["excerpt"] = page.excerpt or page.meta_description
     if page.acf:
-        payload["acf"] = page.acf
-    if settings.wp_default_author_id:
-        payload["author"] = settings.wp_default_author_id
-    if page.post_type in ("post", "posts"):
-        if page.categories:
-            payload["categories"] = client.resolve_terms("category", page.categories)
-        if page.tags:
-            payload["tags"] = client.resolve_terms("post_tag", page.tags)
-    if page.featured_media and page.featured_media.wp_media_id:
-        payload["featured_media"] = page.featured_media.wp_media_id
-    parent_warning = _resolve_parent(client, page, payload)
-    seo_meta = _seo_meta(page, seo_plugin)
-    if seo_meta:
-        payload["meta"] = seo_meta
-    payload.update(page.extra_fields)
+        acf = page.acf
+        if surgical:
+            wanted = set(only_acf_fields)
+            acf = {k: v for k, v in acf.items() if k in wanted}
+        if acf:
+            payload["acf"] = acf
+    parent_warning = None
+    if not surgical:
+        if settings.wp_default_author_id:
+            payload["author"] = settings.wp_default_author_id
+        if page.post_type in ("post", "posts"):
+            if page.categories:
+                payload["categories"] = client.resolve_terms("category", page.categories)
+            if page.tags:
+                payload["tags"] = client.resolve_terms("post_tag", page.tags)
+        if page.featured_media and page.featured_media.wp_media_id:
+            payload["featured_media"] = page.featured_media.wp_media_id
+        parent_warning = _resolve_parent(client, page, payload)
+        seo_meta = _seo_meta(page, seo_plugin)
+        if seo_meta:
+            payload["meta"] = seo_meta
+        payload.update(page.extra_fields)
 
     existing = client.find_post_by_slug(page.post_type, page.slug)
+    if surgical and not existing:
+        raise WordPressError(
+            f"Surgical update (only {', '.join(only_acf_fields)}) requested but no "
+            f"{page.post_type} with slug '{page.slug}' exists. Refusing to create a "
+            f"near-empty page — create the page first, then re-run to patch it."
+        )
     if existing and not update_existing:
         raise WordPressError(
             f"A {page.post_type} with slug '{page.slug}' already exists "

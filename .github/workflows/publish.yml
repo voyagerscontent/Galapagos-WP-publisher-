@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       file:
-        description: "Path to the document in the repo (e.g. content/my-cruise.md)"
+        description: "Path to the document, or 'ALL_ISLANDS' to loop content/*-island.docx"
         required: true
         type: string
       mode:
@@ -53,6 +53,10 @@ on:
         required: true
         default: false
         type: boolean
+      only_fields:
+        description: "Surgical: write ONLY these ACF fields (comma-separated, e.g. related_links). Blank = full publish. Never creates a page."
+        required: false
+        type: string
 
 jobs:
   run:
@@ -81,33 +85,78 @@ jobs:
           IN_SLUG: ${{ inputs.slug }}
           IN_TEST: ${{ inputs.test_mode }}
           IN_UPDATE: ${{ inputs.update_existing }}
+          IN_ONLY: ${{ inputs.only_fields }}
         run: |
           set -euo pipefail
-          if [ ! -f "${IN_FILE}" ]; then
-            echo "::error::File not found in repo: ${IN_FILE}"
-            exit 1
+
+          # Build the list of files to process. 'ALL_ISLANDS' expands to every
+          # island doc (content/*-island.docx); otherwise it's the single file.
+          FILES=()
+          PER_FILE_SLUG=false
+          if [ "${IN_FILE}" = "ALL_ISLANDS" ]; then
+            shopt -s nullglob
+            FILES=(content/*-island.docx)
+            PER_FILE_SLUG=true            # derive each slug from its filename
+            if [ ${#FILES[@]} -eq 0 ]; then
+              echo "::error::ALL_ISLANDS matched no content/*-island.docx files"; exit 1
+            fi
+          else
+            if [ ! -f "${IN_FILE}" ]; then
+              echo "::error::File not found in repo: ${IN_FILE}"; exit 1
+            fi
+            FILES=("${IN_FILE}")
           fi
+
           TYPE_ARGS=()
           if [ -n "${IN_TYPE}" ]; then TYPE_ARGS=(--type "${IN_TYPE}"); fi
-          SLUG_ARGS=()
-          if [ -n "${IN_SLUG}" ]; then SLUG_ARGS=(--slug "${IN_SLUG}"); fi
           TEST_ARGS=()
           if [ "${IN_TEST}" = "true" ]; then TEST_ARGS=(--test); fi
           UPDATE_ARGS=()
           if [ "${IN_UPDATE}" = "true" ]; then UPDATE_ARGS=(--update); fi
-          case "${IN_MODE}" in
-            preview)
-              wp-publish preview "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}"
-              ;;
-            publish-draft)
-              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}" --status draft --yes "${UPDATE_ARGS[@]}"
-              ;;
-            publish-live)
-              wp-publish publish "${IN_FILE}" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}" --status publish --yes "${UPDATE_ARGS[@]}"
-              ;;
-            *)
-              echo "::error::Unknown mode: ${IN_MODE}"; exit 1 ;;
-          esac
+          ONLY_ARGS=()
+          if [ -n "${IN_ONLY}" ]; then ONLY_ARGS=(--only-fields "${IN_ONLY}"); fi
+
+          FAILED=()
+          for f in "${FILES[@]}"; do
+            SLUG_ARGS=()
+            if [ "${PER_FILE_SLUG}" = "true" ]; then
+              base="$(basename "$f" .docx)"     # e.g. baltra-island
+              isl="${base%-island}"             # e.g. baltra
+              SLUG_ARGS=(--slug "${isl}")
+            elif [ -n "${IN_SLUG}" ]; then
+              SLUG_ARGS=(--slug "${IN_SLUG}")
+            fi
+
+            echo "::group::${f}"
+            set +e
+            case "${IN_MODE}" in
+              preview)
+                wp-publish preview "$f" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}"
+                ;;
+              publish-draft)
+                wp-publish publish "$f" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}" --status draft --yes "${UPDATE_ARGS[@]}" "${ONLY_ARGS[@]}"
+                ;;
+              publish-live)
+                wp-publish publish "$f" "${TYPE_ARGS[@]}" "${SLUG_ARGS[@]}" "${TEST_ARGS[@]}" --media "${IN_MEDIA}" --status publish --yes "${UPDATE_ARGS[@]}" "${ONLY_ARGS[@]}"
+                ;;
+              *)
+                echo "::error::Unknown mode: ${IN_MODE}"; exit 1 ;;
+            esac
+            rc=$?
+            set -e
+            echo "::endgroup::"
+            if [ $rc -ne 0 ]; then
+              echo "::warning::${f} failed (exit ${rc})"
+              FAILED+=("$f")
+            fi
+          done
+
+          if [ ${#FAILED[@]} -gt 0 ]; then
+            echo "::error::${#FAILED[@]} file(s) failed: ${FAILED[*]}"
+            # A surgical run over ALL_ISLANDS tolerates per-island refusals (e.g. a
+            # missing -test page); only fail the job if EVERY file failed.
+            if [ ${#FAILED[@]} -eq ${#FILES[@]} ]; then exit 1; fi
+          fi
 
       - name: Upload preview artifacts
         if: ${{ inputs.mode == 'preview' }}
