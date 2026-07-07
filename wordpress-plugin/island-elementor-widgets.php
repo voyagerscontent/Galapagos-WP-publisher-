@@ -2136,20 +2136,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             $s = $this->get_settings_for_display();
-            $collapse = ($s['hide_empty_section'] ?? 'yes') === 'yes' ? island_ew_hide_section() : '';
+            $collapse = ($s['hide_empty_section'] ?? '') === 'yes' ? island_ew_hide_section() : '';
             if (($s['show_block'] ?? 'yes') !== 'yes') {
-                echo $collapse;
+                echo '<!-- island-travel: show_block off -->' . $collapse;
                 return;
             }
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
             $hidden = array_filter(array_map('intval', preg_split('/[\s,]+/', (string) ($s['hide_on_ids'] ?? ''))));
             if (in_array((int) $pid, $hidden, true)) {
-                echo $collapse;
+                echo '<!-- island-travel: hidden on id ' . (int) $pid . ' -->' . $collapse;
                 return;
             }
             $t = get_field('travel_information', $pid);
             if (!$t || !is_array($t)) {
-                echo $collapse;
+                echo '<!-- island-travel: no travel_information for pid ' . (int) $pid . ' -->' . $collapse;
                 return;
             }
             echo '<style>
@@ -2191,7 +2191,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // Nothing to show -> render nothing (no empty wrapper) and collapse
             // the wrapping section if asked.
             if (trim($blocks) === '') {
-                echo $collapse;
+                echo '<!-- island-travel: blocks empty for pid ' . (int) $pid . ' -->' . $collapse;
                 return;
             }
             echo '<div class="itr">' . $blocks . '</div>';
