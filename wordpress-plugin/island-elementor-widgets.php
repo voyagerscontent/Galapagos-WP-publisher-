@@ -1878,6 +1878,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     'selectors' => [$sel . ' .icta-t' => 'color:{{VALUE}}']]);
                 $this->add_control($p . '_text', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR,
                     'selectors' => [$sel . ' .icta-x' => 'color:{{VALUE}}', $sel . ' .icta-x p' => 'color:{{VALUE}}']]);
+                $this->add_control($p . '_link', ['label' => 'Link color', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel . ' .icta-x a' => 'color:{{VALUE}}']]);
+                $this->add_control($p . '_link_hover', ['label' => 'Link hover color', 'type' => \Elementor\Controls_Manager::COLOR,
+                    'selectors' => [$sel . ' .icta-x a:hover' => 'color:{{VALUE}}']]);
+                $this->add_control($p . '_link_ul', ['label' => 'Underline links', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '',
+                    'options' => ['' => 'Default', 'underline' => 'Always', 'none' => 'Never'],
+                    'selectors' => [$sel . ' .icta-x a' => 'text-decoration:{{VALUE}}']]);
                 $this->add_control($p . '_badge', ['label' => 'Badge color', 'type' => \Elementor\Controls_Manager::COLOR,
                     'selectors' => [$sel . ' .icta-badge' => 'color:{{VALUE}};border-color:{{VALUE}}']]);
                 $this->add_control($p . '_btn_bg', ['label' => 'Button background', 'type' => \Elementor\Controls_Manager::COLOR,
