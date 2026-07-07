@@ -2031,8 +2031,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('hide_on_ids', ['label' => 'Hide on these page IDs', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
                 'placeholder' => 'e.g. 12482, 1197',
                 'description' => 'Comma-separated island page IDs where this whole block should NOT show.']);
-            $this->add_control('hide_empty_section', ['label' => 'Also hide the whole section when empty', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-                'description' => 'When there is nothing to show, also collapse the Elementor section that wraps it (e.g. a decorative divider above), so no empty band or lone divider is left.']);
+            $this->add_control('hide_empty_section', ['label' => 'Also hide the whole section when empty', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Off by default. Turn on ONLY on a section whose only content is this block (+ its divider): when there is nothing to show it collapses that whole Elementor section, so no empty band or lone divider is left. Leave off if the section holds other widgets too.']);
 
             /* Link the "When to Visit" block to the on-page Wildlife Calendar
              * (the seasonal table lives in that widget). */
