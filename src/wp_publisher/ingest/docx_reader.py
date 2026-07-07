@@ -705,10 +705,15 @@ def _visual_heading_level(para) -> int:
     if not runs or not any(r.bold for r in runs):
         return 0
     text = para.text.strip()
-    if len(text) > 140 or text.endswith((".", "!", "?")):
+    if len(text) > 140 or text.endswith((".", "!")):
         return 0
     sizes = [r.font.size.pt for r in runs if r.font.size is not None]
     size = max(sizes) if sizes else 0.0
+    # A '?'-ending line is a heading only when it's clearly heading-sized and
+    # short — a real title like "Baltra vs San Cristóbal — Which Airport?" —
+    # never a body/FAQ question (which is set in the smaller body font).
+    if text.endswith("?") and (size < 13.5 or len(text) > 80):
+        return 0
     if size >= 18:
         return 1
     if size >= 13.5:

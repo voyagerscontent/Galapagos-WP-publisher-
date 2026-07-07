@@ -379,8 +379,10 @@ def build_acf_island(
             # bare table labels ("DATA SNAPSHOT", "AT A GLANCE") that sit above the
             # quick-facts table — they are not an intro.
             if m.get("intro") and not heading.strip() and m["intro"] not in out and not features:
-                if not _is_table_label(_plain_text(d.get("content", ""))):
-                    out[m["intro"]] = d.get("content", "")
+                lead = d.get("content", "")
+                # Send "" (not nothing) for a bare label so a republish clears any
+                # stale intro ('DATA SNAPSHOT') already on the page.
+                out[m["intro"]] = "" if _is_table_label(_plain_text(lead)) else lead
                 continue
             body, btn_label, btn_url = _split_feature_button(d.get("content", ""))
             features.append(_feature_row(m["feature_sections"], title=heading,
@@ -415,7 +417,7 @@ def build_acf_island(
 _FEATURE_SKIP_HEADINGS = {"sources", "sources & citations", "sources and citations", "citations"}
 _SKIP_CONTAINS = ("explore more", "seo footer", "version footer")
 _TRAVEL_RULES = [
-    ("getting_there", re.compile(r"getting (to|there)|how to get|how to reach|arriv", re.I)),
+    ("getting_there", re.compile(r"getting (to|there)|how to get|how to reach", re.I)),
     ("best_time", re.compile(r"best time|when to (visit|go)|best season", re.I)),
     ("accommodation", re.compile(r"where to stay|accommodation|hotels|lodging", re.I)),
 ]
@@ -514,7 +516,9 @@ def _split_trailing_link(html: str) -> tuple[str, str, str]:
 
 
 def _is_plan_visit(heading: str) -> bool:
-    return "plan your visit" in heading.strip().lower()
+    # "Plan Your Visit", but also house variants like "Plan Your Arrival" — all
+    # lead into the CTA, so their lead paragraph feeds cta_intro.
+    return heading.strip().lower().startswith("plan your")
 
 
 _TABLE_LABELS = {"data snapshot", "at a glance", "quick facts", "fast facts", "key facts", "key data"}
