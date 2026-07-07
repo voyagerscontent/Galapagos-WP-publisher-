@@ -1986,6 +1986,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
             $this->add_control('show_meta', ['label' => 'Show duration / difficulty', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+
+            /* Visibility — condition the whole block, each sub-section, or hide
+             * it on specific island pages. */
+            $this->add_control('vis_h', ['label' => 'Show / hide', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('show_block', ['label' => 'Show this block', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Turn off to hide the whole Travel Information block here.']);
+            $this->add_control('show_getting', ['label' => 'Getting There', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['show_block' => 'yes']]);
+            $this->add_control('show_best', ['label' => 'When to Visit', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['show_block' => 'yes']]);
+            $this->add_control('show_stay', ['label' => 'Where to Stay', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['show_block' => 'yes']]);
+            $this->add_control('show_notes', ['label' => 'Good to Know', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['show_block' => 'yes']]);
+            $this->add_control('hide_on_ids', ['label' => 'Hide on these page IDs', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true,
+                'placeholder' => 'e.g. 12482, 1197', 'condition' => ['show_block' => 'yes'],
+                'description' => 'Comma-separated island page IDs where this whole block should NOT show.']);
             $this->end_controls_section();
 
             $align = [
@@ -2078,7 +2091,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             $s = $this->get_settings_for_display();
+            if (($s['show_block'] ?? 'yes') !== 'yes') {
+                return;
+            }
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $hidden = array_filter(array_map('intval', preg_split('/[\s,]+/', (string) ($s['hide_on_ids'] ?? ''))));
+            if (in_array((int) $pid, $hidden, true)) {
+                return;
+            }
             $t = get_field('travel_information', $pid);
             if (!$t || !is_array($t)) {
                 return;
@@ -2105,10 +2125,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $meta .= '</div>';
             }
             $blocks = $meta
-                . $this->block($t['getting_there_title'] ?? 'Getting There', $t['getting_there'] ?? '', $t['getting_there_button_label'] ?? '', $t['getting_there_button_url'] ?? '')
-                . $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '')
-                . $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '')
-                . $this->block('Good to Know', $t['travel_notes'] ?? '', '', '');
+                . (($s['show_getting'] ?? 'yes') === 'yes' ? $this->block($t['getting_there_title'] ?? 'Getting There', $t['getting_there'] ?? '', $t['getting_there_button_label'] ?? '', $t['getting_there_button_url'] ?? '') : '')
+                . (($s['show_best'] ?? 'yes') === 'yes' ? $this->block($t['stay_visit_title'] ?? 'When to Visit', $t['best_time'] ?? '', $t['best_time_button_label'] ?? '', $t['best_time_button_url'] ?? '') : '')
+                . (($s['show_stay'] ?? 'yes') === 'yes' ? $this->block('Where to Stay', $t['accommodation'] ?? '', $t['accommodation_button_label'] ?? '', $t['accommodation_button_url'] ?? '') : '')
+                . (($s['show_notes'] ?? 'yes') === 'yes' ? $this->block('Good to Know', $t['travel_notes'] ?? '', '', '') : '');
             // Nothing to show -> render nothing (no empty wrapper).
             if (trim($blocks) === '') {
                 return;
