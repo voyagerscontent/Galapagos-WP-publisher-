@@ -1396,7 +1396,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 100]],
                 'default' => ['size' => 48, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 65]],
-                'default' => ['size' => 45, 'unit' => '%'], 'selectors' => ['{{WRAPPER}} .ifs-row' => 'grid-template-columns:{{SIZE}}% 1fr']]);
+                'default' => ['size' => 42, 'unit' => '%'], 'selectors' => [
+                    '{{WRAPPER}} .ifs-top' => 'grid-template-columns:{{SIZE}}% 1fr',
+                    '{{WRAPPER}} .ifs-row.rev .ifs-top' => 'grid-template-columns:1fr {{SIZE}}%']]);
             $this->add_control('img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 560]],
                 'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-img' => 'height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
@@ -1413,6 +1415,46 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .ifs-btn' => 'color:{{VALUE}}']]);
             $this->add_control('btn_bd', ['label' => 'Button border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
                 'selectors' => ['{{WRAPPER}} .ifs-btn' => 'border-color:{{VALUE}}']]);
+
+            /* Card (each feature section sits in a card) */
+            $this->add_control('card_h', ['label' => 'Card', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FBF8F4',
+                'selectors' => ['{{WRAPPER}} .ifs-row' => 'background:{{VALUE}}']]);
+            $this->add_control('card_border', ['label' => 'Card border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(100,64,44,.14)',
+                'selectors' => ['{{WRAPPER}} .ifs-row' => 'border-color:{{VALUE}}']]);
+            $this->add_control('card_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
+                'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-row' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('card_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 56]],
+                'default' => ['size' => 28, 'unit' => 'px'], 'selectors' => [
+                    '{{WRAPPER}} .ifs-top' => 'padding:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .ifs-tbl' => 'margin-left:{{SIZE}}{{UNIT}};margin-right:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .ifs-after' => 'padding-left:{{SIZE}}{{UNIT}};padding-right:{{SIZE}}{{UNIT}}']]);
+
+            /* Table (styling for feature sections that contain a table) */
+            $this->add_control('tbl_h', ['label' => 'Table', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('tbl_head_bg', ['label' => 'Header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'background:{{VALUE}}']]);
+            $this->add_control('tbl_head_tx', ['label' => 'Header text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F6EFE7',
+                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'color:{{VALUE}}']]);
+            $this->add_control('tbl_head_fs', ['label' => 'Header text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 9, 'max' => 18]],
+                'default' => ['size' => 10.5, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'font-size:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('tbl_tx', ['label' => 'Cell text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
+                'selectors' => ['{{WRAPPER}} .ifs-tbl tbody td' => 'color:{{VALUE}}']]);
+            $this->add_control('tbl_fs', ['label' => 'Cell text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 11, 'max' => 20]],
+                'default' => ['size' => 13, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl table' => 'font-size:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('tbl_first', ['label' => 'First column color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .ifs-tbl td:first-child' => 'color:{{VALUE}}']]);
+            $this->add_control('tbl_stripe', ['label' => 'Row stripe', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F5EEE4',
+                'selectors' => ['{{WRAPPER}} .ifs-tbl tbody tr:nth-child(even)' => 'background:{{VALUE}}']]);
+            $this->add_control('tbl_line', ['label' => 'Border / lines', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(100,64,44,.14)',
+                'selectors' => ['{{WRAPPER}} .ifs-tbl' => 'border-color:{{VALUE}}', '{{WRAPPER}} .ifs-tbl tbody td' => 'border-top-color:{{VALUE}}']]);
+            $this->add_control('tbl_bw', ['label' => 'Line thickness', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 4]],
+                'default' => ['size' => 1, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl tbody td' => 'border-top-width:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('tbl_radius', ['label' => 'Table radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
+                'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('tbl_pad', ['label' => 'Cell padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px'],
+                'default' => ['top' => 13, 'right' => 16, 'bottom' => 13, 'left' => 16, 'unit' => 'px', 'isLinked' => false],
+                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th,{{WRAPPER}} .ifs-tbl tbody td' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
             $this->end_controls_section();
         }
         protected function render()
@@ -1434,21 +1476,31 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $alt = $s['alternate'] === 'yes';
             $showimg = $s['show_img'] === 'yes';
             echo '<style>
-              {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:48px}
-              {{WRAPPER}} .ifs-row{display:grid;grid-template-columns:45% 1fr;gap:34px;align-items:center}
-              {{WRAPPER}} .ifs-row.noimg{grid-template-columns:1fr}
-              {{WRAPPER}} .ifs-row.rev .ifs-img{order:2}
-              {{WRAPPER}} .ifs-img{height:300px;border-radius:12px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 8px 22px rgba(60,40,25,.12)}
+              {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:40px}
+              {{WRAPPER}} .ifs-row{background:#FBF8F4;border:1px solid rgba(100,64,44,.14);border-radius:16px;box-shadow:0 10px 30px rgba(60,40,25,.10);overflow:hidden;display:flex;flex-direction:column}
+              {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;gap:32px;align-items:center;padding:28px}
+              {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%}
+              {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr!important}
+              {{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:2}
+              {{WRAPPER}} .ifs-row.has-table .ifs-top{padding-bottom:4px}
+              {{WRAPPER}} .ifs-img{height:300px;border-radius:12px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 8px 22px rgba(60,40,25,.10)}
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
-              {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#333}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .ifs.hx .ifs-row{align-items:start}
+              {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
               {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .6s cubic-bezier(.22,.61,.36,1)}
-              {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#efe7dd));pointer-events:none;transition:opacity .4s ease}
+              {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .4s ease}
               {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body{max-height:1600px}
               {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after{opacity:0}
               {{WRAPPER}} .ifs-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:10px 18px}
-              @media(max-width:760px){{{WRAPPER}} .ifs-row{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-img{order:0}}
+              {{WRAPPER}} .ifs-tbl{overflow-x:auto;margin:16px 28px 26px;border:1px solid rgba(100,64,44,.14);border-radius:12px}
+              {{WRAPPER}} .ifs-tbl table{border-collapse:collapse;width:100%;min-width:520px;font-size:13px}
+              {{WRAPPER}} .ifs-tbl thead th{background:#64402C;color:#F6EFE7;text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:13px 16px;white-space:nowrap}
+              {{WRAPPER}} .ifs-tbl tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E;font-variant-numeric:tabular-nums}
+              {{WRAPPER}} .ifs-tbl tbody tr:nth-child(even){background:#F5EEE4}
+              {{WRAPPER}} .ifs-tbl tbody tr:hover{background:rgba(100,64,44,.06)}
+              {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
+              {{WRAPPER}} .ifs-after{padding:0 28px 26px;font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-after p{margin:0 0 12px}{{WRAPPER}} .ifs-after :last-child{margin-bottom:0}
+              @media(max-width:760px){{{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}{{WRAPPER}} .ifs-tbl{margin:14px 16px 20px}}
             </style>';
             $hx = ($s['hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
             echo '<div class="ifs' . $hx . '">';
@@ -1457,7 +1509,25 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $img = $showimg ? island_ew_image_src($r['image'] ?? '') : '';
                 $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
                 $noimg = $img ? '' : ' noimg';
-                echo '<article class="ifs-row' . $rev . $noimg . '" tabindex="0">';
+                // A section that carries a table renders the table full-width below
+                // the image+text; everything else keeps the zig-zag.
+                $content = $r['content'] ?? '';
+                $table = '';
+                $before = $content;
+                $after = '';
+                if (stripos($content, '<table') !== false
+                    && preg_match('/<table\b[\s\S]*?<\/table>/i', $content, $mm)) {
+                    $table = $mm[0];
+                    $p = strpos($content, $table);
+                    $before = substr($content, 0, $p);
+                    $after = substr($content, $p + strlen($table));
+                }
+                $has_table = $table !== '';
+                $btn = !empty($r['button_url'])
+                    ? '<a class="ifs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>'
+                    : '';
+                echo '<article class="ifs-row' . $rev . $noimg . ($has_table ? ' has-table' : '') . '" tabindex="0">';
+                echo '<div class="ifs-top">';
                 if ($img) {
                     echo '<div class="ifs-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
                 }
@@ -1466,13 +1536,23 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo '<p class="ifs-eyebrow">' . esc_html($r['subtitle']) . '</p>';
                 }
                 echo '<' . $tag . ' class="ifs-title">' . esc_html($r['title'] ?? '') . '</' . $tag . '>';
-                if (!empty($r['content'])) {
-                    echo '<div class="ifs-body">' . wp_kses_post($r['content']) . '</div>';
+                if (trim(wp_strip_all_tags($before)) !== '') {
+                    echo '<div class="ifs-body">' . wp_kses_post($before) . '</div>';
                 }
-                if (!empty($r['button_url'])) {
-                    echo '<a class="ifs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>';
+                if (!$has_table && $btn) {
+                    echo $btn;
                 }
-                echo '</div></article>';
+                echo '</div></div>';  // .ifs-tx .ifs-top
+                if ($has_table) {
+                    echo '<div class="ifs-tbl">' . wp_kses_post($table) . '</div>';
+                    if (trim(wp_strip_all_tags($after)) !== '') {
+                        echo '<div class="ifs-after">' . wp_kses_post($after) . '</div>';
+                    }
+                    if ($btn) {
+                        echo '<div style="padding:0 28px 26px">' . $btn . '</div>';
+                    }
+                }
+                echo '</article>';
                 $i++;
             }
             echo '</div>';
