@@ -479,7 +479,7 @@ def _cta_from_text(cell: str) -> dict:
             dm = _BARE_DOMAIN_RE.search(ln)
             if dm and dm.end() >= len(ln.rstrip()):
                 url = _norm_url(dm.group(1))
-                ln = ln[: dm.start()].strip()
+                ln = re.sub(r"\s*(?:→|->|—|–|-)\s*$", "", ln[: dm.start()].strip()).strip()
                 if not ln:
                     continue
         if not url:
@@ -532,6 +532,20 @@ def _parse_cta_instruction(cell: str) -> list[dict]:
     return out
 
 
+def _looks_like_cta_grid(rows: list[list[str]]) -> bool:
+    """A column-organized CTA table: row 0 names each audience across columns
+    (e.g. 'For Travelers Booking Direct' | 'For Travel Trade & Wholesalers'),
+    and each column beneath is one CTA (company title, then body)."""
+    if _ncols(rows) < 2 or len(rows) < 2:
+        return False
+    aud_words = (
+        "traveler", "traveller", "direct", "trade", "wholesal", "agent",
+        "operator", "booking",
+    )
+    header = [c.lower() for c in rows[0]]
+    return sum(1 for h in header if any(w in h for w in aud_words)) >= 2
+
+
 def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
     """Parse the two formal CTAs (Voyagers + Latin Trails) across house formats.
 
@@ -540,6 +554,21 @@ def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
     the body and contact lines in others. Joining lets the headline become the
     CTA title instead of being mistaken for body copy.
     """
+    # Column-organized grid: row 0 = audience headers, each column below is a CTA
+    # (title = the company line, text = the copy under it). A row-major join would
+    # interleave the two CTAs, so handle columns explicitly.
+    if _looks_like_cta_grid(rows):
+        grid: list[dict] = []
+        for c in range(_ncols(rows)):
+            cells = [r[c].strip() for r in rows if c < len(r) and r[c].strip()]
+            if len(cells) < 2:
+                continue
+            b = _cta_from_text("\n".join(cells[1:]))  # skip the audience header
+            b["audience"] = _cta_audience(" ".join(cells))
+            grid.append(b)
+        grid = [b for b in grid if _cta_is_real(b)]
+        if len(grid) >= 2:
+            return grid
     joined = "\n".join(c.strip() for row in rows for c in row if c.strip())
     if re.search(r"call to action|CTA\s*\d+\s*[—–-]", joined, re.IGNORECASE):
         blocks = _parse_cta_instruction(joined)
