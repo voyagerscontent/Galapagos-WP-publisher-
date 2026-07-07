@@ -225,6 +225,8 @@ def _extract_wildlife_calendar(rows: list[list[str]]) -> list[dict]:
     def cell(row: list[str], i: int) -> str:
         return (row[i] or "").strip() if i < len(row) else ""
 
+    raw_header = rows[0]
+    multi = len(hl_idx) > 1
     out: list[dict] = []
     for r in rows[1:]:
         period = " ".join(v for i in period_cols if (v := cell(r, i)))
@@ -233,9 +235,18 @@ def _extract_wildlife_calendar(rows: list[list[str]]) -> list[dict]:
         if m and not label:
             label = m.group(1).strip()
             period = (period[: m.start()] + period[m.end():]).strip()
-        highlights = " ".join(v for i in hl_idx if (v := cell(r, i)))
-        highlights = re.sub(r"\[VERIFY[^\]]*\]", "", highlights)
-        period, label, highlights = _norm_ws(period).strip(" —–-"), _norm_ws(label), _norm_ws(highlights)
+        # With more than one highlight column (e.g. "Conditions" + "What to
+        # Prioritize") label each by its header so they don't run together; a
+        # single column stays as plain prose.
+        hl_parts: list[str] = []
+        for i in hl_idx:
+            v = _norm_ws(re.sub(r"\[VERIFY[^\]]*\]", "", cell(r, i)))
+            if not v:
+                continue
+            head = _norm_ws(raw_header[i] if i < len(raw_header) else "").rstrip(":")
+            hl_parts.append(f"**{head}:** {v}" if multi and head else v)
+        highlights = "\n\n".join(hl_parts)
+        period, label = _norm_ws(period).strip(" —–-"), _norm_ws(label)
         if period or highlights:
             out.append({"period": period, "label": label, "highlights": highlights})
     return out
