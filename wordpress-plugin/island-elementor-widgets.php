@@ -2867,7 +2867,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $s = $this->get_settings_for_display();
             $raw = trim((string) ($s['manual'] ?? ''));
             if ($raw === '') {
+                // Inside a Theme Builder template on the front end, get_the_ID()
+                // can be 0 (outside the loop); fall back to the queried object so
+                // the right page's seo_schema is read.
                 $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
+                if (!$pid) {
+                    $pid = (int) get_queried_object_id();
+                }
                 $field = trim((string) ($s['field_name'] ?? 'seo_schema')) ?: 'seo_schema';
                 $raw = trim((string) (get_field($field, $pid) ?: ''));
             }
