@@ -78,11 +78,12 @@ def test_santa_cruz_doc_extracts_travel_and_related_links():
     assert not any("getting to" in t or "explore more" in t or "where to stay" in t for t in titles)
 
 
-def test_no_seo_schema_field_in_island_output():
+def test_schema_jsonld_maps_to_seo_schema_field():
     components = [C.hero(heading="X", subheading="", image={}, ctas=[])]
     acf, _ = build_acf(components, _cfg(), schema_jsonld='{"@context":"x"}')
-    # Island group has no SEO field; schema must not be written here.
-    assert "seo_schema" not in acf
+    # Page-specific JSON-LD is written to the island `seo_schema` field, which the
+    # "Island Schema" Elementor widget prints per page.
+    assert acf["seo_schema"] == '{"@context":"x"}'
 
 
 def test_related_link_groups_flatten_with_group_column():

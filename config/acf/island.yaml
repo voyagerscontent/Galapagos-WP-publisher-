@@ -11,8 +11,10 @@
 mode: island
 image_as: id
 
-# No top_level schema field: the island group has no seo_schema (Rank Math owns SEO).
-top_level: {}
+# Page-specific schema.org JSON-LD lands in `seo_schema`; the "Island Schema"
+# Elementor widget prints it into each page. (Rank Math still owns meta title/desc.)
+top_level:
+  schema_jsonld: seo_schema
 
 island:
   hero:

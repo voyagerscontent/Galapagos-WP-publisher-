@@ -198,6 +198,12 @@
           { "key": "rl_label", "label": "Label", "name": "label", "type": "text" },
           { "key": "rl_url", "label": "URL", "name": "url", "type": "text" }
         ]
+      },
+      { "key": "tab_schema", "label": "Schema", "name": "", "type": "tab" },
+      {
+        "key": "seo_schema", "label": "Schema JSON-LD", "name": "seo_schema", "type": "textarea",
+        "instructions": "Page-specific schema.org markup. Paste the JSON-LD for THIS page (with or without the <script type=\"application/ld+json\"> wrapper). The 'Island Schema' Elementor widget prints it into the page. Leave blank to skip.",
+        "rows": 14, "new_lines": ""
       }
     ],
     "location": [

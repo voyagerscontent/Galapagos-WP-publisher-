@@ -2791,6 +2791,83 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /**
+     * Island Schema (JSON-LD) — prints the page-specific schema.org markup stored
+     * in the ACF `seo_schema` field as a <script type="application/ld+json"> tag.
+     * Drop it ONCE in the Theme Builder template: every page then outputs its own
+     * schema (not a shared/general one). A manual override box is also provided.
+     */
+    class Island_Schema_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_schema';
+        }
+        public function get_title()
+        {
+            return 'Island Schema (JSON-LD)';
+        }
+        public function get_icon()
+        {
+            return 'eicon-code';
+        }
+        public function get_categories()
+        {
+            return ['general'];
+        }
+        public function get_keywords()
+        {
+            return ['schema', 'json-ld', 'jsonld', 'structured', 'seo', 'rich', 'ld+json'];
+        }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Schema', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('field_name', ['label' => 'ACF field name', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'seo_schema',
+                'description' => 'The ACF field holding this page\'s JSON-LD. Default: seo_schema.']);
+            $this->add_control('manual', ['label' => 'Manual override', 'type' => \Elementor\Controls_Manager::TEXTAREA, 'rows' => 8,
+                'description' => 'Optional. Paste JSON-LD (or a full <script> block) here to override the ACF field for this placement.']);
+            $this->add_control('note', ['type' => \Elementor\Controls_Manager::RAW_HTML,
+                'raw' => 'Renders an invisible &lt;script type="application/ld+json"&gt; tag. Place ONCE in the island template; each page prints its own <code>seo_schema</code>.',
+                'content_classes' => 'elementor-descriptor']);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $raw = trim((string) ($s['manual'] ?? ''));
+            if ($raw === '') {
+                $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
+                $field = trim((string) ($s['field_name'] ?? 'seo_schema')) ?: 'seo_schema';
+                $raw = trim((string) (get_field($field, $pid) ?: ''));
+            }
+
+            if ($raw === '') {
+                if (island_ew_is_editing()) {
+                    echo '<div style="padding:10px 14px;border:1px dashed #b9a48c;border-radius:6px;color:#8a7a6a;font:13px/1.4 sans-serif">Island Schema: no <code>seo_schema</code> set for this page yet — nothing will render on the front end.</div>';
+                }
+                return;
+            }
+
+            // Accept either raw JSON ({…}/[…]) or an already-wrapped <script> block.
+            if ($raw[0] === '<') {
+                $out = $raw;                       // already contains <script>…</script>
+            } else {
+                $out = '<script type="application/ld+json">' . $raw . '</script>';
+            }
+
+            if (island_ew_is_editing()) {
+                echo '<div style="padding:10px 14px;border:1px dashed #7fae7f;border-radius:6px;color:#4d774d;font:13px/1.4 sans-serif">✓ Island Schema active — JSON-LD will print here on the front end.</div>';
+            }
+            echo $out;
+        }
+    }
+
     } // end: declare widget classes once
 
     $widgets_manager->register(new Island_Wildlife_Widget());
@@ -2804,4 +2881,5 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     $widgets_manager->register(new Island_Travel_Widget());
     $widgets_manager->register(new Island_Sources_Widget());
     $widgets_manager->register(new Island_RelatedLinks_Widget());
+    $widgets_manager->register(new Island_Schema_Widget());
 });
