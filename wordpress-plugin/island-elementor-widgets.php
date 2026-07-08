@@ -1698,6 +1698,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
             $this->add_control('first_open', ['label' => 'Open first item', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('faq_schema', ['label' => 'Output FAQ schema (JSON-LD)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Adds an FAQPage structured-data block built from these Q&As (like Elementor\'s Toggle). Use only ONE FAQ widget per page with this ON to avoid duplicate schema.']);
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -1751,6 +1753,29 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
             }
             echo '</div>';
+
+            // FAQPage structured data, built from the same Q&As (like Elementor's
+            // Toggle). Slashes stay escaped so an answer can never break out of
+            // the <script>. Keep ONE emitting widget per page (control above).
+            if (($s['faq_schema'] ?? 'yes') === 'yes') {
+                $entities = [];
+                foreach ($rows as $r) {
+                    $q = trim(wp_strip_all_tags((string) ($r['question'] ?? '')));
+                    $a = trim((string) ($r['answer'] ?? ''));
+                    if ($q === '' || $a === '') {
+                        continue;
+                    }
+                    $entities[] = [
+                        '@type' => 'Question',
+                        'name' => $q,
+                        'acceptedAnswer' => ['@type' => 'Answer', 'text' => $a],
+                    ];
+                }
+                if ($entities) {
+                    $schema = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => $entities];
+                    echo '<script type="application/ld+json">' . wp_json_encode($schema, JSON_UNESCAPED_UNICODE) . '</script>';
+                }
+            }
         }
     }
 
