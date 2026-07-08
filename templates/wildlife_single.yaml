@@ -40,8 +40,9 @@ layout:
   - { slot: conservation, kind: section, heading: "Conservation" }
   - { slot: faq, kind: faq }
 
-required_sections:
-  - overview
+# Species docs open with a lead paragraph rather than an "Overview" heading, so
+# no section is strictly required (avoids a spurious "missing overview" warning).
+required_sections: []
 
 schema_extra:
   articleSection: "Wildlife"

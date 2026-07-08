@@ -120,6 +120,20 @@ def build_page(
         quick_facts_intro=str(doc.metadata.get("quick_facts_intro") or ""),
         wildlife_title=str(doc.metadata.get("wildlife_title") or ""),
         visitor_sites_title=str(doc.metadata.get("visitor_sites_title") or ""),
+        scientific_name=str(doc.metadata.get("scientific_name") or ""),
+        common_name=str(doc.metadata.get("common_name") or ""),
+        conservation_status=str(doc.metadata.get("conservation_status") or ""),
+        population=str(doc.metadata.get("population") or ""),
+        endemic=bool(doc.metadata.get("endemic") or False),
+        seasonality=doc.metadata.get("seasonality") or None,
+        seasonality_title=str(doc.metadata.get("seasonality_title") or ""),
+        seasonality_intro=str(doc.metadata.get("seasonality_intro") or ""),
+        subspecies=doc.metadata.get("subspecies") or None,
+        subspecies_title=str(doc.metadata.get("subspecies_title") or ""),
+        subspecies_intro=str(doc.metadata.get("subspecies_intro") or ""),
+        where_to_see=doc.metadata.get("where_to_see") or None,
+        where_to_see_title=str(doc.metadata.get("where_to_see_title") or ""),
+        where_to_see_intro=str(doc.metadata.get("where_to_see_intro") or ""),
     )
     # Make domainless links absolute (e.g. /cruises/ -> https://site/cruises/).
     # Links that already carry a domain are left untouched.

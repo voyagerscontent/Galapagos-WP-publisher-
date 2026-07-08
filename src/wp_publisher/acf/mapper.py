@@ -51,6 +51,20 @@ def build_acf(
     quick_facts_intro: str = "",
     wildlife_title: str = "",
     visitor_sites_title: str = "",
+    scientific_name: str = "",
+    common_name: str = "",
+    conservation_status: str = "",
+    population: str = "",
+    endemic: bool = False,
+    seasonality: list | None = None,
+    seasonality_title: str = "",
+    seasonality_intro: str = "",
+    subspecies: list | None = None,
+    subspecies_title: str = "",
+    subspecies_intro: str = "",
+    where_to_see: list | None = None,
+    where_to_see_title: str = "",
+    where_to_see_intro: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
@@ -67,6 +81,15 @@ def build_acf(
             visitor_sites_intro_cruise=visitor_sites_intro_cruise,
             quick_facts_title=quick_facts_title, quick_facts_intro=quick_facts_intro,
             wildlife_title=wildlife_title, visitor_sites_title=visitor_sites_title,
+            scientific_name=scientific_name, common_name=common_name,
+            conservation_status=conservation_status, population=population,
+            endemic=endemic,
+            seasonality=seasonality, seasonality_title=seasonality_title,
+            seasonality_intro=seasonality_intro,
+            subspecies=subspecies, subspecies_title=subspecies_title,
+            subspecies_intro=subspecies_intro,
+            where_to_see=where_to_see, where_to_see_title=where_to_see_title,
+            where_to_see_intro=where_to_see_intro,
         )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
@@ -249,6 +272,20 @@ def build_acf_island(
     quick_facts_intro: str = "",
     wildlife_title: str = "",
     visitor_sites_title: str = "",
+    scientific_name: str = "",
+    common_name: str = "",
+    conservation_status: str = "",
+    population: str = "",
+    endemic: bool = False,
+    seasonality: list | None = None,
+    seasonality_title: str = "",
+    seasonality_intro: str = "",
+    subspecies: list | None = None,
+    subspecies_title: str = "",
+    subspecies_intro: str = "",
+    where_to_see: list | None = None,
+    where_to_see_title: str = "",
+    where_to_see_intro: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     """Map components to the structured 'Island Guide Content' ACF group.
 
@@ -417,6 +454,56 @@ def build_acf_island(
             rows = [{rl["label"]: r.get("label", ""), rl["url"]: r.get("url", "")} for r in related_links]
         if rows:
             out[rl["field"]] = rows
+    # ── Wildlife species fields (only present in the wildlife_single profile) ──
+    if scientific_name and m.get("scientific_name"):
+        out[m["scientific_name"]] = scientific_name
+    if common_name and m.get("common_name"):
+        out[m["common_name"]] = common_name
+    if conservation_status and m.get("conservation_status"):
+        out[m["conservation_status"]] = conservation_status
+    if population and m.get("population"):
+        out[m["population"]] = population
+    if endemic and m.get("endemic"):
+        out[m["endemic"]] = 1  # ACF true_false
+    if where_to_see and m.get("where_to_see"):
+        ws = m["where_to_see"]
+        out[ws["field"]] = [
+            {
+                ws[k]: (md_to_html(r.get(k, "")) if k == "description" else r.get(k, ""))
+                for k in ("site", "island", "access", "season", "description", "image")
+                if ws.get(k)
+            }
+            for r in where_to_see
+        ]
+    if where_to_see_title and m.get("where_to_see_title"):
+        out[m["where_to_see_title"]] = where_to_see_title
+    if where_to_see_intro and m.get("where_to_see_intro"):
+        out[m["where_to_see_intro"]] = md_to_html(where_to_see_intro)
+    if seasonality and m.get("seasonality"):
+        sf = m["seasonality"]
+        out[sf["field"]] = [
+            {sf[k]: r.get(k, "") for k in ("period", "label", "notes") if sf.get(k)}
+            for r in seasonality
+        ]
+    if seasonality_title and m.get("seasonality_title"):
+        out[m["seasonality_title"]] = seasonality_title
+    if seasonality_intro and m.get("seasonality_intro"):
+        out[m["seasonality_intro"]] = md_to_html(seasonality_intro)
+    if subspecies and m.get("subspecies"):
+        bf = m["subspecies"]
+        out[bf["field"]] = [
+            {
+                bf[k]: r.get(k, "")
+                for k in ("island", "name", "trait", "population", "status", "image")
+                if bf.get(k)
+            }
+            for r in subspecies
+        ]
+    if subspecies_title and m.get("subspecies_title"):
+        out[m["subspecies_title"]] = subspecies_title
+    if subspecies_intro and m.get("subspecies_intro"):
+        out[m["subspecies_intro"]] = md_to_html(subspecies_intro)
+
     # GEO/AI answer: prefer the doc's extracted GEO block, else a tagline/subtitle.
     if m.get("geo_answer") and (geo_answer or subtitle):
         out[m["geo_answer"]] = geo_answer or subtitle

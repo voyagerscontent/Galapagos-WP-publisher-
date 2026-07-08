@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       file:
-        description: "Path to the document, or 'ALL_ISLANDS' to loop content/*-island.docx"
+        description: "Path to the document, or 'ALL_ISLANDS' (content/*-island.docx) / 'ALL_WILDLIFE' (content/wildlife/*.docx)"
         required: true
         type: string
       mode:
@@ -28,7 +28,7 @@ on:
           - publish-draft    # create/update a DRAFT in WordPress
           - publish-live     # publish LIVE on the site
       page_type:
-        description: "Force a page type (blank = auto-detect): blog_post | destination | tour | cruise"
+        description: "Force a page type (blank = auto-detect): blog_post | destination | tour | cruise | wildlife_single. ALL_WILDLIFE forces wildlife_single automatically."
         required: false
         type: string
       slug:
@@ -90,15 +90,27 @@ jobs:
           set -euo pipefail
 
           # Build the list of files to process. 'ALL_ISLANDS' expands to every
-          # island doc (content/*-island.docx); otherwise it's the single file.
+          # island doc (content/*-island.docx); 'ALL_WILDLIFE' to every species
+          # doc (content/wildlife/*.docx); otherwise it's the single file.
           FILES=()
           PER_FILE_SLUG=false
+          SLUG_KIND=""                    # island | wildlife (how to derive the slug)
           if [ "${IN_FILE}" = "ALL_ISLANDS" ]; then
             shopt -s nullglob
             FILES=(content/*-island.docx)
             PER_FILE_SLUG=true            # derive each slug from its filename
+            SLUG_KIND="island"
             if [ ${#FILES[@]} -eq 0 ]; then
               echo "::error::ALL_ISLANDS matched no content/*-island.docx files"; exit 1
+            fi
+          elif [ "${IN_FILE}" = "ALL_WILDLIFE" ]; then
+            shopt -s nullglob
+            FILES=(content/wildlife/*.docx)
+            PER_FILE_SLUG=true            # slug = basename (e.g. giant-tortoise)
+            SLUG_KIND="wildlife"
+            if [ -z "${IN_TYPE}" ]; then IN_TYPE="wildlife_single"; fi
+            if [ ${#FILES[@]} -eq 0 ]; then
+              echo "::error::ALL_WILDLIFE matched no content/wildlife/*.docx files"; exit 1
             fi
           else
             if [ ! -f "${IN_FILE}" ]; then
@@ -120,9 +132,11 @@ jobs:
           for f in "${FILES[@]}"; do
             SLUG_ARGS=()
             if [ "${PER_FILE_SLUG}" = "true" ]; then
-              base="$(basename "$f" .docx)"     # e.g. baltra-island
-              isl="${base%-island}"             # e.g. baltra
-              SLUG_ARGS=(--slug "${isl}")
+              base="$(basename "$f" .docx)"     # e.g. baltra-island / giant-tortoise
+              if [ "${SLUG_KIND}" = "island" ]; then
+                base="${base%-island}"          # e.g. baltra
+              fi                                 # wildlife: basename is already the slug
+              SLUG_ARGS=(--slug "${base}")
             elif [ -n "${IN_SLUG}" ]; then
               SLUG_ARGS=(--slug "${IN_SLUG}")
             fi

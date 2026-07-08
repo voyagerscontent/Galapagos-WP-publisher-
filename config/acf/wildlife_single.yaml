@@ -34,6 +34,13 @@ island:
   geo_answer: geo_answer
   intro: intro
 
+  # Species facts mined from the doc's "At a Glance" table.
+  scientific_name: scientific_name
+  common_name: common_name
+  conservation_status: conservation_status
+  population: population
+  endemic: endemic
+
   feature_sections:
     field: feature_sections
     title: title

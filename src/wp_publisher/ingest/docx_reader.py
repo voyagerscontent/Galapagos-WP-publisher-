@@ -16,7 +16,33 @@ from ..utils import section_slug
 
 _META_RE = re.compile(r"^([A-Za-z][A-Za-z0-9 _/-]{1,40}):\s*(.+)$")
 # House editorial markers that authors type literally into Word.
-_HEADING_MARK = re.compile(r"^\[H[1-6]\]\s*", re.IGNORECASE)
+# House heading markers authors type literally: "[H2] ", "H2: ", "H2. ".
+_HEADING_MARK = re.compile(r"^(\[H[1-6]\]|H[1-6][:.])\s*", re.IGNORECASE)
+# CMS scaffold lines that must never become the page title (the domain,
+# "CMS STAGE …", a KV header row, "PAGE CONTENT BEGINS").
+_SCAFFOLD_TITLE_RE = re.compile(
+    r"^(cms stage\b|galapagosislands\.travel$|page content begins"
+    r"|(publisher|author|slug|redirect|canonical|focus keyword|page template"
+    r"|parent page|publish url|publish status|title tag|meta description"
+    r"|secondary keywords|schema types|date (published|modified))\s*:)",
+    re.IGNORECASE,
+)
+# A Title-Case template label ending in "Page" (e.g. "Galápagos Sea Lion Page").
+# Case-sensitive so ordinary prose ending in "page" doesn't match.
+_SCAFFOLD_PAGE_LABEL_RE = re.compile(r"^([A-ZÁÉÍÓÚ][\wÁÉÍÓÚáéíóúñ-]*\s+){1,4}Page$")
+
+
+def _is_scaffold_title(text: str) -> bool:
+    text = (text or "").strip()
+    return bool(_SCAFFOLD_TITLE_RE.match(text) or _SCAFFOLD_PAGE_LABEL_RE.match(text))
+
+
+# GEO/AIO snippet scaffolding written as prose: instruction lines to drop.
+_GEO_SCAFFOLD_RE = re.compile(
+    r"^(GEO\s*/?\s*AIO\b|AIO\b.*\bSNIPPET|Insert (this|as) .*(paragraph|answer)"
+    r"|Text:\s*$)",
+    re.IGNORECASE,
+)
 _EDITORIAL_FLAG = re.compile(
     r"^(⚠️\s*)?(WEBMASTER\b|.*\bDo not publish\b|\[?VERIFY\]?\b)", re.IGNORECASE
 )
@@ -299,6 +325,200 @@ def _extract_quick_facts(rows: list[list[str]]) -> list[dict]:
     for r in rows[start:]:
         if len(r) >= 2 and r[0].strip() and r[1].strip():
             out.append({"label": r[0].strip(), "value": r[1].strip()})
+    return out
+
+
+# ── Wildlife species pages ──────────────────────────────────────────────────
+# The intended-page-type hints that mean "single wildlife species page", so the
+# reader keeps a table-heavy species doc out of the CMS-Stage adapter.
+_SPECIES_PAGE_TYPES = {
+    "wildlife_single", "wildlife_species", "species_page", "wildlife_page",
+}
+# Content signals (for preview, when no page type is passed). Kept specific so
+# island docs — which merely LINK to /wildlife/ pages — never match.
+_SPECIES_SIGNAL_RE = re.compile(
+    r"taxonconcept|species\s+guide|scientific\s*name\s*[:|]|\bscientificname\b",
+    re.IGNORECASE,
+)
+
+
+def _norm_page_type(value: str | None) -> str:
+    return (value or "").strip().lower().replace(" ", "_")
+
+
+def _looks_like_species(full_text: str) -> bool:
+    return bool(_SPECIES_SIGNAL_RE.search(full_text or ""))
+
+
+# Publisher / SEO scaffold KV tables (PUBLISH URL, Title tag, Anchor Text…) that
+# a species doc packs into 2-column tables. They look like a quick-facts table
+# but are webmaster metadata, not content — skip them so they don't pollute the
+# "At a Glance" repeater.
+_SCAFFOLD_LABELS = {
+    "publish url", "parent page", "page template", "redirect", "publisher",
+    "author / byline", "author", "date published", "date modified", "title tag",
+    "meta description", "canonical", "canonical url", "focus keyword",
+    "secondary keywords", "schema types", "anchor text", "target url",
+    "location", "publish status", "slug", "url",
+}
+
+
+def _scaffold_label(label: str) -> str:
+    return re.sub(r"\s*\(.*?\)\s*", " ", (label or "").lower()).strip().rstrip(":").strip()
+
+
+def _is_scaffold_kv_table(rows: list[list[str]]) -> bool:
+    """A 2-col table whose row labels are mostly webmaster/SEO scaffold keys."""
+    if _ncols(rows) != 2 or len(rows) < 2:
+        return False
+    labels = [_scaffold_label(r[0]) for r in rows if len(r) >= 2 and r[0].strip()]
+    if not labels:
+        return False
+    hits = sum(1 for lbl in labels if lbl in _SCAFFOLD_LABELS)
+    return hits >= max(2, (len(labels) + 1) // 2)
+
+
+# Dedicated species-fact labels mined out of the "At a Glance" facts table.
+_FACT_KEYS = {
+    "scientific_name": ("scientific name", "scientific"),
+    "common_name": ("common name",),
+    "conservation_status": ("iucn status", "iucn", "conservation status", "status"),
+    "population": ("population estimate", "population", "world population"),
+}
+# IUCN Red List categories, longest-first so "Critically Endangered" wins over
+# "Endangered". Maps free text onto the ACF select's canonical choices.
+_IUCN_CHOICES = [
+    "Critically Endangered", "Near Threatened", "Least Concern", "Data Deficient",
+    "Vulnerable", "Endangered",
+]
+
+
+def _normalize_iucn(value: str) -> str:
+    low = (value or "").lower()
+    for choice in _IUCN_CHOICES:
+        if choice.lower() in low:
+            return choice
+    return ""
+
+
+def _extract_species_facts(quick_facts: list[dict]) -> dict:
+    """Pull scientific/common name, IUCN status and population out of the
+    already-parsed facts rows. Returns only the fields actually found."""
+    out: dict = {}
+    for row in quick_facts:
+        label = _scaffold_label(row.get("label", ""))
+        value = (row.get("value") or "").strip()
+        if not label or not value:
+            continue
+        for field, keys in _FACT_KEYS.items():
+            if field in out:
+                continue
+            if any(label == k or label.startswith(k) for k in keys):
+                if field == "conservation_status":
+                    norm = _normalize_iucn(value)
+                    if norm:
+                        out[field] = norm
+                else:
+                    out[field] = value
+                break
+    return out
+
+
+# Seasonality calendar: a Period/Month table (period + optional status + notes).
+_SEASON_PERIOD_HEADS = ("month", "period", "season", "dates", "when", "time of year")
+_SEASON_LABEL_HEADS = ("status", "label", "stage", "phase", "presence")
+
+
+def _is_seasonality_table(rows: list[list[str]]) -> bool:
+    if _ncols(rows) < 2 or len(rows) < 3:
+        return False
+    h0 = rows[0][0].lower()
+    return any(k in h0 for k in _SEASON_PERIOD_HEADS)
+
+
+def _extract_seasonality(rows: list[list[str]]) -> list[dict]:
+    header = [c.lower() for c in rows[0]]
+
+    def find(cands) -> int | None:
+        for i, h in enumerate(header):
+            if any(c in h for c in cands):
+                return i
+        return None
+
+    i_period = find(_SEASON_PERIOD_HEADS) or 0
+    i_label = find(_SEASON_LABEL_HEADS)
+    # Notes = the first remaining column (Event / Notes / Highlights / …).
+    i_notes = next(
+        (i for i in range(len(header)) if i not in (i_period, i_label)), None
+    )
+
+    def cell(r: list[str], i: int | None) -> str:
+        return _norm_ws(r[i]) if i is not None and i < len(r) else ""
+
+    out: list[dict] = []
+    for r in rows[1:]:
+        period = cell(r, i_period)
+        if not period:
+            continue
+        out.append({
+            "period": period,
+            "label": cell(r, i_label),
+            "notes": cell(r, i_notes),
+        })
+    return out
+
+
+# Subspecies / island-variants table: an "Island" column plus a name column
+# (Species / Subspecies / Name) — e.g. giant tortoise shell types, marine iguana
+# subspecies.
+_SUB_NAME_HEADS = ("subspecies", "species", "name", "race", "form", "variant")
+
+
+def _is_subspecies_table(rows: list[list[str]]) -> bool:
+    if _ncols(rows) < 2 or len(rows) < 3:
+        return False
+    header = [c.lower() for c in rows[0]]
+    if "island" not in header[0]:
+        return False
+    return any(any(k in h for k in _SUB_NAME_HEADS) for h in header[1:])
+
+
+def _extract_subspecies(rows: list[list[str]]) -> list[dict]:
+    header = [c.lower() for c in rows[0]]
+
+    def find(cands, skip=()) -> int | None:
+        for i, h in enumerate(header):
+            if i in skip:
+                continue
+            if any(c in h for c in cands):
+                return i
+        return None
+
+    i_island = 0
+    i_name = find(_SUB_NAME_HEADS, skip={0})
+    i_pop = find(("population", "approx"), skip={0})
+    i_status = find(("status",), skip={0})
+    used = {i_island, i_name, i_pop, i_status}
+    i_trait = find(("shell", "trait", "notable", "distinguishing", "descr", "feature"),
+                   skip=used) or next(
+        (i for i in range(1, len(header)) if i not in used), None)
+
+    def cell(r: list[str], i: int | None) -> str:
+        return _norm_ws(r[i]) if i is not None and i < len(r) else ""
+
+    out: list[dict] = []
+    for r in rows[1:]:
+        island = cell(r, i_island)
+        name = cell(r, i_name)
+        if not island and not name:
+            continue
+        out.append({
+            "island": island,
+            "name": name,
+            "trait": cell(r, i_trait),
+            "population": cell(r, i_pop),
+            "status": cell(r, i_status),
+        })
     return out
 
 
@@ -987,7 +1207,7 @@ _KNOWN_META_KEYS = {
 }
 
 
-def read_docx(path: str | Path) -> Document:
+def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     from docx import Document as DocxDocument  # imported lazily
 
     path = Path(path)
@@ -996,14 +1216,19 @@ def read_docx(path: str | Path) -> Document:
     # Page-specific schema.org block the author wrote INTO the document (in a
     # WEBMASTER text box that .paragraphs can't see, so read the raw XML). The
     # engine never generates schema — it publishes only what the doc provides.
-    schema_block = _extract_schema_jsonld(_docx_full_text(path))
+    full_text = _docx_full_text(path)
+    schema_block = _extract_schema_jsonld(full_text)
 
     # House "CMS Stage" docs use no heading styles and their own conventions;
-    # route them to the dedicated adapter.
+    # route them to the dedicated adapter — UNLESS this is a wildlife species
+    # page. Those docs carry the same "PUBLISHER HEADER BLOCK" marker but keep
+    # their real content (facts, seasonality, subspecies, CTA) in data tables the
+    # CMS adapter drops, so they must go through the normal table-aware path.
     from .cms import build_cms_document, looks_like_cms
 
     all_texts = [p.text for p in docx.paragraphs]
-    if looks_like_cms([t for t in all_texts if t.strip()]):
+    is_species = _norm_page_type(page_type) in _SPECIES_PAGE_TYPES or _looks_like_species(full_text)
+    if not is_species and looks_like_cms([t for t in all_texts if t.strip()]):
         cms_doc = build_cms_document(all_texts, path.name)
         if schema_block:
             cms_doc.metadata["schema_jsonld"] = schema_block
@@ -1045,7 +1270,8 @@ def read_docx(path: str | Path) -> Document:
     paras = list(docx.paragraphs)
     start = 0
     for i, p in enumerate(paras):
-        if _p_text(p).strip() and _is_title_para(p):
+        txt = _HEADING_MARK.sub("", _p_text(p).strip()).strip()
+        if txt and _is_title_para(p) and not _is_scaffold_title(txt):
             start = i
             break
 
@@ -1070,6 +1296,13 @@ def read_docx(path: str | Path) -> Document:
         # A stray "CTA button:" directive in the body is an instruction, not prose.
         if text.lower().startswith("cta button:"):
             continue
+        # GEO/AIO snippet scaffolding some docs write as prose (not a table):
+        # drop the instruction lines and unwrap the "Text: <answer>" prefix so the
+        # publishable answer stays as the lead paragraph.
+        if _GEO_SCAFFOLD_RE.match(text):
+            continue
+        if len(text) > 40:
+            text = re.sub(r"^Text:\s+", "", text)
 
         # Heading from a heading/title style, or visually (bold + larger font for
         # docs that don't use Word heading styles).
@@ -1083,6 +1316,9 @@ def read_docx(path: str | Path) -> Document:
         if level:
             flush_list()
             if level == 1 and not doc.title and not seen_body:
+                # A CMS scaffold label ("… Page", the domain) is not the title.
+                if _is_scaffold_title(text):
+                    continue
                 doc.title = text
                 continue
             if level >= 3:
@@ -1139,6 +1375,7 @@ def read_docx(path: str | Path) -> Document:
 
     # Tables become table blocks appended to the lead/last section. Internal
     # instruction / explainer tables (green boxes) are skipped — not content.
+    season_cands: list[list[dict]] = []
     for table in docx.tables:
         rows = [[_clean_markers(_cell_text(cell)) for cell in row.cells] for row in table.rows]
         if not rows:
@@ -1148,6 +1385,10 @@ def read_docx(path: str | Path) -> Document:
             doc.metadata.setdefault("geo_answer", geo)
             continue  # the GEO block is scaffolding, not body content
         if _is_instruction_table(rows):
+            continue
+        # Webmaster / SEO scaffold KV tables (PUBLISH URL, Title tag, Anchor
+        # Text…) that species docs pack into 2-col tables — not content.
+        if _is_scaffold_kv_table(rows):
             continue
         # Single-cell boxes: scaffolding/placeholders are dropped; a prose box is
         # a pull-quote/callout, not a full-width data table.
@@ -1176,6 +1417,20 @@ def read_docx(path: str | Path) -> Document:
             if cal:
                 doc.metadata.setdefault("wildlife_calendar", []).extend(cal)
                 continue
+        # Per-island variants (giant tortoise shell types, marine iguana races).
+        if _is_subspecies_table(rows):
+            sub = _extract_subspecies(rows)
+            if sub:
+                doc.metadata.setdefault("subspecies", []).extend(sub)
+                continue
+        # Viewing calendar / breeding cycle (period + optional status + notes).
+        # Several may exist (e.g. a "Period | Event" plus a "Month | Status |
+        # Notes"); keep the richest and remember the rest as candidates.
+        if _is_seasonality_table(rows):
+            season = _extract_seasonality(rows)
+            if season:
+                season_cands.append(season)
+                continue
         if _is_quick_facts_table(rows):
             facts = _extract_quick_facts(rows)
             if facts:
@@ -1196,6 +1451,23 @@ def read_docx(path: str | Path) -> Document:
     # scaffolding that leaked through a mixed green box).
     if doc.metadata.get("cta_blocks"):
         doc.metadata["cta_blocks"] = _dedupe_ctas(doc.metadata["cta_blocks"])
+
+    # Seasonality: pick the richest calendar (most rows, tie-break: has a
+    # status/label column) when a doc carries more than one.
+    if season_cands:
+        best_season = max(
+            season_cands,
+            key=lambda c: (len(c), sum(1 for r in c if r.get("label"))),
+        )
+        doc.metadata["seasonality"] = best_season
+
+    # Dedicated species facts (scientific/common name, IUCN status, population)
+    # mined from the "At a Glance" facts table; endemism from the body text.
+    if doc.metadata.get("quick_facts"):
+        for field, value in _extract_species_facts(doc.metadata["quick_facts"]).items():
+            doc.metadata.setdefault(field, value)
+    if re.search(r"\bendemic\b", full_text, re.IGNORECASE):
+        doc.metadata.setdefault("endemic", True)
 
     # Citations / sources section -> structured metadata ('sources',
     # 'sources-citations', 'sources & citations'…).

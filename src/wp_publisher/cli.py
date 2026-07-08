@@ -197,7 +197,7 @@ def preview(
     out: Optional[Path] = typer.Option(None, "--out", "-o", help="Write artifacts here."),
 ) -> None:
     """Build a page and show/save it WITHOUT publishing."""
-    doc = read_file(file)
+    doc = read_file(file, page_type=type)
     use_wp = media == "library"
     page, template, reason, _client, _settings = _build(doc, type, None, media, use_wp)
     _apply_slug(page, slug, test)
@@ -252,7 +252,7 @@ def publish(
         [f.strip() for f in only_fields.split(",") if f.strip()] if only_fields else None
     )
 
-    doc = read_file(file)
+    doc = read_file(file, page_type=type)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
     _apply_slug(page, slug, test)
     _fix_schema_url(page, settings)
