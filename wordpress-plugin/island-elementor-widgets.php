@@ -1479,27 +1479,35 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             /* Infographic (renders after a section's card when that row has an
              * "infographic" image — content width, between this card and next). */
             $this->start_controls_section('si', ['label' => 'Infographic', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('info_label', ['label' => 'Show "Infographic" label', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '']);
-            $this->add_control('info_label_text', ['label' => 'Label text', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Infographic',
-                'condition' => ['info_label' => 'yes']]);
-            $this->add_control('info_label_color', ['label' => 'Label color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#b08a55',
-                'selectors' => ['{{WRAPPER}} .ifs-info-eyebrow' => 'color:{{VALUE}}'], 'condition' => ['info_label' => 'yes']]);
+            $this->add_control('info_lightbox', ['label' => 'Open full on click (lightbox)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On: a controlled-height banner that opens the full image on click. Off: show the full image inline.']);
             $this->add_responsive_control('info_maxw', ['label' => 'Max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'size_units' => ['%', 'px'],
                 'range' => ['%' => ['min' => 40, 'max' => 100], 'px' => ['min' => 400, 'max' => 1200]], 'default' => ['size' => 100, 'unit' => '%'],
                 'selectors' => ['{{WRAPPER}} .ifs-info' => 'max-width:{{SIZE}}{{UNIT}};margin-left:auto;margin-right:auto']]);
-            $this->add_control('info_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
-                'default' => ['size' => 20, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-info-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('info_frame_bg', ['label' => 'Background (optional)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '',
-                'selectors' => ['{{WRAPPER}} .ifs-info-frame' => 'background:{{VALUE}}']]);
-            $this->add_control('info_border', ['label' => 'Border (optional)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '',
-                'selectors' => ['{{WRAPPER}} .ifs-info-frame' => 'border:1px solid {{VALUE}}']]);
-            $this->add_control('info_shadow', ['label' => 'Shadow (optional)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'return_value' => 'yes',
-                'selectors' => ['{{WRAPPER}} .ifs-info-frame' => 'box-shadow:0 14px 34px rgba(80,55,35,.12)']]);
-            $this->add_control('info_cap_color', ['label' => 'Caption color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#7a6a5c', 'separator' => 'before',
+            $this->add_control('info_h', ['label' => 'Banner height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 520]],
+                'default' => ['size' => 240, 'unit' => 'px'], 'condition' => ['info_lightbox' => 'yes'],
+                'selectors' => ['{{WRAPPER}} .ifs-info-band' => '--ig-h:{{SIZE}}{{UNIT}}'],
+                'description' => 'Height of the preview strip; the full image opens in the lightbox.']);
+            $this->add_control('info_radius', ['label' => 'Corner radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-info-band,{{WRAPPER}} .ifs-info-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('info_fade', ['label' => 'Fade color (match section bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f4ece0',
+                'selectors' => ['{{WRAPPER}} .ifs-info-band' => '--ig-fade:{{VALUE}}'], 'condition' => ['info_lightbox' => 'yes']]);
+            $this->add_control('info_btn_h', ['label' => 'Button', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before', 'condition' => ['info_lightbox' => 'yes']]);
+            $this->add_control('info_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Ver infográfico completo',
+                'condition' => ['info_lightbox' => 'yes']]);
+            $this->add_control('info_btn_bg', ['label' => 'Button background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a3d2b',
+                'selectors' => ['{{WRAPPER}} .ifs-info-btn' => 'background:{{VALUE}}'], 'condition' => ['info_lightbox' => 'yes']]);
+            $this->add_control('info_btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f6efe7',
+                'selectors' => ['{{WRAPPER}} .ifs-info-btn' => 'color:{{VALUE}}'], 'condition' => ['info_lightbox' => 'yes']]);
+            $this->add_control('info_title_h', ['label' => 'Title & caption', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('info_title_color', ['label' => 'Title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .ifs-info-title' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'info_title_typo', 'selector' => '{{WRAPPER}} .ifs-info-title']);
+            $this->add_control('info_cap_color', ['label' => 'Caption color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#7a6a5c',
                 'selectors' => ['{{WRAPPER}} .ifs-info-cap' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'info_cap_typo', 'selector' => '{{WRAPPER}} .ifs-info-cap']);
             $this->add_control('info_gap', ['label' => 'Space around', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 80]],
-                'default' => ['size' => 8, 'unit' => 'px'],
+                'default' => ['size' => 8, 'unit' => 'px'], 'separator' => 'before',
                 'selectors' => ['{{WRAPPER}} .ifs-info' => 'margin-top:{{SIZE}}{{UNIT}};margin-bottom:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
         }
@@ -1548,14 +1556,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
               {{WRAPPER}} .ifs-after{padding:0 28px 26px;font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-after p{margin:0 0 12px}{{WRAPPER}} .ifs-after :last-child{margin-bottom:0}
               {{WRAPPER}} .ifs-info{text-align:center;width:100%}
-              {{WRAPPER}} .ifs-info-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#b08a55;font-weight:700;margin-bottom:14px}
-              {{WRAPPER}} .ifs-info-eyebrow::before,{{WRAPPER}} .ifs-info-eyebrow::after{content:"";width:34px;height:1px;background:currentColor;opacity:.55}
-              {{WRAPPER}} .ifs-info-frame{border-radius:20px;overflow:hidden}
+              {{WRAPPER}} .ifs-info-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:20px;color:#64402C}
+              {{WRAPPER}} .ifs-info-band{position:relative;height:var(--ig-h,240px);border-radius:16px;overflow:hidden;cursor:zoom-in;box-shadow:0 8px 20px rgba(60,40,25,.10)}
+              {{WRAPPER}} .ifs-info-band img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+              {{WRAPPER}} .ifs-info-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:84px;background:linear-gradient(rgba(244,236,224,0),var(--ig-fade,#f4ece0));pointer-events:none}
+              {{WRAPPER}} .ifs-info-btn{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:2;background:#5a3d2b;color:#f6efe7;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:22px;box-shadow:0 6px 16px rgba(60,40,25,.25);cursor:zoom-in}
+              {{WRAPPER}} .ifs-info-frame{border-radius:16px;overflow:hidden}
               {{WRAPPER}} .ifs-info-frame img{width:100%;height:auto;display:block}
-              {{WRAPPER}} .ifs-info-cap{margin:14px auto 0;max-width:820px;font-size:13.5px;line-height:1.6;color:#7a6a5c}
+              {{WRAPPER}} .ifs-info-cap{margin:12px auto 0;max-width:820px;font-size:13.5px;line-height:1.6;color:#7a6a5c}
               @media(max-width:760px){{{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}{{WRAPPER}} .ifs-tbl{margin:14px 16px 20px}}
             </style>';
             $hx = ($s['hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
+            $lb = ($s['info_lightbox'] ?? 'yes') === 'yes';
+            $info_any = false;
             echo '<div class="ifs' . $hx . '">';
             $i = 0;
             foreach ($rows as $r) {
@@ -1608,15 +1621,28 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</article>';
 
                 // Infographic: its own block AFTER the card (outside it), at
-                // content width, before the next feature section.
+                // content width, before the next feature section. Full-width
+                // banner of a controlled height that opens the full image in a
+                // lightbox on click (Option D).
                 $info = island_ew_image_src($r['infographic'] ?? '');
                 if ($info) {
+                    $ititle = trim((string) ($r['infographic_title'] ?? ''));
                     $cap = trim((string) ($r['infographic_caption'] ?? ''));
+                    $alt = esc_attr($ititle ?: $cap);
                     echo '<div class="ifs-info">';
-                    if (($s['info_label'] ?? 'yes') === 'yes' && trim((string) ($s['info_label_text'] ?? '')) !== '') {
-                        echo '<span class="ifs-info-eyebrow">' . esc_html($s['info_label_text']) . '</span>';
+                    if ($ititle !== '') {
+                        echo '<p class="ifs-info-title">' . esc_html($ititle) . '</p>';
                     }
-                    echo '<div class="ifs-info-frame"><img src="' . esc_url($info) . '" alt="' . esc_attr($cap) . '" loading="lazy"></div>';
+                    if ($lb) {
+                        $blabel = trim((string) ($s['info_btn_label'] ?? '')) ?: 'Ver infográfico completo';
+                        echo '<div class="ifs-info-band" data-ifs-full="' . esc_url($info) . '" role="button" tabindex="0">'
+                            . '<img src="' . esc_url($info) . '" alt="' . $alt . '" loading="lazy">'
+                            . '<span class="ifs-info-btn">' . esc_html($blabel) . ' &#8599;</span>'
+                            . '</div>';
+                        $info_any = true;
+                    } else {
+                        echo '<div class="ifs-info-frame"><img src="' . esc_url($info) . '" alt="' . $alt . '" loading="lazy"></div>';
+                    }
                     if ($cap !== '') {
                         echo '<p class="ifs-info-cap">' . esc_html($cap) . '</p>';
                     }
@@ -1625,6 +1651,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
             }
             echo '</div>';
+            if ($info_any) {
+                $this->fs_lightbox();
+            }
             // Open on hover. Driven by JS (mouseenter/leave) so it never depends
             // on the CSS :hover firing — which Elementor's editor overlay can
             // swallow. Touch: tap toggles it (and :focus-within via tabindex).
@@ -1635,6 +1664,32 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
                     . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
             }
+        }
+
+        /** Shared infographic lightbox (printed once per request): a full-screen
+         * overlay that shows the full image when a banner is clicked. */
+        private function fs_lightbox()
+        {
+            static $done = false;
+            if ($done) {
+                return;
+            }
+            $done = true;
+            echo '<style>'
+                . '.ifs-lb{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(30,20,12,.82)}'
+                . '.ifs-lb.on{display:flex}'
+                . '.ifs-lb img{max-width:1000px;width:100%;height:auto;max-height:88vh;object-fit:contain;border-radius:12px;display:block}'
+                . '.ifs-lb .ifs-lb-x{position:absolute;top:14px;right:22px;color:#fff;font-size:32px;line-height:1;cursor:pointer;opacity:.85}'
+                . '</style>'
+                . '<div class="ifs-lb" id="ifs-lb"><span class="ifs-lb-x">&times;</span><img alt=""></div>';
+            echo '<script>(function(){if(window.__ifsLb)return;window.__ifsLb=1;'
+                . 'var lb=document.getElementById("ifs-lb"),im=lb.querySelector("img");'
+                . 'document.addEventListener("click",function(e){'
+                . 'var t=e.target.closest("[data-ifs-full]");'
+                . 'if(t){im.src=t.getAttribute("data-ifs-full");lb.classList.add("on");return;}'
+                . 'if(e.target===lb||e.target.classList.contains("ifs-lb-x"))lb.classList.remove("on");});'
+                . 'document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("on");});'
+                . '})();</script>';
         }
 
         /* Carousel layout: one feature per slide, image on one side / text on

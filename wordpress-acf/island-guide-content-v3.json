@@ -59,6 +59,8 @@
           { "key": "fs_btn_url", "label": "Button URL", "name": "button_url", "type": "url" },
           { "key": "fs_infographic", "label": "Infographic", "name": "infographic", "type": "image", "return_format": "id", "preview_size": "medium",
             "instructions": "Optional. When set, an infographic block renders AFTER this section's card (outside it, before the next section)." },
+          { "key": "fs_infographic_title", "label": "Infographic title", "name": "infographic_title", "type": "text",
+            "instructions": "Heading for the infographic, e.g. the doc's placeholder title 'El Chato Tortoise Migration Map'." },
           { "key": "fs_infographic_caption", "label": "Infographic caption", "name": "infographic_caption", "type": "text" }
         ]
       },
