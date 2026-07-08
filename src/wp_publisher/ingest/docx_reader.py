@@ -7,6 +7,7 @@ makes Word the highest-fidelity input format.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -715,6 +716,83 @@ def _extract_related_link_groups(section: Section) -> list[dict]:
     return [g for g in groups if g["links"]]
 
 
+_SMART_QUOTES = {
+    "“": '"', "”": '"', "″": '"',
+    "‘": "'", "’": "'", "′": "'",
+}
+
+
+def _normalize_quotes(text: str) -> str:
+    """Word turns straight quotes into curly ones, which breaks pasted JSON.
+    Fold the curly variants back so a doc-authored schema still parses."""
+    for bad, good in _SMART_QUOTES.items():
+        text = text.replace(bad, good)
+    return text
+
+
+def _balanced_json(text: str, start: int) -> str:
+    """Return the {…}/[…] beginning at index `start`, matched by bracket depth
+    (ignoring brackets inside strings). Empty string if unbalanced."""
+    open_ch = text[start]
+    close_ch = "}" if open_ch == "{" else "]"
+    depth = 0
+    in_str = False
+    esc = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == open_ch:
+            depth += 1
+        elif c == close_ch:
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return ""
+
+
+def _extract_schema_jsonld(doc: Document) -> str:
+    """Pull the page-specific schema.org block the uploader wrote INTO the doc.
+
+    The engine never invents schema — it uses only what the document provides.
+    Looks first for a 'Schema' / 'JSON-LD' / 'Structured Data' section, then
+    anywhere in the body, and returns the inner JSON of a
+    ``<script type="application/ld+json">`` block, or the enclosing
+    ``@context`` object, verbatim (curly quotes normalized). Empty when none.
+    """
+    def _from_text(text: str) -> str:
+        text = _normalize_quotes(text or "")
+        m = re.search(r"<script[^>]*application/ld\+json[^>]*>(.*?)</script>", text, re.I | re.S)
+        if m and m.group(1).strip():
+            return m.group(1).strip()
+        j = text.find("@context")
+        if j >= 0:
+            k = text.rfind("{", 0, j)
+            if k >= 0:
+                block = _balanced_json(text, k)
+                if block:
+                    return block
+        return ""
+
+    # 1) A dedicated schema section (heading/slug names it).
+    for s in doc.sections:
+        hay = f"{s.slug} {s.title}".lower()
+        if "schema" in hay or "json-ld" in hay or "jsonld" in hay or "structured data" in hay:
+            block = _from_text("\n".join(b.text for b in s.blocks if getattr(b, "text", "")))
+            if block:
+                return block
+    # 2) Anywhere in the body (a pasted <script> or @context block).
+    return _from_text(doc.raw_body or "")
+
+
 def _visual_heading_level(para) -> int:
     """Infer a heading level for docs that style headings by bold + font size
     rather than Word heading styles. 0 means 'not a heading'."""
@@ -1087,6 +1165,19 @@ def read_docx(path: str | Path) -> Document:
             if srcs:
                 doc.metadata.setdefault("sources", []).extend(srcs)
             break
+
+    # Page-specific schema.org block authored IN the document. The engine never
+    # generates schema for these pages — it publishes only what the doc provides.
+    schema_block = _extract_schema_jsonld(doc)
+    if schema_block:
+        doc.metadata["schema_jsonld"] = schema_block
+        try:
+            json.loads(schema_block)
+        except (ValueError, TypeError):
+            doc.metadata.setdefault("_ingest_warnings", []).append(
+                "The document's schema block is not valid JSON (check for smart "
+                "quotes or a stray comma); it was published as-is."
+            )
 
     # "Explore More" footer -> related internal links (flat list + grouped by
     # sub-heading, e.g. "Santa Cruz Essentials", "Plan Your Santa Cruz Visit").

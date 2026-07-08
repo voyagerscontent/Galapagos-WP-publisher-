@@ -46,8 +46,25 @@ def test_output_is_flat_acf_fields():
     assert acf["hero_heading"]
     assert "<p>" in acf["body"] and "<!-- wp:" not in acf["body"]
     assert isinstance(acf["faq"], list) and acf["faq"][0]["question"]
-    # JSON-LD is delivered as an ACF field, not embedded in content.
-    assert acf.get("seo_schema")
+    # Schema is never generated: a doc with no schema block leaves seo_schema empty.
+    assert not acf.get("seo_schema")
+
+
+def test_schema_comes_from_the_document_not_generated():
+    """When the document carries its own schema.org block, it is published
+    verbatim; the engine never invents one."""
+    from wp_publisher.ingest.docx_reader import _extract_schema_jsonld
+    from wp_publisher.models import Document
+
+    block = ('<script type="application/ld+json">{"@context":"https://schema.org",'
+             '"@type":"TouristDestination","url":"https://site/islands/x/"}</script>')
+    doc = Document(title="X", raw_body=block, sections=[])
+    assert _extract_schema_jsonld(doc).startswith('{"@context"')
+    # Curly quotes (as Word inserts) are folded so the JSON still parses.
+    smart = '{“@context”:“https://schema.org”}'
+    doc2 = Document(title="Y", raw_body=smart, sections=[])
+    import json as _json
+    _json.loads(_extract_schema_jsonld(doc2))  # must not raise
 
 
 def test_seo_fields():

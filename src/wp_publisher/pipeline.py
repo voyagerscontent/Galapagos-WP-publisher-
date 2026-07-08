@@ -15,7 +15,6 @@ separable, so you can preview the ACF payload before anything goes live.
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
 
@@ -94,12 +93,16 @@ def build_page(
     )
 
     # 5) Map components -> ACF payload.
+    # Schema is NEVER generated for these pages: publish only the schema.org
+    # block the document itself provides (doc.metadata['schema_jsonld']). When
+    # the doc has none, the schema field is left empty rather than invented.
     subtitle = str(doc.metadata.get("tagline") or doc.metadata.get("subtitle") or "")
+    doc_schema = str(doc.metadata.get("schema_jsonld") or "")
     acf_payload, acf_warnings = build_acf(
         components,
         acf_config,
         subtitle=subtitle,
-        schema_jsonld=json.dumps(json_ld, ensure_ascii=False, separators=(",", ":")),
+        schema_jsonld=doc_schema,
         geo_answer=str(doc.metadata.get("geo_answer") or ""),
         author=str(doc.metadata.get("author") or ""),
         quick_facts=doc.metadata.get("quick_facts") or None,
