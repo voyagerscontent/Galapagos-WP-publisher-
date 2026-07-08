@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────
+# Wildlife species page (single animal, e.g. "Galápagos Giant Tortoise").
+#
+# ACF-driven (like the island/destination pages): content is mapped into the
+# "Wildlife Single (Species)" ACF group (config/acf/wildlife_single.yaml) and
+# the theme / Elementor widgets render it. This is NOT the legacy Gutenberg
+# `wildlife_tier1/2` renderer — those predate the ACF-only architecture.
+#
+# Nests under the /wildlife/ hub (page 9657) so the section-scoped ACF group
+# (located by page_parent) attaches. Route to it explicitly with
+# `--page-type wildlife_single` (the generic `wildlife`/`species` aliases still
+# go to the legacy tier renderers).
+#
+# Schema is taken verbatim from the document (seo_schema), never generated;
+# `schema_type` below is advisory only.
+# ─────────────────────────────────────────────────────────────
+key: wildlife_single
+name: Wildlife Species Page
+description: >
+  Single-species page under /wildlife/: overview, at-a-glance facts, editorial
+  feature sections, where & when to see it, subspecies, FAQs and a plan-your-visit
+  CTA. Content maps into the "Wildlife Single (Species)" ACF group.
+post_type: page
+status: draft
+parent_page: wildlife       # nests under /wildlife/ (page 9657)
+acf_profile: wildlife_single
+schema_type: Article
+categories: []
+tags: []
+focus_keyword_from: species
+
+layout:
+  - { slot: featured, kind: media, role: featured, hint: "Hero photo of the species" }
+  - { slot: overview, kind: section, required: true, show_heading: false }
+  - { slot: at_a_glance, kind: table, heading: "At a Glance" }
+  - { slot: biology, kind: section, heading: "Biology & Behavior" }
+  - { slot: where_to_see, kind: section, heading: "Where and How to See Them" }
+  - { slot: seasonality, kind: section, heading: "Best Time to See" }
+  - { slot: subspecies, kind: section, heading: "Subspecies" }
+  - { slot: conservation, kind: section, heading: "Conservation" }
+  - { slot: faq, kind: faq }
+
+required_sections:
+  - overview
+
+schema_extra:
+  articleSection: "Wildlife"

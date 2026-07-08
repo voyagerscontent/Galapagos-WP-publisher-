@@ -79,6 +79,12 @@ _ALIASES = {
     "wildlife_tier_2": "wildlife_tier2",
     "wildlife2": "wildlife_tier2",
     "tier2_wildlife": "wildlife_tier2",
+    # ACF-driven single-species page (new "Wildlife Single" group), distinct
+    # from the legacy tier renderers above. Route to it explicitly.
+    "wildlife_single": "wildlife_single",
+    "wildlife_species": "wildlife_single",
+    "species_page": "wildlife_single",
+    "wildlife_page": "wildlife_single",
     "freeform": "freeform",
     "free_form": "freeform",
     "builder": "freeform",
