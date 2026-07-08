@@ -2948,6 +2948,126 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /**
+     * Island Infographic — a standalone widget: drop it anywhere, upload the
+     * image right in Elementor, add a caption. Clean rounded image by default
+     * (no label / frame); background, border, shadow are optional.
+     */
+    class Island_Infographic_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_infographic';
+        }
+        public function get_title()
+        {
+            return 'Island Infographic';
+        }
+        public function get_icon()
+        {
+            return 'eicon-image';
+        }
+        public function get_categories()
+        {
+            return ['general'];
+        }
+        public function get_keywords()
+        {
+            return ['infographic', 'image', 'illustration', 'diagram', 'map'];
+        }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('image', ['label' => 'Infographic image', 'type' => \Elementor\Controls_Manager::MEDIA,
+                'default' => ['url' => \Elementor\Utils::get_placeholder_image_src()]]);
+            $this->add_control('caption', ['label' => 'Caption', 'type' => \Elementor\Controls_Manager::TEXTAREA, 'rows' => 2]);
+            $this->add_control('link', ['label' => 'Link (optional)', 'type' => \Elementor\Controls_Manager::URL,
+                'description' => 'Make the infographic clickable (e.g. open the full-size image).']);
+            $this->add_control('alt', ['label' => 'Alt text (optional)', 'type' => \Elementor\Controls_Manager::TEXT,
+                'description' => 'Falls back to the caption when blank.']);
+            $this->add_control('show_label', ['label' => 'Show "Infographic" label', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'separator' => 'before']);
+            $this->add_control('label_text', ['label' => 'Label text', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Infographic',
+                'condition' => ['show_label' => 'yes']]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'default' => 'center',
+                'options' => [
+                    'left' => ['title' => 'Left', 'icon' => 'eicon-text-align-left'],
+                    'center' => ['title' => 'Center', 'icon' => 'eicon-text-align-center'],
+                    'right' => ['title' => 'Right', 'icon' => 'eicon-text-align-right'],
+                ],
+                'selectors_dictionary' => ['left' => 'margin:0 auto 0 0', 'center' => 'margin:0 auto', 'right' => 'margin:0 0 0 auto'],
+                'selectors' => ['{{WRAPPER}} .iig' => '{{VALUE}}']]);
+            $this->add_responsive_control('maxw', ['label' => 'Max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'size_units' => ['%', 'px'],
+                'range' => ['%' => ['min' => 30, 'max' => 100], 'px' => ['min' => 300, 'max' => 1400]], 'default' => ['size' => 100, 'unit' => '%'],
+                'selectors' => ['{{WRAPPER}} .iig' => 'max-width:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 20, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iig-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bg', ['label' => 'Background (optional)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '',
+                'selectors' => ['{{WRAPPER}} .iig-frame' => 'background:{{VALUE}}']]);
+            $this->add_control('pad', ['label' => 'Inner padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 48]],
+                'default' => ['size' => 0, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iig-frame' => 'padding:{{SIZE}}{{UNIT}}'],
+                'description' => 'Only useful when a background is set.']);
+            $this->add_control('border', ['label' => 'Border (optional)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '',
+                'selectors' => ['{{WRAPPER}} .iig-frame' => 'border:1px solid {{VALUE}}']]);
+            $this->add_control('shadow', ['label' => 'Shadow (optional)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'return_value' => 'yes',
+                'selectors' => ['{{WRAPPER}} .iig-frame' => 'box-shadow:0 14px 34px rgba(80,55,35,.12)']]);
+            $this->add_control('label_color', ['label' => 'Label color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#b08a55', 'separator' => 'before',
+                'selectors' => ['{{WRAPPER}} .iig-eyebrow' => 'color:{{VALUE}}'], 'condition' => ['show_label' => 'yes']]);
+            $this->add_control('cap_color', ['label' => 'Caption color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#7a6a5c',
+                'selectors' => ['{{WRAPPER}} .iig-cap' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'cap_typo', 'selector' => '{{WRAPPER}} .iig-cap']);
+            $this->add_control('cap_align', ['label' => 'Caption align', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'center',
+                'options' => ['left' => 'Left', 'center' => 'Center', 'right' => 'Right'],
+                'selectors' => ['{{WRAPPER}} .iig-cap' => 'text-align:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            $s = $this->get_settings_for_display();
+            $url = $s['image']['url'] ?? '';
+            if (!$url) {
+                if (island_ew_is_editing()) {
+                    echo '<div style="padding:10px 14px;border:1px dashed #b9a48c;border-radius:6px;color:#8a7a6a;font:13px/1.4 sans-serif">Island Infographic: choose an image.</div>';
+                }
+                return;
+            }
+            $cap = trim((string) ($s['caption'] ?? ''));
+            $alt = trim((string) ($s['alt'] ?? '')) ?: $cap;
+
+            echo '<style>
+              {{WRAPPER}} .iig{width:100%}
+              {{WRAPPER}} .iig-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#b08a55;font-weight:700;margin-bottom:14px}
+              {{WRAPPER}} .iig-eyebrow::before,{{WRAPPER}} .iig-eyebrow::after{content:"";width:34px;height:1px;background:currentColor;opacity:.55}
+              {{WRAPPER}} .iig-frame{border-radius:20px;overflow:hidden;line-height:0}
+              {{WRAPPER}} .iig-frame img{width:100%;height:auto;display:block}
+              {{WRAPPER}} .iig-cap{margin:14px 0 0;font-size:13.5px;line-height:1.6;color:#7a6a5c;text-align:center}
+            </style>';
+
+            $img = '<img src="' . esc_url($url) . '" alt="' . esc_attr($alt) . '" loading="lazy">';
+            $link = $s['link'] ?? [];
+            $href = trim((string) ($link['url'] ?? ''));
+            if ($href !== '') {
+                $target = !empty($link['is_external']) ? ' target="_blank"' : '';
+                $rel = !empty($link['nofollow']) ? ' rel="nofollow noopener"' : '';
+                $img = '<a href="' . esc_url($href) . '"' . $target . $rel . '>' . $img . '</a>';
+            }
+
+            echo '<figure class="iig">';
+            if (($s['show_label'] ?? '') === 'yes' && trim((string) ($s['label_text'] ?? '')) !== '') {
+                echo '<span class="iig-eyebrow">' . esc_html($s['label_text']) . '</span>';
+            }
+            echo '<div class="iig-frame">' . $img . '</div>';
+            if ($cap !== '') {
+                echo '<figcaption class="iig-cap">' . esc_html($cap) . '</figcaption>';
+            }
+            echo '</figure>';
+        }
+    }
+
     } // end: declare widget classes once
 
     $widgets_manager->register(new Island_Wildlife_Widget());
@@ -2962,4 +3082,5 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     $widgets_manager->register(new Island_Sources_Widget());
     $widgets_manager->register(new Island_RelatedLinks_Widget());
     $widgets_manager->register(new Island_Schema_Widget());
+    $widgets_manager->register(new Island_Infographic_Widget());
 });
