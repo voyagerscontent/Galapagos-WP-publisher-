@@ -1933,10 +1933,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 100, 'unit' => '%'], 'selectors' => ['{{WRAPPER}} .icta-card' => '--ovo:calc({{SIZE}}/100)']]);
             $this->add_responsive_control('content_w', ['label' => 'Text max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 30, 'max' => 100]],
                 'default' => ['size' => 58, 'unit' => '%'], 'selectors' => ['{{WRAPPER}} .icta-card' => '--cw:{{SIZE}}%'],
-                'description' => 'Keeps the badge/title/text/button on one side so long copy never runs over the photo. Lower = narrower text column.']);
+                'description' => 'Keeps the badge/title/text on one side so long copy never runs over the photo. Lower = narrower text column. (The button width is set separately below.)']);
             $this->add_control('txt_side', ['label' => 'Text side', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'left',
                 'options' => ['left' => 'Left', 'right' => 'Right'],
                 'description' => 'Which side the text column sits on (put the photo’s subject on the opposite side).']);
+            $this->add_control('btn_width', ['label' => 'Button width', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'full',
+                'options' => ['full' => 'Full width', 'auto' => 'Fit to text'],
+                'selectors_dictionary' => ['full' => 'align-self:stretch;text-align:center', 'auto' => 'align-self:flex-start;text-align:left'],
+                'selectors' => ['{{WRAPPER}} .icta-btn' => '{{VALUE}}'],
+                'description' => 'Full width spans the whole card; the text column stays constrained above.']);
             $this->end_controls_section();
 
             /* PER-CARD colors — override the shared colors above for card 1
@@ -2014,14 +2019,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-intro{margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a3a2c;max-width:70ch}
               {{WRAPPER}} .icta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
               {{WRAPPER}} .icta-card{position:relative;overflow:hidden;background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
-              {{WRAPPER}} .icta-card>:not(.icta-bg):not(.icta-ov){position:relative;z-index:1;max-width:var(--cw,100%)}
-              {{WRAPPER}} .icta-card.txt-right>:not(.icta-bg):not(.icta-ov){margin-left:auto;text-align:right}
+              {{WRAPPER}} .icta-card>:not(.icta-bg):not(.icta-ov):not(.icta-btn){position:relative;z-index:1;max-width:var(--cw,100%)}
+              {{WRAPPER}} .icta-card.txt-right>:not(.icta-bg):not(.icta-ov):not(.icta-btn){margin-left:auto;text-align:right}
               {{WRAPPER}} .icta-bg{position:absolute;inset:0;z-index:0;width:100%;height:100%;background:center/cover no-repeat}
               {{WRAPPER}} .icta-ov{position:absolute;inset:0;z-index:0;pointer-events:none;background:var(--ov,transparent);opacity:var(--ovo,1)}
               {{WRAPPER}} .icta-badge{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ECE5DE;border:1px solid rgba(236,229,222,.4);padding:3px 10px;border-radius:20px;margin-bottom:12px}
               {{WRAPPER}} .icta-t{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#fff}
               {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
-              {{WRAPPER}} .icta-btn{align-self:flex-start;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
+              {{WRAPPER}} .icta-btn{align-self:stretch;text-align:center;position:relative;z-index:1;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
               @media(max-width:680px){{{WRAPPER}} .icta-grid{grid-template-columns:1fr!important}}
             </style>';
             if ($title) {
