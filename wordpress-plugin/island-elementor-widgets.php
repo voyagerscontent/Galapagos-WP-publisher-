@@ -1490,10 +1490,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'Height of the preview strip; the full image opens in the lightbox.']);
             $this->add_control('info_radius', ['label' => 'Corner radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-info-band,{{WRAPPER}} .ifs-info-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('info_fade', ['label' => 'Fade color (match section bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f4ece0',
+            $this->add_control('info_fade', ['label' => 'Fade color (match card bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FBF8F4',
                 'selectors' => ['{{WRAPPER}} .ifs-info-band' => '--ig-fade:{{VALUE}}'], 'condition' => ['info_lightbox' => 'yes']]);
             $this->add_control('info_btn_h', ['label' => 'Button', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before', 'condition' => ['info_lightbox' => 'yes']]);
-            $this->add_control('info_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Ver infográfico completo',
+            $this->add_control('info_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'View full infographic',
+                'description' => 'Neutral by default; you can use the infographic title instead.',
                 'condition' => ['info_lightbox' => 'yes']]);
             $this->add_control('info_btn_bg', ['label' => 'Button background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a3d2b',
                 'selectors' => ['{{WRAPPER}} .ifs-info-btn' => 'background:{{VALUE}}'], 'condition' => ['info_lightbox' => 'yes']]);
@@ -1555,15 +1556,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl tbody tr:hover{background:rgba(100,64,44,.06)}
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
               {{WRAPPER}} .ifs-after{padding:0 28px 26px;font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-after p{margin:0 0 12px}{{WRAPPER}} .ifs-after :last-child{margin-bottom:0}
-              {{WRAPPER}} .ifs-info{text-align:center;width:100%}
-              {{WRAPPER}} .ifs-info-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:20px;color:#64402C}
-              {{WRAPPER}} .ifs-info-band{position:relative;height:var(--ig-h,240px);border-radius:16px;overflow:hidden;cursor:zoom-in;box-shadow:0 8px 20px rgba(60,40,25,.10)}
+              {{WRAPPER}} .ifs-info{padding:20px 28px 26px;border-top:1px solid rgba(100,64,44,.10)}
+              {{WRAPPER}} .ifs-info-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:19px;color:#64402C}
+              {{WRAPPER}} .ifs-info-band{position:relative;height:var(--ig-h,240px);border-radius:14px;overflow:hidden;cursor:zoom-in;box-shadow:0 6px 16px rgba(60,40,25,.08)}
               {{WRAPPER}} .ifs-info-band img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
-              {{WRAPPER}} .ifs-info-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:84px;background:linear-gradient(rgba(244,236,224,0),var(--ig-fade,#f4ece0));pointer-events:none}
+              {{WRAPPER}} .ifs-info-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:84px;background:linear-gradient(rgba(251,248,244,0),var(--ig-fade,#FBF8F4));pointer-events:none}
               {{WRAPPER}} .ifs-info-btn{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:2;background:#5a3d2b;color:#f6efe7;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:22px;box-shadow:0 6px 16px rgba(60,40,25,.25);cursor:zoom-in}
-              {{WRAPPER}} .ifs-info-frame{border-radius:16px;overflow:hidden}
+              {{WRAPPER}} .ifs-info-frame{border-radius:14px;overflow:hidden}
               {{WRAPPER}} .ifs-info-frame img{width:100%;height:auto;display:block}
-              {{WRAPPER}} .ifs-info-cap{margin:12px auto 0;max-width:820px;font-size:13.5px;line-height:1.6;color:#7a6a5c}
+              {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
               @media(max-width:760px){{{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}{{WRAPPER}} .ifs-tbl{margin:14px 16px 20px}}
             </style>';
             $hx = ($s['hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
@@ -1618,12 +1619,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                         echo '<div style="padding:0 28px 26px">' . $btn . '</div>';
                     }
                 }
-                echo '</article>';
-
-                // Infographic: its own block AFTER the card (outside it), at
-                // content width, before the next feature section. Full-width
-                // banner of a controlled height that opens the full image in a
-                // lightbox on click (Option D).
+                // Infographic: rendered INSIDE the card (after the text/table),
+                // as a controlled-height banner that opens the full image in a
+                // lightbox on click. Heading = infographic_title.
                 $info = island_ew_image_src($r['infographic'] ?? '');
                 if ($info) {
                     $ititle = trim((string) ($r['infographic_title'] ?? ''));
@@ -1634,7 +1632,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                         echo '<p class="ifs-info-title">' . esc_html($ititle) . '</p>';
                     }
                     if ($lb) {
-                        $blabel = trim((string) ($s['info_btn_label'] ?? '')) ?: 'Ver infográfico completo';
+                        $blabel = trim((string) ($s['info_btn_label'] ?? '')) ?: 'View full infographic';
                         echo '<div class="ifs-info-band" data-ifs-full="' . esc_url($info) . '" role="button" tabindex="0">'
                             . '<img src="' . esc_url($info) . '" alt="' . $alt . '" loading="lazy">'
                             . '<span class="ifs-info-btn">' . esc_html($blabel) . ' &#8599;</span>'
@@ -1648,6 +1646,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     }
                     echo '</div>';
                 }
+                echo '</article>';
                 $i++;
             }
             echo '</div>';
