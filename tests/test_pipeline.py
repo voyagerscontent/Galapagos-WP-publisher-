@@ -50,21 +50,35 @@ def test_output_is_flat_acf_fields():
     assert not acf.get("seo_schema")
 
 
-def test_schema_comes_from_the_document_not_generated():
-    """When the document carries its own schema.org block, it is published
-    verbatim; the engine never invents one."""
-    from wp_publisher.ingest.docx_reader import _extract_schema_jsonld
-    from wp_publisher.models import Document
-
-    block = ('<script type="application/ld+json">{"@context":"https://schema.org",'
-             '"@type":"TouristDestination","url":"https://site/islands/x/"}</script>')
-    doc = Document(title="X", raw_body=block, sections=[])
-    assert _extract_schema_jsonld(doc).startswith('{"@context"')
-    # Curly quotes (as Word inserts) are folded so the JSON still parses.
-    smart = '{“@context”:“https://schema.org”}'
-    doc2 = Document(title="Y", raw_body=smart, sections=[])
+def test_schema_from_document_standardizes_both_styles():
+    """Both authoring styles normalize to ONE @graph, and the engine never
+    invents schema."""
     import json as _json
-    _json.loads(_extract_schema_jsonld(doc2))  # must not raise
+
+    from wp_publisher.ingest.docx_reader import _extract_schema_jsonld
+
+    # Baltra style: several separate labeled blocks -> combined into one @graph.
+    multi = (
+        'TouristAttraction:\n{ "@context": "https://schema.org", "@type": '
+        '"TouristAttraction", "name": "Baltra" }\n\nFAQPage:\n{ "@context": '
+        '"https://schema.org", "@type": "FAQPage", "mainEntity": [] }'
+    )
+    out = _json.loads(_extract_schema_jsonld(multi))
+    assert out["@context"] == "https://schema.org"
+    assert [n["@type"] for n in out["@graph"]] == ["TouristAttraction", "FAQPage"]
+
+    # Santa Cruz style: a single @graph block is kept as one @graph.
+    graph = ('SCHEMA JSON-LD:\n{"@context":"https://schema.org","@graph":['
+             '{"@type":"Article"},{"@type":"BreadcrumbList"}]}')
+    out2 = _json.loads(_extract_schema_jsonld(graph))
+    assert [n["@type"] for n in out2["@graph"]] == ["Article", "BreadcrumbList"]
+
+    # Word curly quotes and literal newlines inside strings still parse.
+    smart = '{ “@context”: “https://schema.org”,\n “@type”: “Thing”,\n "name": "a\nb" }'
+    _json.loads(_extract_schema_jsonld(smart))  # must not raise
+
+    # No schema in the text -> empty (never generated).
+    assert _extract_schema_jsonld("just prose, no schema here") == ""
 
 
 def test_seo_fields():
