@@ -1653,18 +1653,22 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
             }
             echo '</div>';
-            if ($info_any) {
-                $this->fs_lightbox();
-            }
             // Open on hover. Driven by JS (mouseenter/leave) so it never depends
             // on the CSS :hover firing — which Elementor's editor overlay can
             // swallow. Touch: tap toggles it (and :focus-within via tabindex).
+            // MUST print right after the .ifs container: it binds via
+            // currentScript.previousElementSibling, so nothing may sit between.
             if ($hx) {
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
                     . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".ifs-row").forEach(function(c){'
                     . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
                     . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
                     . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+            }
+            // Lightbox assets come AFTER the hover script so they don't break the
+            // previousElementSibling lookup above.
+            if ($info_any) {
+                $this->fs_lightbox();
             }
         }
 
