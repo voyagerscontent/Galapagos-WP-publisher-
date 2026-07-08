@@ -1493,8 +1493,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('info_fade', ['label' => 'Fade color (match card bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FBF8F4',
                 'selectors' => ['{{WRAPPER}} .ifs-info-band' => '--ig-fade:{{VALUE}}'], 'condition' => ['info_lightbox' => 'yes']]);
             $this->add_control('info_band_border', ['label' => 'Border (hairline)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(100,64,44,.12)',
-                'selectors' => ['{{WRAPPER}} .ifs-info-band' => 'border-color:{{VALUE}}'],
-                'description' => 'A thin outline so the rounded corners read against a matching background. Set transparent to remove.']);
+                'selectors' => ['{{WRAPPER}} .ifs-info-band' => 'box-shadow:inset 0 0 0 1px {{VALUE}}'],
+                'description' => 'A thin inset outline that hugs the rounded image (no corner gap). Set transparent to remove.']);
             $this->add_control('info_btn_h', ['label' => 'Button', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before', 'condition' => ['info_lightbox' => 'yes']]);
             $this->add_control('info_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'View full infographic',
                 'description' => 'Neutral by default; you can use the infographic title instead.',
@@ -1561,7 +1561,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-after{padding:0 28px 26px;font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-after p{margin:0 0 12px}{{WRAPPER}} .ifs-after :last-child{margin-bottom:0}
               {{WRAPPER}} .ifs-info{width:100%;padding:20px 28px 26px;border-top:1px solid rgba(100,64,44,.10)}
               {{WRAPPER}} .ifs-info-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:19px;color:#64402C}
-              {{WRAPPER}} .ifs-info-band{position:relative;display:block;width:100%;height:var(--ig-h,240px);border:1px solid rgba(100,64,44,.12);border-radius:14px;overflow:hidden;cursor:zoom-in}
+              {{WRAPPER}} .ifs-info-band{position:relative;display:block;width:100%;height:var(--ig-h,240px);border-radius:14px;overflow:hidden;cursor:zoom-in;box-shadow:inset 0 0 0 1px rgba(100,64,44,.12)}
               {{WRAPPER}} .ifs-info-band img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;border-radius:inherit}
               {{WRAPPER}} .ifs-info-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:84px;background:linear-gradient(rgba(251,248,244,0),var(--ig-fade,#FBF8F4));pointer-events:none}
               {{WRAPPER}} .ifs-info-btn{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:2;white-space:nowrap;background:#5a3d2b;color:#f6efe7;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:22px;box-shadow:0 6px 16px rgba(60,40,25,.25);cursor:zoom-in}
