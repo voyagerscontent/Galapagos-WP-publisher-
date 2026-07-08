@@ -180,3 +180,24 @@ def test_santa_cruz_doc_extracts_cta_and_sources():
     fs_html = " ".join(r.get("content", "") for r in acf["feature_sections"])
     assert "<a href=" in fs_html
     assert all("](" not in r.get("text", "") for r in acf["cta"])
+
+
+def test_fix_schema_url_uses_real_published_url():
+    """The schema's page URL is rewritten to base + parent path + final slug,
+    not the title-derived slug the JSON-LD was first built with."""
+    import json as _json
+    from types import SimpleNamespace
+    from wp_publisher.cli import _apply_slug, _fix_schema_url
+
+    graph = {"@graph": [{"@type": "TouristDestination",
+                         "url": "https://site/santa-cruz-island-the-complete-guide/"}]}
+    page = SimpleNamespace(
+        slug="santa-cruz-island-the-complete-guide", parent_slug="islands",
+        json_ld=graph,
+        acf={"seo_schema": _json.dumps(graph, ensure_ascii=False, separators=(",", ":"))},
+    )
+    settings = SimpleNamespace(wp_base_url="https://site")
+    _apply_slug(page, "santa-cruz", False)
+    _fix_schema_url(page, settings)
+    assert _json.loads(page.acf["seo_schema"])["@graph"][0]["url"] == \
+        "https://site/islands/santa-cruz/"

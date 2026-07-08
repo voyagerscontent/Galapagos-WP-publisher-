@@ -106,6 +106,38 @@ def _apply_slug(page, slug: Optional[str], test: bool) -> None:
         page.slug = f"{page.slug}-test"
 
 
+def _fix_schema_url(page, settings) -> None:
+    """Point the schema's page URL at the REAL published URL.
+
+    The JSON-LD is built before the slug is finalized, so its page ``url`` /
+    ``mainEntityOfPage`` used the title-derived slug and omitted the parent path
+    (e.g. ``…/santa-cruz-island-the-complete…/`` instead of ``…/islands/santa-
+    cruz/``). Rebuild it from ``wp_base_url`` + the page's parent path + the final
+    slug, then re-serialize the schema ACF field so it matches the live page.
+    """
+    base = (settings.wp_base_url or "").rstrip("/")
+    graph = page.json_ld.get("@graph") if isinstance(page.json_ld, dict) else None
+    if not base or not graph or not isinstance(page.acf, dict):
+        return
+    old_str = json.dumps(page.json_ld, ensure_ascii=False, separators=(",", ":"))
+    parent = (page.parent_slug or "").strip("/")
+    path = f"{parent}/{page.slug}" if parent else page.slug
+    url = f"{base}/{path}/"
+    main = graph[0]
+    if main.get("url") == url:
+        return  # already correct
+    main["url"] = url
+    mep = main.get("mainEntityOfPage")
+    if isinstance(mep, dict) and "@id" in mep:
+        mep["@id"] = url
+    elif "mainEntityOfPage" in main:
+        main["mainEntityOfPage"] = url
+    new_str = json.dumps(page.json_ld, ensure_ascii=False, separators=(",", ":"))
+    for key, value in page.acf.items():
+        if value == old_str:
+            page.acf[key] = new_str
+
+
 def _acf_summary(page) -> str:
     from .acf.config import get_acf_config
 
@@ -223,6 +255,7 @@ def publish(
     doc = read_file(file)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
     _apply_slug(page, slug, test)
+    _fix_schema_url(page, settings)
     _summary(doc, page, template, reason)
     if only_acf_fields is not None:
         console.print(
