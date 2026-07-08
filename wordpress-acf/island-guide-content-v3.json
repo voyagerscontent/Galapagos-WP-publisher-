@@ -18,6 +18,10 @@
       { "key": "hero_image", "label": "Hero Image", "name": "hero_image", "type": "image", "return_format": "id", "preview_size": "medium" },
       { "key": "hero_image_alt", "label": "Hero Image Alt", "name": "hero_image_alt", "type": "text" },
       {
+        "key": "page_icon", "label": "Page Icon", "name": "page_icon", "type": "image", "return_format": "array", "preview_size": "thumbnail",
+        "instructions": "Per-page icon (SVG/PNG) for the Icon/Image Box in the template. Bind it in Elementor via an Image Box → Image → Dynamic Tags → ACF Image → Page Icon, so each island shows its own icon."
+      },
+      {
         "key": "author", "label": "Author / Byline", "name": "author", "type": "text",
         "instructions": "Display byline from the document, e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline — do NOT fall back to the WordPress post author (the uploader); the byline simply stays empty."
       },
