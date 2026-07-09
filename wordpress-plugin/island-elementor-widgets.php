@@ -3190,7 +3190,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('border_width', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]], 'default' => ['size' => 1, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .wag-card' => 'border-width:{{SIZE}}{{UNIT}};border-style:solid']]);
-            $this->add_group_control(\Elementor\Group_Control_Box_Shadow::get_type(), ['name' => 'card_shadow', 'selector' => '{{WRAPPER}} .wag-card']);
+            $this->add_control('shadow', ['label' => 'Soft shadow', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'return_value' => 'yes', 'selectors' => ['{{WRAPPER}} .wag-card' => 'box-shadow:0 16px 44px rgba(60,40,25,.14)']]);
             $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'default' => ['top' => 24, 'right' => 26, 'bottom' => 24, 'left' => 26, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .wag-card' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
@@ -3278,7 +3279,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $dotStyle = $auto ? 'background:' . $bc[1] : '';
 
             echo '<style>
-              {{WRAPPER}} .wag-card{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;box-shadow:0 16px 44px rgba(60,40,25,.14);padding:24px 26px}
+              {{WRAPPER}} .wag-card{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;padding:24px 26px}
               {{WRAPPER}} .wag-eyebrow{display:block;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 14px}
               {{WRAPPER}} .wag-badge{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12px;padding:6px 13px;border-radius:999px;border:1px solid transparent;background:#f4e6cf;color:#9a6a1c}
               {{WRAPPER}} .wag-dot{width:8px;height:8px;border-radius:50%;background:#9a6a1c;flex:0 0 auto}
