@@ -1424,8 +1424,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
-                'description' => 'Ignore the section’s content width and span the full browser width.',
+            $this->add_control('full_bleed', ['label' => 'Full width (screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Off by default (this widget is also used on the island pages). Turn on to span the full browser width regardless of the section’s content width.',
                 'selectors' => ['{{WRAPPER}}' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('fade_color', ['label' => 'Fade color (hint of “more”)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--fade:{{VALUE}}'],
@@ -3428,8 +3428,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 ],
                 'selectors_dictionary' => ['left' => 'margin-right:auto', 'center' => 'margin-left:auto;margin-right:auto', 'right' => 'margin-left:auto'],
                 'selectors' => ['{{WRAPPER}} .wss' => '{{VALUE}}']]);
-            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
-                'description' => 'Ignore the section’s content width and span the full browser width. Overrides Max width above.',
+            $this->add_control('full_bleed', ['label' => 'Full width (screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On by default: spans the full browser width regardless of the section’s content width. Overrides Max width above. Turn off to keep it boxed.',
                 'selectors' => ['{{WRAPPER}} .wss' => 'max-width:100vw;width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wss-eyebrow,{{WRAPPER}} .wss-isl' => 'color:{{VALUE}}']]);
@@ -3553,8 +3553,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
-                'description' => 'Ignore the section’s content width and span the full browser width.',
+            $this->add_control('full_bleed', ['label' => 'Full width (screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On by default: spans the full browser width regardless of the section’s content width. Turn off to keep it boxed.',
                 'selectors' => ['{{WRAPPER}} .wts' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wts-eyebrow,{{WRAPPER}} .wts-isl' => 'color:{{VALUE}}']]);
@@ -3656,8 +3656,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
-                'description' => 'Ignore the section’s content width and span the full browser width.',
+            $this->add_control('full_bleed', ['label' => 'Full width (screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On by default: spans the full browser width regardless of the section’s content width. Turn off to keep it boxed.',
                 'selectors' => ['{{WRAPPER}} .wsn' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wsn-eyebrow' => 'color:{{VALUE}}']]);
@@ -3796,8 +3796,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'The feature list never shrinks below this even if the card is short.']);
             $this->add_control('fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
-            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'separator' => 'before',
-                'description' => 'Force the block to the full browser width, ignoring the section’s content width. Use when the widget sits in a boxed/narrow section.',
+            $this->add_control('full_bleed', ['label' => 'Full width (screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'separator' => 'before',
+                'description' => 'On by default: spans the full browser width regardless of the section’s content width. Turn off to keep it boxed.',
                 'selectors' => ['{{WRAPPER}} .wgf' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->end_controls_section();
 
