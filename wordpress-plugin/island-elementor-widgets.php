@@ -29,7 +29,7 @@ add_action('admin_notices', function () {
     if (!current_user_can('manage_options')) {
         return;
     }
-    $st = $GLOBALS['island_ew_atglance_status'] ?? 'not yet registered on this page (open Elementor to trigger)';
+    $st = get_option('island_ew_atglance_status', 'unknown — open a page with Elementor once, then reload this Dashboard');
     echo '<div class="notice notice-info is-dismissible"><p><strong>Island Widgets</strong> — build '
         . esc_html(ISLAND_EW_BUILD) . '. At a Glance: <strong>' . esc_html($st) . '</strong>.</p></div>';
 });
@@ -3346,9 +3346,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     // site stays up and only that widget is skipped — never a white screen.
     try {
         $widgets_manager->register(new Island_AtAGlance_Widget());
-        $GLOBALS['island_ew_atglance_status'] = 'registered OK';
+        $status = 'registered OK';
     } catch (\Throwable $e) {
-        $GLOBALS['island_ew_atglance_status'] = 'ERROR — ' . $e->getMessage();
+        $status = 'ERROR — ' . $e->getMessage();
         error_log('[island-widgets] At a Glance widget skipped: ' . $e->getMessage());
+    }
+    // Persist across requests so the Dashboard notice can report it after the
+    // Elementor editor (which is what fires this hook) has run once.
+    if (get_option('island_ew_atglance_status') !== $status) {
+        update_option('island_ew_atglance_status', $status, false);
     }
 });
