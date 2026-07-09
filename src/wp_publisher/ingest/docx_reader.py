@@ -862,6 +862,63 @@ def _parse_cta_instruction(cell: str) -> list[dict]:
     return out
 
 
+# Plain-paragraph CTAs (waved-albatross style): the two formal CTAs written as
+# body paragraphs — "BOOK WITH VOYAGERS TRAVEL COMPANY — …", "TRAVEL INDUSTRY
+# PARTNERS (agents…) — …" — instead of a CTA table. A strong leading label
+# followed by an em/en dash marks one; anything softer is left as prose.
+_PLAIN_CTA_LEAD_RE = re.compile(
+    r"^\s*("
+    r"BOOK WITH\b[^\n—–]*|"
+    r"TRAVEL INDUSTRY PARTNERS\b[^\n—–]*|"
+    r"TRAVEL TRADE\b[^\n—–]*|"
+    r"TRAVEL AGENTS?\b[^\n—–]*|"
+    r"(?:FOR\s+)?DIRECT TRAVEL\w*\b[^\n—–]*|"
+    r"INDEPENDENT TRAVEL\w*\b[^\n—–]*"
+    r")\s*[—–]\s+",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_plain_cta(text: str) -> bool:
+    return bool(_PLAIN_CTA_LEAD_RE.match(text or ""))
+
+
+def _cta_from_paragraph(text: str) -> dict | None:
+    """Turn a single plain-paragraph CTA into a cta_block. The lead label
+    (before the dash) becomes the title; the rest is body; a URL or bare domain
+    anywhere in the body becomes the button."""
+    m = _PLAIN_CTA_LEAD_RE.match(text)
+    if not m:
+        return None
+    label = m.group(1).strip(" —–-:")
+    body = text[m.end():].strip()
+    # Title = the label, minus a trailing "(agents, wholesalers…)" audience note,
+    # tidied from ALL-CAPS to Title Case.
+    title = re.sub(r"\s*\([^)]*\)\s*$", "", label).strip()
+    if title == title.upper():
+        title = title.title()
+    url = ""
+    um = _URL_RE.search(body)
+    if um:
+        url = um.group(0).rstrip(".,);")
+    else:
+        # Only a bare domain that carries a PATH ("site.travel/contact/") is a
+        # deliberate link; a bare site name dropped mid-sentence ("…or
+        # GalapagosIslands.travel.") is just a mention, not a button target.
+        dm = _BARE_DOMAIN_RE.search(body)
+        if dm and "/" in dm.group(1):
+            url = _norm_url(dm.group(1).rstrip(".,);"))
+    block = {
+        "audience": _cta_audience(text),
+        "title": title,
+        "text": " ".join(body.split()),
+    }
+    if url:
+        block["button_url"] = url
+        block["button_label"] = "Contact us" if "/contact" in url else "Learn more"
+    return block
+
+
 def _looks_like_cta_grid(rows: list[list[str]]) -> bool:
     """A column-organized CTA table: row 0 names each audience across columns
     (e.g. 'For Travelers Booking Direct' | 'For Travel Trade & Wholesalers'),
@@ -1621,6 +1678,22 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     # pile up at the end of the section instead of sitting where they belong.
     for s in doc.sections:
         s.blocks.sort(key=lambda b: b.meta.get("_pos", 1 << 30))
+
+    # Plain-paragraph CTAs (waved-albatross style): some docs write the two
+    # formal CTAs as body paragraphs ("BOOK WITH VOYAGERS… —", "TRAVEL INDUSTRY
+    # PARTNERS… —") rather than a CTA table. Lift them into cta_blocks and drop
+    # them from the section so they render as CTA cards instead of leaking into
+    # the Plan-Your-Visit intro prose.
+    for s in doc.sections:
+        kept = []
+        for blk in s.blocks:
+            if blk.type == BlockType.PARAGRAPH and _looks_like_plain_cta(blk.text or ""):
+                cta = _cta_from_paragraph(blk.text)
+                if cta:
+                    doc.metadata.setdefault("cta_blocks", []).append(cta)
+                    continue
+            kept.append(blk)
+        s.blocks = kept
 
     # Collapse the raw CTA candidates to the two canonical CTAs (drops any
     # scaffolding that leaked through a mixed green box).
