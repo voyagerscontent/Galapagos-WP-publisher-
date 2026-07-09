@@ -6,9 +6,18 @@
     "fields": [
       { "key": "wls_tab_hero", "label": "Hero", "name": "", "type": "tab" },
       { "key": "wls_hero_title", "label": "Hero Title", "name": "hero_title", "type": "text" },
-      { "key": "wls_hero_subtitle", "label": "Hero Subtitle", "name": "hero_subtitle", "type": "text" },
+      { "key": "wls_hero_subtitle", "label": "Hero Subtitle", "name": "hero_subtitle", "type": "textarea", "rows": 2 },
+      {
+        "key": "wls_geo_answer", "label": "Quick Answer (GEO / AI)", "name": "geo_answer", "type": "textarea", "rows": 3,
+        "instructions": "~50-word featured-snippet answer from the doc's 🔍 Quick Answer block. Rendered as the light-teal box above the H1 (same as the island pages)."
+      },
+      { "key": "wls_intro", "label": "Intro / overview", "name": "intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
       { "key": "wls_hero_image", "label": "Hero Image", "name": "hero_image", "type": "image", "return_format": "id", "preview_size": "medium" },
       { "key": "wls_hero_image_alt", "label": "Hero Image Alt", "name": "hero_image_alt", "type": "text" },
+      {
+        "key": "wls_page_icon", "label": "Page Icon", "name": "page_icon", "type": "image", "return_format": "array", "preview_size": "thumbnail",
+        "instructions": "Small per-page icon for a dynamic Image Box (optional, set by hand — same as the island pages)."
+      },
       {
         "key": "wls_author", "label": "Author / Byline", "name": "author", "type": "text",
         "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
@@ -28,11 +37,6 @@
       },
       { "key": "wls_population", "label": "Population estimate", "name": "population", "type": "text" },
       { "key": "wls_endemic", "label": "Endemic to Galápagos?", "name": "endemic", "type": "true_false", "ui": 1 },
-      {
-        "key": "wls_geo_answer", "label": "Quick Answer (GEO / AI)", "name": "geo_answer", "type": "textarea", "rows": 3,
-        "instructions": "~50-word featured-snippet answer from the doc's 🔍 Quick Answer block."
-      },
-      { "key": "wls_intro", "label": "Intro / overview", "name": "intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
       { "key": "wls_quick_facts_title", "label": "At a Glance — heading", "name": "quick_facts_title", "type": "text", "default_value": "At a Glance" },
       {
         "key": "wls_quick_facts", "label": "At a Glance (key / value)", "name": "quick_facts", "type": "repeater",
