@@ -3449,10 +3449,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
               {{WRAPPER}} .wss{width:100%;box-sizing:border-box}
-              html .e-con-boxed:has(.elementor-widget-wildlife_subspecies)>.e-con-inner{max-width:none!important;width:100%!important}
               {{WRAPPER}} .wss-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wss-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
-              {{WRAPPER}} .wss-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
+              {{WRAPPER}} .wss-intro{color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
               {{WRAPPER}} .wss-intro h3{font-family:Merriweather,Georgia,serif;font-style:italic;color:#5A3D2B;font-size:19px;margin:22px 0 6px}
               {{WRAPPER}} .wss-sci{font-style:italic;font-family:Merriweather,Georgia,serif}
               {{WRAPPER}} .wss-num{font-variant-numeric:tabular-nums}
@@ -3563,10 +3562,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
               {{WRAPPER}} .wts{width:100%;box-sizing:border-box}
-              html .e-con-boxed:has(.elementor-widget-wildlife_where_to_see)>.e-con-inner{max-width:none!important;width:100%!important}
               {{WRAPPER}} .wts-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wts-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
-              {{WRAPPER}} .wts-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
+              {{WRAPPER}} .wts-intro{color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
               {{WRAPPER}} .wts-isl{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#a07a44;font-weight:700}
               {{WRAPPER}} .wts-site{font-family:Merriweather,Georgia,serif;font-style:italic;color:#5A3D2B;font-size:18px;margin:2px 0 5px}
               {{WRAPPER}} .wts-desc{margin:0;font-size:13.5px;color:#8a7360;line-height:1.6}
@@ -3672,10 +3670,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
               {{WRAPPER}} .wsn{width:100%;box-sizing:border-box}
-              html .e-con-boxed:has(.elementor-widget-wildlife_seasonality)>.e-con-inner{max-width:none!important;width:100%!important}
               {{WRAPPER}} .wsn-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wsn-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
-              {{WRAPPER}} .wsn-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
+              {{WRAPPER}} .wsn-intro{color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
               {{WRAPPER}} .wsn-cal{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:5px}
               {{WRAPPER}} .wsn-mo{text-align:center;padding:12px 4px;border-radius:10px;font-size:12px;font-weight:700}
               {{WRAPPER}} .wsn-mo small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.03em;margin-top:4px;opacity:.9}
@@ -3888,7 +3885,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
-              html .e-con-boxed:has(.elementor-widget-wildlife_glance_features)>.e-con-inner{max-width:none!important;width:100%!important}
               {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
               {{WRAPPER}} .wgf.wgf-solo{grid-template-columns:1fr}
               {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0}
