@@ -3930,7 +3930,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feats{display:flex;flex-direction:column;gap:18px}
               {{WRAPPER}} .wgf-feat{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:16px;box-shadow:0 10px 26px rgba(60,40,25,.10);overflow:hidden;display:grid;grid-template-columns:1.3fr 1fr}
               {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
-              {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr}
+              {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr!important}
               {{WRAPPER}} .wgf-tx{padding:22px 24px;display:flex;flex-direction:column;justify-content:center}
               {{WRAPPER}} .wgf-feat.rev .wgf-tx{order:2}
               {{WRAPPER}} .wgf-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a07a44;font-weight:700;margin:0 0 8px}
