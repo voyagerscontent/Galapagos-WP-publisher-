@@ -464,17 +464,21 @@ def build_acf_island(
     if population and m.get("population"):
         out[m["population"]] = population
     if endemic and m.get("endemic"):
-        out[m["endemic"]] = 1  # ACF true_false
+        out[m["endemic"]] = True  # ACF true_false -> REST boolean
     if where_to_see and m.get("where_to_see"):
         ws = m["where_to_see"]
-        out[ws["field"]] = [
-            {
-                ws[k]: (md_to_html(r.get(k, "")) if k == "description" else r.get(k, ""))
-                for k in ("site", "island", "access", "season", "description", "image")
-                if ws.get(k)
-            }
-            for r in where_to_see
-        ]
+        rows_ws: list[dict] = []
+        for r in where_to_see:
+            row = {}
+            for k in ("site", "island", "access", "season", "description"):
+                if ws.get(k):
+                    row[ws[k]] = md_to_html(r.get(k, "")) if k == "description" else r.get(k, "")
+            # Image is omitted unless we have an attachment ID: an ACF image field
+            # over REST must be an integer or null, never "" or a boolean.
+            if ws.get("image") and r.get("image"):
+                row[ws["image"]] = r["image"]
+            rows_ws.append(row)
+        out[ws["field"]] = rows_ws
     if where_to_see_title and m.get("where_to_see_title"):
         out[m["where_to_see_title"]] = where_to_see_title
     if where_to_see_intro and m.get("where_to_see_intro"):
@@ -491,14 +495,14 @@ def build_acf_island(
         out[m["seasonality_intro"]] = md_to_html(seasonality_intro)
     if subspecies and m.get("subspecies"):
         bf = m["subspecies"]
-        out[bf["field"]] = [
-            {
-                bf[k]: r.get(k, "")
-                for k in ("island", "name", "trait", "population", "status", "image")
-                if bf.get(k)
-            }
-            for r in subspecies
-        ]
+        rows_sub: list[dict] = []
+        for r in subspecies:
+            row = {bf[k]: r.get(k, "")
+                   for k in ("island", "name", "trait", "population", "status") if bf.get(k)}
+            if bf.get("image") and r.get("image"):  # omit empty image (see above)
+                row[bf["image"]] = r["image"]
+            rows_sub.append(row)
+        out[bf["field"]] = rows_sub
     if subspecies_title and m.get("subspecies_title"):
         out[m["subspecies_title"]] = subspecies_title
     if subspecies_intro and m.get("subspecies_intro"):

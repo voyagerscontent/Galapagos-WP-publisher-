@@ -69,6 +69,18 @@ def test_conservation_status_normalized_to_iucn_choice():
     assert page.acf["endemic"] == 1
 
 
+def test_repeater_image_subfield_never_empty_string():
+    """An ACF image field over REST must be an integer or null — an empty string
+    triggers a 400 (rest_invalid_type). Repeater rows must omit image when we
+    have no attachment ID."""
+    _doc, page, _t = _build("giant-tortoise.docx")
+    for row in page.acf.get("subspecies", []):
+        assert row.get("image", None) not in ("", 0, False)
+    _doc2, page2, _t2 = _build("marine-iguana.docx")
+    # true_false -> a real boolean, not an int.
+    assert page2.acf["endemic"] is True
+
+
 def test_publishes_under_wildlife_hub():
     _doc, page, _t = _build("marine-iguana.docx")
     assert page.post_type == "page"
