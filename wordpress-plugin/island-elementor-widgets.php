@@ -3763,6 +3763,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('feat_heading', ['label' => 'Features heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Feature Sections',
                 'description' => 'Blank = use the page’s feature_sections_title if present.']);
             $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Show a few lines per feature; the full text opens on hover (tap on mobile) and closes on leave. A soft fade hints there is more.']);
+            $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
+                'condition' => ['hover_expand' => 'yes']]);
+            $this->add_control('open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 300, 'max' => 2000]],
+                'default' => ['size' => 900, 'unit' => 'px'], 'condition' => ['hover_expand' => 'yes'],
+                'description' => 'Max height when opened on hover.']);
             $this->end_controls_section();
 
             /* LAYOUT */
@@ -3777,6 +3784,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'The feature list never shrinks below this even if the card is short.']);
             $this->add_control('fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
+            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'separator' => 'before',
+                'description' => 'Force the block to the full browser width, ignoring the section’s content width. Use when the widget sits in a boxed/narrow section.',
+                'selectors' => ['{{WRAPPER}} .wgf' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->end_controls_section();
 
             /* CARD (left) */
@@ -3791,6 +3801,45 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .wgf-eyebrow,{{WRAPPER}} .wgf-kicker' => 'color:{{VALUE}}']]);
             $this->add_control('heading_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
                 'selectors' => ['{{WRAPPER}} .wgf-v,{{WRAPPER}} .wgf-rhead h2,{{WRAPPER}} .wgf-feat h3' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+
+            /* FEATURE CARDS (right) */
+            $this->start_controls_section('feat_s', ['label' => 'Feature cards', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('feat_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
+                'selectors' => ['{{WRAPPER}} .wgf-feat' => 'background:{{VALUE}}', '{{WRAPPER}} .wgf' => '--wgf-card:{{VALUE}}']]);
+            $this->add_control('feat_border', ['label' => 'Card border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(90,61,43,.16)',
+                'selectors' => ['{{WRAPPER}} .wgf-feat' => 'border-color:{{VALUE}}']]);
+            $this->add_control('feat_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
+                'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-feat' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('feat_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px'],
+                'default' => ['top' => 22, 'right' => 24, 'bottom' => 22, 'left' => 24, 'unit' => 'px', 'isLinked' => false],
+                'selectors' => ['{{WRAPPER}} .wgf-tx' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 60]],
+                'default' => ['size' => 43, 'unit' => '%'], 'selectors' => [
+                    '{{WRAPPER}} .wgf-feat' => 'grid-template-columns:{{SIZE}}% 1fr',
+                    '{{WRAPPER}} .wgf-feat.rev' => 'grid-template-columns:1fr {{SIZE}}%']]);
+            $this->add_control('media_h', ['label' => 'Image min height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 100, 'max' => 400]],
+                'default' => ['size' => 150, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-media' => 'min-height:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
+
+            /* TYPOGRAPHY — sizes / fonts for every text bit */
+            $this->start_controls_section('type_s', ['label' => 'Typography', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('h_rhead', ['label' => 'Features heading (H2)', 'type' => \Elementor\Controls_Manager::HEADING]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'rhead_typo', 'selector' => '{{WRAPPER}} .wgf-rhead h2']);
+            $this->add_control('h_kicker', ['label' => 'Feature eyebrow / kicker', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'kicker_typo', 'selector' => '{{WRAPPER}} .wgf-kicker,{{WRAPPER}} .wgf-eyebrow']);
+            $this->add_control('h_ftitle', ['label' => 'Feature title (H3)', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'ftitle_typo', 'selector' => '{{WRAPPER}} .wgf-feat h3']);
+            $this->add_control('h_body', ['label' => 'Feature body text', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('body_color', ['label' => 'Body color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
+                'selectors' => ['{{WRAPPER}} .wgf-body,{{WRAPPER}} .wgf-body p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'body_typo', 'selector' => '{{WRAPPER}} .wgf-body,{{WRAPPER}} .wgf-body p']);
+            $this->add_control('h_glance', ['label' => 'At a Glance value', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'glance_typo', 'selector' => '{{WRAPPER}} .wgf-v']);
+            $this->add_control('h_glabel', ['label' => 'At a Glance label', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('glabel_color', ['label' => 'Label color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#8a7360',
+                'selectors' => ['{{WRAPPER}} .wgf-l' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'glabel_typo', 'selector' => '{{WRAPPER}} .wgf-l']);
             $this->end_controls_section();
         }
 
@@ -3839,6 +3888,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if ($feat_head === '') { $feat_head = trim((string) get_field('feature_sections_title', $pid)); }
             $mn = max(200, (int) ($s['min_h'] ?? 320));
             $alt = ($s['alternate'] ?? 'yes') === 'yes';
+            $hx = ($s['hover_expand'] ?? 'yes') === 'yes';
+            $cl = max(2, (int) ($s['clamp_lines'] ?? 5));
+            $open = (int) ($s['open_h']['size'] ?? 900);
 
             echo '<style>
               {{WRAPPER}} .wgf{display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
@@ -3872,6 +3924,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a07a44;font-weight:700;margin:0 0 8px}
               {{WRAPPER}} .wgf-feat h3{margin:0 0 9px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;line-height:1.2;color:#5A3D2B}
               {{WRAPPER}} .wgf-body{margin:0;color:#3A2A1E;font-size:14px;line-height:1.6}{{WRAPPER}} .wgf-body p{margin:0 0 10px}{{WRAPPER}} .wgf-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .wgf.hx .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;transition:max-height .45s ease}
+              {{WRAPPER}} .wgf.hx .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
+              {{WRAPPER}} .wgf.hx .wgf-feat:hover .wgf-body,{{WRAPPER}} .wgf.hx .wgf-feat:focus-within .wgf-body,{{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body{max-height:var(--wgf-open,900px)}
+              {{WRAPPER}} .wgf.hx .wgf-feat:hover .wgf-body::after,{{WRAPPER}} .wgf.hx .wgf-feat:focus-within .wgf-body::after,{{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body::after{opacity:0}
+              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wgf.hx .wgf-body,{{WRAPPER}} .wgf.hx .wgf-body::after{transition:none}}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
               {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
               {{WRAPPER}} .wgf-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--wgf-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
@@ -3881,7 +3938,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             // When the page has no At a Glance data, the features take the full
             // width (single column, natural flow — no rail, no internal scroll).
-            echo '<div class="wgf' . ($hasGlance ? '' : ' wgf-solo') . '" data-min="' . $mn . '">';
+            $wgf_vars = '--cl:' . $cl . ';--wgf-open:' . $open . 'px';
+            echo '<div class="wgf' . ($hasGlance ? '' : ' wgf-solo') . ($hx ? ' hx' : '') . '" data-min="' . $mn . '" style="' . esc_attr($wgf_vars) . '">';
 
             // LEFT card (only when there is glance data)
             if ($hasGlance) {
@@ -3916,7 +3974,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $img = island_ew_image_src($r['image'] ?? '');
                 $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
                 $noimg = $img ? '' : ' noimg';
-                echo '<article class="wgf-feat' . $rev . $noimg . '"><div class="wgf-tx">';
+                echo '<article class="wgf-feat' . $rev . $noimg . '"' . ($hx ? ' tabindex="0"' : '') . '><div class="wgf-tx">';
                 if (!empty($r['subtitle'])) { echo '<span class="wgf-kicker">' . esc_html($r['subtitle']) . '</span>'; }
                 echo '<h3>' . esc_html($r['title'] ?? '') . '</h3>';
                 $content = (string) ($r['content'] ?? '');
@@ -3933,6 +3991,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '</div></div><div class="wgf-fade"></div></div>';  // .wgf-feats .wgf-scroll .wgf-fade
             echo '</div>';  // .wgf
+
+            // Hover / tap to expand each feature (JS-driven so it never depends
+            // on CSS :hover, which the Elementor overlay can swallow). Binds via
+            // previousElementSibling, so it must print right after the .wgf.
+            if ($hx) {
+                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
+                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
+                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
+                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+            }
 
             $this->gf_sync_script();
         }
