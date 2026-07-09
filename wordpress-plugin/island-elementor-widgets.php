@@ -3325,5 +3325,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     $widgets_manager->register(new Island_RelatedLinks_Widget());
     $widgets_manager->register(new Island_Schema_Widget());
     $widgets_manager->register(new Island_Infographic_Widget());
-    $widgets_manager->register(new Island_AtAGlance_Widget());
+    // New widgets are registered defensively: if one ever throws while building
+    // its controls (e.g. an Elementor build missing a group-control class), the
+    // site stays up and only that widget is skipped — never a white screen.
+    try {
+        $widgets_manager->register(new Island_AtAGlance_Widget());
+    } catch (\Throwable $e) {
+        error_log('[island-widgets] At a Glance widget skipped: ' . $e->getMessage());
+    }
 });
