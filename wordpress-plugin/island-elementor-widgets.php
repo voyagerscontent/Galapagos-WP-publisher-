@@ -54,36 +54,6 @@ if (!function_exists('island_ew_is_editing')) {
 }
 
 
-/** Robust auto full-width: stretch any element carrying data-island-fw="1" to
- * the exact viewport width, flush to the viewport's left edge — measured from
- * the element's real position, so it works no matter how the section is
- * aligned or nested (unlike the CSS `50% - 50vw` trick, which needs a centred
- * container). Printed once per request; a no-op on narrow screens. */
-if (!function_exists('island_ew_fullwidth_script')) {
-    function island_ew_fullwidth_script()
-    {
-        static $done = false;
-        if ($done) {
-            return;
-        }
-        $done = true;
-        echo '<script>(function(){if(window.__islandFW)return;window.__islandFW=1;'
-            . 'function fw(){var els=document.querySelectorAll(\'[data-island-fw="1"]\');Array.prototype.forEach.call(els,function(el){'
-            . 'el.style.width="";el.style.marginLeft="";el.style.marginRight="";el.style.maxWidth="";el.style.paddingLeft="";el.style.paddingRight="";'
-            . 'if(window.innerWidth<=820)return;'
-            . 'var vw=document.documentElement.clientWidth;var rect=el.getBoundingClientRect();'
-            . 'el.style.boxSizing="border-box";el.style.maxWidth="none";el.style.width=vw+"px";el.style.marginLeft=(-rect.left)+"px";el.style.marginRight="0";'
-            . 'el.style.paddingLeft="clamp(16px,4vw,64px)";el.style.paddingRight="clamp(16px,4vw,64px)";});}'
-            . 'var t;function later(){clearTimeout(t);t=setTimeout(fw,60);}'
-            . 'window.addEventListener("resize",later);'
-            . 'window.addEventListener("load",function(){fw();setTimeout(fw,300);setTimeout(fw,900);});'
-            . 'if(document.readyState!=="loading"){fw();setTimeout(fw,300);}else{document.addEventListener("DOMContentLoaded",function(){fw();setTimeout(fw,300);});}'
-            . 'if("ResizeObserver" in window){var ro=new ResizeObserver(later);try{ro.observe(document.body);}catch(e){}}'
-            . '})();</script>';
-    }
-}
-
-
 /** Split a quick-fact "value" into (title, detail): "Cerro Crocker, 864 m" -> ["Cerro Crocker","864 m"]. */
 if (!function_exists('island_ew_split')) {
     function island_ew_split($v)
@@ -1454,9 +1424,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
-                'description' => 'Optional, off by default (this widget is also used on the island pages). Turn on to force the full browser width; otherwise it adapts to its container.',
-                'selectors' => ['{{WRAPPER}}' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('fade_color', ['label' => 'Fade color (hint of “more”)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--fade:{{VALUE}}'],
                 'description' => 'Set this to the page/section background so the text fades softly into it (elegant “there’s more” cue instead of a hard line).']);
@@ -3446,20 +3413,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('max_w', ['label' => 'Max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'size_units' => ['px', '%'],
-                'range' => ['px' => ['min' => 480, 'max' => 1400], '%' => ['min' => 40, 'max' => 100]], 'default' => ['size' => 100, 'unit' => '%'],
-                'selectors' => ['{{WRAPPER}} .wss' => 'max-width:{{SIZE}}{{UNIT}}'],
-                'description' => 'Fills the container by default. Lower it to cap the block to a narrower reading column; use the alignment below to place it.']);
-            $this->add_control('align', ['label' => 'Align block', 'type' => \Elementor\Controls_Manager::CHOOSE, 'default' => 'left',
-                'options' => [
-                    'left' => ['title' => 'Left', 'icon' => 'eicon-h-align-left'],
-                    'center' => ['title' => 'Center', 'icon' => 'eicon-h-align-center'],
-                    'right' => ['title' => 'Right', 'icon' => 'eicon-h-align-right'],
-                ],
-                'selectors_dictionary' => ['left' => 'margin-right:auto', 'center' => 'margin-left:auto;margin-right:auto', 'right' => 'margin-left:auto'],
-                'selectors' => ['{{WRAPPER}} .wss' => '{{VALUE}}']]);
-            $this->add_control('full_width', ['label' => 'Full width (span the page)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-                'description' => 'On by default: spans the full page width automatically, wherever you place it (measured from its real position, so it never spills). Turn off to keep it inside the section width / Max width above.']);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wss-eyebrow,{{WRAPPER}} .wss-isl' => 'color:{{VALUE}}']]);
             $this->add_control('heading_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
@@ -3521,8 +3474,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wss-accin{padding:0 20px 16px;color:#8a7360;font-size:14px}
             </style>';
 
-            $fw = ($s['full_width'] ?? 'yes') === 'yes';
-            echo '<div class="wss"' . ($fw ? ' data-island-fw="1"' : '') . '>';
+            echo '<div class="wss">';
             echo '<span class="wss-eyebrow">Island by island</span>';
             if ($title !== '') { echo '<h2 class="wss-title">' . esc_html($title) . '</h2>'; }
             if (($s['show_intro'] ?? 'yes') === 'yes' && $intro) { echo '<div class="wss-intro">' . wp_kses_post($intro) . '</div>'; }
@@ -3553,7 +3505,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</tbody></table></div>';
             }
             echo '</div>';
-            if ($fw) { island_ew_fullwidth_script(); }
         }
     }
     } // end: Island_Subspecies_Widget guard
@@ -3584,8 +3535,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('full_width', ['label' => 'Full width (span the page)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-                'description' => 'On by default: spans the full page width automatically, wherever you place it. Turn off to keep it inside the section width.']);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wts-eyebrow,{{WRAPPER}} .wts-isl' => 'color:{{VALUE}}']]);
             $this->add_control('brown', ['label' => 'Heading / chip', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
@@ -3629,8 +3578,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
             </style>';
 
-            $fw = ($s['full_width'] ?? 'yes') === 'yes';
-            echo '<div class="wts"' . ($fw ? ' data-island-fw="1"' : '') . '>';
+            echo '<div class="wts">';
             echo '<span class="wts-eyebrow">Plan the encounter</span>';
             if ($title !== '') { echo '<h2 class="wts-title">' . esc_html($title) . '</h2>'; }
             if (($s['show_intro'] ?? 'yes') === 'yes' && $intro) { echo '<div class="wts-intro">' . wp_kses_post($intro) . '</div>'; }
@@ -3660,7 +3608,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div>';
             }
             echo '</div>';
-            if ($fw) { island_ew_fullwidth_script(); }
         }
     }
     } // end: Island_WhereToSee_Widget guard
@@ -3688,8 +3635,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('full_width', ['label' => 'Full width (span the page)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-                'description' => 'On by default: spans the full page width automatically, wherever you place it. Turn off to keep it inside the section width.']);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wsn-eyebrow' => 'color:{{VALUE}}']]);
             $this->add_control('brown', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
@@ -3741,8 +3686,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(max-width:720px){ {{WRAPPER}} .wsn-r{grid-template-columns:78px 92px 1fr} }
             </style>';
 
-            $fw = ($s['full_width'] ?? 'yes') === 'yes';
-            echo '<div class="wsn"' . ($fw ? ' data-island-fw="1"' : '') . '>';
+            echo '<div class="wsn">';
             echo '<span class="wsn-eyebrow">Best time</span>';
             if ($title !== '') { echo '<h2 class="wsn-title">' . esc_html($title) . '</h2>'; }
             if (($s['show_intro'] ?? 'yes') === 'yes' && $intro) { echo '<div class="wsn-intro">' . wp_kses_post($intro) . '</div>'; }
@@ -3775,7 +3719,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div>' . $legend;
             }
             echo '</div>';
-            if ($fw) { island_ew_fullwidth_script(); }
         }
     }
     } // end: Island_Seasonality_Widget guard
@@ -3829,8 +3772,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'The feature list never shrinks below this even if the card is short.']);
             $this->add_control('fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
-            $this->add_control('full_width', ['label' => 'Full width (span the page)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'separator' => 'before',
-                'description' => 'On by default: spans the full page width automatically, wherever you place it. Turn off to keep it inside the section width.']);
             $this->end_controls_section();
 
             /* CARD (left) */
@@ -3983,8 +3924,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // When the page has no At a Glance data, the features take the full
             // width (single column, natural flow — no rail, no internal scroll).
             $wgf_vars = '--cl:' . $cl . ';--wgf-open:' . $open . 'px';
-            $fw = ($s['full_width'] ?? 'yes') === 'yes';
-            echo '<div class="wgf' . ($hasGlance ? '' : ' wgf-solo') . ($hx ? ' hx' : '') . '" data-min="' . $mn . '"' . ($fw ? ' data-island-fw="1"' : '') . ' style="' . esc_attr($wgf_vars) . '">';
+            echo '<div class="wgf' . ($hasGlance ? '' : ' wgf-solo') . ($hx ? ' hx' : '') . '" data-min="' . $mn . '" style="' . esc_attr($wgf_vars) . '">';
 
             // LEFT card (only when there is glance data)
             if ($hasGlance) {
@@ -4049,7 +3989,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
 
             $this->gf_sync_script();
-            if ($fw) { island_ew_fullwidth_script(); }
         }
 
         /** Height-sync: the right scroll area matches the left card's height so
