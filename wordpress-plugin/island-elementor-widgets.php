@@ -19,6 +19,22 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Build tag + diagnostic notice. If this notice does NOT show on wp-admin after
+ * uploading, PHP OPcache is serving a stale copy of this file (clear OPcache /
+ * restart PHP). The registration status of the At a Glance widget is appended
+ * once Elementor has fired its widget-register hook.
+ */
+define('ISLAND_EW_BUILD', 'ATAGLANCE-v1');
+add_action('admin_notices', function () {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    $st = $GLOBALS['island_ew_atglance_status'] ?? 'not yet registered on this page (open Elementor to trigger)';
+    echo '<div class="notice notice-info is-dismissible"><p><strong>Island Widgets</strong> — build '
+        . esc_html(ISLAND_EW_BUILD) . '. At a Glance: <strong>' . esc_html($st) . '</strong>.</p></div>';
+});
+
+/**
  * Resolve an ACF image sub-field to a URL regardless of its Return Format
  * (Image ID, Image Array, or Image URL). This is why "the image is set but
  * doesn't show" — the widget must not assume one format.
@@ -3330,7 +3346,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     // site stays up and only that widget is skipped — never a white screen.
     try {
         $widgets_manager->register(new Island_AtAGlance_Widget());
+        $GLOBALS['island_ew_atglance_status'] = 'registered OK';
     } catch (\Throwable $e) {
+        $GLOBALS['island_ew_atglance_status'] = 'ERROR — ' . $e->getMessage();
         error_log('[island-widgets] At a Glance widget skipped: ' . $e->getMessage());
     }
 });
