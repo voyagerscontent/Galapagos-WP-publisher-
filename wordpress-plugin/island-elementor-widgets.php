@@ -1408,6 +1408,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             ]);
             $this->end_controls_section();
 
+            /* Height / scroll — pair this column with "At a Glance" on its left.
+             * When on, the feature list matches the neighbouring column's height
+             * and scrolls internally so the two columns stay level (desktop only,
+             * rows layout). */
+            $this->start_controls_section('cbind', ['label' => 'Height / Scroll', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT, 'condition' => ['layout' => 'rows']]);
+            $this->add_control('bind_height', ['label' => 'Match neighbour column (internal scroll)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'On: this widget matches the height of the column next to it (e.g. “At a Glance”) and scrolls its feature list inside that height, so the two columns end level. Two-column row, desktop only — on mobile it flows normally.']);
+            $this->add_control('bind_min', ['label' => 'Minimum height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 300, 'min' => 160,
+                'condition' => ['bind_height' => 'yes'],
+                'description' => 'Never shrinks below this, even if the neighbour column is very short.']);
+            $this->add_control('bind_fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
+                'condition' => ['bind_height' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs-scrollwrap' => '--ifs-fade:{{VALUE}}'],
+                'description' => 'The soft “there is more below” fade at the bottom edge. Set to the page/section background so it blends.']);
+            $this->end_controls_section();
+
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('fade_color', ['label' => 'Fade color (hint of “more”)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--fade:{{VALUE}}'],
@@ -1569,10 +1584,23 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-info-frame img{width:100%;height:auto;display:block}
               {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
               @media(max-width:760px){{{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}{{WRAPPER}} .ifs-tbl{margin:14px 16px 20px}}
+              {{WRAPPER}} .ifs-scrollwrap{position:relative}
+              {{WRAPPER}} .ifs-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
+              {{WRAPPER}} .ifs-scroll::-webkit-scrollbar{width:8px}
+              {{WRAPPER}} .ifs-scroll::-webkit-scrollbar-thumb{background:#c8ad82;border-radius:999px}
+              {{WRAPPER}} .ifs-scroll::-webkit-scrollbar-track{background:transparent}
+              {{WRAPPER}} .ifs-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--ifs-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
+              {{WRAPPER}} .ifs-scrollwrap.is-overflow .ifs-fade{opacity:1}
+              @media(max-width:820px){{{WRAPPER}} .ifs-scroll{max-height:none!important;overflow:visible;padding-right:0}{{WRAPPER}} .ifs-fade{display:none}}
             </style>';
             $hx = ($s['hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
             $lb = ($s['info_lightbox'] ?? 'yes') === 'yes';
+            $bind = ($s['bind_height'] ?? '') === 'yes';
             $info_any = false;
+            if ($bind) {
+                $bmin = max(160, (int) ($s['bind_min'] ?? 300));
+                echo '<div class="ifs-scrollwrap" data-ifs-bind="1" data-ifs-min="' . $bmin . '"><div class="ifs-scroll">';
+            }
             echo '<div class="ifs' . $hx . '">';
             $i = 0;
             foreach ($rows as $r) {
@@ -1652,7 +1680,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</article>';
                 $i++;
             }
-            echo '</div>';
+            echo '</div>';  // .ifs
+            if ($bind) {
+                echo '</div><div class="ifs-fade"></div></div>';  // close .ifs-scroll, fade, .ifs-scrollwrap
+            }
             // Open on hover. Driven by JS (mouseenter/leave) so it never depends
             // on the CSS :hover firing — which Elementor's editor overlay can
             // swallow. Touch: tap toggles it (and :focus-within via tabindex).
@@ -1670,6 +1701,44 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if ($info_any) {
                 $this->fs_lightbox();
             }
+            // Height-binding script LAST — must not sit between the .ifs container
+            // and the hover script (which uses previousElementSibling).
+            if ($bind) {
+                $this->fs_bind_script();
+            }
+        }
+
+        /** Match this widget's height to its neighbouring column (e.g. the
+         * "At a Glance" card) and scroll the feature list internally so the two
+         * columns stay level. Printed once per request; desktop only. Works with
+         * both classic columns (.elementor-column) and flexbox containers (.e-con). */
+        private function fs_bind_script()
+        {
+            static $done = false;
+            if ($done) {
+                return;
+            }
+            $done = true;
+            echo '<script>(function(){if(window.__islandIfsBind)return;window.__islandIfsBind=1;'
+                . 'function colOf(w){var g=w.closest(".elementor-widget")||w;var c=g.closest(".elementor-column");if(c)return{col:c,sel:".elementor-column"};c=g.closest(".e-con.e-child")||g.closest(".e-con");return c?{col:c,sel:".e-con"}:null;}'
+                . 'function sync(){var W=document.querySelectorAll(\'.ifs-scrollwrap[data-ifs-bind="1"]\');Array.prototype.forEach.call(W,function(wrap){'
+                . 'var sc=wrap.querySelector(".ifs-scroll");if(!sc)return;'
+                . 'if(window.innerWidth<=820){sc.style.maxHeight="";wrap.classList.remove("is-overflow");return;}'
+                . 'var info=colOf(wrap);if(!info||!info.col.parentElement){sc.style.maxHeight="";return;}'
+                . 'var col=info.col,sel=info.sel;var sibs=Array.prototype.filter.call(col.parentElement.children,function(x){return x!==col&&x.matches&&x.matches(sel);});'
+                . 'if(!sibs.length){sc.style.maxHeight="";wrap.classList.remove("is-overflow");return;}'
+                . 'var target=0;sibs.forEach(function(x){target=Math.max(target,x.offsetHeight);});if(target<=0){sc.style.maxHeight="";return;}'
+                . 'sc.style.maxHeight="none";var above=sc.getBoundingClientRect().top-col.getBoundingClientRect().top;'
+                . 'var mn=parseInt(wrap.getAttribute("data-ifs-min"),10)||300;var h=Math.max(mn,target-above-6);sc.style.maxHeight=h+"px";'
+                . 'wrap.classList.toggle("is-overflow",sc.scrollHeight>sc.clientHeight+2);});}'
+                . 'var t;function later(){clearTimeout(t);t=setTimeout(sync,60);}'
+                . 'window.addEventListener("resize",later);'
+                . 'window.addEventListener("load",function(){sync();setTimeout(sync,300);setTimeout(sync,900);});'
+                . 'if(document.readyState!=="loading"){sync();setTimeout(sync,300);}else{document.addEventListener("DOMContentLoaded",function(){sync();setTimeout(sync,300);});}'
+                . 'if("ResizeObserver" in window){var ro=new ResizeObserver(later);setTimeout(function(){'
+                . 'document.querySelectorAll(\'.ifs-scrollwrap[data-ifs-bind="1"]\').forEach(function(wrap){var info=colOf(wrap);'
+                . 'if(info&&info.col.parentElement){Array.prototype.forEach.call(info.col.parentElement.children,function(x){if(x!==info.col)ro.observe(x);});}});},200);}'
+                . '})();</script>';
         }
 
         /** Shared infographic lightbox (printed once per request): a full-screen
