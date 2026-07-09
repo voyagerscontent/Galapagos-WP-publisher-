@@ -176,6 +176,7 @@
     "menu_order": 0,
     "position": "normal",
     "style": "default",
-    "active": true
+    "active": true,
+    "show_in_rest": 1
   }
 ]
