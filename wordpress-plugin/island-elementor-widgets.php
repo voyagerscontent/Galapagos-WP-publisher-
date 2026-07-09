@@ -3150,6 +3150,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    } // end: declare widget classes once
+
+    // Declared in its OWN guard (independent of the shared guard above),
+    // so it is registered even if another copy of the plugin already
+    // declared the other classes and skipped the shared block.
+    if (!class_exists('Island_AtAGlance_Widget')) {
+
     /* ===================================================================
      *  WILDLIFE · AT A GLANCE — a soft card with the IUCN status badge
      *  (auto-coloured) plus a hairline label/value list. Reads ONLY the
@@ -3326,7 +3333,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
-    } // end: declare widget classes once
+    } // end: Island_AtAGlance_Widget guard
 
     $widgets_manager->register(new Island_Wildlife_Widget());
     $widgets_manager->register(new Island_QuickFacts_Widget());
