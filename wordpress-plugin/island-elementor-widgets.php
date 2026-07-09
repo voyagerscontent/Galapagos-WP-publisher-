@@ -3319,6 +3319,341 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
     } // end: Island_AtAGlance_Widget guard
 
+    /* ===================================================================
+     *  WILDLIFE · SUBSPECIES — title + intro (narratives) + the subspecies
+     *  repeater in one of three layouts: A data table, B island cards,
+     *  C accordion. Own guard (independent of the shared block).
+     * =================================================================== */
+    if (!class_exists('Island_Subspecies_Widget')) {
+    class Island_Subspecies_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name() { return 'wildlife_subspecies'; }
+        public function get_title() { return 'Wildlife · Subspecies'; }
+        public function get_icon() { return 'eicon-table'; }
+        public function get_categories() { return ['general']; }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('heading', ['label' => 'Fallback heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Subspecies',
+                'description' => 'Used when the page has no Subspecies heading.']);
+            $this->add_control('show_intro', ['label' => 'Show intro (narratives)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('layout', ['label' => 'Layout', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'table',
+                'options' => ['table' => 'A · Data table', 'cards' => 'B · Island cards', 'accordion' => 'C · Accordion']]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
+                'selectors' => ['{{WRAPPER}} .wss-eyebrow,{{WRAPPER}} .wss-isl' => 'color:{{VALUE}}']]);
+            $this->add_control('heading_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+                'selectors' => ['{{WRAPPER}} .wss-title,{{WRAPPER}} .wss-sci,{{WRAPPER}} .wss-accnm' => 'color:{{VALUE}}']]);
+            $this->add_control('surface', ['label' => 'Surface', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
+                'selectors' => ['{{WRAPPER}} .wss-surface,{{WRAPPER}} .wss-tbl' => 'background:{{VALUE}}']]);
+            $this->add_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 28]],
+                'default' => ['size' => 14, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wss-surface' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .wss-title']);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) { return; }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (get_the_ID() ?: get_queried_object_id());
+            $rows = get_field('subspecies', $pid) ?: [];
+            $title = trim((string) get_field('subspecies_title', $pid));
+            if ($title === '') { $title = trim((string) ($s['heading'] ?? '')); }
+            $intro = get_field('subspecies_intro', $pid);
+            if (!$rows && !$intro) { return; }
+            $layout = $s['layout'] ?? 'table';
+
+            $pill = function ($status) {
+                $sl = strtolower((string) $status);
+                if ($sl === '') { return ''; }
+                $c = 'ok';
+                if (strpos($sl, 'extinct') !== false || strpos($sl, 'critically') !== false) { $c = 'bad'; }
+                elseif (strpos($sl, 'vulnerable') !== false || strpos($sl, 'recover') !== false || strpos($sl, 'reintroduc') !== false || strpos($sl, 'endangered') !== false) { $c = 'warn'; }
+                return '<span class="wss-pill wss-' . $c . '">' . esc_html($status) . '</span>';
+            };
+
+            echo '<style>
+              {{WRAPPER}} .wss-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
+              {{WRAPPER}} .wss-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
+              {{WRAPPER}} .wss-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
+              {{WRAPPER}} .wss-intro h3{font-family:Merriweather,Georgia,serif;font-style:italic;color:#5A3D2B;font-size:19px;margin:22px 0 6px}
+              {{WRAPPER}} .wss-sci{font-style:italic;font-family:Merriweather,Georgia,serif}
+              {{WRAPPER}} .wss-num{font-variant-numeric:tabular-nums}
+              {{WRAPPER}} .wss-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px}
+              {{WRAPPER}} .wss-ok{background:#e4ede0;color:#3f6a2f}{{WRAPPER}} .wss-warn{background:#f4e6cf;color:#9a6a1c}{{WRAPPER}} .wss-bad{background:#f0dcd8;color:#9a3b2e}
+              {{WRAPPER}} .wss-tblwrap{overflow-x:auto;box-shadow:0 16px 44px rgba(60,40,25,.14)}
+              {{WRAPPER}} .wss-tbl{width:100%;border-collapse:collapse;min-width:540px;font-size:14px;background:#FCF9F5}
+              {{WRAPPER}} .wss-tbl th{background:rgba(90,61,43,.10);text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#5A3D2B;padding:12px 14px;font-weight:700}
+              {{WRAPPER}} .wss-tbl td{padding:11px 14px;border-top:1px solid rgba(90,61,43,.14);vertical-align:top}
+              {{WRAPPER}} .wss-tbl tr:nth-child(even) td{background:rgba(90,61,43,.04)}
+              {{WRAPPER}} .wss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+              {{WRAPPER}} .wss-card{padding:16px 18px;border:1px solid rgba(90,61,43,.16);box-shadow:0 10px 26px rgba(60,40,25,.10)}
+              {{WRAPPER}} .wss-isl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a07a44;font-weight:700}
+              {{WRAPPER}} .wss-nm{font-size:16px;color:#5A3D2B;margin:3px 0 10px}
+              {{WRAPPER}} .wss-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:#8a7360}
+              {{WRAPPER}} .wss-acc{box-shadow:0 16px 44px rgba(60,40,25,.14);overflow:hidden;border-radius:14px}
+              {{WRAPPER}} .wss-acc details{border-bottom:1px solid rgba(90,61,43,.14);background:#FCF9F5}
+              {{WRAPPER}} .wss-acc details:last-child{border-bottom:0}
+              {{WRAPPER}} .wss-acc summary{cursor:pointer;list-style:none;padding:15px 20px;display:flex;justify-content:space-between;gap:14px;align-items:center}
+              {{WRAPPER}} .wss-acc summary::-webkit-details-marker{display:none}
+              {{WRAPPER}} .wss-accnm{font-family:Merriweather,Georgia,serif;font-size:17px;color:#5A3D2B}
+              {{WRAPPER}} .wss-accin{padding:0 20px 16px;color:#8a7360;font-size:14px}
+            </style>';
+
+            echo '<div class="wss">';
+            echo '<span class="wss-eyebrow">Island by island</span>';
+            if ($title !== '') { echo '<h2 class="wss-title">' . esc_html($title) . '</h2>'; }
+            if (($s['show_intro'] ?? 'yes') === 'yes' && $intro) { echo '<div class="wss-intro">' . wp_kses_post($intro) . '</div>'; }
+
+            if ($rows && $layout === 'cards') {
+                echo '<div class="wss-grid">';
+                foreach ($rows as $r) {
+                    $meta = trim(((string) ($r['trait'] ?? '')) . ' · ' . ((string) ($r['population'] ?? '')), " ·");
+                    echo '<div class="wss-surface wss-card"><div class="wss-isl">' . esc_html($r['island'] ?? '') . '</div>'
+                        . '<div class="wss-nm wss-sci">' . esc_html($r['name'] ?? '') . '</div>'
+                        . '<div class="wss-foot"><span>' . esc_html($meta) . '</span>' . $pill($r['status'] ?? '') . '</div></div>';
+                }
+                echo '</div>';
+            } elseif ($rows && $layout === 'accordion') {
+                echo '<div class="wss-acc">';
+                foreach ($rows as $r) {
+                    $meta = trim(((string) ($r['trait'] ?? '')) . ' · ' . ((string) ($r['population'] ?? '')), " ·");
+                    echo '<details><summary><span class="wss-accnm">' . esc_html(trim(($r['island'] ?? '') . ' — ' . ($r['name'] ?? ''), " —")) . '</span>' . $pill($r['status'] ?? '') . '</summary>'
+                        . '<div class="wss-accin">' . esc_html($meta) . '</div></details>';
+                }
+                echo '</div>';
+            } elseif ($rows) {
+                echo '<div class="wss-tblwrap"><table class="wss-tbl"><thead><tr><th>Island</th><th>Species</th><th>Shell</th><th>Pop.</th><th>Status</th></tr></thead><tbody>';
+                foreach ($rows as $r) {
+                    echo '<tr><td>' . esc_html($r['island'] ?? '') . '</td><td class="wss-sci">' . esc_html($r['name'] ?? '') . '</td><td>' . esc_html($r['trait'] ?? '')
+                        . '</td><td class="wss-num">' . esc_html($r['population'] ?? '') . '</td><td>' . $pill($r['status'] ?? '') . '</td></tr>';
+                }
+                echo '</tbody></table></div>';
+            }
+            echo '</div>';
+        }
+    }
+    } // end: Island_Subspecies_Widget guard
+
+    /* ===================================================================
+     *  WILDLIFE · WHERE TO SEE — title + intro + the where_to_see repeater
+     *  in one of three layouts: A numbered cards, B timeline, C list.
+     * =================================================================== */
+    if (!class_exists('Island_WhereToSee_Widget')) {
+    class Island_WhereToSee_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name() { return 'wildlife_where_to_see'; }
+        public function get_title() { return 'Wildlife · Where to See'; }
+        public function get_icon() { return 'eicon-map-pin'; }
+        public function get_categories() { return ['general']; }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('heading', ['label' => 'Fallback heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Where and How to See Them']);
+            $this->add_control('show_intro', ['label' => 'Show intro', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('layout', ['label' => 'Layout', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'cards',
+                'options' => ['cards' => 'A · Numbered cards', 'timeline' => 'B · Timeline', 'list' => 'C · Compact list']]);
+            $this->add_responsive_control('columns', ['label' => 'Card columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'tablet_default' => '2', 'mobile_default' => '1',
+                'options' => ['1' => '1', '2' => '2'], 'condition' => ['layout' => 'cards'],
+                'selectors' => ['{{WRAPPER}} .wts-cards' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
+                'selectors' => ['{{WRAPPER}} .wts-eyebrow,{{WRAPPER}} .wts-isl' => 'color:{{VALUE}}']]);
+            $this->add_control('brown', ['label' => 'Heading / chip', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+                'selectors' => ['{{WRAPPER}} .wts-title,{{WRAPPER}} .wts-site' => 'color:{{VALUE}}', '{{WRAPPER}} .wts-no' => 'background:{{VALUE}}']]);
+            $this->add_control('surface', ['label' => 'Card surface', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
+                'selectors' => ['{{WRAPPER}} .wts-surface' => 'background:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .wts-title']);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) { return; }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (get_the_ID() ?: get_queried_object_id());
+            $rows = get_field('where_to_see', $pid) ?: [];
+            $title = trim((string) get_field('where_to_see_title', $pid));
+            if ($title === '') { $title = trim((string) ($s['heading'] ?? '')); }
+            $intro = get_field('where_to_see_intro', $pid);
+            if (!$rows && !$intro) { return; }
+            $layout = $s['layout'] ?? 'cards';
+
+            echo '<style>
+              {{WRAPPER}} .wts-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
+              {{WRAPPER}} .wts-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
+              {{WRAPPER}} .wts-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
+              {{WRAPPER}} .wts-isl{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#a07a44;font-weight:700}
+              {{WRAPPER}} .wts-site{font-family:Merriweather,Georgia,serif;font-style:italic;color:#5A3D2B;font-size:18px;margin:2px 0 5px}
+              {{WRAPPER}} .wts-desc{margin:0;font-size:13.5px;color:#8a7360;line-height:1.6}
+              {{WRAPPER}} .wts-desc p{margin:0 0 6px}
+              {{WRAPPER}} .wts-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+              {{WRAPPER}} .wts-card{display:grid;grid-template-columns:auto 1fr;gap:15px;padding:18px;border:1px solid rgba(90,61,43,.16);border-radius:16px;box-shadow:0 12px 30px rgba(60,40,25,.12)}
+              {{WRAPPER}} .wts-no{width:36px;height:36px;border-radius:50%;background:#5A3D2B;color:#f6efe4;display:flex;align-items:center;justify-content:center;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:16px}
+              {{WRAPPER}} .wts-tl{border-left:2px solid #c8ad82;margin-left:12px;padding-left:26px}
+              {{WRAPPER}} .wts-tlrow{position:relative;padding:0 0 22px}
+              {{WRAPPER}} .wts-tlrow .wts-dot{position:absolute;left:-35px;top:2px;width:15px;height:15px;border-radius:50%;background:#a07a44;border:3px solid #efe9e1}
+              {{WRAPPER}} .wts-rows{border-radius:14px;box-shadow:0 16px 44px rgba(60,40,25,.14);overflow:hidden}
+              {{WRAPPER}} .wts-r{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:16px 20px;background:#FCF9F5;border-top:1px solid rgba(90,61,43,.14)}
+              {{WRAPPER}} .wts-r:first-child{border-top:0}
+              {{WRAPPER}} .wts-r .wts-isl{padding-top:3px}
+              @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
+            </style>';
+
+            echo '<div class="wts">';
+            echo '<span class="wts-eyebrow">Plan the encounter</span>';
+            if ($title !== '') { echo '<h2 class="wts-title">' . esc_html($title) . '</h2>'; }
+            if (($s['show_intro'] ?? 'yes') === 'yes' && $intro) { echo '<div class="wts-intro">' . wp_kses_post($intro) . '</div>'; }
+
+            if ($rows && $layout === 'timeline') {
+                echo '<div class="wts-tl">';
+                foreach ($rows as $r) {
+                    echo '<div class="wts-tlrow"><span class="wts-dot"></span><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div>'
+                        . '<h4 class="wts-site">' . esc_html($r['site'] ?? '') . '</h4><div class="wts-desc">' . wp_kses_post($r['description'] ?? '') . '</div></div>';
+                }
+                echo '</div>';
+            } elseif ($rows && $layout === 'list') {
+                echo '<div class="wts-rows">';
+                foreach ($rows as $r) {
+                    echo '<div class="wts-r"><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div><div>'
+                        . '<h4 class="wts-site">' . esc_html($r['site'] ?? '') . '</h4><div class="wts-desc">' . wp_kses_post($r['description'] ?? '') . '</div></div></div>';
+                }
+                echo '</div>';
+            } elseif ($rows) {
+                echo '<div class="wts-cards">';
+                $i = 0;
+                foreach ($rows as $r) {
+                    $i++;
+                    echo '<div class="wts-surface wts-card"><div class="wts-no">' . (int) $i . '</div><div><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div>'
+                        . '<h4 class="wts-site">' . esc_html($r['site'] ?? '') . '</h4><div class="wts-desc">' . wp_kses_post($r['description'] ?? '') . '</div></div></div>';
+                }
+                echo '</div>';
+            }
+            echo '</div>';
+        }
+    }
+    } // end: Island_WhereToSee_Widget guard
+
+    /* ===================================================================
+     *  WILDLIFE · SEASONALITY — title + intro + the seasonality repeater
+     *  in one of three layouts: A calendar strip, B rows, C year bar.
+     * =================================================================== */
+    if (!class_exists('Island_Seasonality_Widget')) {
+    class Island_Seasonality_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name() { return 'wildlife_seasonality'; }
+        public function get_title() { return 'Wildlife · Seasonality'; }
+        public function get_icon() { return 'eicon-calendar'; }
+        public function get_categories() { return ['general']; }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('heading', ['label' => 'Fallback heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Best Time to See']);
+            $this->add_control('show_intro', ['label' => 'Show intro', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('layout', ['label' => 'Layout', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'calendar',
+                'options' => ['calendar' => 'A · Calendar strip', 'rows' => 'B · Rows (with notes)', 'bar' => 'C · Year bar']]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
+                'selectors' => ['{{WRAPPER}} .wsn-eyebrow' => 'color:{{VALUE}}']]);
+            $this->add_control('brown', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+                'selectors' => ['{{WRAPPER}} .wsn-title,{{WRAPPER}} .wsn-mo' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .wsn-title']);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) { return; }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (get_the_ID() ?: get_queried_object_id());
+            $rows = get_field('seasonality', $pid) ?: [];
+            $title = trim((string) get_field('seasonality_title', $pid));
+            if ($title === '') { $title = trim((string) ($s['heading'] ?? '')); }
+            $intro = get_field('seasonality_intro', $pid);
+            if (!$rows && !$intro) { return; }
+            $layout = $s['layout'] ?? 'calendar';
+
+            $cls = function ($label) {
+                $l = strtolower((string) $label);
+                if (strpos($l, 'present') !== false) { return 'pr'; }
+                if (strpos($l, 'depart') !== false) { return 'de'; }
+                if (strpos($l, 'absent') !== false) { return 'ab'; }
+                return 'nu';
+            };
+
+            echo '<style>
+              {{WRAPPER}} .wsn-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
+              {{WRAPPER}} .wsn-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
+              {{WRAPPER}} .wsn-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
+              {{WRAPPER}} .wsn-cal{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:5px}
+              {{WRAPPER}} .wsn-mo{text-align:center;padding:12px 4px;border-radius:10px;font-size:12px;font-weight:700}
+              {{WRAPPER}} .wsn-mo small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.03em;margin-top:4px;opacity:.9}
+              {{WRAPPER}} .wsn-pr{background:#dfe9d0;color:#3f6a2f}{{WRAPPER}} .wsn-ab{background:#eee7dd;color:#9a8a76}{{WRAPPER}} .wsn-de{background:#f4e6cf;color:#9a6a1c}{{WRAPPER}} .wsn-nu{background:#efe9e1;color:#6a5c4e}
+              {{WRAPPER}} .wsn-legend{display:flex;gap:16px;margin-top:14px;font-size:12.5px;color:#8a7360;flex-wrap:wrap}
+              {{WRAPPER}} .wsn-legend span{display:inline-flex;align-items:center;gap:6px}
+              {{WRAPPER}} .wsn-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+              {{WRAPPER}} .wsn-tbl{border-radius:14px;box-shadow:0 16px 44px rgba(60,40,25,.14);overflow:hidden}
+              {{WRAPPER}} .wsn-r{display:grid;grid-template-columns:120px 110px 1fr;gap:14px;align-items:center;padding:12px 18px;background:#FCF9F5;border-top:1px solid rgba(90,61,43,.14);font-size:14px}
+              {{WRAPPER}} .wsn-r:first-child{border-top:0}
+              {{WRAPPER}} .wsn-per{font-family:Merriweather,Georgia,serif;color:#5A3D2B;font-size:15px}
+              {{WRAPPER}} .wsn-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
+              {{WRAPPER}} .wsn-note{color:#8a7360;font-size:13px}
+              {{WRAPPER}} .wsn-bar{display:flex;border-radius:12px;overflow:hidden;box-shadow:0 16px 44px rgba(60,40,25,.14)}
+              {{WRAPPER}} .wsn-seg{flex:1;min-width:0;padding:16px 4px;text-align:center;font-size:11px;font-weight:700}
+              {{WRAPPER}} .wsn-seg small{display:block;font-size:9px;opacity:.85;margin-top:3px}
+              @media(max-width:720px){ {{WRAPPER}} .wsn-r{grid-template-columns:78px 92px 1fr} }
+            </style>';
+
+            echo '<div class="wsn">';
+            echo '<span class="wsn-eyebrow">Best time</span>';
+            if ($title !== '') { echo '<h2 class="wsn-title">' . esc_html($title) . '</h2>'; }
+            if (($s['show_intro'] ?? 'yes') === 'yes' && $intro) { echo '<div class="wsn-intro">' . wp_kses_post($intro) . '</div>'; }
+
+            $legend = '<div class="wsn-legend"><span><i style="background:#3f6a2f"></i>Present</span><span><i style="background:#c8ad82"></i>Absent</span><span><i style="background:#9a6a1c"></i>Departing</span></div>';
+
+            if ($rows && $layout === 'rows') {
+                echo '<div class="wsn-tbl">';
+                foreach ($rows as $r) {
+                    $c = $cls($r['label'] ?? '');
+                    echo '<div class="wsn-r"><span class="wsn-per">' . esc_html($r['period'] ?? '') . '</span>'
+                        . '<span><span class="wsn-badge wsn-' . $c . '">' . esc_html($r['label'] ?? '') . '</span></span>'
+                        . '<span class="wsn-note">' . esc_html($r['notes'] ?? '') . '</span></div>';
+                }
+                echo '</div>';
+            } elseif ($rows && $layout === 'bar') {
+                echo '<div class="wsn-bar">';
+                foreach ($rows as $r) {
+                    $c = $cls($r['label'] ?? '');
+                    $lab = trim((string) ($r['label'] ?? ''));
+                    echo '<div class="wsn-seg wsn-' . $c . '">' . esc_html($r['period'] ?? '') . '<small>' . esc_html($lab !== '' ? mb_substr($lab, 0, 3) : '') . '</small></div>';
+                }
+                echo '</div>' . $legend;
+            } elseif ($rows) {
+                echo '<div class="wsn-cal">';
+                foreach ($rows as $r) {
+                    $c = $cls($r['label'] ?? '');
+                    echo '<div class="wsn-mo wsn-' . $c . '">' . esc_html($r['period'] ?? '') . '<small>' . esc_html($r['label'] ?? '') . '</small></div>';
+                }
+                echo '</div>' . $legend;
+            }
+            echo '</div>';
+        }
+    }
+    } // end: Island_Seasonality_Widget guard
+
     $widgets_manager->register(new Island_Wildlife_Widget());
     $widgets_manager->register(new Island_QuickFacts_Widget());
     $widgets_manager->register(new Island_VisitorSites_Widget());
@@ -3335,10 +3670,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     // New widgets are registered defensively: if one ever throws while building
     // its controls (e.g. an Elementor build missing a group-control class), the
     // site stays up and only that widget is skipped — never a white screen.
-    try {
-        $widgets_manager->register(new Island_AtAGlance_Widget());
-    } catch (\Throwable $e) {
-        error_log('[island-widgets] At a Glance widget skipped: ' . $e->getMessage());
+    foreach ([
+        'Island_AtAGlance_Widget',
+        'Island_Subspecies_Widget',
+        'Island_WhereToSee_Widget',
+        'Island_Seasonality_Widget',
+    ] as $island_ew_new) {
+        try {
+            if (class_exists($island_ew_new)) {
+                $widgets_manager->register(new $island_ew_new());
+            }
+        } catch (\Throwable $e) {
+            error_log('[island-widgets] ' . $island_ew_new . ' skipped: ' . $e->getMessage());
+        }
     }
     // One-time cleanup of the temporary diagnostic option (harmless if absent).
     if (get_option('island_ew_atglance_status') !== false) {
