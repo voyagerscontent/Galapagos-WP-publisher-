@@ -3820,10 +3820,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 }
             }
             $hasBadge = ($s['show_badge'] ?? 'yes') === 'yes' && $status !== '';
+            $hasGlance = (bool) ($rows || $hasBadge);
 
             // ---- RIGHT: Feature Sections ----
             $feats = get_field('feature_sections', $pid) ?: [];
-            if (!$rows && !$hasBadge && !$feats) { return; }
+            if (!$hasGlance && !$feats) { return; }
 
             $map = [
                 'least concern' => ['#e4ede0', '#3f6a2f'], 'near threatened' => ['#eef0d6', '#6a7a1c'],
@@ -3841,6 +3842,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             echo '<style>
               {{WRAPPER}} .wgf{display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
+              {{WRAPPER}} .wgf.wgf-solo{grid-template-columns:1fr}
+              {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0}
+              {{WRAPPER}} .wgf-solo .wgf-fade{display:none}
               {{WRAPPER}} .wgf-glance{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;box-shadow:0 16px 44px rgba(60,40,25,.14);padding:24px 26px;align-self:start}
               {{WRAPPER}} .wgf-eyebrow{display:block;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 14px}
               {{WRAPPER}} .wgf-badge{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12px;padding:6px 13px;border-radius:999px;border:1px solid transparent}
@@ -3875,23 +3879,27 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(max-width:820px){{{WRAPPER}} .wgf{grid-template-columns:1fr}{{WRAPPER}} .wgf-scroll{max-height:none!important;overflow:visible;padding-right:0}{{WRAPPER}} .wgf-fade{display:none}{{WRAPPER}} .wgf-feat,{{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr}{{WRAPPER}} .wgf-feat.rev .wgf-media{order:0}}
             </style>';
 
-            echo '<div class="wgf" data-min="' . $mn . '">';
+            // When the page has no At a Glance data, the features take the full
+            // width (single column, natural flow — no rail, no internal scroll).
+            echo '<div class="wgf' . ($hasGlance ? '' : ' wgf-solo') . '" data-min="' . $mn . '">';
 
-            // LEFT card
-            echo '<aside><div class="wgf-glance">';
-            $gh = trim((string) ($s['glance_heading'] ?? ''));
-            if ($gh !== '') { echo '<span class="wgf-eyebrow">' . esc_html($gh) . '</span>'; }
-            if ($hasBadge) {
-                echo '<div><span class="wgf-badge" style="' . esc_attr($badgeStyle) . '"><span class="wgf-dot" style="' . esc_attr($dotStyle) . '"></span>IUCN &middot; ' . esc_html($status) . '</span></div>';
-            }
-            if ($rows) {
-                echo '<dl class="wgf-list">';
-                foreach ($rows as $r) {
-                    echo '<div class="wgf-row"><dt class="wgf-l">' . esc_html($r[0]) . '</dt><dd class="wgf-v">' . $r[1] . '</dd></div>';
+            // LEFT card (only when there is glance data)
+            if ($hasGlance) {
+                echo '<aside><div class="wgf-glance">';
+                $gh = trim((string) ($s['glance_heading'] ?? ''));
+                if ($gh !== '') { echo '<span class="wgf-eyebrow">' . esc_html($gh) . '</span>'; }
+                if ($hasBadge) {
+                    echo '<div><span class="wgf-badge" style="' . esc_attr($badgeStyle) . '"><span class="wgf-dot" style="' . esc_attr($dotStyle) . '"></span>IUCN &middot; ' . esc_html($status) . '</span></div>';
                 }
-                echo '</dl>';
+                if ($rows) {
+                    echo '<dl class="wgf-list">';
+                    foreach ($rows as $r) {
+                        echo '<div class="wgf-row"><dt class="wgf-l">' . esc_html($r[0]) . '</dt><dd class="wgf-v">' . $r[1] . '</dd></div>';
+                    }
+                    echo '</dl>';
+                }
+                echo '</div></aside>';
             }
-            echo '</div></aside>';
 
             // RIGHT column
             echo '<div class="wgf-col">';
