@@ -3735,6 +3735,226 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
     } // end: Island_Seasonality_Widget guard
 
+    /* ===================================================================
+     *  WILDLIFE · AT A GLANCE + FEATURES — ONE widget, two columns.
+     *  Left: the At a Glance soft card (defines the height). Right: the
+     *  Feature Sections, scrolling internally so it never grows past the
+     *  card's height. Because both live in the same widget, the height
+     *  sync is exact — no cross-column Elementor guessing.
+     * =================================================================== */
+    if (!class_exists('Island_GlanceFeatures_Widget')) {
+    class Island_GlanceFeatures_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name() { return 'wildlife_glance_features'; }
+        public function get_title() { return 'Wildlife · At a Glance + Features'; }
+        public function get_icon() { return 'eicon-column'; }
+        public function get_categories() { return ['general']; }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('glance_heading', ['label' => 'At a Glance heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'At a Glance']);
+            $this->add_control('show_badge', ['label' => 'IUCN status badge', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('endemic_text', ['label' => 'Endemic "yes" text', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Yes — endemic to Galápagos']);
+            $this->add_control('include_quick_facts', ['label' => 'Append "At a Glance" facts', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Adds quick_facts rows (Lifespan, Weight…), skipping any already shown (scientific name, population, IUCN).']);
+            $this->add_control('feat_eyebrow', ['label' => 'Features eyebrow', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'The species', 'separator' => 'before']);
+            $this->add_control('feat_heading', ['label' => 'Features heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Feature Sections',
+                'description' => 'Blank = use the page’s feature_sections_title if present.']);
+            $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->end_controls_section();
+
+            /* LAYOUT */
+            $this->start_controls_section('layout_s', ['label' => 'Layout', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_responsive_control('rail_w', ['label' => 'At a Glance width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 240, 'max' => 460]],
+                'default' => ['size' => 320, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => 'grid-template-columns:{{SIZE}}{{UNIT}} 1fr']]);
+            $this->add_control('gap', ['label' => 'Column gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 80]],
+                'default' => ['size' => 40, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('feat_gap', ['label' => 'Feature card gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 8, 'max' => 48]],
+                'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-feats' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('min_h', ['label' => 'Minimum scroll height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 320, 'min' => 200,
+                'description' => 'The feature list never shrinks below this even if the card is short.']);
+            $this->add_control('fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
+                'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
+            $this->end_controls_section();
+
+            /* CARD (left) */
+            $this->start_controls_section('card_s', ['label' => 'At a Glance card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('card_bg', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
+                'selectors' => ['{{WRAPPER}} .wgf-glance' => 'background:{{VALUE}}']]);
+            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 36]],
+                'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-glance' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(90,61,43,.16)',
+                'selectors' => ['{{WRAPPER}} .wgf-glance' => 'border-color:{{VALUE}}']]);
+            $this->add_control('accent', ['label' => 'Eyebrow / accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
+                'selectors' => ['{{WRAPPER}} .wgf-eyebrow,{{WRAPPER}} .wgf-kicker' => 'color:{{VALUE}}']]);
+            $this->add_control('heading_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+                'selectors' => ['{{WRAPPER}} .wgf-v,{{WRAPPER}} .wgf-rhead h2,{{WRAPPER}} .wgf-feat h3' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) { return; }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (get_the_ID() ?: get_queried_object_id());
+
+            // ---- LEFT: At a Glance ----
+            $sci = trim((string) get_field('scientific_name', $pid));
+            $pop = trim((string) get_field('population', $pid));
+            $status = trim((string) get_field('conservation_status', $pid));
+            $endemic = (bool) get_field('endemic', $pid);
+            $facts = get_field('quick_facts', $pid) ?: [];
+            $rows = [];
+            if ($sci !== '') { $rows[] = ['Scientific name', '<span class="wgf-sci">' . esc_html($sci) . '</span>']; }
+            if ($pop !== '') { $rows[] = ['Population', esc_html($pop)]; }
+            if ($endemic) { $rows[] = ['Endemic', esc_html(($s['endemic_text'] ?? '') ?: 'Yes — endemic to Galápagos')]; }
+            if (($s['include_quick_facts'] ?? 'yes') === 'yes' && is_array($facts)) {
+                $skip = ['scientific name', 'common name', 'iucn status', 'iucn', 'conservation status', 'status', 'population', 'population estimate', 'endemic'];
+                foreach ($facts as $f) {
+                    $lab = trim((string) ($f['label'] ?? ''));
+                    $val = trim((string) ($f['value'] ?? ''));
+                    if ($lab === '' || $val === '' || in_array(strtolower($lab), $skip, true)) { continue; }
+                    $rows[] = [$lab, esc_html($val)];
+                }
+            }
+            $hasBadge = ($s['show_badge'] ?? 'yes') === 'yes' && $status !== '';
+
+            // ---- RIGHT: Feature Sections ----
+            $feats = get_field('feature_sections', $pid) ?: [];
+            if (!$rows && !$hasBadge && !$feats) { return; }
+
+            $map = [
+                'least concern' => ['#e4ede0', '#3f6a2f'], 'near threatened' => ['#eef0d6', '#6a7a1c'],
+                'vulnerable' => ['#f4e6cf', '#9a6a1c'], 'endangered' => ['#f6ddc9', '#b5591f'],
+                'critically endangered' => ['#f0dcd8', '#9a3b2e'], 'data deficient' => ['#e6e0da', '#6a5e52'],
+            ];
+            $bc = $map[strtolower($status)] ?? ['#f4e6cf', '#9a6a1c'];
+            $badgeStyle = 'background:' . $bc[0] . ';color:' . $bc[1] . ';border-color:' . $bc[1] . '40';
+            $dotStyle = 'background:' . $bc[1];
+
+            $feat_head = trim((string) ($s['feat_heading'] ?? ''));
+            if ($feat_head === '') { $feat_head = trim((string) get_field('feature_sections_title', $pid)); }
+            $mn = max(200, (int) ($s['min_h'] ?? 320));
+            $alt = ($s['alternate'] ?? 'yes') === 'yes';
+
+            echo '<style>
+              {{WRAPPER}} .wgf{display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
+              {{WRAPPER}} .wgf-glance{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;box-shadow:0 16px 44px rgba(60,40,25,.14);padding:24px 26px;align-self:start}
+              {{WRAPPER}} .wgf-eyebrow{display:block;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 14px}
+              {{WRAPPER}} .wgf-badge{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12px;padding:6px 13px;border-radius:999px;border:1px solid transparent}
+              {{WRAPPER}} .wgf-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+              {{WRAPPER}} .wgf-list{margin:12px 0 0;padding:0;display:flex;flex-direction:column}
+              {{WRAPPER}} .wgf-row{padding:13px 0;border-bottom:1px solid rgba(90,61,43,.13)}
+              {{WRAPPER}} .wgf-row:last-child{border-bottom:0;padding-bottom:2px}
+              {{WRAPPER}} .wgf-l{margin:0 0 2px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8a7360;font-weight:700}
+              {{WRAPPER}} .wgf-v{margin:0;font-family:Merriweather,Georgia,serif;font-size:18px;line-height:1.25;color:#5A3D2B;font-variant-numeric:tabular-nums}
+              {{WRAPPER}} .wgf-sci{font-style:italic}
+              {{WRAPPER}} .wgf-col{min-width:0;position:relative}
+              {{WRAPPER}} .wgf-rhead{margin:2px 0 14px}
+              {{WRAPPER}} .wgf-rhead .wgf-eyebrow{margin-bottom:4px}
+              {{WRAPPER}} .wgf-rhead h2{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B}
+              {{WRAPPER}} .wgf-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
+              {{WRAPPER}} .wgf-scroll::-webkit-scrollbar{width:8px}
+              {{WRAPPER}} .wgf-scroll::-webkit-scrollbar-thumb{background:#c8ad82;border-radius:999px}
+              {{WRAPPER}} .wgf-scroll::-webkit-scrollbar-track{background:transparent}
+              {{WRAPPER}} .wgf-feats{display:flex;flex-direction:column;gap:18px}
+              {{WRAPPER}} .wgf-feat{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:16px;box-shadow:0 10px 26px rgba(60,40,25,.10);overflow:hidden;display:grid;grid-template-columns:1.3fr 1fr}
+              {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
+              {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr}
+              {{WRAPPER}} .wgf-tx{padding:22px 24px;display:flex;flex-direction:column;justify-content:center}
+              {{WRAPPER}} .wgf-feat.rev .wgf-tx{order:2}
+              {{WRAPPER}} .wgf-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a07a44;font-weight:700;margin:0 0 8px}
+              {{WRAPPER}} .wgf-feat h3{margin:0 0 9px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;line-height:1.2;color:#5A3D2B}
+              {{WRAPPER}} .wgf-body{margin:0;color:#3A2A1E;font-size:14px;line-height:1.6}{{WRAPPER}} .wgf-body p{margin:0 0 10px}{{WRAPPER}} .wgf-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
+              {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
+              {{WRAPPER}} .wgf-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--wgf-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
+              {{WRAPPER}} .wgf-col.is-of .wgf-fade{opacity:1}
+              @media(max-width:820px){{{WRAPPER}} .wgf{grid-template-columns:1fr}{{WRAPPER}} .wgf-scroll{max-height:none!important;overflow:visible;padding-right:0}{{WRAPPER}} .wgf-fade{display:none}{{WRAPPER}} .wgf-feat,{{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr}{{WRAPPER}} .wgf-feat.rev .wgf-media{order:0}}
+            </style>';
+
+            echo '<div class="wgf" data-min="' . $mn . '">';
+
+            // LEFT card
+            echo '<aside><div class="wgf-glance">';
+            $gh = trim((string) ($s['glance_heading'] ?? ''));
+            if ($gh !== '') { echo '<span class="wgf-eyebrow">' . esc_html($gh) . '</span>'; }
+            if ($hasBadge) {
+                echo '<div><span class="wgf-badge" style="' . esc_attr($badgeStyle) . '"><span class="wgf-dot" style="' . esc_attr($dotStyle) . '"></span>IUCN &middot; ' . esc_html($status) . '</span></div>';
+            }
+            if ($rows) {
+                echo '<dl class="wgf-list">';
+                foreach ($rows as $r) {
+                    echo '<div class="wgf-row"><dt class="wgf-l">' . esc_html($r[0]) . '</dt><dd class="wgf-v">' . $r[1] . '</dd></div>';
+                }
+                echo '</dl>';
+            }
+            echo '</div></aside>';
+
+            // RIGHT column
+            echo '<div class="wgf-col">';
+            $eb = trim((string) ($s['feat_eyebrow'] ?? ''));
+            if ($eb !== '' || $feat_head !== '') {
+                echo '<div class="wgf-rhead">';
+                if ($eb !== '') { echo '<span class="wgf-eyebrow">' . esc_html($eb) . '</span>'; }
+                if ($feat_head !== '') { echo '<h2>' . esc_html($feat_head) . '</h2>'; }
+                echo '</div>';
+            }
+            echo '<div class="wgf-scroll"><div class="wgf-feats">';
+            $i = 0;
+            foreach ($feats as $r) {
+                $img = island_ew_image_src($r['image'] ?? '');
+                $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
+                $noimg = $img ? '' : ' noimg';
+                echo '<article class="wgf-feat' . $rev . $noimg . '"><div class="wgf-tx">';
+                if (!empty($r['subtitle'])) { echo '<span class="wgf-kicker">' . esc_html($r['subtitle']) . '</span>'; }
+                echo '<h3>' . esc_html($r['title'] ?? '') . '</h3>';
+                $content = (string) ($r['content'] ?? '');
+                // Drop any table markup — the combined view is a compact reading
+                // column, not the place for wide data tables.
+                $content = preg_replace('/<table\b[\s\S]*?<\/table>/i', '', $content);
+                if (trim(wp_strip_all_tags($content)) !== '') {
+                    echo '<div class="wgf-body">' . wp_kses_post($content) . '</div>';
+                }
+                echo '</div>';
+                if ($img) { echo '<div class="wgf-media" style="background-image:url(\'' . esc_url($img) . '\')"></div>'; }
+                echo '</article>';
+                $i++;
+            }
+            echo '</div></div><div class="wgf-fade"></div></div>';  // .wgf-feats .wgf-scroll .wgf-fade
+            echo '</div>';  // .wgf
+
+            $this->gf_sync_script();
+        }
+
+        /** Height-sync: the right scroll area matches the left card's height so
+         * the two columns end level; printed once per request, desktop only. */
+        private function gf_sync_script()
+        {
+            static $done = false;
+            if ($done) { return; }
+            $done = true;
+            echo '<script>(function(){if(window.__islandGfSync)return;window.__islandGfSync=1;'
+                . 'function sync(){document.querySelectorAll(".wgf").forEach(function(w){'
+                . 'var g=w.querySelector(".wgf-glance"),sc=w.querySelector(".wgf-scroll"),rh=w.querySelector(".wgf-rhead"),col=w.querySelector(".wgf-col");'
+                . 'if(!g||!sc)return;'
+                . 'if(window.innerWidth<=820){sc.style.maxHeight="";if(col)col.classList.remove("is-of");return;}'
+                . 'sc.style.maxHeight="none";var head=rh?rh.offsetHeight:0;'
+                . 'var mn=parseInt(w.getAttribute("data-min"),10)||320;var h=Math.max(mn,g.offsetHeight-head-14);'
+                . 'sc.style.maxHeight=h+"px";if(col)col.classList.toggle("is-of",sc.scrollHeight>sc.clientHeight+2);});}'
+                . 'var t;function later(){clearTimeout(t);t=setTimeout(sync,60);}'
+                . 'window.addEventListener("resize",later);'
+                . 'window.addEventListener("load",function(){sync();setTimeout(sync,300);setTimeout(sync,900);});'
+                . 'if(document.readyState!=="loading"){sync();setTimeout(sync,300);}else{document.addEventListener("DOMContentLoaded",function(){sync();setTimeout(sync,300);});}'
+                . 'if("ResizeObserver" in window){var ro=new ResizeObserver(later);setTimeout(function(){'
+                . 'document.querySelectorAll(".wgf .wgf-glance").forEach(function(g){ro.observe(g);});},200);}'
+                . '})();</script>';
+        }
+    }
+    } // end: Island_GlanceFeatures_Widget guard
+
     $widgets_manager->register(new Island_Wildlife_Widget());
     $widgets_manager->register(new Island_QuickFacts_Widget());
     $widgets_manager->register(new Island_VisitorSites_Widget());
@@ -3753,6 +3973,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     // site stays up and only that widget is skipped — never a white screen.
     foreach ([
         'Island_AtAGlance_Widget',
+        'Island_GlanceFeatures_Widget',
         'Island_Subspecies_Widget',
         'Island_WhereToSee_Widget',
         'Island_Seasonality_Widget',
