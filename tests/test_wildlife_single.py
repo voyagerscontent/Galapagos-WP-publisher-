@@ -119,6 +119,32 @@ def test_explore_footer_becomes_related_links_from_hyperlinks():
                    for fs in page.acf.get("feature_sections", []))
 
 
+def test_where_to_see_prose_becomes_repeater():
+    """The prose 'Where to See' section (H3 sites) maps to the where_to_see
+    repeater with island/site split — not a feature section."""
+    _doc, page, _t = _build("giant-tortoise.docx")
+    ws = page.acf.get("where_to_see") or []
+    assert len(ws) >= 4
+    assert page.acf.get("where_to_see_title")
+    first = ws[0]
+    assert first["site"] and first["island"] and first["description"]
+    assert not any("where to see" in (fs.get("title") or "").lower()
+                   for fs in page.acf.get("feature_sections", []))
+
+
+def test_subspecies_title_intro_and_narratives():
+    """Subspecies gives title + intro (WYSIWYG with the per-island H3
+    narratives) AND the structured repeater — not a duplicate feature."""
+    _doc, page, _t = _build("giant-tortoise.docx")
+    assert page.acf["subspecies_title"].startswith("The Subspecies")
+    intro = page.acf.get("subspecies_intro") or ""
+    assert "<h3" in intro.lower()  # the per-island sub-topics are preserved
+    assert "porteri" in intro  # Santa Cruz narrative
+    assert len(page.acf.get("subspecies") or []) == 13
+    assert not any("subspecies" in (fs.get("title") or "").lower()
+                   for fs in page.acf.get("feature_sections", []))
+
+
 def test_publishes_under_wildlife_hub():
     _doc, page, _t = _build("marine-iguana.docx")
     assert page.post_type == "page"

@@ -1219,6 +1219,38 @@ def _extract_visitor_sites_prose(section: Section) -> tuple[str, list[dict]]:
     return intro, out
 
 
+def _extract_where_to_see_prose(section: Section) -> tuple[str, list[dict]]:
+    """'Where to See' H3 sites -> (intro prose, [{site, island, description}]).
+    An 'Island — Site' heading splits into island + site."""
+    intro, cards = _extract_cards(section)
+    out: list[dict] = []
+    for name, paras in cards:
+        paras, _button = _split_off_button(paras)
+        parts = re.split(r"\s+[—–]\s+", name.strip(), maxsplit=1)
+        island, site = (parts[0].strip(), parts[1].strip()) if len(parts) == 2 else ("", name.strip())
+        out.append({
+            "site": site,
+            "island": island,
+            "description": "\n\n".join(paras).strip(),
+        })
+    return intro, out
+
+
+def _section_prose_md(section: Section) -> str:
+    """Render a section's blocks back to Markdown (H3 sub-headings + prose +
+    callouts), in document order — used to keep a section's full narrative in a
+    single WYSIWYG field."""
+    parts: list[str] = []
+    for b in section.blocks:
+        if b.type == BlockType.HEADING:
+            parts.append("### " + b.text.strip())
+        elif b.items:
+            parts.extend("- " + it for it in b.items)
+        elif b.text:
+            parts.append(b.text.strip())
+    return "\n\n".join(p for p in parts if p).strip()
+
+
 def _extract_wildlife(section: Section) -> tuple[str, list[dict]]:
     """Wildlife section -> (intro prose, species list).
 
@@ -1651,6 +1683,31 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
                 doc.metadata.setdefault(key, intro)
             if prose_sites:
                 doc.metadata.setdefault("visitor_sites", []).extend(prose_sites)
+
+    # Wildlife species pages: pull the prose "Where to See" and "Subspecies"
+    # sections into their dedicated repeaters/fields (gated to species docs so
+    # island pages are untouched). Both are then removed from doc.sections so
+    # they don't ALSO render as Feature Sections.
+    if is_species:
+        for s in list(doc.sections):
+            tl = s.title.lower()
+            if s.slug == "where_to_see" or tl.startswith(("where to see", "where and how", "where to find")):
+                intro, sites = _extract_where_to_see_prose(s)
+                if sites:
+                    doc.metadata.setdefault("where_to_see_title", s.title)
+                    if intro:
+                        doc.metadata.setdefault("where_to_see_intro", intro)
+                    doc.metadata["where_to_see"] = sites
+                    doc.sections.remove(s)
+                break
+        for s in list(doc.sections):
+            if "subspecies" in s.slug or "subspecies" in s.title.lower():
+                doc.metadata.setdefault("subspecies_title", s.title)
+                intro_md = _section_prose_md(s)  # intro + the H3 island narratives
+                if intro_md:
+                    doc.metadata.setdefault("subspecies_intro", intro_md)
+                doc.sections.remove(s)
+                break
 
     if verify_warnings:
         doc.metadata["_ingest_warnings"] = [
