@@ -3449,7 +3449,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
               {{WRAPPER}} .wss{width:100%;box-sizing:border-box}
-              html .e-con-boxed>.e-con-inner:has(>.elementor-widget-wildlife_subspecies){max-width:none!important}
               {{WRAPPER}} .wss-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wss-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
               {{WRAPPER}} .wss-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
@@ -3563,7 +3562,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
               {{WRAPPER}} .wts{width:100%;box-sizing:border-box}
-              html .e-con-boxed>.e-con-inner:has(>.elementor-widget-wildlife_where_to_see){max-width:none!important}
               {{WRAPPER}} .wts-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wts-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
               {{WRAPPER}} .wts-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
@@ -3672,7 +3670,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
               {{WRAPPER}} .wsn{width:100%;box-sizing:border-box}
-              html .e-con-boxed>.e-con-inner:has(>.elementor-widget-wildlife_seasonality){max-width:none!important}
               {{WRAPPER}} .wsn-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wsn-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
               {{WRAPPER}} .wsn-intro{max-width:70ch;color:#3A2A1E;margin:0 0 22px;font-size:15px;line-height:1.65}
@@ -3888,7 +3885,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             echo '<style>
               {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
-              html .e-con-boxed>.e-con-inner:has(>.elementor-widget-wildlife_glance_features){max-width:none!important}
               {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
               {{WRAPPER}} .wgf.wgf-solo{grid-template-columns:1fr}
               {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0}
