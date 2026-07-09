@@ -3134,6 +3134,181 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /* ===================================================================
+     *  WILDLIFE · AT A GLANCE — a soft card with the IUCN status badge
+     *  (auto-coloured) plus a hairline label/value list. Reads ONLY the
+     *  species-facts fields: scientific_name, conservation_status,
+     *  population, endemic, and the quick_facts repeater.
+     * =================================================================== */
+    class Island_AtAGlance_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'wildlife_at_a_glance';
+        }
+
+        public function get_title()
+        {
+            return 'Wildlife · At a Glance';
+        }
+
+        public function get_icon()
+        {
+            return 'eicon-table-of-contents';
+        }
+
+        public function get_categories()
+        {
+            return ['general'];
+        }
+
+        protected function register_controls()
+        {
+            $this->start_controls_section('content', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'At a Glance']);
+            $this->add_control('show_badge', ['label' => 'IUCN status badge', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_scientific', ['label' => 'Scientific name row', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_population', ['label' => 'Population row', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_endemic', ['label' => 'Endemic row', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('endemic_text', ['label' => 'Endemic "yes" text', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Yes — endemic to Galápagos', 'condition' => ['show_endemic' => 'yes']]);
+            $this->add_control('include_quick_facts', [
+                'label' => 'Append "At a Glance" facts', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Adds the quick_facts rows (Lifespan, Weight…), skipping any already shown above (scientific name, population, IUCN).',
+            ]);
+            $this->end_controls_section();
+
+            /* CARD */
+            $this->start_controls_section('card', ['label' => 'Card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('card_bg', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
+                'selectors' => ['{{WRAPPER}} .wag-card' => 'background:{{VALUE}}']]);
+            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 36]], 'default' => ['size' => 18, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .wag-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('border_color', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(90,61,43,.16)',
+                'selectors' => ['{{WRAPPER}} .wag-card' => 'border-color:{{VALUE}}']]);
+            $this->add_control('border_width', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]], 'default' => ['size' => 1, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .wag-card' => 'border-width:{{SIZE}}{{UNIT}};border-style:solid']]);
+            $this->add_group_control(\Elementor\Group_Control_Box_Shadow::get_type(), ['name' => 'card_shadow', 'selector' => '{{WRAPPER}} .wag-card']);
+            $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
+                'default' => ['top' => 24, 'right' => 26, 'bottom' => 24, 'left' => 26, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .wag-card' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->end_controls_section();
+
+            /* BADGE */
+            $this->start_controls_section('badge_s', ['label' => 'IUCN badge', 'tab' => \Elementor\Controls_Manager::TAB_STYLE, 'condition' => ['show_badge' => 'yes']]);
+            $this->add_control('badge_auto', ['label' => 'Colour by IUCN status', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Automatic: green (Least Concern) → red (Critically Endangered).']);
+            $this->add_control('badge_bg', ['label' => 'Badge background', 'type' => \Elementor\Controls_Manager::COLOR, 'condition' => ['badge_auto' => ''],
+                'selectors' => ['{{WRAPPER}} .wag-badge' => 'background:{{VALUE}};border-color:{{VALUE}}']]);
+            $this->add_control('badge_fg', ['label' => 'Badge text', 'type' => \Elementor\Controls_Manager::COLOR, 'condition' => ['badge_auto' => ''],
+                'selectors' => ['{{WRAPPER}} .wag-badge' => 'color:{{VALUE}}', '{{WRAPPER}} .wag-dot' => 'background:{{VALUE}}']]);
+            $this->end_controls_section();
+
+            /* TEXT */
+            $this->start_controls_section('text', ['label' => 'Text', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('eyebrow_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
+                'selectors' => ['{{WRAPPER}} .wag-eyebrow' => 'color:{{VALUE}}']]);
+            $this->add_control('label_color', ['label' => 'Label color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#8a7360',
+                'selectors' => ['{{WRAPPER}} .wag-l' => 'color:{{VALUE}}']]);
+            $this->add_control('value_color', ['label' => 'Value color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+                'selectors' => ['{{WRAPPER}} .wag-v' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'value_typo', 'selector' => '{{WRAPPER}} .wag-v']);
+            $this->add_control('divider_color', ['label' => 'Divider color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(90,61,43,.13)',
+                'selectors' => ['{{WRAPPER}} .wag-row' => 'border-color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (get_the_ID() ?: get_queried_object_id());
+
+            $sci = trim((string) get_field('scientific_name', $pid));
+            $pop = trim((string) get_field('population', $pid));
+            $status = trim((string) get_field('conservation_status', $pid));
+            $endemic = (bool) get_field('endemic', $pid);
+            $facts = get_field('quick_facts', $pid) ?: [];
+
+            // Rows: dedicated species facts first, then the quick_facts repeater
+            // (de-duped against what is already shown). Values are pre-escaped.
+            $rows = [];
+            if (($s['show_scientific'] ?? 'yes') === 'yes' && $sci !== '') {
+                $rows[] = ['Scientific name', '<span class="wag-sci">' . esc_html($sci) . '</span>'];
+            }
+            if (($s['show_population'] ?? 'yes') === 'yes' && $pop !== '') {
+                $rows[] = ['Population', esc_html($pop)];
+            }
+            if (($s['show_endemic'] ?? 'yes') === 'yes' && $endemic) {
+                $rows[] = ['Endemic', esc_html(($s['endemic_text'] ?? '') ?: 'Yes — endemic to Galápagos')];
+            }
+            if (($s['include_quick_facts'] ?? 'yes') === 'yes' && is_array($facts)) {
+                $skip = ['scientific name', 'common name', 'iucn status', 'iucn', 'conservation status', 'status', 'population', 'population estimate', 'endemic'];
+                foreach ($facts as $f) {
+                    $lab = trim((string) ($f['label'] ?? ''));
+                    $val = trim((string) ($f['value'] ?? ''));
+                    if ($lab === '' || $val === '' || in_array(strtolower($lab), $skip, true)) {
+                        continue;
+                    }
+                    $rows[] = [$lab, esc_html($val)];
+                }
+            }
+
+            $hasBadge = ($s['show_badge'] ?? 'yes') === 'yes' && $status !== '';
+            if (!$rows && !$hasBadge) {
+                return;
+            }
+
+            // Auto badge colour by IUCN category (background, text/dot).
+            $map = [
+                'least concern' => ['#e4ede0', '#3f6a2f'],
+                'near threatened' => ['#eef0d6', '#6a7a1c'],
+                'vulnerable' => ['#f4e6cf', '#9a6a1c'],
+                'endangered' => ['#f6ddc9', '#b5591f'],
+                'critically endangered' => ['#f0dcd8', '#9a3b2e'],
+                'data deficient' => ['#e6e0da', '#6a5e52'],
+            ];
+            $auto = ($s['badge_auto'] ?? 'yes') === 'yes';
+            $bc = $map[strtolower($status)] ?? ['#f4e6cf', '#9a6a1c'];
+            $badgeStyle = $auto ? 'background:' . $bc[0] . ';color:' . $bc[1] . ';border-color:' . $bc[1] . '40' : '';
+            $dotStyle = $auto ? 'background:' . $bc[1] : '';
+
+            echo '<style>
+              {{WRAPPER}} .wag-card{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;box-shadow:0 16px 44px rgba(60,40,25,.14);padding:24px 26px}
+              {{WRAPPER}} .wag-eyebrow{display:block;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 14px}
+              {{WRAPPER}} .wag-badge{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12px;padding:6px 13px;border-radius:999px;border:1px solid transparent;background:#f4e6cf;color:#9a6a1c}
+              {{WRAPPER}} .wag-dot{width:8px;height:8px;border-radius:50%;background:#9a6a1c;flex:0 0 auto}
+              {{WRAPPER}} .wag-list{margin:12px 0 0;padding:0;display:flex;flex-direction:column}
+              {{WRAPPER}} .wag-row{padding:13px 0;border-bottom:1px solid rgba(90,61,43,.13)}
+              {{WRAPPER}} .wag-row:last-child{border-bottom:0;padding-bottom:2px}
+              {{WRAPPER}} .wag-l{margin:0 0 2px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8a7360;font-weight:700}
+              {{WRAPPER}} .wag-v{margin:0;font-family:Merriweather,Georgia,serif;font-size:18px;line-height:1.25;color:#5A3D2B;font-variant-numeric:tabular-nums}
+              {{WRAPPER}} .wag-sci{font-style:italic}
+            </style>';
+
+            echo '<div class="wag-card">';
+            $head = trim((string) ($s['heading'] ?? ''));
+            if ($head !== '') {
+                echo '<span class="wag-eyebrow">' . esc_html($head) . '</span>';
+            }
+            if ($hasBadge) {
+                echo '<div><span class="wag-badge" style="' . esc_attr($badgeStyle) . '"><span class="wag-dot" style="' . esc_attr($dotStyle) . '"></span>IUCN &middot; ' . esc_html($status) . '</span></div>';
+            }
+            if ($rows) {
+                echo '<dl class="wag-list">';
+                foreach ($rows as $r) {
+                    echo '<div class="wag-row"><dt class="wag-l">' . esc_html($r[0]) . '</dt><dd class="wag-v">' . $r[1] . '</dd></div>';
+                }
+                echo '</dl>';
+            }
+            echo '</div>';
+        }
+    }
+
     } // end: declare widget classes once
 
     $widgets_manager->register(new Island_Wildlife_Widget());
@@ -3149,4 +3324,5 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     $widgets_manager->register(new Island_RelatedLinks_Widget());
     $widgets_manager->register(new Island_Schema_Widget());
     $widgets_manager->register(new Island_Infographic_Widget());
+    $widgets_manager->register(new Island_AtAGlance_Widget());
 });
