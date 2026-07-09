@@ -43,6 +43,28 @@ _GEO_SCAFFOLD_RE = re.compile(
     r"|Text:\s*$)",
     re.IGNORECASE,
 )
+# A webmaster INSTRUCTION about the Quick Answer/GEO block (how/where to place
+# it) — never the answer itself, and never body content.
+_GEO_INSTRUCTION_RE = re.compile(
+    r"is your GEO\b|generative engine optimization|written to be cited"
+    r"|place this (block|as|snippet)|do not bury|very first (visible )?element"
+    r"|style (this|it|as) a\b|webmaster instruction",
+    re.IGNORECASE,
+)
+
+
+def _is_geo_instruction(rows: list[list[str]]) -> bool:
+    text = " ".join(c for row in rows for c in row if c)[:400]
+    return bool(_GEO_INSTRUCTION_RE.search(text))
+
+
+def _looks_like_jsonld(text: str) -> bool:
+    """A raw schema.org JSON-LD block (already captured into seo_schema) that must
+    not leak into the page body as prose."""
+    t = (text or "").lstrip()
+    if t[:1] not in ("{", "["):
+        return False
+    return "@context" in t[:400] or "@graph" in t[:400]
 _EDITORIAL_FLAG = re.compile(
     r"^(⚠️\s*)?(WEBMASTER\b|.*\bDo not publish\b|\[?VERIFY\]?\b)", re.IGNORECASE
 )
@@ -532,6 +554,8 @@ _WT = _W_NS + "t"
 _WBR = _W_NS + "br"  # soft line break (Shift+Enter)
 _WCR = _W_NS + "cr"  # carriage return
 _WTAB = _W_NS + "tab"
+_WHYPERLINK = _W_NS + "hyperlink"
+_R_ID = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
 _INTERNAL_LINK_RE = re.compile(r"\[INTERNAL LINK:\s*(.+?)\s*(?:→|->)\s*([^\]\s]+)\s*\]")
 # "⬛ WEBMASTER DESIGN NOTE: …" styling instructions — never published, even when
 # appended inline to a real paragraph. Stripped from the marker to end of line.
@@ -540,18 +564,42 @@ _DESIGN_NOTE_RE = re.compile(
 )
 
 
-def _p_text(paragraph) -> str:
-    # Walk descendants in document order so soft line breaks (<w:br>) and tabs
-    # survive as real separators — Word packs multi-line cells (e.g. CTA blocks)
-    # into ONE paragraph with <w:br>, and dropping them runs the lines together.
+def _run_text(el) -> str:
+    """Visible text under a run-level element (soft breaks/tabs preserved)."""
     parts: list[str] = []
-    for node in paragraph._p.iter():
+    for node in el.iter():
         if node.tag == _WT:
             parts.append(node.text or "")
         elif node.tag in (_WBR, _WCR):
             parts.append("\n")
         elif node.tag == _WTAB:
             parts.append("\t")
+    return "".join(parts)
+
+
+def _p_text(paragraph) -> str:
+    # Walk direct children in document order so soft line breaks (<w:br>) and tabs
+    # survive as real separators, and so a <w:hyperlink> becomes a real Markdown
+    # link ([label](url)) — python-docx's `.text` drops the URL entirely, which
+    # loses every internal link (e.g. the "Explore More" SEO footer).
+    try:
+        rels = paragraph.part.rels
+    except Exception:  # pragma: no cover - a detached paragraph has no part
+        rels = {}
+    parts: list[str] = []
+    for child in paragraph._p:
+        if child.tag == _WHYPERLINK:
+            label = _run_text(child)
+            rid = child.get(_R_ID)
+            url = ""
+            if rid and rid in rels:
+                try:
+                    url = rels[rid].target_ref or ""
+                except Exception:  # pragma: no cover
+                    url = ""
+            parts.append(f"[{label}]({url})" if (url and label) else label)
+        else:
+            parts.append(_run_text(child))
     return "".join(parts)
 
 
@@ -678,7 +726,18 @@ def _norm_url(u: str) -> str:
     return "https://" + u
 
 
+_CTA_HEADER_RE = re.compile(r"^\s*CTA\s*[:#-]?\s*[^\n]*\n", re.IGNORECASE)
+
+
 def _cta_from_text(cell: str) -> dict:
+    # Single-cell "CTA: <audience> | <company>" header line (giant-tortoise style):
+    # not the headline — derive audience from it, then drop it so the real hook
+    # becomes the title.
+    forced_aud = ""
+    hdr = _CTA_HEADER_RE.match(cell)
+    if hdr:
+        forced_aud = cell[: hdr.end()]
+        cell = cell[hdr.end():]
     btn = _CTA_BUTTON_RE.search(cell)
     cell_wo = _CTA_BUTTON_RE.sub("", cell)
     # House format: "INDEPENDENT TRAVELLERS: <body…>" — the audience label is a
@@ -728,7 +787,7 @@ def _cta_from_text(cell: str) -> dict:
             continue  # drop "Website:/Email:" label lines from body
         body.append(ln)
     block = {
-        "audience": _cta_audience(cell),
+        "audience": _cta_audience(forced_aud or cell),
         "title": title,
         "text": " ".join(" ".join(body).split()),
     }
@@ -895,18 +954,37 @@ def _extract_sources(section: Section) -> list[dict]:
 _REL_LINK_RE = re.compile(r"^[•·\-*\s]*(.+?)\s*(?:→|->)\s*(\S+)\s*$")
 
 
+def _links_from_line(line: str) -> list[dict]:
+    """Internal links from one footer line, in either house style:
+    Markdown ``[Label](/url/)`` (Word hyperlink) or ``• Label → /url/``."""
+    line = (line or "").strip()
+    out: list[dict] = []
+    md = _MD_LINK_RE.findall(line)  # Word hyperlinks -> [(label, url), ...]
+    if md:
+        for label, url in md:
+            label = label.strip()
+            if label and url.startswith(("/", "http")):
+                out.append({"label": label, "url": url})
+        return out
+    m = _REL_LINK_RE.match(line)  # "Label → /url/"
+    if m:
+        label, url = m.group(1).strip(), m.group(2).strip()
+        um = _MD_LINK_RE.search(url)  # url side may itself be a markdown link
+        if um:
+            url = um.group(2)
+        label = _MD_LINK_RE.sub(r"\1", label).strip()
+        if label and url.startswith(("/", "http")):
+            out.append({"label": label, "url": url})
+    return out
+
+
 def _extract_related_links(section: Section) -> list[dict]:
-    """'• Label → /url/' bullet lines from an 'Explore More' footer."""
+    """Internal links from an 'Explore More' / 'Explore …' footer section."""
     out: list[dict] = []
     for b in section.blocks:
         lines = list(b.items) if b.items else ([b.text] if b.text else [])
         for line in lines:
-            m = _REL_LINK_RE.match(line.strip())
-            if not m:
-                continue
-            label, url = m.group(1).strip(), m.group(2).strip()
-            if label and url.startswith(("/", "http")):
-                out.append({"label": label, "url": url})
+            out.extend(_links_from_line(line))
     return out
 
 
@@ -923,16 +1001,11 @@ def _extract_related_link_groups(section: Section) -> list[dict]:
             continue
         lines = list(b.items) if b.items else ([b.text] if b.text else [])
         for line in lines:
-            m = _REL_LINK_RE.match(line.strip())
-            if not m:
-                continue
-            label, url = m.group(1).strip(), m.group(2).strip()
-            if not (label and url.startswith(("/", "http"))):
-                continue
-            if current is None:  # links before any sub-heading -> untitled group
-                current = {"title": "", "links": []}
-                groups.append(current)
-            current["links"].append({"label": label, "url": url})
+            for link in _links_from_line(line):
+                if current is None:  # links before any sub-heading -> untitled group
+                    current = {"title": "", "links": []}
+                    groups.append(current)
+                current["links"].append(link)
     return [g for g in groups if g["links"]]
 
 
@@ -1250,6 +1323,7 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     section_start_pos: list[tuple[int, Section]] = [(-1, current)]
     list_items: list[str] = []
     list_ordered = False
+    list_pos = 1 << 30
     seen_body = False
     verify_warnings: list[str] = []
     # Reconstruct a markdown-ish body so the freeform builder can read any
@@ -1259,9 +1333,9 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     def flush_list() -> None:
         nonlocal list_items, list_ordered
         if list_items:
-            current.blocks.append(
-                ContentBlock(type=BlockType.LIST, ordered=list_ordered, items=list_items[:])
-            )
+            blk = ContentBlock(type=BlockType.LIST, ordered=list_ordered, items=list_items[:])
+            blk.meta["_pos"] = list_pos
+            current.blocks.append(blk)
             list_items = []
             list_ordered = False
 
@@ -1279,6 +1353,7 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
         text = _clean_markers(_p_text(para)).strip()
         style = (para.style.name if para.style else "") or ""
         style_l = style.lower()
+        cur_pos = body_order.get(para._p, 1 << 29)
 
         if not text:
             continue
@@ -1323,9 +1398,9 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
                 continue
             if level >= 3:
                 # Subheadings nest inside the current section (e.g. FAQ items).
-                current.blocks.append(
-                    ContentBlock(type=BlockType.HEADING, text=text, level=level)
-                )
+                h_blk = ContentBlock(type=BlockType.HEADING, text=text, level=level)
+                h_blk.meta["_pos"] = cur_pos
+                current.blocks.append(h_blk)
                 raw_lines.append("#" * level + " " + text)
                 seen_body = True
                 continue
@@ -1354,6 +1429,8 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
 
         # List styles.
         if "list bullet" in style_l or "list number" in style_l or style_l.startswith("list"):
+            if not list_items:
+                list_pos = cur_pos
             list_ordered = "number" in style_l
             list_items.append(text)
             raw_lines.append(("1. " if list_ordered else "- ") + text)
@@ -1361,11 +1438,15 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
         flush_list()
 
         if style_l == "quote" or style_l == "intense quote":
-            current.blocks.append(ContentBlock(type=BlockType.QUOTE, text=text))
+            q_blk = ContentBlock(type=BlockType.QUOTE, text=text)
+            q_blk.meta["_pos"] = cur_pos
+            current.blocks.append(q_blk)
             raw_lines.extend(["", "> " + text])
             continue
 
-        current.blocks.append(ContentBlock(type=BlockType.PARAGRAPH, text=text))
+        p_blk = ContentBlock(type=BlockType.PARAGRAPH, text=text)
+        p_blk.meta["_pos"] = cur_pos
+        current.blocks.append(p_blk)
         raw_lines.extend(["", text])
 
     flush_list()
@@ -1382,8 +1463,15 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             continue
         geo = _extract_geo_answer(rows)
         if geo:
+            # A box that is a webmaster INSTRUCTION about the Quick Answer ("This
+            # block is your GEO snippet… Place it as the VERY FIRST element") is
+            # not the answer — drop it instead of publishing it as geo_answer.
+            if _GEO_INSTRUCTION_RE.search(geo[:200]):
+                continue
             doc.metadata.setdefault("geo_answer", geo)
             continue  # the GEO block is scaffolding, not body content
+        if _is_geo_instruction(rows):
+            continue  # webmaster "how to place the Quick Answer" box -> drop
         if _is_instruction_table(rows):
             continue
         # Webmaster / SEO scaffold KV tables (PUBLISH URL, Title tag, Anchor
@@ -1396,11 +1484,17 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             one = rows[0][0].strip()
             if not one:
                 continue
-            if one.startswith("[") or _SCAFFOLD_RE.match(one):
-                continue  # [PHOTO/INFOGRAPHIC PLACEHOLDER], PUBLISH AT/URL, SLUG…
-            _table_target(table, body_order, section_start_pos, doc, current).blocks.append(
-                ContentBlock(type=BlockType.PARAGRAPH, text=one)
-            )
+            if one.startswith("[") or _SCAFFOLD_RE.match(one) or _looks_like_jsonld(one):
+                continue  # placeholder, PUBLISH/SLUG scaffold, or a JSON-LD block
+            # A "CTA: <audience> | <company>" pull-out is a real CTA, not prose.
+            if re.match(r"^\s*CTA\b", one, re.IGNORECASE) or _is_cta_table(rows):
+                blocks = _extract_cta_blocks(rows)
+                if blocks:
+                    doc.metadata.setdefault("cta_blocks", []).extend(blocks)
+                    continue
+            blk = ContentBlock(type=BlockType.PARAGRAPH, text=one)
+            blk.meta["_pos"] = body_order.get(table._tbl, 1 << 30)
+            _table_target(table, body_order, section_start_pos, doc, current).blocks.append(blk)
             continue
         if _is_visitor_sites_table(rows):
             sites = _extract_visitor_sites(rows)
@@ -1445,7 +1539,16 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
         # fees/comparison table lands under its own heading (not dumped into the
         # last section, e.g. "Sources").
         target = _table_target(table, body_order, section_start_pos, doc, current)
-        target.blocks.append(ContentBlock(type=BlockType.TABLE, rows=rows))
+        tbl_blk = ContentBlock(type=BlockType.TABLE, rows=rows)
+        tbl_blk.meta["_pos"] = body_order.get(table._tbl, 1 << 30)
+        target.blocks.append(tbl_blk)
+
+    # Restore document order within each section. Stray single-cell tables
+    # (pull-quote/stat callouts) are appended after the paragraph pass, so sort
+    # every section's blocks by their source position — otherwise the callouts
+    # pile up at the end of the section instead of sitting where they belong.
+    for s in doc.sections:
+        s.blocks.sort(key=lambda b: b.meta.get("_pos", 1 << 30))
 
     # Collapse the raw CTA candidates to the two canonical CTAs (drops any
     # scaffolding that leaked through a mixed green box).
@@ -1478,16 +1581,19 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
                 doc.metadata.setdefault("sources", []).extend(srcs)
             break
 
-    # "Explore More" footer -> related internal links (flat list + grouped by
-    # sub-heading, e.g. "Santa Cruz Essentials", "Plan Your Santa Cruz Visit").
+    # "Explore More" / "Explore <X>" footer -> related internal links (flat list +
+    # grouped by sub-heading). Once mined, drop the section so it doesn't ALSO
+    # render as a Feature Section — it's the SEO footer, not body content.
     for s in doc.sections:
-        if "explore" in s.slug or "footer" in s.slug:
+        if "explore" in s.slug or "footer" in s.slug or s.title.lower().startswith("explore"):
             related = _extract_related_links(s)
             if related:
                 doc.metadata["related_links"] = related
             groups = _extract_related_link_groups(s)
             if groups:
                 doc.metadata["related_link_groups"] = groups
+            if related or groups:
+                doc.sections.remove(s)
             break
 
     # "At a Glance" / "Quick Facts" section -> the quick-facts heading + intro.

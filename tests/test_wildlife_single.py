@@ -81,6 +81,44 @@ def test_repeater_image_subfield_never_empty_string():
     assert page2.acf["endemic"] is True
 
 
+def test_schema_never_leaks_into_body():
+    """A raw JSON-LD block in a single-cell table must not become body prose."""
+    _doc, page, _t = _build("giant-tortoise.docx")
+    assert "@context" not in (page.acf.get("intro") or "")
+    for fs in page.acf.get("feature_sections", []):
+        assert "@graph" not in (fs.get("content") or "")
+
+
+def test_geo_answer_is_the_answer_not_the_instruction():
+    """The webmaster 'this block is your GEO snippet' instruction box must be
+    dropped; geo_answer is the real Quick Answer."""
+    _doc, page, _t = _build("giant-tortoise.docx")
+    geo = page.acf.get("geo_answer") or ""
+    assert geo.startswith("The Galápagos giant tortoise")
+    assert "is your GEO" not in geo and "Place this" not in geo
+
+
+def test_single_cell_cta_becomes_repeater():
+    """'CTA: <audience> | <company>' single-cell blocks parse into the cta
+    repeater (2 cards), not the Plan-Your-Visit intro prose."""
+    _doc, page, _t = _build("giant-tortoise.docx")
+    cta = page.acf.get("cta") or []
+    assert len(cta) == 2
+    assert {c["audience"] for c in cta} == {"Direct travelers", "Travel trade"}
+    assert "CTA:" not in (page.acf.get("cta_intro") or "")
+
+
+def test_explore_footer_becomes_related_links_from_hyperlinks():
+    """The 'Explore …' footer (Word hyperlinks, no '→ url' text) is mined into
+    related_links via the hyperlink URLs — and is NOT also a feature section."""
+    _doc, page, _t = _build("giant-tortoise.docx")
+    rel = page.acf.get("related_links") or []
+    assert len(rel) >= 5
+    assert all(r["url"].startswith(("/", "http")) for r in rel)
+    assert not any("explore" in (fs.get("title") or "").lower()
+                   for fs in page.acf.get("feature_sections", []))
+
+
 def test_publishes_under_wildlife_hub():
     _doc, page, _t = _build("marine-iguana.docx")
     assert page.post_type == "page"

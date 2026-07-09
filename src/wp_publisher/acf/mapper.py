@@ -414,6 +414,10 @@ def build_acf_island(
                 continue
             if _should_skip_feature(heading) or heading.strip().lower() in _extracted_titles:
                 continue  # dedicated repeaters (wildlife/visitor sites) / footer fields
+            # The species subspecies prose duplicates the subspecies repeater;
+            # once that repeater is populated, don't also render it as a feature.
+            if subspecies and "subspecies" in heading.lower():
+                continue
             # The lead paragraph (no heading, before any titled section) is the
             # island intro/overview -> its own field, not a title-less card. Skip
             # bare table labels ("DATA SNAPSHOT", "AT A GLANCE") that sit above the
