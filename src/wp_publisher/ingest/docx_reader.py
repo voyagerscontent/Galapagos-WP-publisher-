@@ -77,6 +77,25 @@ def _clean_byline(text: str) -> str:
     return re.split(r"\s+[—–-]\s+", s, maxsplit=1)[0].strip()
 
 
+_BYLINE_ROLE_RE = re.compile(
+    r"contributor|naturalist|editor|writer|correspondent|journalist|guide", re.IGNORECASE
+)
+
+
+def _looks_like_byline(text: str) -> bool:
+    """A standalone author byline ('By <Name>, <Role> — <site>'), as opposed to a
+    body sentence that merely starts with 'By'. Requires a real byline signal
+    (an em/en dash, a site domain, or a role word) so prose like 'By Darwin's
+    account…' is never mistaken for one."""
+    if not _BYLINE.match(text) or len(text) > 220:
+        return False
+    low = text.lower()
+    return (
+        "—" in text or "–" in text or ".travel" in low or ".com" in low
+        or bool(_BYLINE_ROLE_RE.search(low))
+    )
+
+
 # Strong "internal / do-not-publish" markers. Scanned across the WHOLE table
 # because these blocks often lead with a separator rule, pushing the real marker
 # into a later row. Kept CTA-agnostic (no 'Voyagers'/'Latin Trails') so real CTA
@@ -387,6 +406,20 @@ _SCAFFOLD_LABELS = {
 
 def _scaffold_label(label: str) -> str:
     return re.sub(r"\s*\(.*?\)\s*", " ", (label or "").lower()).strip().rstrip(":").strip()
+
+
+_AUTHOR_KV_LABELS = {"author", "author / byline", "author/byline", "byline", "by"}
+
+
+def _author_from_kv(rows: list[list[str]]) -> str:
+    """Pull an 'Author / Byline' value out of a webmaster header KV table."""
+    for r in rows:
+        if len(r) >= 2 and _scaffold_label(r[0]) in _AUTHOR_KV_LABELS:
+            val = re.sub(r"^By\s+", "", r[1].strip()).strip()
+            val = re.split(r"\s+[—–]\s+", val, maxsplit=1)[0].strip()
+            if val:
+                return val
+    return ""
 
 
 def _is_scaffold_kv_table(rows: list[list[str]]) -> bool:
@@ -1444,8 +1477,10 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             seen_body = True
             continue
 
-        # A byline near the top -> author metadata (not body content).
-        if not seen_body and not doc.metadata.get("author") and _BYLINE.match(text):
+        # A byline anywhere in the lead (before the first H2) -> author metadata,
+        # even when it follows the intro paragraph. `not current.title` means we
+        # are still in the lead section, so a mid-article "By …" stays as prose.
+        if not doc.metadata.get("author") and not current.title and _looks_like_byline(text):
             doc.metadata["author"] = _clean_byline(text)
             continue
 
@@ -1507,8 +1542,13 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
         if _is_instruction_table(rows):
             continue
         # Webmaster / SEO scaffold KV tables (PUBLISH URL, Title tag, Anchor
-        # Text…) that species docs pack into 2-col tables — not content.
+        # Text…) that species docs pack into 2-col tables — not content, but a
+        # header block often carries the Author / Byline, so mine that first.
         if _is_scaffold_kv_table(rows):
+            if not doc.metadata.get("author"):
+                aut = _author_from_kv(rows)
+                if aut:
+                    doc.metadata["author"] = aut
             continue
         # Single-cell boxes: scaffolding/placeholders are dropped; a prose box is
         # a pull-quote/callout, not a full-width data table.
