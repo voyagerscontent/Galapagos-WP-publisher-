@@ -3413,6 +3413,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('max_w', ['label' => 'Max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'size_units' => ['px', '%'],
+                'range' => ['px' => ['min' => 480, 'max' => 1400], '%' => ['min' => 40, 'max' => 100]], 'default' => ['size' => 1080, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .wss' => 'max-width:{{SIZE}}{{UNIT}}'],
+                'description' => 'Caps the whole block so title, intro and table share one reading column even inside a full-width section. Use the alignment below to place it.']);
+            $this->add_control('align', ['label' => 'Align block', 'type' => \Elementor\Controls_Manager::CHOOSE, 'default' => 'left',
+                'options' => [
+                    'left' => ['title' => 'Left', 'icon' => 'eicon-h-align-left'],
+                    'center' => ['title' => 'Center', 'icon' => 'eicon-h-align-center'],
+                    'right' => ['title' => 'Right', 'icon' => 'eicon-h-align-right'],
+                ],
+                'selectors_dictionary' => ['left' => 'margin-right:auto', 'center' => 'margin-left:auto;margin-right:auto', 'right' => 'margin-left:auto'],
+                'selectors' => ['{{WRAPPER}} .wss' => '{{VALUE}}']]);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wss-eyebrow,{{WRAPPER}} .wss-isl' => 'color:{{VALUE}}']]);
             $this->add_control('heading_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
