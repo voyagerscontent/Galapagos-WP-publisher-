@@ -1424,6 +1424,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Ignore the section’s content width and span the full browser width.',
+                'selectors' => ['{{WRAPPER}}' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('fade_color', ['label' => 'Fade color (hint of “more”)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--fade:{{VALUE}}'],
                 'description' => 'Set this to the page/section background so the text fades softly into it (elegant “there’s more” cue instead of a hard line).']);
@@ -3425,6 +3428,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 ],
                 'selectors_dictionary' => ['left' => 'margin-right:auto', 'center' => 'margin-left:auto;margin-right:auto', 'right' => 'margin-left:auto'],
                 'selectors' => ['{{WRAPPER}} .wss' => '{{VALUE}}']]);
+            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Ignore the section’s content width and span the full browser width. Overrides Max width above.',
+                'selectors' => ['{{WRAPPER}} .wss' => 'max-width:100vw;width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wss-eyebrow,{{WRAPPER}} .wss-isl' => 'color:{{VALUE}}']]);
             $this->add_control('heading_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
@@ -3547,6 +3553,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Ignore the section’s content width and span the full browser width.',
+                'selectors' => ['{{WRAPPER}} .wts' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wts-eyebrow,{{WRAPPER}} .wts-isl' => 'color:{{VALUE}}']]);
             $this->add_control('brown', ['label' => 'Heading / chip', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
@@ -3647,6 +3656,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('full_bleed', ['label' => 'Full-bleed (break out to screen width)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Ignore the section’s content width and span the full browser width.',
+                'selectors' => ['{{WRAPPER}} .wsn' => 'width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:clamp(16px,4vw,64px);padding-right:clamp(16px,4vw,64px)']]);
             $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wsn-eyebrow' => 'color:{{VALUE}}']]);
             $this->add_control('brown', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
