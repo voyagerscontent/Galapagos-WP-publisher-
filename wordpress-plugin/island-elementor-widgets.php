@@ -19,6 +19,61 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * SVG icon upload support. The "At a Glance" / quick-facts icons are Font
+ * Awesome glyphs downloaded as .svg and uploaded to the media library — but
+ * WordPress blocks the SVG mime type by default, so those uploads silently fail
+ * ("the icon won't save"). Allow it for administrators only, and reject any SVG
+ * that carries a <script> or inline event handler so a malicious file can't be
+ * uploaded. (For a hardened sanitizer, the "Safe SVG" plugin is the belt-and-
+ * suspenders option; this guard covers the common cases.)
+ */
+if (!function_exists('island_ew_allow_svg')) {
+    function island_ew_allow_svg($mimes)
+    {
+        if (current_user_can('manage_options')) {
+            $mimes['svg'] = 'image/svg+xml';
+            $mimes['svgz'] = 'image/svg+xml';
+        }
+        return $mimes;
+    }
+    add_filter('upload_mimes', 'island_ew_allow_svg');
+
+    // WP's real-mime sniffing rejects SVG (it isn't a bitmap); assert the type
+    // for .svg files so the upload passes the filetype-and-ext check.
+    add_filter('wp_check_filetype_and_ext', function ($data, $file, $filename, $mimes) {
+        if (preg_match('/\.svgz?$/i', $filename)) {
+            $data['ext'] = 'svg';
+            $data['type'] = 'image/svg+xml';
+        }
+        return $data;
+    }, 10, 4);
+
+    // Reject obviously-unsafe SVGs (script / javascript: / on*= handlers) before
+    // they land in the media library.
+    add_filter('wp_handle_upload_prefilter', function ($file) {
+        if (($file['type'] ?? '') === 'image/svg+xml' && !empty($file['tmp_name'])) {
+            $svg = @file_get_contents($file['tmp_name']);
+            if ($svg !== false && preg_match('/<script\b|javascript:|\son\w+\s*=/i', $svg)) {
+                $file['error'] = 'This SVG was blocked because it contains a script or event handler. Re-export it as a clean icon SVG.';
+            }
+        }
+        return $file;
+    });
+
+    // Let the media library render a thumbnail/preview for SVGs (otherwise they
+    // show as a blank/broken icon in the picker, which reads as "not there").
+    add_filter('wp_prepare_attachment_for_js', function ($response, $attachment) {
+        if (($response['mime'] ?? '') === 'image/svg+xml') {
+            $url = wp_get_attachment_url($attachment->ID);
+            $response['image'] = ['src' => $url];
+            $response['thumb'] = ['src' => $url];
+            $response['sizes'] = ['full' => ['url' => $url, 'width' => 60, 'height' => 60, 'orientation' => 'portrait']];
+        }
+        return $response;
+    }, 10, 2);
+}
+
+/**
  * Resolve an ACF image sub-field to a URL regardless of its Return Format
  * (Image ID, Image Array, or Image URL). This is why "the image is set but
  * doesn't show" — the widget must not assume one format.
