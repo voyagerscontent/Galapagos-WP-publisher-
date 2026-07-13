@@ -3589,15 +3589,29 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('columns', ['label' => 'Card columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'tablet_default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2'], 'condition' => ['layout' => 'cards'],
                 'selectors' => ['{{WRAPPER}} .wts-cards' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Show a few lines per site; the full description opens on hover (tap on mobile) and hides again on leave. A soft fade hints there is more.']);
+            $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 4, 'min' => 2, 'max' => 20,
+                'condition' => ['hover_expand' => 'yes']]);
+            $this->add_control('open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 200, 'max' => 1600]],
+                'default' => ['size' => 700, 'unit' => 'px'], 'condition' => ['hover_expand' => 'yes']]);
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
+            $this->add_control('accent', ['label' => 'Accent (eyebrow / island)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wts-eyebrow,{{WRAPPER}} .wts-isl' => 'color:{{VALUE}}']]);
-            $this->add_control('brown', ['label' => 'Heading / chip', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+            $this->add_control('brown', ['label' => 'Heading / site / chip', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
                 'selectors' => ['{{WRAPPER}} .wts-title,{{WRAPPER}} .wts-site' => 'color:{{VALUE}}', '{{WRAPPER}} .wts-no' => 'background:{{VALUE}}']]);
+            $this->add_control('intro_color', ['label' => 'Intro text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
+                'selectors' => ['{{WRAPPER}} .wts-intro,{{WRAPPER}} .wts-intro p' => 'color:{{VALUE}}']]);
+            $this->add_control('desc_color', ['label' => 'Description text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#8a7360',
+                'selectors' => ['{{WRAPPER}} .wts-desc,{{WRAPPER}} .wts-desc p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'desc_typo', 'selector' => '{{WRAPPER}} .wts-desc,{{WRAPPER}} .wts-desc p']);
             $this->add_control('surface', ['label' => 'Card surface', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
                 'selectors' => ['{{WRAPPER}} .wts-surface' => 'background:{{VALUE}}']]);
+            $this->add_control('fade_color', ['label' => 'Fade color (hover hint)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
+                'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .wts' => '--wts-fade:{{VALUE}}'],
+                'description' => 'Set to the card background so the clamped text fades softly into it.']);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .wts-title']);
             $this->end_controls_section();
         }
@@ -3634,10 +3648,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts-r{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:16px 20px;background:#FCF9F5;border-top:1px solid rgba(90,61,43,.14)}
               {{WRAPPER}} .wts-r:first-child{border-top:0}
               {{WRAPPER}} .wts-r .wts-isl{padding-top:3px}
+              {{WRAPPER}} .wts.hx .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden;transition:max-height .4s ease}
+              {{WRAPPER}} .wts.hx .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
+              {{WRAPPER}} .wts.hx .wts-item:hover .wts-desc,{{WRAPPER}} .wts.hx .wts-item:focus-within .wts-desc,{{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc{max-height:var(--wts-open,700px)}
+              {{WRAPPER}} .wts.hx .wts-item:hover .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item:focus-within .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc::after{opacity:0}
+              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wts.hx .wts-desc,{{WRAPPER}} .wts.hx .wts-desc::after{transition:none}}
               @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
             </style>';
 
-            echo '<div class="wts">';
+            $hx = ($s['hover_expand'] ?? '') === 'yes';
+            $cl = max(2, (int) ($s['clamp_lines'] ?? 4));
+            $open = (int) ($s['open_h']['size'] ?? 700);
+            $ti = $hx ? ' tabindex="0"' : '';
+            echo '<div class="wts' . ($hx ? ' hx' : '') . '" style="--cl:' . $cl . ';--wts-open:' . $open . 'px">';
             echo '<span class="wts-eyebrow">Plan the encounter</span>';
             if ($title !== '') { echo '<h2 class="wts-title">' . esc_html($title) . '</h2>'; }
             if (($s['show_intro'] ?? 'yes') === 'yes' && $intro) { echo '<div class="wts-intro">' . wp_kses_post($intro) . '</div>'; }
@@ -3645,14 +3668,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if ($rows && $layout === 'timeline') {
                 echo '<div class="wts-tl">';
                 foreach ($rows as $r) {
-                    echo '<div class="wts-tlrow"><span class="wts-dot"></span><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div>'
+                    echo '<div class="wts-tlrow wts-item"' . $ti . '><span class="wts-dot"></span><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div>'
                         . '<h4 class="wts-site">' . esc_html($r['site'] ?? '') . '</h4><div class="wts-desc">' . wp_kses_post($r['description'] ?? '') . '</div></div>';
                 }
                 echo '</div>';
             } elseif ($rows && $layout === 'list') {
                 echo '<div class="wts-rows">';
                 foreach ($rows as $r) {
-                    echo '<div class="wts-r"><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div><div>'
+                    echo '<div class="wts-r wts-item"' . $ti . '><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div><div>'
                         . '<h4 class="wts-site">' . esc_html($r['site'] ?? '') . '</h4><div class="wts-desc">' . wp_kses_post($r['description'] ?? '') . '</div></div></div>';
                 }
                 echo '</div>';
@@ -3661,12 +3684,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i = 0;
                 foreach ($rows as $r) {
                     $i++;
-                    echo '<div class="wts-surface wts-card"><div class="wts-no">' . (int) $i . '</div><div><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div>'
+                    echo '<div class="wts-surface wts-card wts-item"' . $ti . '><div class="wts-no">' . (int) $i . '</div><div><div class="wts-isl">' . esc_html($r['island'] ?? '') . '</div>'
                         . '<h4 class="wts-site">' . esc_html($r['site'] ?? '') . '</h4><div class="wts-desc">' . wp_kses_post($r['description'] ?? '') . '</div></div></div>';
                 }
                 echo '</div>';
             }
             echo '</div>';
+            // Hover / tap to expand each site's description (JS-driven so it never
+            // depends on CSS :hover, which the Elementor overlay can swallow).
+            if ($hx) {
+                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
+                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wts-item").forEach(function(c){'
+                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
+                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+            }
         }
     }
     } // end: Island_WhereToSee_Widget guard
