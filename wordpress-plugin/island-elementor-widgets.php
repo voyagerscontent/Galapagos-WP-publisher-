@@ -3972,11 +3972,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}}.elementor-widget.elementor-element{width:100%!important;max-width:100%!important;flex-grow:1!important;flex-shrink:0!important;align-self:stretch!important}
               {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
-              {{WRAPPER}} .wgf.wgf-solo{grid-template-columns:1fr;width:100%}
-              {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0}
+              {{WRAPPER}} .wgf.wgf-solo{display:block!important;width:100%}
+              {{WRAPPER}} .wgf-solo .wgf-col{width:100%}
+              {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0;width:100%}
               {{WRAPPER}} .wgf-solo .wgf-fade{display:none}
-              {{WRAPPER}} .wgf-solo .wgf-feats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
-              {{WRAPPER}} .wgf-solo .wgf-feat{grid-template-columns:1fr!important}
+              {{WRAPPER}} .wgf-solo .wgf-feats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;width:100%}
+              {{WRAPPER}} .wgf-solo .wgf-feat{grid-template-columns:1fr!important;min-width:0}
               {{WRAPPER}} .wgf-solo .wgf-feat .wgf-media{order:-1;min-height:170px}
               @media(max-width:820px){{{WRAPPER}} .wgf-solo .wgf-feats{grid-template-columns:1fr}}
               {{WRAPPER}} .wgf-glance{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;box-shadow:0 16px 44px rgba(60,40,25,.14);padding:24px 26px;align-self:start}
