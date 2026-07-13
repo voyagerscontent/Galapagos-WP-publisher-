@@ -3502,7 +3502,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             };
 
             echo '<style>
-              {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
+              {{WRAPPER}}{width:100%!important;max-width:100%!important;flex-grow:1!important;align-self:stretch!important}
               {{WRAPPER}} .wss{width:100%;box-sizing:border-box}
               {{WRAPPER}} .wss-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wss-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
@@ -3615,7 +3615,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $layout = $s['layout'] ?? 'cards';
 
             echo '<style>
-              {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
+              {{WRAPPER}}{width:100%!important;max-width:100%!important;flex-grow:1!important;align-self:stretch!important}
               {{WRAPPER}} .wts{width:100%;box-sizing:border-box}
               {{WRAPPER}} .wts-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wts-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
@@ -3723,7 +3723,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             };
 
             echo '<style>
-              {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
+              {{WRAPPER}}{width:100%!important;max-width:100%!important;flex-grow:1!important;align-self:stretch!important}
               {{WRAPPER}} .wsn{width:100%;box-sizing:border-box}
               {{WRAPPER}} .wsn-eyebrow{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 6px}
               {{WRAPPER}} .wsn-title{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;color:#5A3D2B;margin:0 0 10px}
@@ -3939,7 +3939,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $open = (int) ($s['open_h']['size'] ?? 900);
 
             echo '<style>
-              {{WRAPPER}}{width:100%!important;max-width:100%!important;align-self:stretch!important}
+              {{WRAPPER}}{width:100%!important;max-width:100%!important;flex-grow:1!important;align-self:stretch!important}
               {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
               {{WRAPPER}} .wgf.wgf-solo{grid-template-columns:1fr}
               {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0}
