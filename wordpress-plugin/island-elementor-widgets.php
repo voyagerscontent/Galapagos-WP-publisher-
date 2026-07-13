@@ -3694,11 +3694,42 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('accent', ['label' => 'Accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
+            /* Heading + intro */
+            $this->add_control('accent', ['label' => 'Eyebrow color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#a07a44',
                 'selectors' => ['{{WRAPPER}} .wsn-eyebrow' => 'color:{{VALUE}}']]);
             $this->add_control('brown', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
-                'selectors' => ['{{WRAPPER}} .wsn-title,{{WRAPPER}} .wsn-mo' => 'color:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .wsn-title' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .wsn-title']);
+            $this->add_control('intro_color', ['label' => 'Intro text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
+                'selectors' => ['{{WRAPPER}} .wsn-intro,{{WRAPPER}} .wsn-intro p' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'intro_typo', 'selector' => '{{WRAPPER}} .wsn-intro,{{WRAPPER}} .wsn-intro p']);
+
+            /* Present / Absent / Departing — themes calendar cells, row badges AND
+             * year-bar segments at once (they share the state classes). */
+            $this->add_control('h_states', ['label' => 'Present / Absent / Departing', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('present_bg', ['label' => 'Present — background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#dfe9d0',
+                'selectors' => ['{{WRAPPER}} .wsn-pr' => 'background:{{VALUE}}']]);
+            $this->add_control('present_tx', ['label' => 'Present — text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3f6a2f',
+                'selectors' => ['{{WRAPPER}} .wsn-pr' => 'color:{{VALUE}}']]);
+            $this->add_control('absent_bg', ['label' => 'Absent — background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#eee7dd',
+                'selectors' => ['{{WRAPPER}} .wsn-ab' => 'background:{{VALUE}}']]);
+            $this->add_control('absent_tx', ['label' => 'Absent — text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9a8a76',
+                'selectors' => ['{{WRAPPER}} .wsn-ab' => 'color:{{VALUE}}']]);
+            $this->add_control('depart_bg', ['label' => 'Departing — background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f4e6cf',
+                'selectors' => ['{{WRAPPER}} .wsn-de' => 'background:{{VALUE}}']]);
+            $this->add_control('depart_tx', ['label' => 'Departing — text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9a6a1c',
+                'selectors' => ['{{WRAPPER}} .wsn-de' => 'color:{{VALUE}}']]);
+
+            /* Rows / table (layout B) */
+            $this->add_control('h_rows', ['label' => 'Rows / table text', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('period_color', ['label' => 'Period / month text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+                'selectors' => ['{{WRAPPER}} .wsn-per' => 'color:{{VALUE}}']]);
+            $this->add_control('note_color', ['label' => 'Notes text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#8a7360',
+                'selectors' => ['{{WRAPPER}} .wsn-note' => 'color:{{VALUE}}']]);
+            $this->add_control('surface_color', ['label' => 'Row background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
+                'selectors' => ['{{WRAPPER}} .wsn-r' => 'background:{{VALUE}}']]);
+            $this->add_control('legend_color', ['label' => 'Legend text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#8a7360',
+                'selectors' => ['{{WRAPPER}} .wsn-legend' => 'color:{{VALUE}}']]);
             $this->end_controls_section();
         }
 
