@@ -1,17 +1,19 @@
 <?php
 /**
- * Plugin Name: Island Elementor Widgets (example)
- * Description: GENERIC EXAMPLE — a native Elementor widget that loops the ACF
- *              "wildlife" repeater and exposes visual style controls (columns,
- *              colors, borders, typography, buttons, image). Shows how a custom
- *              widget gives Elementor-side visual control over a repeater without
- *              a paid add-on. The same pattern applies to visitor_sites, features…
- * Version:     0.1.0
+ * Plugin Name: Galápagos Site Widgets
+ * Description: Native Elementor widgets for this site — Islands, Wildlife and
+ *              Informative pages. Each widget loops an ACF repeater/field and
+ *              exposes visual style controls (columns, colors, borders,
+ *              typography, buttons, images, immersive background bands) so the
+ *              layout is editable in Elementor without a paid add-on. The engine
+ *              writes the ACF fields; these widgets render them.
+ * Version:     0.2.0
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
- * Elementor + ACF. In Elementor you'll find the widget "Island Wildlife" under
- * the "General" category.
+ * Elementor + ACF. In Elementor the widgets live under the
+ * "Galápagos Site Widgets" category. (The internal widget slugs are unchanged,
+ * so pages built with earlier versions keep working.)
  */
 
 if (!defined('ABSPATH')) {
@@ -127,6 +129,17 @@ if (!function_exists('island_ew_split')) {
     }
 }
 
+// Custom Elementor category so all of this site's widgets group under one
+// understandable heading ("Galápagos Site Widgets") instead of the generic
+// "General" bucket. Display-only — pages reference widgets by slug, not
+// category, so this never affects existing pages.
+add_action('elementor/elements/categories_registered', function ($mgr) {
+    $mgr->add_category('galapagos_site', [
+        'title' => 'Galápagos Site Widgets',
+        'icon'  => 'eicon-globe',
+    ]);
+});
+
 add_action('elementor/widgets/register', function ($widgets_manager) {
     if (!did_action('elementor/loaded')) {
         return;
@@ -156,7 +169,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
 
         private function tag($v, $allowed, $default)
@@ -416,7 +429,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
 
         protected function register_controls()
@@ -653,7 +666,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
 
         private function tag($v, $allowed, $default)
@@ -1274,7 +1287,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
 
         private function tag($v, $allowed, $default)
@@ -1420,7 +1433,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         private function tg($v, $a, $d)
         {
@@ -1433,8 +1446,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
             $this->add_control('layout', [
                 'label' => 'Layout', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'rows',
-                'options' => ['rows' => 'Rows (zig-zag)', 'carousel' => 'Carousel (image + text, one at a time)'],
-                'description' => 'Rows stacks every feature as a zig-zag block. Carousel shows one feature at a time (image on one side, text on the other) with arrows/dots.',
+                'options' => [
+                    'rows' => 'Rows (zig-zag)',
+                    'carousel' => 'Carousel (image + text, one at a time)',
+                    'bands' => 'Bands (immersive — per-section background)',
+                ],
+                'description' => 'Rows = zig-zag cards. Carousel = one feature at a time. Bands = each feature is a full-width colour band; the band background, gradient, text tone and per-row layout (image / floating table / icon) come from the ACF row itself, with editable defaults below.',
             ]);
             $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
             $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['layout' => 'rows']]);
@@ -1584,6 +1601,75 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 8, 'unit' => 'px'], 'separator' => 'before',
                 'selectors' => ['{{WRAPPER}} .ifs-info' => 'margin-top:{{SIZE}}{{UNIT}};margin-bottom:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
+
+            /* ── BANDS (immersive) — only shown when Layout = Bands. Every value
+             * here is an editable DEFAULT; each ACF row can override its own
+             * background (bg_color), gradient (bg_color2), text tone (text_tone)
+             * and layout (row_layout: auto/image/table/icon). ── */
+            $this->start_controls_section('sb', ['label' => 'Bands (immersive)', 'tab' => \Elementor\Controls_Manager::TAB_STYLE, 'condition' => ['layout' => 'bands']]);
+            $this->add_control('bd_bleed', ['label' => 'Backgrounds bleed to screen edges', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Off (recommended): put this widget in a Full-Width section and each band already spans it. On: force each band edge-to-edge even inside a boxed container. Content stays centered either way.']);
+            $this->add_responsive_control('bd_cw', ['label' => 'Content width', 'type' => \Elementor\Controls_Manager::SLIDER, 'size_units' => ['px'],
+                'range' => ['px' => ['min' => 700, 'max' => 1400]], 'default' => ['size' => 1120, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .ifb-inner' => 'max-width:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('bd_pad', ['label' => 'Band padding (vertical)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 8, 'max' => 120]],
+                'default' => ['size' => 40, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-inner' => 'padding-top:{{SIZE}}{{UNIT}};padding-bottom:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('bd_padx', ['label' => 'Band padding (sides)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 80]],
+                'default' => ['size' => 20, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-inner' => 'padding-left:{{SIZE}}{{UNIT}};padding-right:{{SIZE}}{{UNIT}}']]);
+
+            $this->add_control('bd_defbg', ['label' => 'Default background (odd rows)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FBF8F4',
+                'description' => 'Used when an ACF row leaves its background empty. Odd/even alternate so untinted pages still get rhythm.',
+                'selectors' => ['{{WRAPPER}}' => '--ifb-def:{{VALUE}}']]);
+            $this->add_control('bd_defbg2', ['label' => 'Default background (even rows)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1E9DE',
+                'selectors' => ['{{WRAPPER}}' => '--ifb-def2:{{VALUE}}']]);
+
+            $this->add_control('bd_light_h', ['label' => 'Text on LIGHT bands', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('bd_lt_title', ['label' => 'Title', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .ifb-light' => '--t-title:{{VALUE}}']]);
+            $this->add_control('bd_lt_body', ['label' => 'Body', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
+                'selectors' => ['{{WRAPPER}} .ifb-light' => '--t-body:{{VALUE}}']]);
+            $this->add_control('bd_lt_eye', ['label' => 'Eyebrow / subtitle', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9c7b4e',
+                'selectors' => ['{{WRAPPER}} .ifb-light' => '--t-eye:{{VALUE}}']]);
+
+            $this->add_control('bd_dark_h', ['label' => 'Text on DARK bands', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('bd_dk_title', ['label' => 'Title', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F5EAD8',
+                'selectors' => ['{{WRAPPER}} .ifb-dark' => '--t-title:{{VALUE}}']]);
+            $this->add_control('bd_dk_body', ['label' => 'Body', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#E7Dccb',
+                'selectors' => ['{{WRAPPER}} .ifb-dark' => '--t-body:{{VALUE}}']]);
+            $this->add_control('bd_dk_eye', ['label' => 'Eyebrow / subtitle', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#CBB68F',
+                'selectors' => ['{{WRAPPER}} .ifb-dark' => '--t-eye:{{VALUE}}']]);
+
+            $this->add_control('bd_icon_h', ['label' => 'Icon badge', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('bd_ic_bg', ['label' => 'Icon background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5A3D2B',
+                'selectors' => ['{{WRAPPER}} .ifb-ic' => 'background:{{VALUE}}']]);
+            $this->add_control('bd_ic_tx', ['label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F3ECE2',
+                'selectors' => ['{{WRAPPER}} .ifb-ic' => 'color:{{VALUE}}']]);
+            $this->add_control('bd_ic_size', ['label' => 'Icon badge size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 36, 'max' => 96]],
+                'default' => ['size' => 56, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bd_ic_radius', ['label' => 'Icon badge radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
+                'default' => ['size' => 14, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+
+            $this->add_control('bd_card_h', ['label' => 'Floating table card', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before',
+                'description' => 'The white card a table sits in (so tables read cleanly on dark bands).']);
+            $this->add_control('bd_card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FFFFFF',
+                'selectors' => ['{{WRAPPER}} .ifb-card' => 'background:{{VALUE}}']]);
+            $this->add_control('bd_card_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
+                'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bd_card_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 8, 'max' => 48]],
+                'default' => ['size' => 22, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-card' => 'padding:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bd_card_shadow', ['label' => 'Card shadow', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'soft',
+                'options' => ['none' => 'None', 'soft' => 'Soft', 'strong' => 'Strong']]);
+
+            $this->add_control('bd_img_h2', ['label' => 'Image (image layout)', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_responsive_control('bd_img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 30, 'max' => 60]],
+                'default' => ['size' => 44, 'unit' => '%'], 'selectors' => [
+                    '{{WRAPPER}} .ifb-image' => 'grid-template-columns:{{SIZE}}% 1fr',
+                    '{{WRAPPER}} .ifb-image.rev' => 'grid-template-columns:1fr {{SIZE}}%']]);
+            $this->add_control('bd_img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 160, 'max' => 520]],
+                'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'height:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bd_img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
         }
         protected function render()
         {
@@ -1598,6 +1684,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             if (($s['layout'] ?? 'rows') === 'carousel') {
                 $this->render_carousel($rows, $s);
+                return;
+            }
+            if (($s['layout'] ?? 'rows') === 'bands') {
+                $this->render_bands($rows, $s);
                 return;
             }
             $tag = $this->tg($s['title_tag'], ['h2', 'h3', 'h4', 'div'], 'h3');
@@ -1904,6 +1994,147 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . 'if(ap){setInterval(function(){go(cur+1>=n?0:cur+1);},ap);}'
                 . '})();</script>';
         }
+
+        /** Relative luminance (0–255) of a CSS colour, or null if unparseable.
+         * Used to auto-pick light vs. dark text when text_tone = auto. */
+        private function ifb_lum($c)
+        {
+            $c = trim((string) $c);
+            $r = $g = $b = null;
+            if (preg_match('/^#([0-9a-f]{3})$/i', $c, $m)) {
+                $h = $m[1];
+                $r = hexdec($h[0] . $h[0]); $g = hexdec($h[1] . $h[1]); $b = hexdec($h[2] . $h[2]);
+            } elseif (preg_match('/^#([0-9a-f]{6})$/i', $c, $m)) {
+                $h = $m[1];
+                $r = hexdec(substr($h, 0, 2)); $g = hexdec(substr($h, 2, 2)); $b = hexdec(substr($h, 4, 2));
+            } elseif (preg_match('/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i', $c, $m)) {
+                $r = (int) $m[1]; $g = (int) $m[2]; $b = (int) $m[3];
+            }
+            if ($r === null) {
+                return null;
+            }
+            return 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+        }
+
+        /* Bands (immersive) layout: each feature_sections row becomes a full-width
+         * colour band. Per-row ACF overrides — bg_color, bg_color2 (gradient),
+         * text_tone (auto/light/dark), icon, row_layout (auto/image/table/icon).
+         * Everything falls back to the editable widget defaults. Tables reuse the
+         * .ifs-tbl markup (so the Table style controls apply) inside a white card. */
+        private function render_bands($rows, $s)
+        {
+            $tag = $this->tg($s['title_tag'], ['h2', 'h3', 'h4', 'div'], 'h3');
+            $bleed = ($s['bd_bleed'] ?? '') === 'yes' ? ' bleed' : '';
+            $sh = $s['bd_card_shadow'] ?? 'soft';
+            $shcss = $sh === 'none' ? 'none' : ($sh === 'strong' ? '0 24px 60px rgba(0,0,0,.30)' : '0 14px 40px rgba(30,20,12,.16)');
+            echo '<style>
+              {{WRAPPER}} .ifb{--ifb-def:#FBF8F4;--ifb-def2:#F1E9DE}
+              {{WRAPPER}} .ifb-band{width:100%}
+              {{WRAPPER}} .ifb-band.bleed{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);width:100vw}
+              {{WRAPPER}} .ifb-inner{max-width:1120px;margin:0 auto;padding:40px 20px}
+              {{WRAPPER}} .ifb-light{--t-title:#64402C;--t-body:#3A2A1E;--t-eye:#9c7b4e}
+              {{WRAPPER}} .ifb-dark{--t-title:#F5EAD8;--t-body:#E7DCCB;--t-eye:#CBB68F}
+              {{WRAPPER}} .ifb-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t-eye)}
+              {{WRAPPER}} .ifb-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:var(--t-title)}
+              {{WRAPPER}} .ifb-body{font-size:15px;line-height:1.7;color:var(--t-body)}
+              {{WRAPPER}} .ifb-body p{margin:0 0 12px}{{WRAPPER}} .ifb-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;gap:32px;align-items:center}
+              {{WRAPPER}} .ifb-image.rev .ifb-img{order:2}
+              {{WRAPPER}} .ifb-img{height:300px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
+              {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+              {{WRAPPER}} .ifb-ic{width:56px;height:56px;border-radius:14px;background:#5A3D2B;color:#F3ECE2;display:flex;align-items:center;justify-content:center;font-size:26px;flex:none;line-height:1}
+              {{WRAPPER}} .ifb-ic-inline{margin-bottom:14px}
+              {{WRAPPER}} .ifb-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:var(--t-title);border:1px solid currentColor;border-radius:7px;padding:10px 18px;opacity:.92}
+              {{WRAPPER}} .ifb-card{background:#fff;border-radius:16px;padding:22px;margin-top:18px;box-shadow:' . $shcss . '}
+              {{WRAPPER}} .ifb-card .ifs-tbl{margin:0;border:1px solid rgba(100,64,44,.14);border-radius:12px;overflow-x:auto}
+              {{WRAPPER}} .ifb-after{margin-top:16px}
+              {{WRAPPER}} .ifs-tbl table{border-collapse:collapse;width:100%;min-width:520px;font-size:13px}
+              {{WRAPPER}} .ifs-tbl thead th{background:#64402C;color:#F6EFE7;text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:13px 16px;white-space:nowrap}
+              {{WRAPPER}} .ifs-tbl tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E}
+              {{WRAPPER}} .ifs-tbl tbody tr:nth-child(even){background:#F5EEE4}
+              {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
+              @media(max-width:760px){{{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important}{{WRAPPER}} .ifb-image.rev .ifb-img{order:0}{{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}}
+            </style>';
+            echo '<div class="ifb">';
+            $i = 0;
+            foreach ($rows as $r) {
+                $bg1 = trim((string) ($r['bg_color'] ?? ''));
+                $bg2 = trim((string) ($r['bg_color2'] ?? ''));
+                if ($bg1 === '') {
+                    $bgcss = 'background:var(' . ($i % 2 ? '--ifb-def2' : '--ifb-def') . ')';
+                    $toneBase = $i % 2 ? ($s['bd_defbg2'] ?? '#F1E9DE') : ($s['bd_defbg'] ?? '#FBF8F4');
+                } else {
+                    $bgcss = $bg2 !== '' ? 'background:linear-gradient(135deg,' . $bg1 . ',' . $bg2 . ')' : 'background:' . $bg1;
+                    $toneBase = $bg1;
+                }
+                $tone = $r['text_tone'] ?? 'auto';
+                if ($tone !== 'light' && $tone !== 'dark') {
+                    $lum = $this->ifb_lum($toneBase);
+                    $tone = ($lum !== null && $lum < 140) ? 'dark' : 'light';
+                }
+                $img = island_ew_image_src($r['image'] ?? '');
+                $content = (string) ($r['content'] ?? '');
+                $table = '';
+                $before = $content;
+                $after = '';
+                if (stripos($content, '<table') !== false
+                    && preg_match('/<table\b[\s\S]*?<\/table>/i', $content, $mm)) {
+                    $table = $mm[0];
+                    $p = strpos($content, $table);
+                    $before = substr($content, 0, $p);
+                    $after = substr($content, $p + strlen($table));
+                }
+                $has_table = $table !== '';
+                $rl = $r['row_layout'] ?? 'auto';
+                if (!in_array($rl, ['image', 'table', 'icon'], true)) {
+                    $rl = $img ? 'image' : ($has_table ? 'table' : 'icon');
+                }
+                $icon = trim((string) ($r['icon'] ?? ''));
+                $rev = ($i % 2 === 1) ? ' rev' : '';
+
+                $head = '';
+                if (trim((string) ($r['subtitle'] ?? '')) !== '') {
+                    $head .= '<p class="ifb-eyebrow">' . esc_html($r['subtitle']) . '</p>';
+                }
+                $head .= '<' . $tag . ' class="ifb-title">' . esc_html($r['title'] ?? '') . '</' . $tag . '>';
+                $body = trim(wp_strip_all_tags($before)) !== '' ? '<div class="ifb-body">' . wp_kses_post($before) . '</div>' : '';
+                $btn = !empty($r['button_url'])
+                    ? '<a class="ifb-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>'
+                    : '';
+
+                echo '<section class="ifb-band ifb-' . $tone . $bleed . '" style="' . esc_attr($bgcss) . '"><div class="ifb-inner">';
+                if ($rl === 'image' && $img) {
+                    echo '<div class="ifb-image' . $rev . '">';
+                    echo '<div class="ifb-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
+                    echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
+                    echo '</div>';
+                } elseif ($rl === 'icon') {
+                    echo '<div class="ifb-iconrow">';
+                    echo '<div class="ifb-ic">' . ($icon !== '' ? esc_html($icon) : '&#9670;') . '</div>';
+                    echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
+                    echo '</div>';
+                } else {
+                    echo '<div class="ifb-tx">';
+                    if ($icon !== '') {
+                        echo '<div class="ifb-ic ifb-ic-inline">' . esc_html($icon) . '</div>';
+                    }
+                    echo $head . $body;
+                    echo '</div>';
+                }
+                if ($has_table) {
+                    echo '<div class="ifb-card"><div class="ifs-tbl">' . wp_kses_post($table) . '</div></div>';
+                    if (trim(wp_strip_all_tags($after)) !== '') {
+                        echo '<div class="ifb-body ifb-after">' . wp_kses_post($after) . '</div>';
+                    }
+                    if ($rl === 'table' && $btn) {
+                        echo '<div style="margin-top:14px">' . $btn . '</div>';
+                    }
+                }
+                echo '</div></section>';
+                $i++;
+            }
+            echo '</div>';
+        }
     }
 
     /* ===================================================================
@@ -1925,7 +2156,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         protected function register_controls()
         {
@@ -2032,7 +2263,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         protected function register_controls()
         {
@@ -2273,7 +2504,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         protected function register_controls()
         {
@@ -2487,7 +2718,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         protected function register_controls()
         {
@@ -2644,7 +2875,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         public function get_keywords()
         {
@@ -3077,7 +3308,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         public function get_keywords()
         {
@@ -3159,7 +3390,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
         public function get_keywords()
         {
@@ -3290,7 +3521,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
         public function get_categories()
         {
-            return ['general'];
+            return ['galapagos_site'];
         }
 
         protected function register_controls()
@@ -3454,7 +3685,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         public function get_name() { return 'wildlife_subspecies'; }
         public function get_title() { return 'Wildlife · Subspecies'; }
         public function get_icon() { return 'eicon-table'; }
-        public function get_categories() { return ['general']; }
+        public function get_categories() { return ['galapagos_site']; }
 
         protected function register_controls()
         {
@@ -3576,7 +3807,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         public function get_name() { return 'wildlife_where_to_see'; }
         public function get_title() { return 'Wildlife · Where to See'; }
         public function get_icon() { return 'eicon-map-pin'; }
-        public function get_categories() { return ['general']; }
+        public function get_categories() { return ['galapagos_site']; }
 
         protected function register_controls()
         {
@@ -3713,7 +3944,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         public function get_name() { return 'wildlife_seasonality'; }
         public function get_title() { return 'Wildlife · Seasonality'; }
         public function get_icon() { return 'eicon-calendar'; }
-        public function get_categories() { return ['general']; }
+        public function get_categories() { return ['galapagos_site']; }
 
         protected function register_controls()
         {
@@ -3860,7 +4091,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         public function get_name() { return 'wildlife_glance_features'; }
         public function get_title() { return 'Wildlife · At a Glance + Features'; }
         public function get_icon() { return 'eicon-column'; }
-        public function get_categories() { return ['general']; }
+        public function get_categories() { return ['galapagos_site']; }
 
         protected function register_controls()
         {
