@@ -85,6 +85,12 @@ _ALIASES = {
     "wildlife_species": "wildlife_single",
     "species_page": "wildlife_single",
     "wildlife_page": "wildlife_single",
+    # Generic informative/guide page (Informative Page ACF group), attached by
+    # page template. Route to it explicitly with `--type informative`.
+    "informative": "informative",
+    "informative_page": "informative",
+    "planning": "informative",
+    "info": "informative",
     "freeform": "freeform",
     "free_form": "freeform",
     "builder": "freeform",

@@ -375,6 +375,15 @@ def _extract_quick_facts(rows: list[list[str]]) -> list[dict]:
 _SPECIES_PAGE_TYPES = {
     "wildlife_single", "wildlife_species", "species_page", "wildlife_page",
 }
+# Informative/guide pages have no wildlife/island structured fields (seasonality,
+# subspecies, quick_facts, visitor_sites, wildlife_calendar). Their multi-column
+# tables are ordinary DATA tables that must survive as HTML in the section
+# content — so those structured-table detectors are skipped for this page type,
+# otherwise a "Month | …" or "…| Best Season |…" table gets mined into metadata
+# the informative profile never reads and vanishes from the page.
+_INFORMATIVE_PAGE_TYPES = {
+    "informative", "informative_page", "planning", "info",
+}
 # Content signals (for preview, when no page type is passed). Kept specific so
 # island docs — which merely LINK to /wildlife/ pages — never match.
 _SPECIES_SIGNAL_RE = re.compile(
@@ -1423,6 +1432,7 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
 
     all_texts = [p.text for p in docx.paragraphs]
     is_species = _norm_page_type(page_type) in _SPECIES_PAGE_TYPES or _looks_like_species(full_text)
+    is_informative = _norm_page_type(page_type) in _INFORMATIVE_PAGE_TYPES
     if not is_species and looks_like_cms([t for t in all_texts if t.strip()]):
         cms_doc = build_cms_document(all_texts, path.name)
         if schema_block:
@@ -1625,7 +1635,7 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             blk.meta["_pos"] = body_order.get(table._tbl, 1 << 30)
             _table_target(table, body_order, section_start_pos, doc, current).blocks.append(blk)
             continue
-        if _is_visitor_sites_table(rows):
+        if not is_informative and _is_visitor_sites_table(rows):
             sites = _extract_visitor_sites(rows)
             if sites:
                 doc.metadata.setdefault("visitor_sites", []).extend(sites)
@@ -1635,13 +1645,13 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             if srcs:
                 doc.metadata.setdefault("sources", []).extend(srcs)
                 continue
-        if _is_wildlife_calendar_table(rows):
+        if not is_informative and _is_wildlife_calendar_table(rows):
             cal = _extract_wildlife_calendar(rows)
             if cal:
                 doc.metadata.setdefault("wildlife_calendar", []).extend(cal)
                 continue
         # Per-island variants (giant tortoise shell types, marine iguana races).
-        if _is_subspecies_table(rows):
+        if not is_informative and _is_subspecies_table(rows):
             sub = _extract_subspecies(rows)
             if sub:
                 doc.metadata.setdefault("subspecies", []).extend(sub)
@@ -1649,12 +1659,12 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
         # Viewing calendar / breeding cycle (period + optional status + notes).
         # Several may exist (e.g. a "Period | Event" plus a "Month | Status |
         # Notes"); keep the richest and remember the rest as candidates.
-        if _is_seasonality_table(rows):
+        if not is_informative and _is_seasonality_table(rows):
             season = _extract_seasonality(rows)
             if season:
                 season_cands.append(season)
                 continue
-        if _is_quick_facts_table(rows):
+        if not is_informative and _is_quick_facts_table(rows):
             facts = _extract_quick_facts(rows)
             if facts:
                 doc.metadata.setdefault("quick_facts", []).extend(facts)

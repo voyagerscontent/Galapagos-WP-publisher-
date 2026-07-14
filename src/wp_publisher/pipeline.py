@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Any
 
 from .acf import build_acf
 from .acf.config import AcfConfig, get_acf_config
@@ -146,10 +147,17 @@ def build_page(
     tags = _csv(doc.metadata.get("tags")) or list(template.tags)
     post_type = _normalize_post_type(doc.metadata.get("post_type")) or template.post_type
 
+    # Assign the WordPress page template (REST `template` field) when the profile
+    # declares one, so a "Page Template == X" ACF group attaches on publish.
+    extra_fields: dict[str, Any] = {}
+    if template.page_template:
+        extra_fields["template"] = template.page_template
+
     page = RenderedPage(
         title=doc.title,
         slug=seo.slug,
         parent_slug=template.parent_page or "",
+        extra_fields=extra_fields,
         acf=acf_payload,
         content_html="",  # ACF-driven; the theme renders the fields
         excerpt=strip_html(seo.meta_description),

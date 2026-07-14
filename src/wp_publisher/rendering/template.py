@@ -47,6 +47,11 @@ class PageTemplate(BaseModel):
     # so section-scoped ACF field groups (located by page_parent) attach. None =
     # top-level (no parent).
     parent_page: str | None = None
+    # WordPress page template slug to assign (`_wp_page_template`). Sent as the
+    # REST `template` field so an ACF group located by "Page Template == X"
+    # attaches — which is how informative pages get their group regardless of
+    # parent (works for a standalone URL too). None = leave the default template.
+    page_template: str | None = None
     # Which ACF mapping profile to use (config/acf/<acf_profile>.yaml). None =
     # the default config/acf.yaml. Lets each section target its own field group.
     acf_profile: str | None = None
