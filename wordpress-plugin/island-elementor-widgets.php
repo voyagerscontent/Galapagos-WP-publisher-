@@ -4404,10 +4404,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
               {{WRAPPER}} .wgf-info{grid-column:1/-1;margin-top:14px}
               {{WRAPPER}} .wgf-info-title{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:16px;color:#64402C}
-              {{WRAPPER}} .wgf-info-band{position:relative;display:block;width:100%;height:190px;border-radius:12px;overflow:hidden;cursor:zoom-in}
-              {{WRAPPER}} .wgf-info-band img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
-              {{WRAPPER}} .wgf-info-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(rgba(251,248,244,0),var(--wgf-card,#FBF8F4));pointer-events:none}
-              {{WRAPPER}} .wgf-info-btn{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);white-space:nowrap;background:#5a3d2b;color:#f6efe7;font-size:12px;font-weight:700;padding:8px 15px;border-radius:20px;box-shadow:0 6px 16px rgba(60,40,25,.25);cursor:zoom-in}
+              /* Infographic shows in FULL (natural aspect) — never cropped like a
+               * cover photo. Click to open it even larger in the lightbox. */
+              {{WRAPPER}} .wgf-info-band{position:relative;display:block;width:100%;border-radius:12px;overflow:hidden;cursor:zoom-in;background:var(--wgf-card,#FBF8F4)}
+              {{WRAPPER}} .wgf-info-band img{width:100%;height:auto;display:block}
+              {{WRAPPER}} .wgf-info-btn{position:absolute;right:12px;bottom:12px;white-space:nowrap;background:rgba(90,61,43,.92);color:#f6efe7;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:20px;box-shadow:0 6px 16px rgba(60,40,25,.25);cursor:zoom-in;opacity:0;transition:opacity .2s}
+              {{WRAPPER}} .wgf-info-band:hover .wgf-info-btn{opacity:1}
               {{WRAPPER}} .wgf-info-cap{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:#7a6a5c}
               {{WRAPPER}} .wgf-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--wgf-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
               {{WRAPPER}} .wgf-col.is-of .wgf-fade{opacity:1}
