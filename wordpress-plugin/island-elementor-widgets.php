@@ -151,6 +151,52 @@ add_filter('theme_page_templates', function ($templates) {
     return $templates;
 });
 
+// Custom Elementor Pro display condition: "Informative Page (template)". Lets a
+// Theme Builder template target EVERY page that uses the Informative Page
+// template automatically — no listing pages one by one, and it covers a
+// standalone URL too. In the condition UI it appears alongside "Pages"/"Posts":
+// choose  Include → Informative Page (template).
+// Defensive: only registers when Elementor Pro's condition base is present, and
+// never fatals if the Pro API changes.
+add_action('elementor/theme/register_conditions', function ($conditions_manager) {
+    if (!class_exists('\ElementorPro\Modules\ThemeBuilder\Conditions\Condition_Base')) {
+        return;
+    }
+    if (!class_exists('Island_Informative_Template_Condition')) {
+        class Island_Informative_Template_Condition extends \ElementorPro\Modules\ThemeBuilder\Conditions\Condition_Base
+        {
+            public static function get_type()
+            {
+                return 'singular';
+            }
+            public function get_name()
+            {
+                return 'island_informative_template';
+            }
+            public function get_label()
+            {
+                return 'Informative Page (template)';
+            }
+            public function get_all_label()
+            {
+                return 'Informative Pages (template)';
+            }
+            public function check($args)
+            {
+                return is_page() && get_page_template_slug() === 'informative-page';
+            }
+        }
+    }
+    try {
+        $singular = $conditions_manager->get_condition('singular');
+        if ($singular) {
+            $singular->register_sub_condition(new Island_Informative_Template_Condition());
+        }
+    } catch (\Throwable $e) {
+        error_log('[island-widgets] informative condition skipped: ' . $e->getMessage());
+    }
+});
+
 add_action('elementor/widgets/register', function ($widgets_manager) {
     if (!did_action('elementor/loaded')) {
         return;
