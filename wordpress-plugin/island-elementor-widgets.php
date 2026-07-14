@@ -4404,7 +4404,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
               {{WRAPPER}} .wgf-info{grid-column:1/-1;margin-top:14px}
               {{WRAPPER}} .wgf-info-title{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:16px;color:#64402C}
-              /* Controlled-height banner (cropped preview) with a 'View full'
+              /* Controlled-height banner (cropped preview) with a View full
                * button that opens the whole image in the lightbox. */
               {{WRAPPER}} .wgf-info-band{position:relative;display:block;width:100%;height:190px;border-radius:12px;overflow:hidden;cursor:zoom-in}
               {{WRAPPER}} .wgf-info-band img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
