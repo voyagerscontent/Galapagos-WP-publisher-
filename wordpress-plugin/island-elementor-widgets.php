@@ -140,6 +140,17 @@ add_action('elementor/elements/categories_registered', function ($mgr) {
     ]);
 });
 
+// Register an "Informative Page" page template. No PHP file is needed — it acts
+// as a TAG: assigning it to a page (Page Attributes → Template) makes the
+// "Informative Page" ACF group appear (its location is Page Template ==
+// informative-page) and lets an Elementor Theme Builder template target these
+// pages. This works for any parent page OR a standalone top-level URL, which a
+// parent-based rule cannot do.
+add_filter('theme_page_templates', function ($templates) {
+    $templates['informative-page'] = 'Informative Page';
+    return $templates;
+});
+
 add_action('elementor/widgets/register', function ($widgets_manager) {
     if (!did_action('elementor/loaded')) {
         return;
