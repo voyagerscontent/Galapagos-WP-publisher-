@@ -4402,6 +4402,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wgf.hx .wgf-body,{{WRAPPER}} .wgf.hx .wgf-body::after{transition:none}}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
               {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
+              {{WRAPPER}} .wgf-info{grid-column:1/-1;margin-top:14px}
+              {{WRAPPER}} .wgf-info-title{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:16px;color:#64402C}
+              {{WRAPPER}} .wgf-info-band{position:relative;display:block;width:100%;height:190px;border-radius:12px;overflow:hidden;cursor:zoom-in}
+              {{WRAPPER}} .wgf-info-band img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+              {{WRAPPER}} .wgf-info-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(rgba(251,248,244,0),var(--wgf-card,#FBF8F4));pointer-events:none}
+              {{WRAPPER}} .wgf-info-btn{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);white-space:nowrap;background:#5a3d2b;color:#f6efe7;font-size:12px;font-weight:700;padding:8px 15px;border-radius:20px;box-shadow:0 6px 16px rgba(60,40,25,.25);cursor:zoom-in}
+              {{WRAPPER}} .wgf-info-cap{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:#7a6a5c}
               {{WRAPPER}} .wgf-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--wgf-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
               {{WRAPPER}} .wgf-col.is-of .wgf-fade{opacity:1}
               @media(max-width:820px){{{WRAPPER}} .wgf{grid-template-columns:1fr}{{WRAPPER}} .wgf-scroll{max-height:none!important;overflow:visible;padding-right:0}{{WRAPPER}} .wgf-fade{display:none}{{WRAPPER}} .wgf-feat,{{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr}{{WRAPPER}} .wgf-feat.rev .wgf-media{order:0}}
@@ -4441,6 +4448,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '<div class="wgf-scroll"><div class="wgf-feats">';
             $i = 0;
+            $gf_info_any = false;
             foreach ($feats as $r) {
                 $img = island_ew_image_src($r['image'] ?? '');
                 $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
@@ -4457,6 +4465,23 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 }
                 echo '</div>';
                 if ($img) { echo '<div class="wgf-media" style="background-image:url(\'' . esc_url($img) . '\')"></div>'; }
+                // Infographic: a full-card-width banner (spans both grid columns)
+                // that opens the full image in the shared lightbox — same idea as
+                // the Feature Sections cards, adapted to the compact card design.
+                $info = island_ew_image_src($r['infographic'] ?? '');
+                if ($info) {
+                    $ititle = trim((string) ($r['infographic_title'] ?? ''));
+                    $cap = trim((string) ($r['infographic_caption'] ?? ''));
+                    $ialt = esc_attr($ititle ?: ($r['title'] ?? ''));
+                    echo '<div class="wgf-info">';
+                    if ($ititle !== '') { echo '<p class="wgf-info-title">' . esc_html($ititle) . '</p>'; }
+                    echo '<div class="wgf-info-band" data-ifs-full="' . esc_url($info) . '" role="button" tabindex="0">'
+                        . '<img src="' . esc_url($info) . '" alt="' . $ialt . '" loading="lazy">'
+                        . '<span class="wgf-info-btn">View full &#8599;</span></div>';
+                    if ($cap !== '') { echo '<p class="wgf-info-cap">' . esc_html($cap) . '</p>'; }
+                    echo '</div>';
+                    $gf_info_any = true;
+                }
                 echo '</article>';
                 $i++;
             }
@@ -4474,7 +4499,37 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
             }
 
+            // Infographic lightbox — printed AFTER the hover script so it never
+            // sits between .wgf and that script's previousElementSibling lookup.
+            if ($gf_info_any) {
+                $this->gf_lightbox();
+            }
+
             $this->gf_sync_script();
+        }
+
+        /** Shared infographic lightbox (mirrors the Feature Sections one; guarded
+         * by window.__ifsLb so the two never double-bind on the same page). */
+        private function gf_lightbox()
+        {
+            static $done = false;
+            if ($done) { return; }
+            $done = true;
+            echo '<style>'
+                . '.ifs-lb{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(30,20,12,.82)}'
+                . '.ifs-lb.on{display:flex}'
+                . '.ifs-lb img{max-width:1000px;width:100%;height:auto;max-height:88vh;object-fit:contain;border-radius:12px;display:block}'
+                . '.ifs-lb .ifs-lb-x{position:absolute;top:14px;right:22px;color:#fff;font-size:32px;line-height:1;cursor:pointer;opacity:.85}'
+                . '</style>'
+                . '<div class="ifs-lb" id="ifs-lb"><span class="ifs-lb-x">&times;</span><img alt=""></div>';
+            echo '<script>(function(){if(window.__ifsLb)return;window.__ifsLb=1;'
+                . 'var lb=document.getElementById("ifs-lb"),im=lb.querySelector("img");'
+                . 'document.addEventListener("click",function(e){'
+                . 'var t=e.target.closest("[data-ifs-full]");'
+                . 'if(t){im.src=t.getAttribute("data-ifs-full");lb.classList.add("on");return;}'
+                . 'if(e.target===lb||e.target.classList.contains("ifs-lb-x"))lb.classList.remove("on");});'
+                . 'document.addEventListener("keydown",function(e){if(e.key==="Escape")lb.classList.remove("on");});'
+                . '})();</script>';
         }
 
         /** Height-sync: the right scroll area matches the left card's height so
