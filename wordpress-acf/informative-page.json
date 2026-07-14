@@ -11,11 +11,17 @@
                 "type": "tab"
             },
             {
-                "key": "field_inf_author",
-                "label": "Author / Byline",
-                "name": "author",
-                "type": "text",
-                "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
+                "key": "field_inf_hero_title",
+                "label": "Hero Title",
+                "name": "hero_title",
+                "type": "text"
+            },
+            {
+                "key": "field_inf_hero_subtitle",
+                "label": "Hero Subtitle",
+                "name": "hero_subtitle",
+                "type": "textarea",
+                "rows": 2
             },
             {
                 "key": "field_inf_geo_answer",
@@ -32,6 +38,36 @@
                 "type": "wysiwyg",
                 "tabs": "all",
                 "media_upload": 0
+            },
+            {
+                "key": "field_inf_hero_image",
+                "label": "Hero Image",
+                "name": "hero_image",
+                "type": "image",
+                "return_format": "id",
+                "preview_size": "medium"
+            },
+            {
+                "key": "field_inf_hero_image_alt",
+                "label": "Hero Image Alt",
+                "name": "hero_image_alt",
+                "type": "text"
+            },
+            {
+                "key": "field_inf_page_icon",
+                "label": "Page Icon",
+                "name": "page_icon",
+                "type": "image",
+                "return_format": "array",
+                "preview_size": "thumbnail",
+                "instructions": "Small per-page icon for a dynamic Image Box (optional, set by hand — same as the island pages)."
+            },
+            {
+                "key": "field_inf_author",
+                "label": "Author / Byline",
+                "name": "author",
+                "type": "text",
+                "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
             },
             {
                 "key": "field_inf_tab_content",
