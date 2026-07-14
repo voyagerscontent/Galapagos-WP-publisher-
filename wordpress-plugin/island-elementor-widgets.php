@@ -1425,7 +1425,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         public function get_title()
         {
-            return 'Island Feature Sections';
+            return 'Feature Sections';
         }
         public function get_icon()
         {
@@ -1617,11 +1617,27 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('bd_padx', ['label' => 'Band padding (sides)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 80]],
                 'default' => ['size' => 20, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-inner' => 'padding-left:{{SIZE}}{{UNIT}};padding-right:{{SIZE}}{{UNIT}}']]);
 
-            $this->add_control('bd_defbg', ['label' => 'Default background (odd rows)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FBF8F4',
-                'description' => 'Used when an ACF row leaves its background empty. Odd/even alternate so untinted pages still get rhythm.',
-                'selectors' => ['{{WRAPPER}}' => '--ifb-def:{{VALUE}}']]);
-            $this->add_control('bd_defbg2', ['label' => 'Default background (even rows)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1E9DE',
-                'selectors' => ['{{WRAPPER}}' => '--ifb-def2:{{VALUE}}']]);
+            /* Band palette — the source of truth for backgrounds. Define the
+             * colours ONCE here and they cycle across the sections in order
+             * (section 1 → colour 1, section 2 → colour 2, … wraps around).
+             * No colour is entered in ACF; the content only carries text/tables/
+             * image. Each entry may add a 2nd colour (gradient) and force a text
+             * tone; "Auto" tone picks light/dark from the colour's luminance. */
+            $pal = new \Elementor\Repeater();
+            $pal->add_control('c', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FBF8F4']);
+            $pal->add_control('c2', ['label' => 'Gradient 2nd colour (optional)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '']);
+            $pal->add_control('tone', ['label' => 'Text tone', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'auto',
+                'options' => ['auto' => 'Auto (by luminance)', 'light' => 'Light text', 'dark' => 'Dark text']]);
+            $this->add_control('bd_palette', [
+                'label' => 'Band backgrounds (cycle)', 'type' => \Elementor\Controls_Manager::REPEATER,
+                'fields' => $pal->get_controls(), 'title_field' => '{{{ c }}}',
+                'default' => [
+                    ['c' => '#FBF8F4', 'c2' => '', 'tone' => 'auto'],
+                    ['c' => '#F1E9DE', 'c2' => '', 'tone' => 'auto'],
+                    ['c' => '#173A34', 'c2' => '', 'tone' => 'auto'],
+                ],
+                'description' => 'These cycle across the sections in order. Add or remove colours to change the rhythm. Set once here — never in ACF.',
+            ]);
 
             $this->add_control('bd_light_h', ['label' => 'Text on LIGHT bands', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('bd_lt_title', ['label' => 'Title', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
@@ -2055,19 +2071,35 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
               @media(max-width:760px){{{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important}{{WRAPPER}} .ifb-image.rev .ifb-img{order:0}{{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}}
             </style>';
+            // Background palette comes from Elementor (design), NOT from ACF.
+            // It cycles across the sections in order. A row MAY still override
+            // via an optional ACF bg_color, but nothing requires it.
+            $pal = (isset($s['bd_palette']) && is_array($s['bd_palette'])) ? array_values($s['bd_palette']) : [];
             echo '<div class="ifb">';
             $i = 0;
             foreach ($rows as $r) {
-                $bg1 = trim((string) ($r['bg_color'] ?? ''));
-                $bg2 = trim((string) ($r['bg_color2'] ?? ''));
-                if ($bg1 === '') {
-                    $bgcss = 'background:var(' . ($i % 2 ? '--ifb-def2' : '--ifb-def') . ')';
-                    $toneBase = $i % 2 ? ($s['bd_defbg2'] ?? '#F1E9DE') : ($s['bd_defbg'] ?? '#FBF8F4');
+                $ovr = trim((string) ($r['bg_color'] ?? ''));  // optional per-row override
+                $palTone = 'auto';
+                if ($ovr !== '') {
+                    $bg2 = trim((string) ($r['bg_color2'] ?? ''));
+                    $bgcss = $bg2 !== '' ? 'background:linear-gradient(135deg,' . $ovr . ',' . $bg2 . ')' : 'background:' . $ovr;
+                    $toneBase = $ovr;
+                } elseif ($pal) {
+                    $pe = $pal[$i % count($pal)];
+                    $c1 = trim((string) ($pe['c'] ?? '')) ?: '#FBF8F4';
+                    $c2 = trim((string) ($pe['c2'] ?? ''));
+                    $bgcss = $c2 !== '' ? 'background:linear-gradient(135deg,' . $c1 . ',' . $c2 . ')' : 'background:' . $c1;
+                    $toneBase = $c1;
+                    $palTone = in_array(($pe['tone'] ?? 'auto'), ['light', 'dark'], true) ? $pe['tone'] : 'auto';
                 } else {
-                    $bgcss = $bg2 !== '' ? 'background:linear-gradient(135deg,' . $bg1 . ',' . $bg2 . ')' : 'background:' . $bg1;
-                    $toneBase = $bg1;
+                    $bgcss = 'background:' . ($i % 2 ? '#F1E9DE' : '#FBF8F4');
+                    $toneBase = $i % 2 ? '#F1E9DE' : '#FBF8F4';
                 }
+                // Tone priority: ACF row override → palette entry → auto (luminance).
                 $tone = $r['text_tone'] ?? 'auto';
+                if ($tone !== 'light' && $tone !== 'dark') {
+                    $tone = $palTone;
+                }
                 if ($tone !== 'light' && $tone !== 'dark') {
                     $lum = $this->ifb_lum($toneBase);
                     $tone = ($lum !== null && $lum < 140) ? 'dark' : 'light';
