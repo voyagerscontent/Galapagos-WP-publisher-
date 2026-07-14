@@ -1696,6 +1696,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('bd_img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+
+            /* Hover clamp — show a few lines of each band's prose, expand the full
+             * text on hover (tap on mobile). The fade blends into that band's own
+             * background colour. Tables/after-table text are never clamped. */
+            $this->add_control('bd_hx_h', ['label' => 'Hover clamp', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('bd_hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Show a few lines by default; the full text opens on hover (tap on mobile) and closes on leave. A soft fade hints there is more.']);
+            $this->add_control('bd_clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
+                'condition' => ['bd_hover_expand' => 'yes'],
+                'selectors' => ['{{WRAPPER}} .ifb' => '--cl:{{VALUE}}']]);
+            $this->add_control('bd_open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 300, 'max' => 3000]],
+                'default' => ['size' => 1200, 'unit' => 'px'], 'condition' => ['bd_hover_expand' => 'yes'],
+                'description' => 'Max height when opened on hover. Raise it if a long section gets cut off.',
+                'selectors' => ['{{WRAPPER}} .ifb' => '--open:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
         }
         protected function render()
@@ -2065,6 +2079,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:var(--t-title)}
               {{WRAPPER}} .ifb-body{font-size:15px;line-height:1.7;color:var(--t-body)}
               {{WRAPPER}} .ifb-body p{margin:0 0 12px}{{WRAPPER}} .ifb-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
+              {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
+              {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body{max-height:var(--open,1200px)}
+              {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
+              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{transition:none}{{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{transition:none}}
               {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;gap:32px;align-items:center}
               {{WRAPPER}} .ifb-image.rev .ifb-img{order:2}
               {{WRAPPER}} .ifb-img{height:300px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
@@ -2086,7 +2105,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // It cycles across the sections in order. A row MAY still override
             // via an optional ACF bg_color, but nothing requires it.
             $pal = (isset($s['bd_palette']) && is_array($s['bd_palette'])) ? array_values($s['bd_palette']) : [];
-            echo '<div class="ifb">';
+            $hx = ($s['bd_hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
+            echo '<div class="ifb' . $hx . '">';
             $i = 0;
             foreach ($rows as $r) {
                 $ovr = trim((string) ($r['bg_color'] ?? ''));  // optional per-row override
@@ -2145,7 +2165,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     ? '<a class="ifb-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>'
                     : '';
 
-                echo '<section class="ifb-band ifb-' . $tone . $bleed . '" style="' . esc_attr($bgcss) . '"><div class="ifb-inner">';
+                // --ifb-bg lets the hover-clamp fade blend into THIS band's own
+                // colour; tabindex makes :focus-within (tap/keyboard) open it too.
+                $sec_style = $bgcss . ';--ifb-bg:' . $toneBase;
+                $tabidx = $hx ? ' tabindex="0"' : '';
+                echo '<section class="ifb-band ifb-' . $tone . $bleed . '" style="' . esc_attr($sec_style) . '"' . $tabidx . '><div class="ifb-inner">';
                 if ($rl === 'image' && $img) {
                     echo '<div class="ifb-image' . $rev . '">';
                     echo '<div class="ifb-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
@@ -2177,6 +2201,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $i++;
             }
             echo '</div>';
+            // Open on hover, driven by JS (mouseenter/leave) so it never depends
+            // on CSS :hover — which Elementor's editor overlay can swallow. Touch:
+            // a tap toggles it (and :focus-within via tabindex). Binds via
+            // currentScript.previousElementSibling, so it MUST print right after
+            // the .ifb container with nothing in between.
+            if ($hx) {
+                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
+                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".ifb-band").forEach(function(c){'
+                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
+                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+            }
         }
     }
 
