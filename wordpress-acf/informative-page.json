@@ -54,6 +54,15 @@
                 "type": "text"
             },
             {
+                "key": "field_inf_hero_image_mobile",
+                "label": "Hero image (mobile)",
+                "name": "hero_image_mobile",
+                "type": "image",
+                "return_format": "id",
+                "preview_size": "medium",
+                "instructions": "Optional cover photo for the mobile version. If empty, the main hero image is used."
+            },
+            {
                 "key": "field_inf_page_icon",
                 "label": "Page Icon",
                 "name": "page_icon",

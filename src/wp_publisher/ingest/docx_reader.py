@@ -69,12 +69,17 @@ _EDITORIAL_FLAG = re.compile(
     r"^(⚠️\s*)?(WEBMASTER\b|.*\bDo not publish\b|\[?VERIFY\]?\b)", re.IGNORECASE
 )
 # A byline near the top: "By Juan Magallanes, Naturalist Expert Contributor — …".
-_BYLINE = re.compile(r"^By\s+[A-Z][\w'.-]+\s+[A-Z]")
+# Allow an optional leading "the" so a corporate byline ("By the Voyagers Travel
+# Company Editorial Team | GalapagosIslands.travel") is recognized, not just a
+# personal one ("By Jane Darwin").
+_BYLINE = re.compile(r"^By\s+(?:the\s+)?[A-Z][\w'.-]+\s+[A-Z]")
 
 
 def _clean_byline(text: str) -> str:
-    s = re.sub(r"^By\s+", "", text).strip()
-    return re.split(r"\s+[—–-]\s+", s, maxsplit=1)[0].strip()
+    # Strip the "By " / "By the " lead-in, then keep only the name — dropping a
+    # trailing site/handle after an em/en dash OR a pipe ("… | GalapagosIslands.travel").
+    s = re.sub(r"^By\s+(?:the\s+)?", "", text, flags=re.IGNORECASE).strip()
+    return re.split(r"\s+[—–-]\s+|\s*\|\s*", s, maxsplit=1)[0].strip()
 
 
 _BYLINE_ROLE_RE = re.compile(

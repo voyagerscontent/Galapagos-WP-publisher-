@@ -1,186 +1,635 @@
 [
-  {
-    "key": "group_wildlife_single",
-    "title": "Wildlife Single (Species)",
-    "description": "Content for a /wildlife/<species>/ page. Populated by the publishing engine over the REST `acf` payload; the theme/Elementor widgets render the fields. Location rule attaches these fields to any child of the /wildlife/ hub (page 9657).",
-    "fields": [
-      { "key": "field_wls_tab_hero", "label": "Hero", "name": "", "type": "tab" },
-      { "key": "field_wls_hero_title", "label": "Hero Title", "name": "hero_title", "type": "text" },
-      { "key": "field_wls_hero_subtitle", "label": "Hero Subtitle", "name": "hero_subtitle", "type": "textarea", "rows": 2 },
-      {
-        "key": "field_wls_geo_answer", "label": "Quick Answer (GEO / AI)", "name": "geo_answer", "type": "textarea", "rows": 3,
-        "instructions": "~50-word featured-snippet answer from the doc's 🔍 Quick Answer block. Rendered as the light-teal box above the H1 (same as the island pages)."
-      },
-      { "key": "field_wls_intro", "label": "Intro / overview", "name": "intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-      { "key": "field_wls_hero_image", "label": "Hero Image", "name": "hero_image", "type": "image", "return_format": "id", "preview_size": "medium" },
-      { "key": "field_wls_hero_image_alt", "label": "Hero Image Alt", "name": "hero_image_alt", "type": "text" },
-      {
-        "key": "field_wls_page_icon", "label": "Page Icon", "name": "page_icon", "type": "image", "return_format": "array", "preview_size": "thumbnail",
-        "instructions": "Small per-page icon for a dynamic Image Box (optional, set by hand — same as the island pages)."
-      },
-      {
-        "key": "field_wls_author", "label": "Author / Byline", "name": "author", "type": "text",
-        "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
-      },
-
-      { "key": "field_wls_tab_facts", "label": "Species Facts", "name": "", "type": "tab" },
-      { "key": "field_wls_scientific_name", "label": "Scientific name", "name": "scientific_name", "type": "text",
-        "instructions": "Binomial, e.g. 'Chelonoidis niger'. Feeds TaxonConcept schema." },
-      { "key": "field_wls_common_name", "label": "Common name", "name": "common_name", "type": "text" },
-      {
-        "key": "field_wls_conservation_status", "label": "Conservation status (IUCN)", "name": "conservation_status", "type": "select",
-        "choices": {
-          "Least Concern": "Least Concern", "Near Threatened": "Near Threatened", "Vulnerable": "Vulnerable",
-          "Endangered": "Endangered", "Critically Endangered": "Critically Endangered", "Data Deficient": "Data Deficient"
-        },
-        "allow_null": 1, "ui": 1
-      },
-      { "key": "field_wls_population", "label": "Population estimate", "name": "population", "type": "text" },
-      { "key": "field_wls_endemic", "label": "Endemic to Galápagos?", "name": "endemic", "type": "true_false", "ui": 1 },
-      { "key": "field_wls_quick_facts_title", "label": "At a Glance — heading", "name": "quick_facts_title", "type": "text", "default_value": "At a Glance" },
-      {
-        "key": "field_wls_quick_facts", "label": "At a Glance (key / value)", "name": "quick_facts", "type": "repeater",
-        "instructions": "The full At-a-Glance table. Flexible because attributes differ per species.",
-        "layout": "table", "button_label": "Add fact",
-        "sub_fields": [
-          { "key": "field_wls_qf_label", "label": "Label", "name": "label", "type": "text" },
-          { "key": "field_wls_qf_value", "label": "Value", "name": "value", "type": "text" }
-        ]
-      },
-
-      { "key": "field_wls_tab_features", "label": "Feature Sections", "name": "", "type": "tab" },
-      {
-        "key": "field_wls_feature_sections", "label": "Feature Sections", "name": "feature_sections", "type": "repeater",
-        "instructions": "Editorial sections (biology, behaviour, threats, conservation…). Optional per-row infographic.",
-        "layout": "block", "button_label": "Add section",
-        "sub_fields": [
-          { "key": "field_wls_fs_title", "label": "Title", "name": "title", "type": "text" },
-          { "key": "field_wls_fs_subtitle", "label": "Subtitle", "name": "subtitle", "type": "text" },
-          { "key": "field_wls_fs_content", "label": "Content", "name": "content", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-          { "key": "field_wls_fs_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
-          { "key": "field_wls_fs_alt", "label": "Image Alt", "name": "image_alt", "type": "text" },
-          { "key": "field_wls_fs_btn_label", "label": "Button Label", "name": "button_label", "type": "text" },
-          { "key": "field_wls_fs_btn_url", "label": "Button URL", "name": "button_url", "type": "url" },
-          { "key": "field_wls_fs_infographic", "label": "Infographic", "name": "infographic", "type": "image", "return_format": "id", "preview_size": "medium" },
-          { "key": "field_wls_fs_infographic_title", "label": "Infographic title", "name": "infographic_title", "type": "text" },
-          { "key": "field_wls_fs_infographic_caption", "label": "Infographic caption", "name": "infographic_caption", "type": "text" }
-        ]
-      },
-
-      { "key": "field_wls_tab_where", "label": "Where to See", "name": "", "type": "tab" },
-      { "key": "field_wls_where_title", "label": "Where to See — heading", "name": "where_to_see_title", "type": "text", "default_value": "Where and How to See Them" },
-      { "key": "field_wls_where_intro", "label": "Where to See — intro", "name": "where_to_see_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-      {
-        "key": "field_wls_where_to_see", "label": "Where to See (sites)", "name": "where_to_see", "type": "repeater",
-        "layout": "block", "button_label": "Add site",
-        "sub_fields": [
-          { "key": "field_wls_ws_site", "label": "Site name", "name": "site", "type": "text" },
-          { "key": "field_wls_ws_island", "label": "Island", "name": "island", "type": "text" },
-          {
-            "key": "field_wls_ws_access", "label": "Access", "name": "access", "type": "select",
-            "choices": { "Land-based": "Land-based", "Cruise-only": "Cruise-only", "Both": "Both" }, "allow_null": 1, "ui": 1
-          },
-          { "key": "field_wls_ws_season", "label": "Best season", "name": "season", "type": "text" },
-          { "key": "field_wls_ws_desc", "label": "Description", "name": "description", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-          { "key": "field_wls_ws_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" }
-        ]
-      },
-
-      { "key": "field_wls_tab_season", "label": "Seasonality", "name": "", "type": "tab" },
-      { "key": "field_wls_season_title", "label": "Seasonality — heading", "name": "seasonality_title", "type": "text", "default_value": "Best Time to See" },
-      { "key": "field_wls_season_intro", "label": "Seasonality — intro", "name": "seasonality_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-      {
-        "key": "field_wls_seasonality", "label": "Seasonality (calendar)", "name": "seasonality", "type": "repeater",
-        "instructions": "Month/period rows: viewing calendar or breeding cycle (period + optional label + notes).",
-        "layout": "table", "button_label": "Add period",
-        "sub_fields": [
-          { "key": "field_wls_se_period", "label": "Period", "name": "period", "type": "text" },
-          { "key": "field_wls_se_label", "label": "Label / status", "name": "label", "type": "text" },
-          { "key": "field_wls_se_notes", "label": "Notes", "name": "notes", "type": "textarea", "rows": 2, "new_lines": "" }
-        ]
-      },
-
-      { "key": "field_wls_tab_subspecies", "label": "Subspecies", "name": "", "type": "tab" },
-      { "key": "field_wls_sub_title", "label": "Subspecies — heading", "name": "subspecies_title", "type": "text" },
-      { "key": "field_wls_sub_intro", "label": "Subspecies — intro", "name": "subspecies_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-      {
-        "key": "field_wls_subspecies", "label": "Subspecies / variants", "name": "subspecies", "type": "repeater",
-        "instructions": "Per-island variants (e.g. giant tortoise shell types, marine iguana subspecies).",
-        "layout": "block", "button_label": "Add subspecies",
-        "sub_fields": [
-          { "key": "field_wls_ss_island", "label": "Island", "name": "island", "type": "text" },
-          { "key": "field_wls_ss_name", "label": "Name", "name": "name", "type": "text" },
-          { "key": "field_wls_ss_trait", "label": "Notable trait", "name": "trait", "type": "text" },
-          { "key": "field_wls_ss_population", "label": "Population", "name": "population", "type": "text" },
-          { "key": "field_wls_ss_status", "label": "Status", "name": "status", "type": "text" },
-          { "key": "field_wls_ss_image", "label": "Image", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" }
-        ]
-      },
-
-      { "key": "field_wls_tab_faq", "label": "FAQs", "name": "", "type": "tab" },
-      {
-        "key": "field_wls_faqs", "label": "FAQs", "name": "faqs", "type": "repeater",
-        "layout": "block", "button_label": "Add FAQ",
-        "sub_fields": [
-          { "key": "field_wls_faq_q", "label": "Question", "name": "question", "type": "text" },
-          { "key": "field_wls_faq_a", "label": "Answer", "name": "answer", "type": "wysiwyg", "tabs": "all", "media_upload": 0 }
-        ]
-      },
-
-      { "key": "field_wls_tab_cta", "label": "Plan Your Visit", "name": "", "type": "tab" },
-      { "key": "field_wls_cta_title", "label": "Plan Your Visit — Heading", "name": "cta_title", "type": "text" },
-      { "key": "field_wls_cta_intro", "label": "Plan Your Visit — Intro", "name": "cta_intro", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-      {
-        "key": "field_wls_cta", "label": "CTA Blocks", "name": "cta", "type": "repeater",
-        "layout": "block", "button_label": "Add CTA",
-        "sub_fields": [
-          {
-            "key": "field_wls_cta_audience", "label": "Audience", "name": "audience", "type": "select",
-            "choices": { "Direct travelers": "Direct travelers", "Travel trade": "Travel trade" }, "allow_null": 1, "ui": 1
-          },
-          { "key": "field_wls_cta_card_title", "label": "Title", "name": "title", "type": "text" },
-          { "key": "field_wls_cta_text", "label": "Text", "name": "text", "type": "wysiwyg", "tabs": "all", "media_upload": 0 },
-          { "key": "field_wls_cta_image", "label": "Background image (optional)", "name": "image", "type": "image", "return_format": "id", "preview_size": "medium" },
-          { "key": "field_wls_cta_button", "label": "Button Label", "name": "button_label", "type": "text" },
-          { "key": "field_wls_cta_url", "label": "Button URL", "name": "button_url", "type": "url" }
-        ]
-      },
-
-      { "key": "field_wls_tab_sources", "label": "Sources & Links", "name": "", "type": "tab" },
-      {
-        "key": "field_wls_sources", "label": "Sources / Citations", "name": "sources", "type": "repeater",
-        "layout": "table", "button_label": "Add source",
-        "sub_fields": [
-          { "key": "field_wls_src_label", "label": "Label", "name": "label", "type": "text" },
-          { "key": "field_wls_src_url", "label": "URL", "name": "url", "type": "url" }
-        ]
-      },
-      {
-        "key": "field_wls_related_links", "label": "Related Links (internal)", "name": "related_links", "type": "repeater",
-        "instructions": "Internal 'Explore More' footer. Links sharing a Group heading render as one titled column.",
-        "layout": "table", "button_label": "Add link",
-        "sub_fields": [
-          { "key": "field_wls_rl_group", "label": "Group heading", "name": "group", "type": "text" },
-          { "key": "field_wls_rl_label", "label": "Label", "name": "label", "type": "text" },
-          { "key": "field_wls_rl_url", "label": "URL", "name": "url", "type": "text" }
-        ]
-      },
-
-      { "key": "field_wls_tab_schema", "label": "Schema", "name": "", "type": "tab" },
-      {
-        "key": "field_wls_seo_schema", "label": "Schema JSON-LD", "name": "seo_schema", "type": "textarea", "rows": 14, "new_lines": "",
-        "instructions": "Page-specific schema.org (TaxonConcept + FAQPage + BreadcrumbList) from the doc. Printed by the 'Island Schema' widget."
-      }
-    ],
-    "location": [
-      [
-        { "param": "page_parent", "operator": "==", "value": "9657" }
-      ]
-    ],
-    "menu_order": 0,
-    "position": "normal",
-    "style": "default",
-    "active": true,
-    "show_in_rest": 1
-  }
+    {
+        "key": "group_wildlife_single",
+        "title": "Wildlife Single (Species)",
+        "description": "Content for a /wildlife/<species>/ page. Populated by the publishing engine over the REST `acf` payload; the theme/Elementor widgets render the fields. Location rule attaches these fields to any child of the /wildlife/ hub (page 9657).",
+        "fields": [
+            {
+                "key": "field_wls_tab_hero",
+                "label": "Hero",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_hero_title",
+                "label": "Hero Title",
+                "name": "hero_title",
+                "type": "text"
+            },
+            {
+                "key": "field_wls_hero_subtitle",
+                "label": "Hero Subtitle",
+                "name": "hero_subtitle",
+                "type": "textarea",
+                "rows": 2
+            },
+            {
+                "key": "field_wls_geo_answer",
+                "label": "Quick Answer (GEO / AI)",
+                "name": "geo_answer",
+                "type": "textarea",
+                "rows": 3,
+                "instructions": "~50-word featured-snippet answer from the doc's 🔍 Quick Answer block. Rendered as the light-teal box above the H1 (same as the island pages)."
+            },
+            {
+                "key": "field_wls_intro",
+                "label": "Intro / overview",
+                "name": "intro",
+                "type": "wysiwyg",
+                "tabs": "all",
+                "media_upload": 0
+            },
+            {
+                "key": "field_wls_hero_image",
+                "label": "Hero Image",
+                "name": "hero_image",
+                "type": "image",
+                "return_format": "id",
+                "preview_size": "medium"
+            },
+            {
+                "key": "field_wls_hero_image_alt",
+                "label": "Hero Image Alt",
+                "name": "hero_image_alt",
+                "type": "text"
+            },
+            {
+                "key": "field_wls_hero_image_mobile",
+                "label": "Hero image (mobile)",
+                "name": "hero_image_mobile",
+                "type": "image",
+                "return_format": "id",
+                "preview_size": "medium",
+                "instructions": "Optional cover photo for the mobile version. If empty, the main hero image is used."
+            },
+            {
+                "key": "field_wls_page_icon",
+                "label": "Page Icon",
+                "name": "page_icon",
+                "type": "image",
+                "return_format": "array",
+                "preview_size": "thumbnail",
+                "instructions": "Small per-page icon for a dynamic Image Box (optional, set by hand — same as the island pages)."
+            },
+            {
+                "key": "field_wls_author",
+                "label": "Author / Byline",
+                "name": "author",
+                "type": "text",
+                "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
+            },
+            {
+                "key": "field_wls_tab_facts",
+                "label": "Species Facts",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_scientific_name",
+                "label": "Scientific name",
+                "name": "scientific_name",
+                "type": "text",
+                "instructions": "Binomial, e.g. 'Chelonoidis niger'. Feeds TaxonConcept schema."
+            },
+            {
+                "key": "field_wls_common_name",
+                "label": "Common name",
+                "name": "common_name",
+                "type": "text"
+            },
+            {
+                "key": "field_wls_conservation_status",
+                "label": "Conservation status (IUCN)",
+                "name": "conservation_status",
+                "type": "select",
+                "choices": {
+                    "Least Concern": "Least Concern",
+                    "Near Threatened": "Near Threatened",
+                    "Vulnerable": "Vulnerable",
+                    "Endangered": "Endangered",
+                    "Critically Endangered": "Critically Endangered",
+                    "Data Deficient": "Data Deficient"
+                },
+                "allow_null": 1,
+                "ui": 1
+            },
+            {
+                "key": "field_wls_population",
+                "label": "Population estimate",
+                "name": "population",
+                "type": "text"
+            },
+            {
+                "key": "field_wls_endemic",
+                "label": "Endemic to Galápagos?",
+                "name": "endemic",
+                "type": "true_false",
+                "ui": 1
+            },
+            {
+                "key": "field_wls_quick_facts_title",
+                "label": "At a Glance — heading",
+                "name": "quick_facts_title",
+                "type": "text",
+                "default_value": "At a Glance"
+            },
+            {
+                "key": "field_wls_quick_facts",
+                "label": "At a Glance (key / value)",
+                "name": "quick_facts",
+                "type": "repeater",
+                "instructions": "The full At-a-Glance table. Flexible because attributes differ per species.",
+                "layout": "table",
+                "button_label": "Add fact",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_qf_label",
+                        "label": "Label",
+                        "name": "label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_qf_value",
+                        "label": "Value",
+                        "name": "value",
+                        "type": "text"
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_features",
+                "label": "Feature Sections",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_feature_sections",
+                "label": "Feature Sections",
+                "name": "feature_sections",
+                "type": "repeater",
+                "instructions": "Editorial sections (biology, behaviour, threats, conservation…). Optional per-row infographic.",
+                "layout": "block",
+                "button_label": "Add section",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_fs_title",
+                        "label": "Title",
+                        "name": "title",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_fs_subtitle",
+                        "label": "Subtitle",
+                        "name": "subtitle",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_fs_content",
+                        "label": "Content",
+                        "name": "content",
+                        "type": "wysiwyg",
+                        "tabs": "all",
+                        "media_upload": 0
+                    },
+                    {
+                        "key": "field_wls_fs_image",
+                        "label": "Image",
+                        "name": "image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    },
+                    {
+                        "key": "field_wls_fs_alt",
+                        "label": "Image Alt",
+                        "name": "image_alt",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_fs_btn_label",
+                        "label": "Button Label",
+                        "name": "button_label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_fs_btn_url",
+                        "label": "Button URL",
+                        "name": "button_url",
+                        "type": "url"
+                    },
+                    {
+                        "key": "field_wls_fs_infographic",
+                        "label": "Infographic",
+                        "name": "infographic",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    },
+                    {
+                        "key": "field_wls_fs_infographic_title",
+                        "label": "Infographic title",
+                        "name": "infographic_title",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_fs_infographic_caption",
+                        "label": "Infographic caption",
+                        "name": "infographic_caption",
+                        "type": "text"
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_where",
+                "label": "Where to See",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_where_title",
+                "label": "Where to See — heading",
+                "name": "where_to_see_title",
+                "type": "text",
+                "default_value": "Where and How to See Them"
+            },
+            {
+                "key": "field_wls_where_intro",
+                "label": "Where to See — intro",
+                "name": "where_to_see_intro",
+                "type": "wysiwyg",
+                "tabs": "all",
+                "media_upload": 0
+            },
+            {
+                "key": "field_wls_where_to_see",
+                "label": "Where to See (sites)",
+                "name": "where_to_see",
+                "type": "repeater",
+                "layout": "block",
+                "button_label": "Add site",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_ws_site",
+                        "label": "Site name",
+                        "name": "site",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ws_island",
+                        "label": "Island",
+                        "name": "island",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ws_access",
+                        "label": "Access",
+                        "name": "access",
+                        "type": "select",
+                        "choices": {
+                            "Land-based": "Land-based",
+                            "Cruise-only": "Cruise-only",
+                            "Both": "Both"
+                        },
+                        "allow_null": 1,
+                        "ui": 1
+                    },
+                    {
+                        "key": "field_wls_ws_season",
+                        "label": "Best season",
+                        "name": "season",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ws_desc",
+                        "label": "Description",
+                        "name": "description",
+                        "type": "wysiwyg",
+                        "tabs": "all",
+                        "media_upload": 0
+                    },
+                    {
+                        "key": "field_wls_ws_image",
+                        "label": "Image",
+                        "name": "image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_season",
+                "label": "Seasonality",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_season_title",
+                "label": "Seasonality — heading",
+                "name": "seasonality_title",
+                "type": "text",
+                "default_value": "Best Time to See"
+            },
+            {
+                "key": "field_wls_season_intro",
+                "label": "Seasonality — intro",
+                "name": "seasonality_intro",
+                "type": "wysiwyg",
+                "tabs": "all",
+                "media_upload": 0
+            },
+            {
+                "key": "field_wls_seasonality",
+                "label": "Seasonality (calendar)",
+                "name": "seasonality",
+                "type": "repeater",
+                "instructions": "Month/period rows: viewing calendar or breeding cycle (period + optional label + notes).",
+                "layout": "table",
+                "button_label": "Add period",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_se_period",
+                        "label": "Period",
+                        "name": "period",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_se_label",
+                        "label": "Label / status",
+                        "name": "label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_se_notes",
+                        "label": "Notes",
+                        "name": "notes",
+                        "type": "textarea",
+                        "rows": 2,
+                        "new_lines": ""
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_subspecies",
+                "label": "Subspecies",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_sub_title",
+                "label": "Subspecies — heading",
+                "name": "subspecies_title",
+                "type": "text"
+            },
+            {
+                "key": "field_wls_sub_intro",
+                "label": "Subspecies — intro",
+                "name": "subspecies_intro",
+                "type": "wysiwyg",
+                "tabs": "all",
+                "media_upload": 0
+            },
+            {
+                "key": "field_wls_subspecies",
+                "label": "Subspecies / variants",
+                "name": "subspecies",
+                "type": "repeater",
+                "instructions": "Per-island variants (e.g. giant tortoise shell types, marine iguana subspecies).",
+                "layout": "block",
+                "button_label": "Add subspecies",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_ss_island",
+                        "label": "Island",
+                        "name": "island",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ss_name",
+                        "label": "Name",
+                        "name": "name",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ss_trait",
+                        "label": "Notable trait",
+                        "name": "trait",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ss_population",
+                        "label": "Population",
+                        "name": "population",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ss_status",
+                        "label": "Status",
+                        "name": "status",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_ss_image",
+                        "label": "Image",
+                        "name": "image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_faq",
+                "label": "FAQs",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_faqs",
+                "label": "FAQs",
+                "name": "faqs",
+                "type": "repeater",
+                "layout": "block",
+                "button_label": "Add FAQ",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_faq_q",
+                        "label": "Question",
+                        "name": "question",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_faq_a",
+                        "label": "Answer",
+                        "name": "answer",
+                        "type": "wysiwyg",
+                        "tabs": "all",
+                        "media_upload": 0
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_cta",
+                "label": "Plan Your Visit",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_cta_title",
+                "label": "Plan Your Visit — Heading",
+                "name": "cta_title",
+                "type": "text"
+            },
+            {
+                "key": "field_wls_cta_intro",
+                "label": "Plan Your Visit — Intro",
+                "name": "cta_intro",
+                "type": "wysiwyg",
+                "tabs": "all",
+                "media_upload": 0
+            },
+            {
+                "key": "field_wls_cta",
+                "label": "CTA Blocks",
+                "name": "cta",
+                "type": "repeater",
+                "layout": "block",
+                "button_label": "Add CTA",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_cta_audience",
+                        "label": "Audience",
+                        "name": "audience",
+                        "type": "select",
+                        "choices": {
+                            "Direct travelers": "Direct travelers",
+                            "Travel trade": "Travel trade"
+                        },
+                        "allow_null": 1,
+                        "ui": 1
+                    },
+                    {
+                        "key": "field_wls_cta_card_title",
+                        "label": "Title",
+                        "name": "title",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_cta_text",
+                        "label": "Text",
+                        "name": "text",
+                        "type": "wysiwyg",
+                        "tabs": "all",
+                        "media_upload": 0
+                    },
+                    {
+                        "key": "field_wls_cta_image",
+                        "label": "Background image (optional)",
+                        "name": "image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    },
+                    {
+                        "key": "field_wls_cta_button",
+                        "label": "Button Label",
+                        "name": "button_label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_cta_url",
+                        "label": "Button URL",
+                        "name": "button_url",
+                        "type": "url"
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_sources",
+                "label": "Sources & Links",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_sources",
+                "label": "Sources / Citations",
+                "name": "sources",
+                "type": "repeater",
+                "layout": "table",
+                "button_label": "Add source",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_src_label",
+                        "label": "Label",
+                        "name": "label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_src_url",
+                        "label": "URL",
+                        "name": "url",
+                        "type": "url"
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_related_links",
+                "label": "Related Links (internal)",
+                "name": "related_links",
+                "type": "repeater",
+                "instructions": "Internal 'Explore More' footer. Links sharing a Group heading render as one titled column.",
+                "layout": "table",
+                "button_label": "Add link",
+                "sub_fields": [
+                    {
+                        "key": "field_wls_rl_group",
+                        "label": "Group heading",
+                        "name": "group",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_rl_label",
+                        "label": "Label",
+                        "name": "label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_wls_rl_url",
+                        "label": "URL",
+                        "name": "url",
+                        "type": "text"
+                    }
+                ]
+            },
+            {
+                "key": "field_wls_tab_schema",
+                "label": "Schema",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_wls_seo_schema",
+                "label": "Schema JSON-LD",
+                "name": "seo_schema",
+                "type": "textarea",
+                "rows": 14,
+                "new_lines": "",
+                "instructions": "Page-specific schema.org (TaxonConcept + FAQPage + BreadcrumbList) from the doc. Printed by the 'Island Schema' widget."
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "page_parent",
+                    "operator": "==",
+                    "value": "9657"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "active": true,
+        "show_in_rest": 1
+    }
 ]
