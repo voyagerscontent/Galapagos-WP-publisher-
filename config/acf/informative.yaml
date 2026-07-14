@@ -20,7 +20,14 @@ top_level:
   schema_jsonld: seo_schema
 
 island:
-  # No `hero:` block — the hero is manual (built in Elementor per page).
+  # Hero is built manually in Elementor, so the IMAGE, subtitle and page_icon
+  # are left for the editor. Only the two text fields the doc reliably provides
+  # are extracted: hero_title (the document title) and hero_image_alt (written
+  # ONLY when the doc actually carries alt text — empty values are never set).
+  hero:
+    title: hero_title
+    image_alt: hero_image_alt
+
   author: author
   geo_answer: geo_answer
   intro: intro
