@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.2.5
+ * Version:     0.2.6
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -183,13 +183,19 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
             }
             public function check($args)
             {
-                // Use the queried object, not is_page()/get_the_ID(): during
-                // Elementor's condition evaluation the loop context isn't reliably
-                // set, so is_page() can be false and get_the_ID() 0. Read the
-                // template meta straight off the queried page id.
+                // Resolve the page id robustly (queried object first, then the
+                // loop id), because Elementor evaluates conditions before the loop
+                // is reliably set. Then compare the stored page-template meta,
+                // tolerating an optional ".php" suffix.
                 $id = get_queried_object_id();
-                return $id && get_post_type($id) === 'page'
-                    && get_page_template_slug($id) === 'informative-page';
+                if (!$id) {
+                    $id = get_the_ID();
+                }
+                if (!$id) {
+                    return false;
+                }
+                $tpl = get_page_template_slug($id);
+                return $tpl === 'informative-page' || $tpl === 'informative-page.php';
             }
         }
     }
