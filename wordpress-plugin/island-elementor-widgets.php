@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.2.9
+ * Version:     0.3.0
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1823,6 +1823,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('bd_img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bd_img_sticky', ['label' => 'Image stays fixed on scroll (sticky)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'The image pins in place while the section text scrolls past it (desktop only; on mobile it stacks normally). Works best when the section text is taller than the image.']);
+            $this->add_control('bd_img_sticky_top', ['label' => 'Sticky distance from top', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 200]],
+                'default' => ['size' => 26, 'unit' => 'px'], 'condition' => ['bd_img_sticky' => 'yes'],
+                'description' => 'Raise it if you have a fixed/sticky site header, so the image pins below it.',
+                'selectors' => ['{{WRAPPER}} .ifb-image.stick .ifb-img' => 'top:{{SIZE}}{{UNIT}}']]);
 
             /* Hover clamp — show a few lines of each band's prose, expand the full
              * text on hover (tap on mobile). The fade blends into that band's own
@@ -2220,6 +2226,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{transition:none}{{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{transition:none}}
               {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;gap:32px;align-items:center}
+              {{WRAPPER}} .ifb-image.stick{align-items:start}
+              {{WRAPPER}} .ifb-image.stick .ifb-img{position:sticky;top:26px;align-self:start}
               {{WRAPPER}} .ifb-image.rev .ifb-img{order:2}
               {{WRAPPER}} .ifb-img{height:300px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
               {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
@@ -2234,7 +2242,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E}
               {{WRAPPER}} .ifs-tbl tbody tr:nth-child(even){background:#F5EEE4}
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
-              @media(max-width:760px){{{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important}{{WRAPPER}} .ifb-image.rev .ifb-img{order:0}{{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}}
+              @media(max-width:760px){{{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important}{{WRAPPER}} .ifb-image.rev .ifb-img{order:0}{{WRAPPER}} .ifb-image.stick .ifb-img{position:static!important}{{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}}
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
             // It cycles across the sections in order. A row MAY still override
@@ -2310,7 +2318,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $tabidx = $hx ? ' tabindex="0"' : '';
                 echo '<section class="ifb-band ifb-' . $tone . $bleed . '" style="' . esc_attr($sec_style) . '"' . $tabidx . '><div class="ifb-inner">';
                 if ($rl === 'image' && $img) {
-                    echo '<div class="ifb-image' . $rev . '">';
+                    $stick = ($s['bd_img_sticky'] ?? 'yes') === 'yes' ? ' stick' : '';
+                    echo '<div class="ifb-image' . $rev . $stick . '">';
                     echo '<div class="ifb-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
                     echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
                     echo '</div>';
@@ -2590,6 +2599,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             foreach ([['c1', 'Card 1 (left)'], ['c2', 'Card 2 (right)']] as [$p, $lbl]) {
                 $sel = '{{WRAPPER}} .icta-' . $p;
                 $this->add_control($p . '_h', ['label' => $lbl, 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+                $this->add_control($p . '_side', ['label' => 'Text side (this card)', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '',
+                    'options' => ['' => 'Use shared setting', 'left' => 'Left', 'right' => 'Right'],
+                    'description' => 'Override the text side just for this card — e.g. card 1 on the left, card 2 on the right.']);
                 $this->add_control($p . '_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR,
                     'selectors' => [$sel => 'background:{{VALUE}}']]);
                 $this->add_control($p . '_title', ['label' => 'Title color', 'type' => \Elementor\Controls_Manager::COLOR,
@@ -2683,7 +2695,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     // already resolved it. Resolve both to a URL here.
                     $imgurl = island_ew_image_src($r['image'] ?? '');
                     $has_bg = $imgurl !== '';
-                    $tside = ($s['txt_side'] ?? 'left') === 'right' ? ' txt-right' : '';
+                    // Per-card text side override (card 1 / card 2) falls back to
+                    // the shared setting when left blank.
+                    $side = $s['c' . $ci . '_side'] ?? '';
+                    if ($side !== 'left' && $side !== 'right') {
+                        $side = ($s['txt_side'] ?? 'left');
+                    }
+                    $tside = ($side === 'right') ? ' txt-right' : '';
                     echo '<article class="icta-card icta-c' . $ci . ($has_bg ? ' has-bg' : '') . $tside . '">';
                     if ($has_bg) {
                         echo '<div class="icta-bg" style="background-image:url(\'' . esc_url($imgurl) . '\')"></div>';
