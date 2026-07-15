@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.2.1
+ * Version:     0.2.2
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4367,6 +4367,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-solo .wgf-feats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;width:100%}
               {{WRAPPER}} .wgf-solo .wgf-feat{grid-template-columns:1fr!important;min-width:0}
               {{WRAPPER}} .wgf-solo .wgf-feat .wgf-media{order:-1;min-height:170px}
+              {{WRAPPER}} .wgf-solo .wgf-feat .wgf-tx{order:0}
+              {{WRAPPER}} .wgf-solo .wgf-feat .wgf-info{order:1}
               @media(max-width:820px){{{WRAPPER}} .wgf-solo .wgf-feats{grid-template-columns:1fr}}
               {{WRAPPER}} .wgf-glance{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;box-shadow:0 16px 44px rgba(60,40,25,.14);padding:24px 26px;align-self:start}
               {{WRAPPER}} .wgf-eyebrow{display:block;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 14px}
