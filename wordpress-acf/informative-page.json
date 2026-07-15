@@ -113,6 +113,16 @@
                         "instructions": "Emoji or short glyph for the icon layout, e.g. 🧭 📅 🐋. Optional."
                     },
                     {
+                        "key": "field_inf_fs_icon_image",
+                        "label": "Icon image (optional)",
+                        "name": "icon_image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "thumbnail",
+                        "library": "all",
+                        "instructions": "Upload a custom icon (PNG/SVG) for the icon layout. Takes priority over the emoji field above. Leave empty to use the emoji, or neither for the default mark."
+                    },
+                    {
                         "key": "field_inf_fs_row_layout",
                         "label": "Layout",
                         "name": "row_layout",

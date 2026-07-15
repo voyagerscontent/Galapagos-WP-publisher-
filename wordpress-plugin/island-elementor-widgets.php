@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.0
+ * Version:     0.3.1
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2231,7 +2231,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-image.rev .ifb-img{order:2}
               {{WRAPPER}} .ifb-img{height:300px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
               {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
-              {{WRAPPER}} .ifb-ic{width:56px;height:56px;border-radius:14px;background:#5A3D2B;color:#F3ECE2;display:flex;align-items:center;justify-content:center;font-size:26px;flex:none;line-height:1}
+              {{WRAPPER}} .ifb-ic{width:56px;height:56px;border-radius:14px;background:#5A3D2B;color:#F3ECE2;display:flex;align-items:center;justify-content:center;font-size:26px;flex:none;line-height:1;overflow:hidden}
+              {{WRAPPER}} .ifb-ic-img{width:62%;height:62%;object-fit:contain;display:block}
               {{WRAPPER}} .ifb-ic-inline{margin-bottom:14px}
               {{WRAPPER}} .ifb-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:var(--t-title);border:1px solid currentColor;border-radius:7px;padding:10px 18px;opacity:.92}
               {{WRAPPER}} .ifb-card{background:#fff;border-radius:16px;padding:22px;margin-top:18px;box-shadow:' . $shcss . '}
@@ -2300,6 +2301,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     $rl = $img ? 'image' : ($has_table ? 'table' : 'icon');
                 }
                 $icon = trim((string) ($r['icon'] ?? ''));
+                $iconimg = island_ew_image_src($r['icon_image'] ?? '');
+                // Badge content: a custom uploaded icon image wins; then an emoji;
+                // then a default diamond mark.
+                $icon_inner = $iconimg !== ''
+                    ? '<img class="ifb-ic-img" src="' . esc_url($iconimg) . '" alt="">'
+                    : ($icon !== '' ? esc_html($icon) : '');
+                $has_icon = $icon_inner !== '';
                 $rev = ($i % 2 === 1) ? ' rev' : '';
 
                 $head = '';
@@ -2325,13 +2333,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo '</div>';
                 } elseif ($rl === 'icon') {
                     echo '<div class="ifb-iconrow">';
-                    echo '<div class="ifb-ic">' . ($icon !== '' ? esc_html($icon) : '&#9670;') . '</div>';
+                    echo '<div class="ifb-ic">' . ($has_icon ? $icon_inner : '&#9670;') . '</div>';
                     echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
                     echo '</div>';
                 } else {
                     echo '<div class="ifb-tx">';
-                    if ($icon !== '') {
-                        echo '<div class="ifb-ic ifb-ic-inline">' . esc_html($icon) . '</div>';
+                    if ($has_icon) {
+                        echo '<div class="ifb-ic ifb-ic-inline">' . $icon_inner . '</div>';
                     }
                     echo $head . $body;
                     echo '</div>';
