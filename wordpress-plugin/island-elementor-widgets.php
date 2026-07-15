@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.2.7
+ * Version:     0.2.8
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -189,6 +189,40 @@ add_filter('acf/location/rule_match/gp_page_type', function ($match, $rule, $scr
     $val = (string) get_post_meta((int) $post_id, 'gp_page_type', true);
     return ($rule['operator'] === '!=') ? ($val !== $rule['value']) : ($val === $rule['value']);
 }, 10, 3);
+
+// The user's explicit CONTROL: a "Galápagos Page Type" dropdown in the page
+// editor sidebar. Selecting "Informative Page" writes the gp_page_type marker
+// (fields + Elementor template appear); "None" removes it (normal page). The
+// engine also sets it on publish, so this is the manual override / toggle.
+add_action('add_meta_boxes_page', function () {
+    add_meta_box('gp_page_type_box', 'Galápagos Page Type', function ($post) {
+        $val = get_post_meta($post->ID, 'gp_page_type', true);
+        wp_nonce_field('gp_page_type_save', 'gp_page_type_nonce');
+        echo '<select name="gp_page_type" style="width:100%">';
+        echo '<option value=""' . selected($val, '', false) . '>— None (normal page) —</option>';
+        echo '<option value="informative"' . selected($val, 'informative', false) . '>Informative Page</option>';
+        echo '</select>';
+        echo '<p style="margin:8px 0 0;color:#666;font-size:12px">Choose "Informative Page" to show the Informative Page fields and apply that Elementor template. Leave "None" for a normal page.</p>';
+    }, 'page', 'side', 'high');
+});
+add_action('save_post_page', function ($post_id) {
+    if (!isset($_POST['gp_page_type_nonce'])
+        || !wp_verify_nonce($_POST['gp_page_type_nonce'], 'gp_page_type_save')) {
+        return;
+    }
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+    if (!current_user_can('edit_page', $post_id)) {
+        return;
+    }
+    $val = isset($_POST['gp_page_type']) ? sanitize_text_field(wp_unslash($_POST['gp_page_type'])) : '';
+    if ($val === 'informative') {
+        update_post_meta($post_id, 'gp_page_type', 'informative');
+    } else {
+        delete_post_meta($post_id, 'gp_page_type');
+    }
+});
 
 // Custom Elementor Pro display condition: "Informative Page (template)". Lets a
 // Theme Builder template target EVERY page that uses the Informative Page
