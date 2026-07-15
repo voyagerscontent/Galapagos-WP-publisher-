@@ -47,8 +47,10 @@ _GEO_SCAFFOLD_RE = re.compile(
 # it) — never the answer itself, and never body content.
 _GEO_INSTRUCTION_RE = re.compile(
     r"is your GEO\b|generative engine optimization|written to be cited"
-    r"|place this (block|as|snippet)|do not bury|very first (visible )?element"
-    r"|style (this|it|as) a\b|webmaster instruction",
+    r"|place this (block|as|snippet|text)|do not bury|very first (visible )?element"
+    r"|style (this|it|as) a\b|webmaster instruction"
+    r"|optimized for (ai|google|llm|voice)|first paragraph of the page"
+    r"|do not use as a subtitle|\b50-word (block|citation)|do not skip it",
     re.IGNORECASE,
 )
 
@@ -68,18 +70,46 @@ def _looks_like_jsonld(text: str) -> bool:
 _EDITORIAL_FLAG = re.compile(
     r"^(⚠️\s*)?(WEBMASTER\b|.*\bDo not publish\b|\[?VERIFY\]?\b)", re.IGNORECASE
 )
+
+# CMS-Stage annotated docs: a GEO citation-ready summary written as PROSE inside
+# a "[CARD START — GEO SUMMARY …]" … "[CARD END]" wrapper (not a table). The
+# inner text is the geo_answer; the markers are dropped.
+_CARD_GEO_START_RE = re.compile(r"^\[CARD\s+START\b[^\]]*\bGEO\b", re.IGNORECASE)
+_CARD_END_RE = re.compile(r"^\[CARD\s+END\b", re.IGNORECASE)
+# Bracketed CMS annotations to drop: [SEO: …], [SCHEMA: …], [GEO: …instruction],
+# [AIO …], [IMAGE …], [DATASET …], [KEYWORD …], [H2] handled elsewhere.
+_BRACKET_ANNOT_RE = re.compile(
+    r"^\[(SEO|SCHEMA|GEO|AIO|IMAGE|ALT|DATASET|META|KEYWORD|SECTION|NOTE|DESIGN|CARD)\b",
+    re.IGNORECASE,
+)
+# "STAGE 8 — CMS-READY ANNOTATED CONTENT" banner.
+_STAGE_SCAFFOLD_RE = re.compile(r"^STAGE\s+\d+\s*[—–-]\s*CMS", re.IGNORECASE)
+# Publisher strip: "Galapagos Islands Travel | Updated 2026 | https://…".
+_PUBLISHER_LINE_RE = re.compile(r"\|\s*Updated\s+\d{4}\s*\|.*https?://", re.IGNORECASE)
 # A byline near the top: "By Juan Magallanes, Naturalist Expert Contributor — …".
 # Allow an optional leading "the" so a corporate byline ("By the Voyagers Travel
 # Company Editorial Team | GalapagosIslands.travel") is recognized, not just a
 # personal one ("By Jane Darwin").
 _BYLINE = re.compile(r"^By\s+(?:the\s+)?[A-Z][\w'.-]+\s+[A-Z]")
 
+# A standalone domain/URL token within a byline (dropped from the author name).
+_DOMAIN_TOKEN_RE = re.compile(
+    r"^(?:https?://\S+|[\w-]+\.(?:travel|com|org|net|co|io|gov|edu)\b.*)$", re.IGNORECASE
+)
+
 
 def _clean_byline(text: str) -> str:
-    # Strip the "By " / "By the " lead-in, then keep only the name — dropping a
-    # trailing site/handle after an em/en dash OR a pipe ("… | GalapagosIslands.travel").
+    # Strip the "By " / "By the " lead-in, then drop only the site/domain token —
+    # keeping the name, role AND any company. So
+    # "By Juan Magallanes, Naturalist Expert Contributor — GalapagosIslands.travel
+    #  / Voyagers Travel Company" -> "Juan Magallanes, Naturalist Expert
+    #  Contributor — Voyagers Travel Company", and "By the Voyagers Travel Company
+    #  Editorial Team | GalapagosIslands.travel" -> "Voyagers Travel Company
+    #  Editorial Team".
     s = re.sub(r"^By\s+(?:the\s+)?", "", text, flags=re.IGNORECASE).strip()
-    return re.split(r"\s+[—–-]\s+|\s*\|\s*", s, maxsplit=1)[0].strip()
+    parts = [p.strip() for p in re.split(r"\s*\|\s*|\s+[—–]\s+|\s*/\s*", s) if p.strip()]
+    kept = [p for p in parts if not _DOMAIN_TOKEN_RE.match(p)]
+    return " — ".join(kept) if kept else s
 
 
 _BYLINE_ROLE_RE = re.compile(
@@ -1463,6 +1493,8 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     list_pos = 1 << 30
     seen_body = False
     verify_warnings: list[str] = []
+    geo_capturing = False       # inside a "[CARD START — GEO SUMMARY]…[CARD END]"
+    geo_lines: list[str] = []
     # Reconstruct a markdown-ish body so the freeform builder can read any
     # directives an author typed directly into Word (e.g. "::: columns").
     raw_lines: list[str] = []
@@ -1507,6 +1539,23 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             continue
         # A stray "CTA button:" directive in the body is an instruction, not prose.
         if text.lower().startswith("cta button:"):
+            continue
+        # GEO citation card written as prose: capture the inner text as geo_answer,
+        # drop the "[CARD START — GEO SUMMARY]" / "[CARD END]" markers.
+        if _CARD_GEO_START_RE.match(text):
+            geo_capturing = True
+            continue
+        if geo_capturing:
+            if _CARD_END_RE.match(text):
+                geo_capturing = False
+            else:
+                geo_lines.append(text)
+            continue
+        if _CARD_END_RE.match(text):
+            continue
+        # CMS-Stage annotations / banners / publisher strip — never body content.
+        if (_BRACKET_ANNOT_RE.match(text) or _STAGE_SCAFFOLD_RE.match(text)
+                or _PUBLISHER_LINE_RE.search(text)):
             continue
         # GEO/AIO snippet scaffolding some docs write as prose (not a table):
         # drop the instruction lines and unwrap the "Text: <answer>" prefix so the
@@ -1592,6 +1641,15 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     if current.blocks or current.title:
         doc.sections.append(current)
     doc.raw_body = "\n".join(raw_lines).strip()
+
+    # GEO citation-card prose captured above -> geo_answer (unless a table already
+    # supplied one). A trailing "Source: …" attribution is dropped from the
+    # concise answer.
+    if geo_lines and not doc.metadata.get("geo_answer"):
+        geo = " ".join(g.strip() for g in geo_lines if g.strip()).strip()
+        geo = re.split(r"\s*Source:\s", geo, maxsplit=1)[0].strip()
+        if geo:
+            doc.metadata["geo_answer"] = geo
 
     # Tables become table blocks appended to the lead/last section. Internal
     # instruction / explainer tables (green boxes) are skipped — not content.
