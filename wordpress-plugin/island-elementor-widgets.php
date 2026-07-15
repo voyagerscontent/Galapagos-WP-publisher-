@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.1
+ * Version:     0.3.2
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1830,6 +1830,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'Raise it if you have a fixed/sticky site header, so the image pins below it.',
                 'selectors' => ['{{WRAPPER}} .ifb-image.stick .ifb-img' => 'top:{{SIZE}}{{UNIT}}']]);
 
+            /* Infographic — the row's `infographic` image, rendered below the text
+             * as JUST the image with rounded corners (no card / frame / colour). */
+            $this->add_control('bd_info_h2', ['label' => 'Infographic', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('bd_info_lightbox', ['label' => 'Open full on click (lightbox)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On: a controlled-height banner (cropped) with a "View full" button that opens the whole image. Off: show the full image inline.']);
+            $this->add_control('bd_info_h', ['label' => 'Banner height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 520]],
+                'default' => ['size' => 230, 'unit' => 'px'], 'condition' => ['bd_info_lightbox' => 'yes'],
+                'selectors' => ['{{WRAPPER}} .ifb-info-band' => 'height:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bd_info_radius', ['label' => 'Corner radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 14, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .ifb-info-band,{{WRAPPER}} .ifb-info-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bd_info_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'View full',
+                'condition' => ['bd_info_lightbox' => 'yes']]);
+
             /* Hover clamp — show a few lines of each band's prose, expand the full
              * text on hover (tap on mobile). The fade blends into that band's own
              * background colour. Tables/after-table text are never clamped. */
@@ -2238,6 +2252,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-card{background:#fff;border-radius:16px;padding:22px;margin-top:18px;box-shadow:' . $shcss . '}
               {{WRAPPER}} .ifb-card .ifs-tbl{margin:0;border:1px solid rgba(100,64,44,.14);border-radius:12px;overflow-x:auto}
               {{WRAPPER}} .ifb-after{margin-top:16px}
+              {{WRAPPER}} .ifb-info{margin-top:18px}
+              {{WRAPPER}} .ifb-info-title{margin:0 0 10px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:16px;color:var(--t-title)}
+              {{WRAPPER}} .ifb-info-band{position:relative;display:block;width:100%;height:230px;border-radius:14px;overflow:hidden;cursor:zoom-in}
+              {{WRAPPER}} .ifb-info-band img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+              {{WRAPPER}} .ifb-info-frame{border-radius:14px;overflow:hidden}
+              {{WRAPPER}} .ifb-info-frame img{width:100%;height:auto;display:block}
+              {{WRAPPER}} .ifb-info-btn{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);white-space:nowrap;background:rgba(90,61,43,.92);color:#f6efe7;font-size:12.5px;font-weight:700;padding:9px 17px;border-radius:22px;box-shadow:0 6px 16px rgba(0,0,0,.28);cursor:zoom-in}
+              {{WRAPPER}} .ifb-info-cap{margin:10px 2px 0;font-size:12.5px;color:var(--t-body);opacity:.82;font-style:italic}
               {{WRAPPER}} .ifs-tbl table{border-collapse:collapse;width:100%;min-width:520px;font-size:13px}
               {{WRAPPER}} .ifs-tbl thead th{background:#64402C;color:#F6EFE7;text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:13px 16px;white-space:nowrap}
               {{WRAPPER}} .ifs-tbl tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E}
@@ -2251,6 +2273,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $pal = (isset($s['bd_palette']) && is_array($s['bd_palette'])) ? array_values($s['bd_palette']) : [];
             $hx = ($s['bd_hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
             echo '<div class="ifb' . $hx . '">';
+            $ifb_info_any = false;  // set true when a lightbox infographic banner is printed
             $i = 0;
             foreach ($rows as $r) {
                 $ovr = trim((string) ($r['bg_color'] ?? ''));  // optional per-row override
@@ -2358,10 +2381,40 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                         echo '<div style="margin-top:14px">' . $btn . '</div>';
                     }
                 }
+                // Infographic (row's `infographic` image) — below the text, as just
+                // the image with rounded corners. Cropped banner + lightbox by
+                // default, or the full image inline when the lightbox is off.
+                $info = island_ew_image_src($r['infographic'] ?? '');
+                if ($info) {
+                    $ititle = trim((string) ($r['infographic_title'] ?? ''));
+                    $icap = trim((string) ($r['infographic_caption'] ?? ''));
+                    $ialt = esc_attr($ititle ?: ($r['title'] ?? ''));
+                    echo '<div class="ifb-info">';
+                    if ($ititle !== '') {
+                        echo '<p class="ifb-info-title">' . esc_html($ititle) . '</p>';
+                    }
+                    if (($s['bd_info_lightbox'] ?? 'yes') === 'yes') {
+                        $blabel = trim((string) ($s['bd_info_btn_label'] ?? '')) ?: 'View full';
+                        echo '<div class="ifb-info-band" data-ifs-full="' . esc_url($info) . '" role="button" tabindex="0">'
+                            . '<img src="' . esc_url($info) . '" alt="' . $ialt . '" loading="lazy">'
+                            . '<span class="ifb-info-btn">' . esc_html($blabel) . ' &#8599;</span></div>';
+                        $ifb_info_any = true;
+                    } else {
+                        echo '<div class="ifb-info-frame"><img src="' . esc_url($info) . '" alt="' . $ialt . '" loading="lazy"></div>';
+                    }
+                    if ($icap !== '') {
+                        echo '<p class="ifb-info-cap">' . esc_html($icap) . '</p>';
+                    }
+                    echo '</div>';
+                }
                 echo '</div></section>';
                 $i++;
             }
             echo '</div>';
+            // Shared lightbox for any cropped infographic banners (data-ifs-full).
+            if ($ifb_info_any) {
+                $this->fs_lightbox();
+            }
             // Open on hover, driven by JS (mouseenter/leave) so it never depends
             // on CSS :hover — which Elementor's editor overlay can swallow. Touch:
             // a tap toggles it (and :focus-within via tabindex). Binds via
