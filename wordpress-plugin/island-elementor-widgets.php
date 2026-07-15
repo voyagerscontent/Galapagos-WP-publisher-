@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.2.8
+ * Version:     0.2.9
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1923,17 +1923,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 // A section that carries a table renders the table full-width below
                 // the image+text; everything else keeps the zig-zag.
                 $content = $r['content'] ?? '';
-                $table = '';
-                $before = $content;
-                $after = '';
-                if (stripos($content, '<table') !== false
-                    && preg_match('/<table\b[\s\S]*?<\/table>/i', $content, $mm)) {
-                    $table = $mm[0];
-                    $p = strpos($content, $table);
-                    $before = substr($content, 0, $p);
-                    $after = substr($content, $p + strlen($table));
+                // Split into text/table segments so EVERY table gets styled (not
+                // just the first). $before = lead text before the first table.
+                $segs = preg_split('/(<table\b[\s\S]*?<\/table>)/i', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+                $before = array_shift($segs);
+                if ($before === null) {
+                    $before = '';
                 }
-                $has_table = $table !== '';
+                $has_table = false;
+                foreach ($segs as $sg) {
+                    if (preg_match('/^\s*<table\b/i', $sg)) {
+                        $has_table = true;
+                        break;
+                    }
+                }
                 $btn = !empty($r['button_url'])
                     ? '<a class="ifs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>'
                     : '';
@@ -1954,10 +1957,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo $btn;
                 }
                 echo '</div></div>';  // .ifs-tx .ifs-top
-                if ($has_table) {
-                    echo '<div class="ifs-tbl">' . wp_kses_post($table) . '</div>';
-                    if (trim(wp_strip_all_tags($after)) !== '') {
-                        echo '<div class="ifs-after">' . wp_kses_post($after) . '</div>';
+                if ($segs) {
+                    // Every remaining segment in order: each table full-width styled,
+                    // each text block as after-text.
+                    foreach ($segs as $sg) {
+                        if (preg_match('/^\s*<table\b/i', $sg)) {
+                            echo '<div class="ifs-tbl">' . wp_kses_post($sg) . '</div>';
+                        } elseif (trim(wp_strip_all_tags($sg)) !== '') {
+                            echo '<div class="ifs-after">' . wp_kses_post($sg) . '</div>';
+                        }
                     }
                     if ($btn) {
                         echo '<div style="padding:0 28px 26px">' . $btn . '</div>';
@@ -2264,17 +2272,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 }
                 $img = island_ew_image_src($r['image'] ?? '');
                 $content = (string) ($r['content'] ?? '');
-                $table = '';
-                $before = $content;
-                $after = '';
-                if (stripos($content, '<table') !== false
-                    && preg_match('/<table\b[\s\S]*?<\/table>/i', $content, $mm)) {
-                    $table = $mm[0];
-                    $p = strpos($content, $table);
-                    $before = substr($content, 0, $p);
-                    $after = substr($content, $p + strlen($table));
+                // Split into alternating text/table segments so EVERY table in the
+                // section gets the styled card (not just the first). $before is the
+                // lead text before the first table; $segs holds the rest in order.
+                $segs = preg_split('/(<table\b[\s\S]*?<\/table>)/i', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+                $before = array_shift($segs);
+                if ($before === null) {
+                    $before = '';
                 }
-                $has_table = $table !== '';
+                $has_table = false;
+                foreach ($segs as $sg) {
+                    if (preg_match('/^\s*<table\b/i', $sg)) {
+                        $has_table = true;
+                        break;
+                    }
+                }
                 $rl = $r['row_layout'] ?? 'auto';
                 if (!in_array($rl, ['image', 'table', 'icon'], true)) {
                     $rl = $img ? 'image' : ($has_table ? 'table' : 'icon');
@@ -2315,10 +2327,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo $head . $body;
                     echo '</div>';
                 }
-                if ($has_table) {
-                    echo '<div class="ifb-card"><div class="ifs-tbl">' . wp_kses_post($table) . '</div></div>';
-                    if (trim(wp_strip_all_tags($after)) !== '') {
-                        echo '<div class="ifb-body ifb-after">' . wp_kses_post($after) . '</div>';
+                if ($segs) {
+                    // Render every remaining segment in order: each table in its own
+                    // floating card, each text block as after-text.
+                    foreach ($segs as $sg) {
+                        if (preg_match('/^\s*<table\b/i', $sg)) {
+                            echo '<div class="ifb-card"><div class="ifs-tbl">' . wp_kses_post($sg) . '</div></div>';
+                        } elseif (trim(wp_strip_all_tags($sg)) !== '') {
+                            echo '<div class="ifb-body ifb-after">' . wp_kses_post($sg) . '</div>';
+                        }
                     }
                     if ($rl === 'table' && $btn) {
                         echo '<div style="margin-top:14px">' . $btn . '</div>';
