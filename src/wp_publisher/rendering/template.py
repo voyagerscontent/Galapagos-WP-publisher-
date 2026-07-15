@@ -52,6 +52,11 @@ class PageTemplate(BaseModel):
     # attaches — which is how informative pages get their group regardless of
     # parent (works for a standalone URL too). None = leave the default template.
     page_template: str | None = None
+    # Extra post meta to write on publish (merged into the REST `meta`). Used for
+    # a page-type marker that attaches the ACF group and targets an Elementor
+    # template WITHOUT occupying the WP page-template slot (which would block
+    # Elementor's Theme Builder from rendering the body).
+    page_meta: dict[str, Any] = Field(default_factory=dict)
     # Which ACF mapping profile to use (config/acf/<acf_profile>.yaml). None =
     # the default config/acf.yaml. Lets each section target its own field group.
     acf_profile: str | None = None

@@ -93,6 +93,11 @@ def publish_page(
         if seo_meta:
             payload["meta"] = seo_meta
         payload.update(page.extra_fields)
+        # Extra post meta (e.g. the page-type marker used to attach the ACF group
+        # and target an Elementor template) — MERGED into meta so it never clobbers
+        # the SEO meta above.
+        if page.wp_meta:
+            payload.setdefault("meta", {}).update(page.wp_meta)
 
     existing = client.find_post_by_slug(page.post_type, page.slug)
     if surgical and not existing:

@@ -158,6 +158,7 @@ def build_page(
         slug=seo.slug,
         parent_slug=template.parent_page or "",
         extra_fields=extra_fields,
+        wp_meta=dict(template.page_meta),
         acf=acf_payload,
         content_html="",  # ACF-driven; the theme renders the fields
         excerpt=strip_html(seo.meta_description),

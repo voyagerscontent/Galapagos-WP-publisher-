@@ -24,8 +24,12 @@ description: >
   Widgets (Feature Sections in Bands mode, FAQs, CTA, Related, Schema).
 post_type: page
 status: draft
-# No parent — attaches by page template instead (works for standalone URLs).
-page_template: informative-page
+# No parent, and NO WP page-template: the page-type marker below attaches the
+# ACF group and targets the Elementor template, while the WP page-template slot
+# stays "Default" so Elementor's Theme Builder can render the body. Works for a
+# standalone URL too.
+page_meta:
+  gp_page_type: informative
 acf_profile: informative
 schema_type: Article
 categories: []

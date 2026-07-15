@@ -342,9 +342,9 @@
         "location": [
             [
                 {
-                    "param": "page_template",
+                    "param": "gp_page_type",
                     "operator": "==",
-                    "value": "informative-page"
+                    "value": "informative"
                 }
             ]
         ],

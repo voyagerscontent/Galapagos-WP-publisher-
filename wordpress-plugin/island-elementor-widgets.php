@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.2.6
+ * Version:     0.2.7
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -151,6 +151,45 @@ add_filter('theme_page_templates', function ($templates) {
     return $templates;
 });
 
+// ── Page-type MARKER (decoupled from the WP page-template) ──────────────────
+// The WP page-template slot is ALSO what Elementor's Theme Builder respects, so
+// using it for the ACF group location blocks Elementor from rendering the body.
+// Instead the engine writes a plain post-meta marker `gp_page_type` (e.g.
+// "informative"); the ACF group attaches by it (custom location rule below) and
+// the Elementor condition targets it — all while the WP page-template stays
+// "Default" so Elementor renders freely.
+add_action('init', function () {
+    register_post_meta('page', 'gp_page_type', [
+        'type'          => 'string',
+        'single'        => true,
+        'show_in_rest'  => true,   // so the engine can set it over the REST API
+        'default'       => '',
+        'auth_callback' => function () {
+            return current_user_can('edit_pages');
+        },
+    ]);
+});
+
+// Custom ACF location rule: "Galápagos Page Type == Informative", backed by the
+// gp_page_type meta. Lets the group appear on any page carrying the marker,
+// regardless of its WP page-template.
+add_filter('acf/location/rule_types', function ($choices) {
+    $choices['Galápagos']['gp_page_type'] = 'Galápagos Page Type';
+    return $choices;
+});
+add_filter('acf/location/rule_values/gp_page_type', function ($choices) {
+    $choices['informative'] = 'Informative';
+    return $choices;
+});
+add_filter('acf/location/rule_match/gp_page_type', function ($match, $rule, $screen) {
+    $post_id = $screen['post_id'] ?? 0;
+    if (!$post_id) {
+        return false;
+    }
+    $val = (string) get_post_meta((int) $post_id, 'gp_page_type', true);
+    return ($rule['operator'] === '!=') ? ($val !== $rule['value']) : ($val === $rule['value']);
+}, 10, 3);
+
 // Custom Elementor Pro display condition: "Informative Page (template)". Lets a
 // Theme Builder template target EVERY page that uses the Informative Page
 // template automatically — no listing pages one by one, and it covers a
@@ -175,27 +214,23 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
             }
             public function get_label()
             {
-                return 'Informative Page (template)';
+                return 'Informative Page (auto)';
             }
             public function get_all_label()
             {
-                return 'Informative Pages (template)';
+                return 'Informative Pages (auto)';
             }
             public function check($args)
             {
-                // Resolve the page id robustly (queried object first, then the
-                // loop id), because Elementor evaluates conditions before the loop
-                // is reliably set. Then compare the stored page-template meta,
-                // tolerating an optional ".php" suffix.
+                // Match on the gp_page_type post-meta marker (NOT the WP page
+                // template, which would block Elementor from rendering). Resolve
+                // the id robustly since Elementor evaluates conditions before the
+                // loop is reliably set.
                 $id = get_queried_object_id();
                 if (!$id) {
                     $id = get_the_ID();
                 }
-                if (!$id) {
-                    return false;
-                }
-                $tpl = get_page_template_slug($id);
-                return $tpl === 'informative-page' || $tpl === 'informative-page.php';
+                return $id && get_post_meta($id, 'gp_page_type', true) === 'informative';
             }
         }
     }
