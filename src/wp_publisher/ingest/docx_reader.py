@@ -77,9 +77,17 @@ _EDITORIAL_FLAG = re.compile(
 _CARD_GEO_START_RE = re.compile(r"^\[CARD\s+START\b[^\]]*\bGEO\b", re.IGNORECASE)
 _CARD_END_RE = re.compile(r"^\[CARD\s+END\b", re.IGNORECASE)
 # Bracketed CMS annotations to drop: [SEO: …], [SCHEMA: …], [GEO: …instruction],
-# [AIO …], [IMAGE …], [DATASET …], [KEYWORD …], [H2] handled elsewhere.
+# [AIO …], [IMAGE …], [DATASET …], [KEYWORD …], [H2] handled elsewhere. Also the
+# production-placeholder directives these annotated docs sprinkle inline — the
+# label the actual asset (a real Word table, a manually-uploaded infographic, an
+# Elementor form/gallery) is produced from elsewhere, so the marker text is never
+# body content: [TABLE: …], [FORM: …], [GALLERY: …], [INFOGRAPHIC: …],
+# [INTERACTIVE: …], [VIDEO: …], [QUOTE — …], [FAQ — …], [HIGHLIGHT BOX].
+# [CTA: …] is handled BEFORE this (parsed into cta_blocks), not dropped here.
 _BRACKET_ANNOT_RE = re.compile(
-    r"^\[(SEO|SCHEMA|GEO|AIO|IMAGE|ALT|DATASET|META|KEYWORD|SECTION|NOTE|DESIGN|CARD)\b",
+    r"^\[(SEO|SCHEMA|GEO|AIO|IMAGE|ALT|DATASET|META|KEYWORD|SECTION|NOTE|DESIGN|CARD"
+    r"|TABLE|FORM|GALLERY|INFOGRAPHIC|INTERACTIVE|VIDEO|AUDIO|EMBED|MAP|CHART"
+    r"|QUOTE|PULL\s*QUOTE|FAQ|HIGHLIGHT|SIDEBAR|CALLOUT|BOX)\b",
     re.IGNORECASE,
 )
 # "STAGE 8 — CMS-READY ANNOTATED CONTENT" banner.
@@ -875,6 +883,68 @@ def _cta_from_text(cell: str) -> dict:
     return block
 
 
+# Inline bracket CTA (best-time / permits style), one per line:
+#   [CTA: Plan your trip | voyagers.travel — "Get a custom Galápagos itinerary"]
+#   [CTA: Travel trade | latintrails.com — "Wholesale rates for agents"]
+# Shape: [CTA: <label> | <company/url> — "<hook>"]. The left label is either an
+# action verb ("Plan your trip") or an audience word ("Travel trade"); the quoted
+# hook is the headline; the bare domain is the button URL.
+_BRACKET_CTA_RE = re.compile(r"^\[CTA:\s*(.+?)\s*\]\s*$", re.IGNORECASE | re.DOTALL)
+_AUD_WORD_RE = re.compile(
+    r"trade|agents?|travell?ers?|partners?|industry|wholesal|direct\b|b2b|dmc",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_bracket_cta(text: str) -> bool:
+    return bool(_BRACKET_CTA_RE.match((text or "").strip()))
+
+
+def _cta_from_bracket(text: str) -> dict | None:
+    """Parse one inline ``[CTA: …]`` line into a cta_block."""
+    m = _BRACKET_CTA_RE.match((text or "").strip())
+    if not m:
+        return None
+    inner = m.group(1).strip()
+    # Pull the quoted hook (headline), then strip it (and any trailing dash) off.
+    hook = ""
+    hm = re.search(r'[\"“”„‟\'‘’]([^\"“”„‟\'‘’]+)[\"“”„‟\'‘’]', inner)
+    if hm:
+        hook = hm.group(1).strip()
+        inner = (inner[: hm.start()] + inner[hm.end():]).strip()
+    inner = re.sub(r"\s*[—–-]\s*$", "", inner).strip()
+    # left label | company/url
+    if "|" in inner:
+        left, right = inner.split("|", 1)
+    else:
+        left, right = inner, ""
+    label = left.strip().rstrip("—–-").strip()
+    url = ""
+    um = _URL_RE.search(right) or _BARE_DOMAIN_RE.search(right)
+    if um:
+        url = _norm_url(um.group(0) if um.re is _URL_RE else um.group(1))
+    blob = " ".join([label, right, hook])
+    audience = "Travel trade" if (_TRADE_MARK_RE.search(blob)
+                                  or re.search(r"\bagents?\b|\btrade\b|wholesal", blob, re.I)) \
+        else "Direct travelers"
+    # If the left label is just an audience word, it is not a button — use a
+    # sensible default action; otherwise the left label IS the button.
+    is_aud = bool(_AUD_WORD_RE.search(label)) and not re.search(
+        r"\b(plan|get|book|contact|request|enquir|inquir|explore|compare|start|find|design)\b",
+        label, re.I,
+    )
+    button_label = "" if (is_aud or not label) else label
+    if not button_label:
+        button_label = "Plan your trip" if audience == "Direct travelers" else "Partner with us"
+    return {
+        "audience": audience,
+        "title": hook or label,
+        "text": "",
+        "button_label": button_label,
+        "button_url": url,
+    }
+
+
 # "CALL TO ACTION … CTA 1 — <audience>: Headline: … Body: … Button: label → url".
 _CTA_INSTR_RE = re.compile(
     r"CTA\s*\d+\s*[—–-]\s*([^\n:]+):(.*?)(?=CTA\s*\d+\s*[—–-]|\Z)", re.IGNORECASE | re.DOTALL
@@ -885,6 +955,61 @@ _CTA_TRADE_RE = re.compile(r"trade|industry|partner|wholesal|agent|dmc", re.IGNO
 def _grab_field(block: str, name: str) -> str:
     m = re.search(rf"{name}:\s*(.+)", block, re.IGNORECASE)
     return m.group(1).strip() if m else ""
+
+
+# "[CTA 1 — Liveaboard Divers]" bracket header inside a single CTA cell.
+_BRACKET_CTA_HDR_RE = re.compile(r"\[CTA\s*\d+\s*[—–-]\s*([^\]]+)\]", re.IGNORECASE)
+# Lines that are the shared publisher/address footer under a dual-CTA block,
+# never part of a CTA headline.
+_CTA_FOOTER_RE = re.compile(
+    r"is maintained by|Quito:|Easton|Suite\s*\d|Madrid y|,\s*PA\b|^\s*Voyagers Travel Company\s*\|",
+    re.IGNORECASE,
+)
+
+
+def _parse_bracket_cta_cell(cell: str) -> list[dict]:
+    """Split a single cell holding several ``[CTA N — audience]`` blocks into one
+    cta_block each: the bracket header gives the audience, the first following
+    line is the headline (title), and the first URL is the button."""
+    marks = list(_BRACKET_CTA_HDR_RE.finditer(cell))
+    if not marks:
+        return []
+    out: list[dict] = []
+    for i, m in enumerate(marks):
+        seg = cell[m.end(): (marks[i + 1].start() if i + 1 < len(marks) else len(cell))]
+        aud_label = m.group(1).strip()
+        title, url = "", ""
+        for ln in (ln.strip() for ln in seg.splitlines()):
+            if not ln or _CTA_FOOTER_RE.search(ln):
+                continue
+            um = _URL_RE.search(ln)
+            if um and not url:
+                url = um.group(0).rstrip(".,);")
+                if ln[: um.start()].strip():
+                    title = title or ln[: um.start()].strip()
+                continue
+            if not title and not _ANY_URL_RE.search(ln):
+                title = ln
+        block = {
+            "audience": "Travel trade" if _TRADE_MARK_RE.search(aud_label + " " + title)
+            else (aud_label or "Direct travelers"),
+            "title": title,
+            "text": "",
+        }
+        if url:
+            block["button_url"] = _norm_url(url)
+        out.append(block)
+    return [b for b in out if b.get("title") or b.get("button_url")]
+
+
+def _clean_cta_label(s: str) -> str:
+    """Strip stray Markdown-link brackets from a CTA button label/title:
+    ``[Contact Latin Trails`` / ``[Contact Latin Trails](url)`` -> ``Contact Latin Trails``."""
+    s = (s or "").strip()
+    md = _MD_LINK_RE.search(s)
+    if md:
+        return md.group(1).strip()
+    return s.strip("[] ").strip()
 
 
 def _parse_cta_instruction(cell: str) -> list[dict]:
@@ -1001,6 +1126,13 @@ def _extract_cta_blocks(rows: list[list[str]]) -> list[dict]:
         if len(grid) >= 2:
             return grid
     joined = "\n".join(c.strip() for row in rows for c in row if c.strip())
+    # Bracket-header multi-CTA cell (diving style): one cell holds several CTAs,
+    # each introduced by "[CTA N — <audience>]" then a headline and a URL. Parse
+    # these before the colon-delimited "CTA N — audience:" instruction format.
+    if _BRACKET_CTA_HDR_RE.search(joined):
+        blocks = _parse_bracket_cta_cell(joined)
+        if blocks:
+            return blocks
     if re.search(r"call to action|CTA\s*\d+\s*[—–-]", joined, re.IGNORECASE):
         blocks = _parse_cta_instruction(joined)
         if blocks:
@@ -1058,6 +1190,12 @@ def _dedupe_ctas(blocks: list[dict]) -> list[dict]:
     order = ["Direct travelers", "Travel trade"]
     out = [best[a][1] for a in order if a in best]
     out += [v[1] for a, v in best.items() if a not in order]
+    # Final tidy: strip stray Markdown-link brackets left on labels/titles.
+    for b in out:
+        if b.get("button_label"):
+            b["button_label"] = _clean_cta_label(b["button_label"])
+        if b.get("title"):
+            b["title"] = _clean_cta_label(b["title"])
     return out
 
 
@@ -1553,6 +1691,13 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             continue
         if _CARD_END_RE.match(text):
             continue
+        # Inline "[CTA: … | … — "hook"]" line: lift into cta_blocks (deduped and
+        # mapped to the CTA fields later), never leave it in the section body.
+        if _looks_like_bracket_cta(text):
+            cta = _cta_from_bracket(text)
+            if cta:
+                doc.metadata.setdefault("cta_blocks", []).append(cta)
+            continue
         # CMS-Stage annotations / banners / publisher strip — never body content.
         if (_BRACKET_ANNOT_RE.match(text) or _STAGE_SCAFFOLD_RE.match(text)
                 or _PUBLISHER_LINE_RE.search(text)):
@@ -1815,7 +1960,9 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
             break
 
     # "At a Glance" / "Quick Facts" section -> the quick-facts heading + intro.
-    for s in doc.sections:
+    # Gated off for informative pages: their sections are plain feature content,
+    # never island/wildlife structured blocks.
+    for s in doc.sections if not is_informative else []:
         tl = s.title.lower()
         if "at a glance" in tl or "quick facts" in tl or "glance" in s.slug:
             doc.metadata["quick_facts_title"] = s.title
@@ -1833,8 +1980,11 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     # titles ("The Wildlife", "Christmas Iguanas and Other Wildlife") still
     # qualify. When several sections mention wildlife, keep the one that yields
     # the most species rows (so we don't stop on a passing mention that has none).
+    # Gated off for informative pages, where "…Wildlife Calendar" is a normal
+    # content section (with its month sub-headings and data table), NOT a species
+    # list to lift out — otherwise the whole section is consumed and lost.
     best: tuple[int, Section, str, list[dict]] | None = None
-    for s in doc.sections:
+    for s in doc.sections if not is_informative else []:
         if not re.search(r"\bwildlife\b", s.slug) and not re.search(
             r"\bwildlife\b", s.title.lower()
         ):
@@ -1853,7 +2003,8 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
 
     # "Visitor Sites" sections -> the title + prose-based sites (H3 sub-headings).
     # (A table-based extraction may already have filled visitor_sites upstream.)
-    for s in doc.sections:
+    # Gated off for informative pages (island/wildlife structure only).
+    for s in doc.sections if not is_informative else []:
         if s.slug.startswith("visitor-sites") or s.title.lower().startswith("visitor sites"):
             doc.metadata.setdefault(
                 "visitor_sites_title", re.split(r"\s+[—–-]\s+", s.title, maxsplit=1)[0].strip()
