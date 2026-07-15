@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.2.3
+ * Version:     0.2.4
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4397,8 +4397,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-body{margin:0;color:#3A2A1E;font-size:14px;line-height:1.6}{{WRAPPER}} .wgf-body p{margin:0 0 10px}{{WRAPPER}} .wgf-body :last-child{margin-bottom:0}
               {{WRAPPER}} .wgf.hx .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;transition:max-height .45s ease}
               {{WRAPPER}} .wgf.hx .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .wgf.hx .wgf-feat:hover .wgf-body,{{WRAPPER}} .wgf.hx .wgf-feat:focus-within .wgf-body,{{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body{max-height:var(--wgf-open,900px)}
-              {{WRAPPER}} .wgf.hx .wgf-feat:hover .wgf-body::after,{{WRAPPER}} .wgf.hx .wgf-feat:focus-within .wgf-body::after,{{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body::after{opacity:0}
+              {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body{max-height:var(--wgf-open,900px)}
+              {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body::after{opacity:0}
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wgf.hx .wgf-body,{{WRAPPER}} .wgf.hx .wgf-body::after{transition:none}}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
               {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
@@ -4490,15 +4490,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '</div></div><div class="wgf-fade"></div></div>';  // .wgf-feats .wgf-scroll .wgf-fade
             echo '</div>';  // .wgf
 
-            // Hover / tap to expand each feature (JS-driven so it never depends
-            // on CSS :hover, which the Elementor overlay can swallow). Binds via
-            // previousElementSibling, so it must print right after the .wgf.
+            // Hover / tap to expand each feature. The clamp opens ONLY when the
+            // cursor is over the TEXT (.wgf-tx), and stays open while the cursor
+            // moves anywhere else in the card — so reaching the infographic below
+            // doesn't reflow it away and it stays clickable. Collapses on leaving
+            // the whole card. Touch: a tap toggles the text, but tapping a link OR
+            // the infographic is left alone (so the infographic opens instead of
+            // toggling). Binds via previousElementSibling — must print right after
+            // the .wgf.
             if ($hx) {
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
                     . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
+                    . 'var tx=c.querySelector(".wgf-tx");'
+                    . 'if(tx)tx.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
                     . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
-                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+                    . 'c.addEventListener("touchstart",function(e){if(e.target.closest("a")||e.target.closest(".wgf-info"))return;c.classList.toggle("is-open");},{passive:true});});})();</script>';
             }
 
             // Infographic lightbox — printed AFTER the hover script so it never
