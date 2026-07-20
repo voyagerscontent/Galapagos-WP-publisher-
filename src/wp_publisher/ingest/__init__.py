@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..models import Document
 from .docx_reader import read_docx
+from .html_reader import read_html
 from .markdown_reader import read_markdown
 from .text_reader import read_text
 
@@ -16,6 +17,8 @@ _READERS = {
     ".markdown": read_markdown,
     ".txt": read_text,
     ".text": read_text,
+    ".html": read_html,
+    ".htm": read_html,
 }
 
 
@@ -45,4 +48,11 @@ def read_file(path: str | Path, *, page_type: str | None = None) -> Document:
     return reader(path)
 
 
-__all__ = ["read_file", "read_markdown", "read_docx", "read_text", "supported_extensions"]
+__all__ = [
+    "read_file",
+    "read_markdown",
+    "read_docx",
+    "read_html",
+    "read_text",
+    "supported_extensions",
+]
