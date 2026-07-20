@@ -82,6 +82,9 @@ def test_build_preserves_html_tags(tmp_path):
         wp_client=None, media_strategy="placeholder",
     )
     page, _t, _r = build_page(doc, ctx, page_type="informative")
+    # The curated <title> wins as the SEO title, distinct from the visible H1.
+    assert page.seo_title.startswith("Galápagos Trip Cost")
+    assert page.title.startswith("How Much Does")
     acf = page.acf
     assert acf["geo_answer"].startswith("<p>")  # GEO filled, not empty
     assert acf["author"] == "Juan Magallanes"
