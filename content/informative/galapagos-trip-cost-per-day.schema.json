@@ -1,0 +1,73 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.galapagosislands.travel/"},
+        {"@type": "ListItem", "position": 2, "name": "Planning", "item": "https://www.galapagosislands.travel/planning/"},
+        {"@type": "ListItem", "position": 3, "name": "How Much Does a Galápagos Trip Cost Per Day?", "item": "https://www.galapagosislands.travel/planning/galapagos-trip-cost-per-day/"}
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "How Much Does a Galápagos Trip Cost Per Day?",
+      "image": "https://www.galapagosislands.travel/img/galapagos-trip-cost.jpg",
+      "datePublished": "2026-07-16",
+      "dateModified": "2026-07-16",
+      "author": {"@type": "Person", "name": "Juan Magallanes", "jobTitle": "Galápagos Travel Advisor"},
+      "publisher": {"@type": "Organization", "name": "Galapagos Islands.Travel", "logo": {"@type": "ImageObject", "url": "https://www.galapagosislands.travel/img/logo.png"}},
+      "mainEntityOfPage": "https://www.galapagosislands.travel/planning/galapagos-trip-cost-per-day/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How much does a Galápagos trip cost per day?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Roughly $150–$700 per person per day land-based (hotel plus day tours) or $445–$2,193 per day on a cruise, with a fleet median around $907. On top of either, everyone pays a one-off $200 park fee, a about $20 transit card and about $400–$500 in mainland flights."}
+        },
+        {
+          "@type": "Question",
+          "name": "Is a Galápagos cruise or a land-based trip cheaper per day?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Land-based is cheaper day-for-day: $150–$700 versus $445–$2,193 on a cruise. The trade-off is reach — a land base gets you to about one-third of the visitor sites, while a 5-day-plus cruise can reach them all."}
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Galápagos National Park entrance fee?",
+          "acceptedAnswer": {"@type": "Answer", "text": "$200 for most foreign adults, paid in cash on arrival. It rose on 1 August 2024 — the first increase since 1998. Children, Ecuadorians and CAN/MERCOSUR nationals pay reduced rates. It is a one-off gateway cost, not a daily one."}
+        },
+        {
+          "@type": "Question",
+          "name": "Are flights and park fees included in a Galápagos cruise price?",
+          "acceptedAnswer": {"@type": "Answer", "text": "No. Mainland flights (about $400–$500), the $200 park fee and the about $20 INGALA transit card are extra on essentially every cruise fare, and so are international flights to Ecuador. Always budget these three fixed costs separately."}
+        },
+        {
+          "@type": "Question",
+          "name": "How much does a week in the Galápagos cost?",
+          "acceptedAnswer": {"@type": "Answer", "text": "For a 7-day trip, plan roughly $2,070 budget land-based, $7,020 mid-range cruise (fleet median) or $11,170 high-end yacht per person — each figure includes the $200 park fee, about $20 card and about $450 flights. Your real total shifts with cabin, season and operator."}
+        },
+        {
+          "@type": "Question",
+          "name": "Does a more expensive cruise visit better islands?",
+          "acceptedAnswer": {"@type": "Answer", "text": "No. Nearly all boats reach nearly all islands, so price buys the onboard experience — service, guiding, cuisine and cabins — not a better map. Every island is reachable on a 5-day-plus cruise; only Fernandina and west Isabela need more than a 4-day program."}
+        },
+        {
+          "@type": "Question",
+          "name": "What extra costs are not included on an all-inclusive Galápagos cruise?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Beyond the fare: international flights to Ecuador, the about $400–$500 mainland hop, the $200 park fee, the about $20 transit card, travel insurance, crew tips, alcohol, wetsuit hire and any mainland hotel nights before or after the cruise. Budget these on top."}
+        },
+        {
+          "@type": "Question",
+          "name": "How can I do the Galápagos on a budget?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Base yourself on land (about $150–$700/day), pick a shorter or lower-tier cruise (a 3-star cabin reaches the same headline islands), travel in the cool season or take a late cabin for price, share a cabin to dodge the solo supplement, and book flights separately."}
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a solo traveller supplement in the Galápagos?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Often, yes — solo travellers can pay a single-occupancy premium on top of the per-day rate. It is not universal: some operators waive or reduce it on select departures, and sharing a cabin removes it entirely. Tell us your dates and we'll find the ones that don't penalise solo travellers."}
+        }
+      ]
+    }
+  ]
+}
