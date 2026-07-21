@@ -245,6 +245,12 @@ def _resolve_parent(client: WordPressClient, page: RenderedPage, payload: dict) 
     """
     slug = (page.parent_slug or "").strip()
     if not slug:
+        # No parent for this page type (e.g. informative / standalone). Set 0
+        # EXPLICITLY so a republish CLEARS any stale parent — otherwise a page
+        # that once nested under "Galapagos Wildlife" (id 9657) keeps that
+        # parent, and the wildlife ACF group (located by page_parent) stays
+        # wrongly attached alongside the correct one.
+        payload["parent"] = 0
         return None
     if page.post_type in ("post", "posts"):
         # Only hierarchical types (pages / hierarchical CPTs) support `parent`.
