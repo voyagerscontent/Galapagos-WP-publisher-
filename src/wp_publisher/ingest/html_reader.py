@@ -16,7 +16,7 @@ Special elements are pulled out by class first, tolerating synonyms:
 
     .answer-box                       -> geo_answer (the AI-Overview answer)
     .dateline / .byline / JSON-LD     -> author
-    .conversion-band / .cta-primary   -> CTA blocks (primary)
+    .conversion-band/.cta-primary/.cta-close -> CTA blocks (primary)
     .lead-magnet                      -> CTA block (secondary)
     #related / h2#related             -> related_links
     footer.sources / p.sources        -> sources
@@ -178,7 +178,7 @@ def _consume_specials(article, meta: dict) -> None:
     # section) / lead-magnet. Plus a *standalone* <a class="cta-primary"> that is
     # not inside such a container (some pages use a bare anchor as the CTA). An
     # <a> inside a band is its own button — handled by _cta_from_el — so skip it.
-    _CTA = ("conversion-band", "cta-primary", "lead-magnet")
+    _CTA = ("conversion-band", "cta-primary", "cta-close", "lead-magnet")
     containers = [e for e in article.find_all(class_=list(_CTA)) if e.name != "a"]
     chosen = []
     for el in article.find_all(True):
