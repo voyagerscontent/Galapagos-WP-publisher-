@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.4
+ * Version:     0.3.5
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4554,6 +4554,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0;width:100%}
               {{WRAPPER}} .wgf-solo .wgf-fade{display:none}
               {{WRAPPER}} .wgf-solo .wgf-feats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;width:100%}
+              {{WRAPPER}} .wgf-solo .wgf-feats .wgf-feat.wtab{grid-column:1/-1}
               {{WRAPPER}} .wgf-solo .wgf-feat{grid-template-columns:1fr!important;min-width:0}
               {{WRAPPER}} .wgf-solo .wgf-feat .wgf-media{order:-1;min-height:170px}
               @media(max-width:820px){{{WRAPPER}} .wgf-solo .wgf-feats{grid-template-columns:1fr}}
@@ -4584,6 +4585,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a07a44;font-weight:700;margin:0 0 8px}
               {{WRAPPER}} .wgf-feat h3{margin:0 0 9px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;line-height:1.2;color:#5A3D2B}
               {{WRAPPER}} .wgf-body{margin:0;color:#3A2A1E;font-size:14px;line-height:1.6}{{WRAPPER}} .wgf-body p{margin:0 0 10px}{{WRAPPER}} .wgf-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .wgf-tbl{margin:12px 0;border:1px solid rgba(90,61,43,.14);border-radius:12px;overflow-x:auto}
+              {{WRAPPER}} .wgf-tbl table{border-collapse:collapse;width:100%;min-width:480px;font-size:13px}
+              {{WRAPPER}} .wgf-tbl th,{{WRAPPER}} .wgf-tbl td{border:1px solid rgba(90,61,43,.12);padding:8px 10px;text-align:left;vertical-align:top;color:#3A2A1E}
+              {{WRAPPER}} .wgf-tbl thead th,{{WRAPPER}} .wgf-tbl tr:first-child td{background:rgba(90,61,43,.06);font-weight:700}
+              {{WRAPPER}} .wgf-tbl caption{caption-side:top;text-align:left;font-size:12px;color:#6a5646;padding:6px 2px}
               {{WRAPPER}} .wgf.hx .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;transition:max-height .45s ease}
               {{WRAPPER}} .wgf.hx .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
               {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body{max-height:var(--wgf-open,900px)}
@@ -4644,15 +4650,23 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $img = island_ew_image_src($r['image'] ?? '');
                 $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
                 $noimg = $img ? '' : ' noimg';
-                echo '<article class="wgf-feat' . $rev . $noimg . '"' . ($hx ? ' tabindex="0"' : '') . '><div class="wgf-tx">';
+                $content = (string) ($r['content'] ?? '');
+                // A section carrying a table spans BOTH grid columns so the table
+                // has room (otherwise it's cramped in a half-width card).
+                $wtab = preg_match('/<table\b/i', $content) ? ' wtab' : '';
+                echo '<article class="wgf-feat' . $rev . $noimg . $wtab . '"' . ($hx ? ' tabindex="0"' : '') . '><div class="wgf-tx">';
                 if (!empty($r['subtitle'])) { echo '<span class="wgf-kicker">' . esc_html($r['subtitle']) . '</span>'; }
                 echo '<h3>' . esc_html($r['title'] ?? '') . '</h3>';
-                $content = (string) ($r['content'] ?? '');
-                // Drop any table markup — the combined view is a compact reading
-                // column, not the place for wide data tables.
-                $content = preg_replace('/<table\b[\s\S]*?<\/table>/i', '', $content);
-                if (trim(wp_strip_all_tags($content)) !== '') {
-                    echo '<div class="wgf-body">' . wp_kses_post($content) . '</div>';
+                // Split into text/table segments so tables RENDER (styled, scrollable)
+                // instead of being dropped — a table-only section (e.g. "… at a
+                // glance") would otherwise show just its title.
+                $segs = preg_split('/(<table\b[\s\S]*?<\/table>)/i', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+                foreach ($segs as $sg) {
+                    if (preg_match('/^\s*<table\b/i', $sg)) {
+                        echo '<div class="wgf-tbl">' . wp_kses_post($sg) . '</div>';
+                    } elseif (trim(wp_strip_all_tags($sg)) !== '') {
+                        echo '<div class="wgf-body">' . wp_kses_post($sg) . '</div>';
+                    }
                 }
                 echo '</div>';
                 if ($img) { echo '<div class="wgf-media" style="background-image:url(\'' . esc_url($img) . '\')"></div>'; }
