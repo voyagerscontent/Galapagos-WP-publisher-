@@ -399,7 +399,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 ]]);
             $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
                 'selectors' => ['{{WRAPPER}} .iw2-ofc' => 'border-color:{{VALUE}}', '{{WRAPPER}} .iw2-ed' => 'border-bottom-color:{{VALUE}}']]);
-            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iw2-ph,{{WRAPPER}} .iw2-ov,{{WRAPPER}} .iw2-ofc' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
 
@@ -610,7 +610,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'label' => 'Item background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EAE4',
                 'selectors' => ['{{WRAPPER}} .qf-item' => 'background:{{VALUE}}'],
             ]);
-            $this->add_control('card_radius', [
+            $this->add_responsive_control('card_radius', [
                 'label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 40]], 'default' => ['size' => 9, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .qf-card,{{WRAPPER}} .qf-cards .qf-item' => 'border-radius:{{SIZE}}{{UNIT}}'],
@@ -620,7 +620,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'condition' => ['layout' => 'panel'],
                 'selectors' => ['{{WRAPPER}} .qf-card' => 'border-color:{{VALUE}}'],
             ]);
-            $this->add_control('border_width', [
+            $this->add_responsive_control('border_width', [
                 'label' => 'Panel border width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 8, 'step' => 0.5]], 'default' => ['size' => 1.5, 'unit' => 'px'],
                 'condition' => ['layout' => 'panel'],
@@ -857,7 +857,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .vs-card' => 'background:{{VALUE}}']]);
             $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
                 'selectors' => ['{{WRAPPER}} .vs-card' => 'border-color:{{VALUE}}']]);
-            $this->add_control('card_bw', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]],
+            $this->add_responsive_control('card_bw', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]],
                 'default' => ['size' => 1, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vs-card' => 'border-width:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('card_radius', ['label' => 'Radius (per corner)', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', '%'], 'default' => ['top' => 9, 'right' => 9, 'bottom' => 9, 'left' => 9, 'unit' => 'px', 'isLinked' => true],
@@ -947,7 +947,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('t_icon_access', ['label' => 'Access icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
             $this->add_control('t_icon_wild', ['label' => 'Key Wildlife icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
             $this->add_control('t_icon_notes', ['label' => 'Notes icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
-            $this->add_control('t_icon_size', ['label' => 'Header icon size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 10, 'max' => 44]],
+            $this->add_responsive_control('t_icon_size', ['label' => 'Header icon size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 10, 'max' => 44]],
                 'default' => ['size' => 16, 'unit' => 'px'],
                 'selectors' => [
                     '{{WRAPPER}} .vt-hc svg,{{WRAPPER}} .vt-hc img.vt-ic' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}',
@@ -957,7 +957,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .vt-hc svg' => 'stroke:{{VALUE}}', '{{WRAPPER}} .vt-hc i,{{WRAPPER}} .vt-hc svg[fill]' => 'color:{{VALUE}};fill:{{VALUE}}']]);
             $this->add_control('t_border', ['label' => 'Outer border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .vt-wrap' => 'border-color:{{VALUE}}']]);
-            $this->add_control('t_radius', ['label' => 'Outer radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
+            $this->add_responsive_control('t_radius', ['label' => 'Outer radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
                 'default' => ['size' => 9, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vt-wrap' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('t_head_bg', ['label' => 'Header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .vt-head' => 'background:{{VALUE}}']]);
@@ -979,7 +979,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .vt-tag.cru' => 'color:{{VALUE}}']]);
             $this->add_control('t_cruise_bg', ['label' => 'Cruise badge fill', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(58,90,140,.10)',
                 'selectors' => ['{{WRAPPER}} .vt-tag.cru' => 'background:{{VALUE}}']]);
-            $this->add_control('t_thumb', ['label' => 'Thumbnail size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 120]],
+            $this->add_responsive_control('t_thumb', ['label' => 'Thumbnail size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 120]],
                 'default' => ['size' => 72, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vt-thumb' => 'width:{{SIZE}}{{UNIT}};height:calc({{SIZE}}{{UNIT}} * .82)']]);
             $this->end_controls_section();
 
@@ -995,9 +995,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 100, 'unit' => '%'], 'tablet_default' => ['size' => 100, 'unit' => '%'],
                 'description' => 'Below 100% shows a peek of the next slide.',
                 'selectors' => ['{{WRAPPER}} .vcar-slide' => 'flex-basis:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('car_gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
+            $this->add_responsive_control('car_gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
                 'default' => ['size' => 20, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vcar-track' => 'gap:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('car_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('car_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 14, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .vcar-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('car_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#faf9f7',
                 'selectors' => ['{{WRAPPER}} .vcar-card' => 'background:{{VALUE}}']]);
@@ -1471,9 +1471,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .wcal-card' => 'background:{{VALUE}}']]);
             $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .wcal-card' => 'border-color:{{VALUE}}']]);
-            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 10, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wcal-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('accent_w', ['label' => 'Accent bar width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 14]],
+            $this->add_responsive_control('accent_w', ['label' => 'Accent bar width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 14]],
                 'default' => ['size' => 5, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wcal-card' => 'border-left-width:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('card_pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'default' => ['top' => 18, 'right' => 20, 'bottom' => 18, 'left' => 20, 'unit' => 'px'],
@@ -1600,7 +1600,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
                 'condition' => ['layout' => 'rows', 'hover_expand' => 'yes'],
                 'selectors' => ['{{WRAPPER}} .ifs' => '--cl:{{VALUE}}']]);
-            $this->add_control('open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 300, 'max' => 2000]],
+            $this->add_responsive_control('open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 300, 'max' => 2000]],
                 'default' => ['size' => 900, 'unit' => 'px'], 'condition' => ['layout' => 'rows', 'hover_expand' => 'yes'],
                 'description' => 'Max height when opened on hover. Lower = snappier close; raise it if a long section gets cut off.',
                 'selectors' => ['{{WRAPPER}} .ifs' => '--open:{{SIZE}}{{UNIT}}']]);
@@ -1637,15 +1637,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('fade_color', ['label' => 'Fade color (hint of “more”)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--fade:{{VALUE}}'],
                 'description' => 'Set this to the page/section background so the text fades softly into it (elegant “there’s more” cue instead of a hard line).']);
-            $this->add_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 100]],
+            $this->add_responsive_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 100]],
                 'default' => ['size' => 48, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 65]],
                 'default' => ['size' => 42, 'unit' => '%'], 'selectors' => [
                     '{{WRAPPER}} .ifs-top' => 'grid-template-columns:{{SIZE}}% 1fr',
                     '{{WRAPPER}} .ifs-row.rev .ifs-top' => 'grid-template-columns:1fr {{SIZE}}%']]);
-            $this->add_control('img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 560]],
+            $this->add_responsive_control('img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 560]],
                 'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-img' => 'height:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('eyebrow_color', ['label' => 'Subtitle color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#9c7b4e',
                 'selectors' => ['{{WRAPPER}} .ifs-eyebrow' => 'color:{{VALUE}}']]);
@@ -1666,9 +1666,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .ifs-row' => 'background:{{VALUE}}']]);
             $this->add_control('card_border', ['label' => 'Card border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(100,64,44,.14)',
                 'selectors' => ['{{WRAPPER}} .ifs-row' => 'border-color:{{VALUE}}']]);
-            $this->add_control('card_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
+            $this->add_responsive_control('card_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-row' => 'border-radius:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('card_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 56]],
+            $this->add_responsive_control('card_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 56]],
                 'default' => ['size' => 28, 'unit' => 'px'], 'selectors' => [
                     '{{WRAPPER}} .ifs-top' => 'padding:{{SIZE}}{{UNIT}}',
                     '{{WRAPPER}} .ifs-tbl' => 'margin-left:{{SIZE}}{{UNIT}};margin-right:{{SIZE}}{{UNIT}}',
@@ -1680,11 +1680,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'background:{{VALUE}}']]);
             $this->add_control('tbl_head_tx', ['label' => 'Header text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F6EFE7',
                 'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'color:{{VALUE}}']]);
-            $this->add_control('tbl_head_fs', ['label' => 'Header text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 9, 'max' => 18]],
+            $this->add_responsive_control('tbl_head_fs', ['label' => 'Header text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 9, 'max' => 18]],
                 'default' => ['size' => 10.5, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'font-size:{{SIZE}}{{UNIT}}']]);
             $this->add_control('tbl_tx', ['label' => 'Cell text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
                 'selectors' => ['{{WRAPPER}} .ifs-tbl tbody td' => 'color:{{VALUE}}']]);
-            $this->add_control('tbl_fs', ['label' => 'Cell text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 11, 'max' => 20]],
+            $this->add_responsive_control('tbl_fs', ['label' => 'Cell text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 11, 'max' => 20]],
                 'default' => ['size' => 13, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl table' => 'font-size:{{SIZE}}{{UNIT}}']]);
             $this->add_control('tbl_first', ['label' => 'First column color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .ifs-tbl td:first-child' => 'color:{{VALUE}}']]);
@@ -1692,9 +1692,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .ifs-tbl tbody tr:nth-child(even)' => 'background:{{VALUE}}']]);
             $this->add_control('tbl_line', ['label' => 'Border / lines', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(100,64,44,.14)',
                 'selectors' => ['{{WRAPPER}} .ifs-tbl' => 'border-color:{{VALUE}}', '{{WRAPPER}} .ifs-tbl tbody td' => 'border-top-color:{{VALUE}}']]);
-            $this->add_control('tbl_bw', ['label' => 'Line thickness', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 4]],
+            $this->add_responsive_control('tbl_bw', ['label' => 'Line thickness', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 4]],
                 'default' => ['size' => 1, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl tbody td' => 'border-top-width:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('tbl_radius', ['label' => 'Table radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
+            $this->add_responsive_control('tbl_radius', ['label' => 'Table radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
                 'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('tbl_pad', ['label' => 'Cell padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px'],
                 'default' => ['top' => 13, 'right' => 16, 'bottom' => 13, 'left' => 16, 'unit' => 'px', 'isLinked' => false],
@@ -1709,11 +1709,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('info_maxw', ['label' => 'Max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'size_units' => ['%', 'px'],
                 'range' => ['%' => ['min' => 40, 'max' => 100], 'px' => ['min' => 400, 'max' => 1200]], 'default' => ['size' => 100, 'unit' => '%'],
                 'selectors' => ['{{WRAPPER}} .ifs-info' => 'max-width:{{SIZE}}{{UNIT}};margin-left:auto;margin-right:auto']]);
-            $this->add_control('info_h', ['label' => 'Banner height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 520]],
+            $this->add_responsive_control('info_h', ['label' => 'Banner height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 520]],
                 'default' => ['size' => 240, 'unit' => 'px'], 'condition' => ['info_lightbox' => 'yes'],
                 'selectors' => ['{{WRAPPER}} .ifs-info-band' => '--ig-h:{{SIZE}}{{UNIT}}'],
                 'description' => 'Height of the preview strip; the full image opens in the lightbox.']);
-            $this->add_control('info_radius', ['label' => 'Corner radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('info_radius', ['label' => 'Corner radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-info-band,{{WRAPPER}} .ifs-info-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('info_fade', ['label' => 'Fade color (match card bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FBF8F4',
                 'selectors' => ['{{WRAPPER}} .ifs-info-band' => '--ig-fade:{{VALUE}}'], 'condition' => ['info_lightbox' => 'yes']]);
@@ -1735,7 +1735,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('info_cap_color', ['label' => 'Caption color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#7a6a5c',
                 'selectors' => ['{{WRAPPER}} .ifs-info-cap' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'info_cap_typo', 'selector' => '{{WRAPPER}} .ifs-info-cap']);
-            $this->add_control('info_gap', ['label' => 'Space around', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 80]],
+            $this->add_responsive_control('info_gap', ['label' => 'Space around', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 80]],
                 'default' => ['size' => 8, 'unit' => 'px'], 'separator' => 'before',
                 'selectors' => ['{{WRAPPER}} .ifs-info' => 'margin-top:{{SIZE}}{{UNIT}};margin-bottom:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
@@ -1822,13 +1822,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 44, 'unit' => '%'], 'selectors' => [
                     '{{WRAPPER}} .ifb-image' => 'grid-template-columns:{{SIZE}}% 1fr',
                     '{{WRAPPER}} .ifb-image.rev' => 'grid-template-columns:1fr {{SIZE}}%']]);
-            $this->add_control('bd_img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 160, 'max' => 520]],
+            $this->add_responsive_control('bd_img_h', ['label' => 'Image height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 160, 'max' => 520]],
                 'default' => ['size' => 300, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'height:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('bd_img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('bd_img_radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('bd_img_sticky', ['label' => 'Image stays fixed on scroll (sticky)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'The image pins in place while the section text scrolls past it (desktop only; on mobile it stacks normally). Works best when the section text is taller than the image.']);
-            $this->add_control('bd_img_sticky_top', ['label' => 'Sticky distance from top', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 200]],
+            $this->add_responsive_control('bd_img_sticky_top', ['label' => 'Sticky distance from top', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 200]],
                 'default' => ['size' => 26, 'unit' => 'px'], 'condition' => ['bd_img_sticky' => 'yes'],
                 'description' => 'Raise it if you have a fixed/sticky site header, so the image pins below it.',
                 'selectors' => ['{{WRAPPER}} .ifb-image.stick .ifb-img' => 'top:{{SIZE}}{{UNIT}}']]);
@@ -1838,10 +1838,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('bd_info_h2', ['label' => 'Infographic', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
             $this->add_control('bd_info_lightbox', ['label' => 'Open full on click (lightbox)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'On: a controlled-height banner (cropped) with a "View full" button that opens the whole image. Off: show the full image inline.']);
-            $this->add_control('bd_info_h', ['label' => 'Banner height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 520]],
+            $this->add_responsive_control('bd_info_h', ['label' => 'Banner height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 140, 'max' => 520]],
                 'default' => ['size' => 230, 'unit' => 'px'], 'condition' => ['bd_info_lightbox' => 'yes'],
                 'selectors' => ['{{WRAPPER}} .ifb-info-band' => 'height:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('bd_info_radius', ['label' => 'Corner radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('bd_info_radius', ['label' => 'Corner radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 14, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .ifb-info-band,{{WRAPPER}} .ifb-info-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('bd_info_btn_label', ['label' => 'Button label', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'View full',
@@ -1856,7 +1856,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('bd_clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
                 'condition' => ['bd_hover_expand' => 'yes'],
                 'selectors' => ['{{WRAPPER}} .ifb' => '--cl:{{VALUE}}']]);
-            $this->add_control('bd_open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 300, 'max' => 3000]],
+            $this->add_responsive_control('bd_open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 300, 'max' => 3000]],
                 'default' => ['size' => 1200, 'unit' => 'px'], 'condition' => ['bd_hover_expand' => 'yes'],
                 'description' => 'Max height when opened on hover. Raise it if a long section gets cut off.',
                 'selectors' => ['{{WRAPPER}} .ifb' => '--open:{{SIZE}}{{UNIT}}']]);
@@ -2464,7 +2464,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
+            $this->add_responsive_control('gap', ['label' => 'Gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
                 'default' => ['size' => 10, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifaq' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_control('item_bg', ['label' => 'Question / header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f1ebe4',
                 'selectors' => ['{{WRAPPER}} .ifaq-q' => 'background:{{VALUE}}']]);
@@ -2474,7 +2474,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .ifaq-a' => 'border-top-color:{{VALUE}}']]);
             $this->add_control('item_bd', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .ifaq-item' => 'border-color:{{VALUE}}']]);
-            $this->add_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
+            $this->add_responsive_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
                 'default' => ['size' => 9, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifaq-item' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('q_color', ['label' => 'Question color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .ifaq-q' => 'color:{{VALUE}}']]);
@@ -2859,7 +2859,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .itr-block' => 'background:{{VALUE}}']]);
             $this->add_control('block_bd', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#DBCEC4',
                 'selectors' => ['{{WRAPPER}} .itr-block' => 'border-color:{{VALUE}}']]);
-            $this->add_control('block_bw', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]],
+            $this->add_responsive_control('block_bw', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]],
                 'default' => ['size' => 1, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .itr-block' => 'border-width:{{SIZE}}{{UNIT}};border-style:solid']]);
             $this->add_responsive_control('block_radius', ['label' => 'Radius (per corner)', 'type' => \Elementor\Controls_Manager::DIMENSIONS,
                 'size_units' => ['px', '%'], 'default' => ['top' => 11, 'right' => 11, 'bottom' => 11, 'left' => 11, 'unit' => 'px', 'isLinked' => true],
@@ -3248,7 +3248,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px', 'em', '%'],
                 'default' => ['top' => '48', 'right' => '24', 'bottom' => '48', 'left' => '24', 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-wrap' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
-            $this->add_control('max_w', ['label' => 'Content max width', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('max_w', ['label' => 'Content max width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 600, 'max' => 1400]], 'default' => ['size' => 1120, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-inner' => 'max-width:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('col_gap', ['label' => 'Column gap', 'type' => \Elementor\Controls_Manager::SLIDER,
@@ -3263,15 +3263,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('sh', ['label' => 'Ornament & header', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('orn_color', ['label' => 'Ornament color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f3ead9',
                 'selectors' => ['{{WRAPPER}} .irl-orn' => 'color:{{VALUE}}']]);
-            $this->add_control('orn_size', ['label' => 'Ornament icon size', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('orn_size', ['label' => 'Ornament icon size', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 16, 'max' => 64]], 'default' => ['size' => 30, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-orn-i' => 'font-size:{{SIZE}}{{UNIT}}', '{{WRAPPER}} .irl-orn-i svg' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('orn_line', ['label' => 'Ornament line color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(243,234,217,.55)',
                 'selectors' => ['{{WRAPPER}} .irl-line' => 'background:{{VALUE}}']]);
-            $this->add_control('orn_line_thick', ['label' => 'Ornament line thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('orn_line_thick', ['label' => 'Ornament line thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 1, 'max' => 8]], 'default' => ['size' => 1, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-line' => 'height:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('orn_line_len', ['label' => 'Ornament line length', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('orn_line_len', ['label' => 'Ornament line length', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 40, 'max' => 400]], 'default' => ['size' => 190, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-line' => 'max-width:{{SIZE}}{{UNIT}}']]);
             $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1', 'separator' => 'before',
@@ -3289,7 +3289,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'gh_typo', 'selector' => '{{WRAPPER}} .irl-gh']);
             $this->add_control('accent_color', ['label' => 'Heading underline accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.7)',
                 'selectors' => ['{{WRAPPER}} .irl-gh::after' => 'background:{{VALUE}}']]);
-            $this->add_control('accent_w', ['label' => 'Accent width', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('accent_w', ['label' => 'Accent width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 120]], 'default' => ['size' => 64, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-gh::after' => 'width:{{SIZE}}{{UNIT}}']]);
             $this->add_control('link_color', ['label' => 'Link color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ece2d1', 'separator' => 'before',
@@ -3319,20 +3319,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .irl-ct-t' => 'color:{{VALUE}}']]);
             $this->add_control('ct_accent_color', ['label' => 'Heading underline accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.7)',
                 'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'background:{{VALUE}}']]);
-            $this->add_control('ct_accent_w', ['label' => 'Accent width', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('ct_accent_w', ['label' => 'Accent width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 160]], 'default' => ['size' => 64, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'width:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('ct_accent_h', ['label' => 'Accent thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('ct_accent_h', ['label' => 'Accent thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 1, 'max' => 8]], 'default' => ['size' => 2, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'height:{{SIZE}}{{UNIT}}']]);
             $this->add_control('ct_btn_color', ['label' => 'Button text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1',
                 'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'color:{{VALUE}}']]);
             $this->add_control('ct_btn_border', ['label' => 'Button border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.9)',
                 'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-color:{{VALUE}}']]);
-            $this->add_control('ct_btn_bw', ['label' => 'Button border width', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('ct_btn_bw', ['label' => 'Button border width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 4]], 'default' => ['size' => 1.5, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-width:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('ct_btn_radius', ['label' => 'Button radius', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('ct_btn_radius', ['label' => 'Button radius', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 40]], 'default' => ['size' => 4, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('ct_btn_hover', ['label' => 'Button hover text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a2a1e',
@@ -3729,11 +3729,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('maxw', ['label' => 'Max width', 'type' => \Elementor\Controls_Manager::SLIDER, 'size_units' => ['%', 'px'],
                 'range' => ['%' => ['min' => 30, 'max' => 100], 'px' => ['min' => 300, 'max' => 1400]], 'default' => ['size' => 100, 'unit' => '%'],
                 'selectors' => ['{{WRAPPER}} .iig' => 'max-width:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+            $this->add_responsive_control('radius', ['label' => 'Image radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
                 'default' => ['size' => 20, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iig-frame' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('bg', ['label' => 'Background (optional)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '',
                 'selectors' => ['{{WRAPPER}} .iig-frame' => 'background:{{VALUE}}']]);
-            $this->add_control('pad', ['label' => 'Inner padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 48]],
+            $this->add_responsive_control('pad', ['label' => 'Inner padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 48]],
                 'default' => ['size' => 0, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iig-frame' => 'padding:{{SIZE}}{{UNIT}}'],
                 'description' => 'Only useful when a background is set.']);
             $this->add_control('border', ['label' => 'Border (optional)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '',
@@ -3849,12 +3849,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('card', ['label' => 'Card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('card_bg', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
                 'selectors' => ['{{WRAPPER}} .wag-card' => 'background:{{VALUE}}']]);
-            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 36]], 'default' => ['size' => 18, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .wag-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('border_color', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(90,61,43,.16)',
                 'selectors' => ['{{WRAPPER}} .wag-card' => 'border-color:{{VALUE}}']]);
-            $this->add_control('border_width', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER,
+            $this->add_responsive_control('border_width', ['label' => 'Border width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 0, 'max' => 6, 'step' => 0.5]], 'default' => ['size' => 1, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .wag-card' => 'border-width:{{SIZE}}{{UNIT}};border-style:solid']]);
             $this->add_control('shadow', ['label' => 'Soft shadow', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
@@ -4010,7 +4010,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .wss-title,{{WRAPPER}} .wss-sci,{{WRAPPER}} .wss-accnm' => 'color:{{VALUE}}']]);
             $this->add_control('surface', ['label' => 'Surface', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
                 'selectors' => ['{{WRAPPER}} .wss-surface,{{WRAPPER}} .wss-tbl' => 'background:{{VALUE}}']]);
-            $this->add_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 28]],
+            $this->add_responsive_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 28]],
                 'default' => ['size' => 14, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wss-surface' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .wss-title']);
             $this->end_controls_section();
@@ -4424,9 +4424,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('layout_s', ['label' => 'Layout', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_responsive_control('rail_w', ['label' => 'At a Glance width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 240, 'max' => 460]],
                 'default' => ['size' => 320, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => 'grid-template-columns:{{SIZE}}{{UNIT}} 1fr']]);
-            $this->add_control('gap', ['label' => 'Column gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 80]],
+            $this->add_responsive_control('gap', ['label' => 'Column gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 80]],
                 'default' => ['size' => 40, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => 'gap:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('feat_gap', ['label' => 'Feature card gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 8, 'max' => 48]],
+            $this->add_responsive_control('feat_gap', ['label' => 'Feature card gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 8, 'max' => 48]],
                 'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-feats' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_control('min_h', ['label' => 'Minimum scroll height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 320, 'min' => 200,
                 'description' => 'The feature list never shrinks below this even if the card is short.']);
@@ -4438,7 +4438,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('card_s', ['label' => 'At a Glance card', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('card_bg', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FCF9F5',
                 'selectors' => ['{{WRAPPER}} .wgf-glance' => 'background:{{VALUE}}']]);
-            $this->add_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 36]],
+            $this->add_responsive_control('card_radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 36]],
                 'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-glance' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_control('card_border', ['label' => 'Border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(90,61,43,.16)',
                 'selectors' => ['{{WRAPPER}} .wgf-glance' => 'border-color:{{VALUE}}']]);
@@ -4454,7 +4454,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .wgf-feat' => 'background:{{VALUE}}', '{{WRAPPER}} .wgf' => '--wgf-card:{{VALUE}}']]);
             $this->add_control('feat_border', ['label' => 'Card border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(90,61,43,.16)',
                 'selectors' => ['{{WRAPPER}} .wgf-feat' => 'border-color:{{VALUE}}']]);
-            $this->add_control('feat_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
+            $this->add_responsive_control('feat_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-feat' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('feat_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px'],
                 'default' => ['top' => 22, 'right' => 24, 'bottom' => 22, 'left' => 24, 'unit' => 'px', 'isLinked' => false],
@@ -4463,7 +4463,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 43, 'unit' => '%'], 'selectors' => [
                     '{{WRAPPER}} .wgf-feat' => 'grid-template-columns:{{SIZE}}% 1fr',
                     '{{WRAPPER}} .wgf-feat.rev' => 'grid-template-columns:1fr {{SIZE}}%']]);
-            $this->add_control('media_h', ['label' => 'Image min height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 100, 'max' => 400]],
+            $this->add_responsive_control('media_h', ['label' => 'Image min height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 100, 'max' => 400]],
                 'default' => ['size' => 150, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-media' => 'min-height:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
 
