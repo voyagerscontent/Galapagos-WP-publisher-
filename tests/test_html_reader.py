@@ -96,3 +96,63 @@ def test_build_preserves_html_tags(tmp_path):
     )
     assert "<table>" in bodies and "<th>Style</th>" in bodies
     assert "<ul>" in bodies and "<li>Park fee</li>" in bodies
+
+
+# A "flat" page: h2/h3 hang directly off <article> (no <section> wrappers),
+# byline instead of dateline, p.sources, and a bare <a class="cta-primary">.
+_FLAT_HTML = """<!DOCTYPE html><html lang="en"><head>
+<title>Family Galápagos Cruises: Ships That Work With Kids</title>
+<meta name="description" content="Family cruises.">
+<link rel="canonical" href="https://www.galapagosislands.travel/galapagos-cruises/family/">
+</head><body><article>
+<h1>Family Galápagos Cruises</h1>
+<p class="byline">By the Galapagos Islands.Travel editorial team</p>
+<div class="answer-box" data-speakable="true"><p>A family-suitable cruise is <strong>most ships</strong>.</p></div>
+<nav class="anchor-nav"><p>On this page: ...</p></nav>
+<h2 id="figures">Key figures at a glance</h2>
+<ul><li>About $445–$2,193 per person per day</li></ul>
+<h2 id="suitable">What makes a cruise family-suitable?</h2>
+<p>Three things decide it.</p>
+<h3 id="cabins">Cabins: family, triple &amp; connecting</h3>
+<p>Many vessels offer triple cabins.</p>
+<h2 id="costs">What a family cruise really costs</h2>
+<table><thead><tr><th>Class</th><th>Per day</th></tr></thead>
+<tbody><tr><td>3-star</td><td>$445–$928</td></tr></tbody></table>
+<h2 id="takeaways">Key takeaways</h2><ul><li>Shop on cabins.</li></ul>
+<div class="cta-primary"><p>Not sure which ship fits? Tell us.</p>
+<p><a class="cta-primary" href="/contact/">Talk to a Specialist</a></p></div>
+<h2 id="faq">Frequently asked questions</h2>
+<details><summary><h3>Minimum age?</h3></summary><p>Often none.</p></details>
+<details><summary><h3>Do kids pay the park fee?</h3></summary><p>Yes.</p></details>
+<h2 id="related">Related guides</h2>
+<ul><li><a href="/galapagos-cruises/">Cruises pillar</a></li></ul>
+<div class="cta-primary"><p>Ready to narrow it down?</p>
+<p><a class="cta-primary" href="/contact/">Talk to a Specialist</a></p></div>
+<p class="sources">Sources: Galápagos National Park; INGALA.</p>
+</article></body></html>
+"""
+
+
+def test_flat_layout_no_sections(tmp_path):
+    f = tmp_path / "family.html"
+    f.write_text(_FLAT_HTML, encoding="utf-8")
+    doc = read_file(f)
+    m = doc.metadata
+    assert m["slug"] == "family"
+    assert m["author"].startswith("the Galapagos")  # from p.byline
+    assert "<strong>most ships</strong>" in m["geo_answer"]  # answer-box -> GEO
+    assert len(m["related_links"]) == 1  # the trailing CTA is NOT a related link
+    assert len(m["cta_blocks"]) == 2  # both cta-primary blocks, not swallowed
+    ctx = BuildContext(
+        settings=get_settings(), registry=load_registry(),
+        wp_client=None, media_strategy="placeholder",
+    )
+    page, _t, _r = build_page(doc, ctx, page_type="informative")
+    acf = page.acf
+    # h2-delimited flow becomes feature sections; the <table> survives.
+    assert len(acf["feature_sections"]) >= 3
+    assert len(acf["faqs"]) == 2
+    bodies = "".join(
+        v for r in acf["feature_sections"] for v in r.values() if isinstance(v, str)
+    )
+    assert "<table>" in bodies
