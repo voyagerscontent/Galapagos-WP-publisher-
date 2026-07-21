@@ -58,7 +58,9 @@ def build_page(
         key, reason = page_type, "explicitly requested"
         ctx.registry.get(key)  # validate
     else:
-        key, reason = detect_page_type(doc, ctx.registry)
+        key, reason = detect_page_type(
+            doc, ctx.registry, ctx.settings.routing.get("url_sections")
+        )
     template = ctx.registry.get(key)
 
     # ACF mapping profile follows the page type (config/acf/<profile>.yaml),

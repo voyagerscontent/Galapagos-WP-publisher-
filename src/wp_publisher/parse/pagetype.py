@@ -111,8 +111,23 @@ def _search_volume(value) -> int | None:
     return int(digits) if digits else None
 
 
-def detect_page_type(doc: Document, registry: TemplateRegistry) -> tuple[str, str]:
+def detect_page_type(
+    doc: Document,
+    registry: TemplateRegistry,
+    url_sections: dict | None = None,
+) -> tuple[str, str]:
     """Return (template_key, reason)."""
+    # 0) Canonical URL section (authoritative placement): a doc under /wildlife/
+    #    is a wildlife page, /islands/ a destination, etc. Configured per site in
+    #    site.yaml routing.url_sections, so each URL section carries its own
+    #    template + parent + ACF group without hand-picking a type.
+    section = str(doc.metadata.get("url_section") or "").strip().lower()
+    if section and url_sections:
+        mapped = url_sections.get(section)
+        key = _ALIASES.get(str(mapped).strip().lower(), str(mapped).strip().lower()) if mapped else ""
+        if key and key in registry:
+            return key, f"URL section '/{section}/' -> {key}"
+
     # 1) Explicit declaration.
     declared = (
         doc.metadata.get("type")

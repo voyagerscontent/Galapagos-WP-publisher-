@@ -67,6 +67,10 @@ class Settings:
     def defaults(self) -> dict[str, Any]:
         return self.site.get("defaults", {})
 
+    @property
+    def routing(self) -> dict[str, Any]:
+        return self.site.get("routing", {})
+
     def require_wordpress(self) -> None:
         missing = [
             name

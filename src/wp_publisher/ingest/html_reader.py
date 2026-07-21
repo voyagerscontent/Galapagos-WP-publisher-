@@ -78,18 +78,19 @@ def _read_head(soup: BeautifulSoup, meta: dict) -> None:
     canonical = soup.find("link", attrs={"rel": "canonical"}) or soup.find(
         "link", rel="canonical"
     )
-    slug = _slug_from_url(canonical.get("href") if canonical else "")
-    if slug:
-        meta["slug"] = slug
+    href = canonical.get("href") if canonical else ""
+    parts = _url_parts(href)
+    if parts:
+        meta["slug"] = parts[-1]  # last segment -> slug
+        meta["url_section"] = parts[0]  # first segment -> page-type routing
 
 
-def _slug_from_url(url: str) -> str:
-    """Last non-empty path segment of a canonical URL -> slug."""
+def _url_parts(url: str) -> list[str]:
+    """Non-empty path segments of a canonical URL."""
     if not url:
-        return ""
+        return []
     path = re.sub(r"^https?://[^/]+", "", url.strip())
-    parts = [p for p in path.split("/") if p]
-    return parts[-1] if parts else ""
+    return [p for p in path.split("/") if p]
 
 
 def _read_schema(soup: BeautifulSoup, path: Path, meta: dict) -> None:

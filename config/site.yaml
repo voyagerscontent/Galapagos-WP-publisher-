@@ -48,3 +48,20 @@ defaults:
   status: "draft"          # draft | pending | publish
   comment_status: "closed"
   ping_status: "closed"
+
+routing:
+  # Auto page-type by the canonical URL's first path segment. Leave the CLI
+  # --page-type (and the doc's "Type:" line) blank to use this, so a doc is
+  # placed by WHERE it lives, not by a hand-picked flag. Each type carries its
+  # own parent + ACF group (see templates/*.yaml). Add a segment here when a new
+  # section gets its own template.
+  #   /planning/…  -> informative     (no parent, Informative Page group)
+  #   /wildlife/…  -> wildlife_single (parent Wildlife, Wildlife Single group)
+  #   /islands/…   -> destination     (parent Islands, Island Guide group)
+  #   /cruises/…   -> informative     (temporary: no cruise template/group yet)
+  url_sections:
+    planning: informative
+    wildlife: wildlife_single
+    islands: destination
+    cruises: informative
+    galapagos-cruises: informative

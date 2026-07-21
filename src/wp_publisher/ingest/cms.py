@@ -213,7 +213,11 @@ def _parse_header(texts: list[str], meta: dict) -> tuple[int, str]:
 
 def _store_header_kv(key: str, value: str, meta: dict) -> None:
     if key == "slug":
-        meta["slug"] = to_slug(value.strip("/").split("/")[-1])
+        segs = [s for s in value.strip("/").split("/") if s]
+        if segs:
+            meta["slug"] = to_slug(segs[-1])
+            if len(segs) > 1:
+                meta["url_section"] = segs[0]
     elif key == "page type":
         meta["page_type"] = value
     elif key == "author":
@@ -483,7 +487,11 @@ def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
             key = m.group(1).strip().lower()
             value = m.group(2).strip()
             if key == "slug":
-                meta["slug"] = to_slug(value.strip("/").split("/")[-1])
+                segs = [s for s in value.strip("/").split("/") if s]
+                if segs:
+                    meta["slug"] = to_slug(segs[-1])
+                    if len(segs) > 1:
+                        meta["url_section"] = segs[0]  # /islands/bartolome/ -> islands
             elif key == "page type":
                 meta["page_type"] = value.split("|")[0].strip()
             elif key == "primary cta":
