@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.3
+ * Version:     0.3.4
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1798,6 +1798,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'background:{{VALUE}}']]);
             $this->add_control('bd_ic_tx', ['label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F3ECE2',
                 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'color:{{VALUE}}']]);
+            $this->add_control('bd_ic_recolor', ['label' => 'Recolour uploaded icon image', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'no',
+                'description' => 'Paint an uploaded icon IMAGE with the Icon color above (via CSS mask). For solid silhouettes (mono SVG/PNG) — not full-colour photos. Emoji/glyph icons already follow Icon color.']);
             $this->add_responsive_control('bd_ic_size', ['label' => 'Icon badge size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 24, 'max' => 160]],
                 'default' => ['size' => 56, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('bd_ic_glyph', ['label' => 'Icon glyph size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 110]],
@@ -2250,6 +2252,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
               {{WRAPPER}} .ifb-ic{display:flex;align-items:center;justify-content:center;flex:none;line-height:1;overflow:hidden}
               {{WRAPPER}} .ifb-ic-img{width:62%;height:62%;object-fit:contain;display:block}
+              {{WRAPPER}} .ifb-ic-mask{background-color:currentColor;-webkit-mask:var(--ic-mask) center/contain no-repeat;mask:var(--ic-mask) center/contain no-repeat}
               {{WRAPPER}} .ifb-ic-inline{margin-bottom:14px}
               {{WRAPPER}} .ifb-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:var(--t-title);border:1px solid currentColor;border-radius:7px;padding:10px 18px;opacity:.92}
               {{WRAPPER}} .ifb-card{background:#fff;border-radius:16px;padding:22px;margin-top:18px;box-shadow:' . $shcss . '}
@@ -2330,9 +2333,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $iconimg = island_ew_image_src($r['icon_image'] ?? '');
                 // Badge content: a custom uploaded icon image wins; then an emoji;
                 // then a default diamond mark.
-                $icon_inner = $iconimg !== ''
-                    ? '<img class="ifb-ic-img" src="' . esc_url($iconimg) . '" alt="">'
-                    : ($icon !== '' ? esc_html($icon) : '');
+                $recolor = ($s['bd_ic_recolor'] ?? '') === 'yes';
+                if ($iconimg !== '' && $recolor) {
+                    // Paint the image with the badge's Icon color via CSS mask.
+                    $icon_inner = '<span class="ifb-ic-img ifb-ic-mask" style="--ic-mask:url(\'' . esc_url($iconimg) . '\')" aria-hidden="true"></span>';
+                } elseif ($iconimg !== '') {
+                    $icon_inner = '<img class="ifb-ic-img" src="' . esc_url($iconimg) . '" alt="">';
+                } else {
+                    $icon_inner = ($icon !== '' ? esc_html($icon) : '');
+                }
                 $has_icon = $icon_inner !== '';
                 $rev = ($i % 2 === 1) ? ' rev' : '';
 
