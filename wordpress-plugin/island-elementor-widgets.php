@@ -1798,18 +1798,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'background:{{VALUE}}']]);
             $this->add_control('bd_ic_tx', ['label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F3ECE2',
                 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'color:{{VALUE}}']]);
-            $this->add_control('bd_ic_size', ['label' => 'Icon badge size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 36, 'max' => 96]],
+            $this->add_responsive_control('bd_ic_size', ['label' => 'Icon badge size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 24, 'max' => 160]],
                 'default' => ['size' => 56, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('bd_ic_radius', ['label' => 'Icon badge radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 50]],
+            $this->add_responsive_control('bd_ic_glyph', ['label' => 'Icon glyph size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 110]],
+                'default' => ['size' => 26, 'unit' => 'px'], 'description' => 'Size of the emoji/glyph inside the badge (uploaded icon images scale with the badge).',
+                'selectors' => ['{{WRAPPER}} .ifb-ic' => 'font-size:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('bd_ic_radius', ['label' => 'Icon badge radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 80], '%' => ['min' => 0, 'max' => 50]],
                 'default' => ['size' => 14, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-ic' => 'border-radius:{{SIZE}}{{UNIT}}']]);
 
             $this->add_control('bd_card_h', ['label' => 'Floating table card', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before',
                 'description' => 'The white card a table sits in (so tables read cleanly on dark bands).']);
             $this->add_control('bd_card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#FFFFFF',
                 'selectors' => ['{{WRAPPER}} .ifb-card' => 'background:{{VALUE}}']]);
-            $this->add_control('bd_card_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 32]],
+            $this->add_responsive_control('bd_card_radius', ['label' => 'Card radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 48]],
                 'default' => ['size' => 16, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-card' => 'border-radius:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('bd_card_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 8, 'max' => 48]],
+            $this->add_responsive_control('bd_card_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 64]],
                 'default' => ['size' => 22, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifb-card' => 'padding:{{SIZE}}{{UNIT}}']]);
             $this->add_control('bd_card_shadow', ['label' => 'Card shadow', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'soft',
                 'options' => ['none' => 'None', 'soft' => 'Soft', 'strong' => 'Strong']]);
@@ -2245,7 +2248,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-image.rev .ifb-img{order:2}
               {{WRAPPER}} .ifb-img{height:300px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
               {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
-              {{WRAPPER}} .ifb-ic{width:56px;height:56px;border-radius:14px;background:#5A3D2B;color:#F3ECE2;display:flex;align-items:center;justify-content:center;font-size:26px;flex:none;line-height:1;overflow:hidden}
+              {{WRAPPER}} .ifb-ic{display:flex;align-items:center;justify-content:center;flex:none;line-height:1;overflow:hidden}
               {{WRAPPER}} .ifb-ic-img{width:62%;height:62%;object-fit:contain;display:block}
               {{WRAPPER}} .ifb-ic-inline{margin-bottom:14px}
               {{WRAPPER}} .ifb-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:var(--t-title);border:1px solid currentColor;border-radius:7px;padding:10px 18px;opacity:.92}
