@@ -158,7 +158,12 @@ def build_page(
         slug=seo.slug,
         parent_slug=template.parent_page or "",
         extra_fields=extra_fields,
-        wp_meta=dict(template.page_meta),
+        # Always stamp gp_page_type = the current page type so a republish
+        # OVERWRITES a stale marker. Otherwise a page once published as
+        # "informative" keeps gp_page_type=informative forever, and the
+        # Informative ACF group (located by gp_page_type==informative) stays
+        # attached even after the page becomes a wildlife/island page.
+        wp_meta={"gp_page_type": template.key, **template.page_meta},
         acf=acf_payload,
         content_html="",  # ACF-driven; the theme renders the fields
         excerpt=strip_html(seo.meta_description),
