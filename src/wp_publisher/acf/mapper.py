@@ -412,7 +412,12 @@ def build_acf_island(
                     out.setdefault(m["cta_title"], heading)
                 out.setdefault(m["cta_intro"], d.get("content", ""))
                 continue
-            if _should_skip_feature(heading) or heading.strip().lower() in _extracted_titles:
+            if _should_skip_feature(
+                heading,
+                has_wildlife=bool(wildlife or wildlife_calendar),
+                has_visitor=bool(visitor_sites),
+                has_quick_facts=bool(quick_facts),
+            ) or heading.strip().lower() in _extracted_titles:
                 continue  # dedicated repeaters (wildlife/visitor sites) / footer fields
             # The species subspecies prose duplicates the subspecies repeater;
             # once that repeater is populated, don't also render it as a feature.
@@ -643,11 +648,22 @@ def _is_table_label(text: str) -> bool:
     return bool(words) and len(words) <= 4 and t == t.upper() and not t.endswith((".", "?", "!"))
 
 
-def _should_skip_feature(heading: str) -> bool:
+def _should_skip_feature(
+    heading: str,
+    *,
+    has_wildlife: bool = True,
+    has_visitor: bool = True,
+    has_quick_facts: bool = True,
+) -> bool:
     h = heading.strip().lower()
-    if h.startswith(("wildlife", "visitor sites")):  # -> their dedicated repeaters
+    # Wildlife / visitor-sites / quick-facts headings are skipped ONLY when their
+    # dedicated repeater is actually populated; otherwise keep the section as a
+    # feature so its content (e.g. a wildlife-by-season table) is never lost.
+    if h.startswith("wildlife") and has_wildlife:
         return True
-    if "at a glance" in h or "quick facts" in h:  # -> the quick facts tab
+    if h.startswith("visitor sites") and has_visitor:
+        return True
+    if ("at a glance" in h or "quick facts" in h) and has_quick_facts:
         return True
     return h in _FEATURE_SKIP_HEADINGS or any(s in h for s in _SKIP_CONTAINS)
 

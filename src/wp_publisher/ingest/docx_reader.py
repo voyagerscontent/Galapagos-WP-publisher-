@@ -692,6 +692,23 @@ def _cell_text(cell) -> str:
     return "\n".join(_p_text(p) for p in cell.paragraphs).strip()
 
 
+def _ordered_blocks(document) -> list:
+    """Paragraphs and tables in document order: [('p', text) | ('table', rows)]."""
+    from docx.oxml.table import CT_Tbl
+    from docx.oxml.text.paragraph import CT_P
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
+
+    out: list = []
+    for child in document.element.body.iterchildren():
+        if isinstance(child, CT_P):
+            out.append(("p", _p_text(Paragraph(child, document))))
+        elif isinstance(child, CT_Tbl):
+            tbl = Table(child, document)
+            out.append(("table", [[_cell_text(c) for c in row.cells] for row in tbl.rows]))
+    return out
+
+
 # A visual rule made of box-drawing / dash / underscore / equals runs. These are
 # layout separators in the house docs, never content — drop them so they don't
 # become empty feature sections or trail into the previous card's prose.
@@ -1601,11 +1618,23 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
     # page. Those docs carry the same "PUBLISHER HEADER BLOCK" marker but keep
     # their real content (facts, seasonality, subspecies, CTA) in data tables the
     # CMS adapter drops, so they must go through the normal table-aware path.
-    from .cms import build_cms_document, looks_like_cms
+    from .cms import (
+        build_cms_document,
+        build_cms_stage8_document,
+        looks_like_cms,
+        looks_like_stage8,
+    )
 
     all_texts = [p.text for p in docx.paragraphs]
     is_species = _norm_page_type(page_type) in _SPECIES_PAGE_TYPES or _looks_like_species(full_text)
     is_informative = _norm_page_type(page_type) in _INFORMATIVE_PAGE_TYPES
+    # Stage-8 "CMS-READY" docs (banner + [AIO BLOCK] markers + data tables) have
+    # their own adapter that keeps tables and drops the trailing pipeline logs.
+    if looks_like_stage8([t for t in all_texts if t.strip()]):
+        s8 = build_cms_stage8_document(_ordered_blocks(docx), all_texts, path.name)
+        if schema_block:
+            s8.metadata.setdefault("schema_jsonld", schema_block)
+        return s8
     if not is_species and looks_like_cms([t for t in all_texts if t.strip()]):
         cms_doc = build_cms_document(all_texts, path.name)
         if schema_block:

@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 
 from ..models import BlockType, ContentBlock, Document, Section
-from ..utils import to_slug
+from ..utils import section_slug, to_slug
 
 _KV = re.compile(r"^([A-Za-z][\w /\-]{1,34}):\s*(.+)$")
 _PLACEHOLDER = re.compile(r"^\[\s*(PHOTO|INFOGRAPHIC)\s+PLACEHOLDER\s*[—\-:]\s*(.+?)\s*\]$", re.I)
@@ -268,6 +268,269 @@ def _is_heading(line: str) -> bool:
     if len(line) > 72:
         return False
     return len(line.split()) <= 9
+
+
+# --------------------------------------------------------------------------- #
+# Stage-8 "CMS-READY ANNOTATED" docs. A newer house format than the one above:
+# a `<domain> | CMS Stage 8 | <name> | vN` banner, `[AIO BLOCK …]` markers, data
+# tables, and a large trailing block of pipeline/audit logs that must be dropped.
+# Parsed into the same Document shape the HTML reader produces (geo_answer,
+# feature sections with HTML tables, faqs, cta_blocks, sources).
+# --------------------------------------------------------------------------- #
+_STAGE8_BANNER = re.compile(r"\bCMS\s+Stage\s+\d+\b", re.I)
+_BRACKET_MARK = re.compile(r"^\[.*\]$")  # a whole-line [AIO BLOCK …] / [PHOTO …]
+_INLINE_BRACKET = re.compile(r"\[[^\]]*\]")  # inline [source: …] / [VERIFY …] tags
+_SOURCE_URL = re.compile(r"^(.*?)\s+[—–-]\s+(https?://\S+)\s*$")
+_META_TITLE = re.compile(r"^Meta Title\s*\(", re.I)  # "Meta Title (53 characters):"
+_META_DESC = re.compile(r"^Meta Description\s*\(", re.I)
+# Known Stage-8 header KV labels. Only these are consumed as header metadata; any
+# other "X: Y" line (e.g. the H1 "Bartolomé Island: Pinnacle Rock…") is content.
+_STAGE8_HEADER_KEYS = {
+    "slug", "page type", "primary cta", "secondary cta", "trade cta",
+    "objections", "objections pre-empted", "schema", "aio blocks", "publisher",
+    "persona", "funnel", "canonical url", "canonical", "author", "website",
+}
+# Everything from here on is internal pipeline/audit scaffold — never published.
+_STAGE8_JUNK = re.compile(
+    r"^(VERIFY Summary|Open \[VERIFY\]|WF\d|WF5|WF6|WF7|Pipeline complete|"
+    r"Logged by WF|Files Produced|Audit date|Part [A-G]\b|AUDITOR|"
+    r"Meta Title & Meta Description)",
+    re.I,
+)
+
+
+def looks_like_stage8(texts: list[str]) -> bool:
+    banner = _STAGE8_BANNER.search(texts[0]) if texts else None
+    has_aio = any("[AIO BLOCK" in t.upper() for t in texts[:60])
+    return bool(banner) and has_aio
+
+
+def _esc(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _table_html(rows: list[list[str]]) -> str:
+    rows = [[c.strip() for c in r] for r in rows if any(c.strip() for c in r)]
+    if not rows:
+        return ""
+    head, *body = rows
+    out = ["<table><thead><tr>"]
+    out += [f"<th>{_esc(c)}</th>" for c in head]
+    out.append("</tr></thead><tbody>")
+    for r in body:
+        out.append("<tr>" + "".join(f"<td>{_esc(c)}</td>" for c in r) + "</tr>")
+    out.append("</tbody></table>")
+    return "".join(out)
+
+
+def _stage8_scan_meta(texts: list[str], meta: dict) -> None:
+    """Pull the curated Meta Title / Meta Description out of the trailing block."""
+    for i, t in enumerate(texts):
+        line = t.strip()
+        if _META_TITLE.match(line) and i + 1 < len(texts):
+            val = texts[i + 1].strip()
+            if val:
+                meta.setdefault("seo_title", val)
+        elif _META_DESC.match(line) and i + 1 < len(texts):
+            val = texts[i + 1].strip()
+            if val:
+                meta.setdefault("meta_description", val)
+
+
+def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -> Document:
+    """``items`` is an ordered list of ('p', text) / ('table', rows) blocks."""
+    doc = Document(source_name=source_name, source_kind="docx")
+    meta = doc.metadata
+    warnings: list[str] = []
+
+    idx, title = _stage8_header(items, meta)
+    doc.title = title or source_name
+    _stage8_scan_meta(texts, meta)
+
+    sections: list[Section] = []
+    faq_pairs: list[tuple[str, str]] = []
+    cta_blocks: list[dict] = []
+    sources: list[dict] = []
+    cur_title, cur_slug, buf = "", "_lead", []
+    mode = "body"  # body | faq | sources | cta
+    expect_geo = False
+
+    def flush() -> None:
+        html = "".join(buf).strip()
+        if html or cur_title:
+            blocks = [ContentBlock(type=BlockType.HTML, html=html)] if html else []
+            sections.append(Section(title=cur_title, level=2, slug=cur_slug, blocks=blocks))
+        buf.clear()
+
+    for kind, val in items[idx:]:
+        if kind == "table":
+            if mode == "cta":
+                cta_blocks.extend(_stage8_cta_from_table(val, meta))
+            elif val and len(val) == 1 and len(val[0]) == 1:
+                buf.append(f"<p>{_esc(val[0][0].strip())}</p>")  # 1x1 -> prose
+            else:
+                buf.append(_table_html(val))
+            continue
+
+        line = val.strip()
+        if not line:
+            continue
+        if _STAGE8_JUNK.match(line):
+            break  # trailing pipeline/audit scaffold — stop here
+
+        # The speakable answer box: the paragraph right after the AIO-1 marker.
+        if expect_geo and not _BRACKET_MARK.match(line):
+            meta.setdefault("geo_answer", f"<p>{_esc(_strip_tags(line))}</p>")
+            expect_geo = False
+            continue
+        if re.match(r"^\[\s*AIO BLOCK 1\b", line, re.I) and "speakable" in line.lower():
+            expect_geo = True
+            continue
+        if _BRACKET_MARK.match(line):
+            continue  # drop [AIO BLOCK …] / [PHOTO/INFOGRAPHIC PLACEHOLDER …]
+
+        # Byline -> author.
+        by = re.match(r"^([A-ZÁ-Ú][\w'’.-]+(?: [A-ZÁ-Ú][\w'’.-]+)+),\s", line)
+        if by and not meta.get("author") and (
+            "contributor" in line.lower() or "naturalist" in line.lower() or "expert" in line.lower()
+        ):
+            meta["author"] = by.group(1).strip()
+            continue
+
+        # Once in the sources block (the last real section), every line is a
+        # citation — don't let a URL line be mistaken for a new heading.
+        if mode == "sources":
+            src = _stage8_source(line)
+            if src:
+                sources.append(src)
+            continue
+
+        heading = _is_heading(_strip_marks(line))
+        if heading:
+            h = _strip_marks(line)
+            low = h.lower()
+            if low.startswith("faq") or "frequently asked" in low:
+                flush()
+                mode = "faq"
+                continue
+            if low.startswith("sources") or low.startswith("citations"):
+                flush()
+                mode = "sources"
+                continue
+            if low.startswith("plan your") or "talk to" in low:
+                flush()
+                mode = "cta"
+                cur_title, cur_slug = h, section_slug(h)
+                continue
+            # A normal section heading (skip a duplicate of the current one).
+            new_slug = section_slug(h)
+            if not (new_slug == cur_slug and not "".join(buf).strip()):
+                flush()
+                cur_title, cur_slug = h, new_slug
+            mode = "body"
+            continue
+
+        # FAQ question / answer pairs.
+        if mode == "faq":
+            if line.endswith("?"):
+                faq_pairs.append((_strip_tags(line), ""))
+            elif faq_pairs:
+                q, a = faq_pairs[-1]
+                faq_pairs[-1] = (q, (a + " " + _strip_tags(line)).strip())
+            continue
+        # Body / cta prose.
+        prose = _strip_tags(line)
+        for m in _INLINE_BRACKET.finditer(line):
+            if "verify" in m.group(0).lower():
+                warnings.append("VERIFY: " + m.group(0).strip("[] "))
+        if prose:
+            buf.append(f"<p>{_esc(prose)}</p>")
+
+    flush()
+    doc.sections = [s for s in sections if s.blocks or s.slug == "faq"]
+    if faq_pairs:
+        faq = Section(title="FAQ", slug="faq", level=2)
+        for q, a in faq_pairs:
+            faq.blocks.append(ContentBlock(type=BlockType.HEADING, text=q, level=3))
+            faq.blocks.append(ContentBlock(type=BlockType.PARAGRAPH, text=a))
+        doc.sections.append(faq)
+
+    if cta_blocks:
+        meta["cta_blocks"] = cta_blocks
+    if sources:
+        meta["sources"] = sources
+    meta.setdefault("type", _map_page_type(meta.get("page_type", "")))
+    meta.setdefault("status", "draft")
+    if warnings:
+        meta["_ingest_warnings"] = warnings
+    return doc
+
+
+def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
+    title = ""
+    idx = 0
+    for kind, val in items:
+        idx += 1
+        if kind == "table":
+            break
+        line = val.strip()
+        if not line:
+            continue
+        if _STAGE8_BANNER.search(line):
+            continue
+        m = _KV.match(line)
+        if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
+            key = m.group(1).strip().lower()
+            value = m.group(2).strip()
+            if key == "slug":
+                meta["slug"] = to_slug(value.strip("/").split("/")[-1])
+            elif key == "page type":
+                meta["page_type"] = value.split("|")[0].strip()
+            elif key == "primary cta":
+                meta["primary_cta"] = value.split("|")[0].strip()
+            continue
+        title = line  # first line that isn't the banner or a known header key
+        break
+    return idx, title
+
+
+def _stage8_cta_from_table(rows: list[list[str]], meta: dict) -> list[dict]:
+    rows = [[c.strip() for c in r] for r in rows if any(c.strip() for c in r)]
+    if not rows:
+        return []
+    header = [c.lower() for c in rows[0]]
+    values = rows[1] if len(rows) > 1 else rows[0]
+    out = []
+    for i, cell in enumerate(values):
+        col = header[i] if i < len(header) else ""
+        aud = "Travel trade" if ("trade" in col or "dmc" in col) else "Direct travelers"
+        text = _strip_tags(cell)
+        if text:
+            row = {"audience": aud, "text": text}
+            if aud == "Direct travelers" and meta.get("primary_cta"):
+                row["button_label"] = meta["primary_cta"]
+            out.append(row)
+    return out
+
+
+def _stage8_source(line: str) -> dict | None:
+    line = _strip_tags(line).strip(" .")
+    if not line or ".md" in line.lower() or ".csv" in line.lower() or "internal" in line.lower():
+        return None  # internal source-of-truth files are not public citations
+    m = _SOURCE_URL.match(line)
+    if m:
+        return {"label": m.group(1).strip(" —–-"), "url": m.group(2).strip()}
+    return {"label": line, "url": ""}
+
+
+def _strip_marks(line: str) -> str:
+    """Remove a trailing bracket marker from a heading, e.g. 'KEY TAKEAWAYS [AIO BLOCK 4]'."""
+    return re.sub(r"\s*\[[^\]]*\]\s*$", "", line).strip()
+
+
+def _strip_tags(line: str) -> str:
+    """Strip inline [source: …] / [VERIFY …] / [Citation] tags from prose."""
+    return re.sub(r"\s{2,}", " ", _INLINE_BRACKET.sub("", line)).strip()
 
 
 def _map_page_type(page_type: str) -> str:
