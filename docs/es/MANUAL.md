@@ -1,3 +1,5 @@
+> Versión en español · English version: [../MANUAL.md](../MANUAL.md).
+
 # Manual de uso — Publicador Galápagos
 
 Manual práctico del sistema que convierte un documento (HTML, Word) en una página
