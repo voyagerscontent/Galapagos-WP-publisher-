@@ -261,7 +261,55 @@ Quick Facts, Visitor Sites, Wildlife, CTA, Related Links, y el widget de Schema
 que imprime el campo `seo_schema` por página. Los controles dimensionales tienen
 versión responsive.
 
-## 12. Historial de problemas resueltos (troubleshooting técnico)
+## 12. Los 3 formatos de documento por dentro (contrato técnico)
+
+Cómo lee el motor cada formato. El lector correcto se elige por la extensión y por
+la detección de contenido (`looks_like_stage8`).
+
+### 12.1 HTML de producción (+ sidecar `schema.json`)
+Lector: `ingest/html_reader.py`. Es el **camino canónico**.
+- Segmenta el cuerpo por cada **`<h2>`** (soporta layout con `<section>` o plano).
+- Mapeo de bloques a campos:
+  - `.answer-box` → `geo_answer` (respuesta GEO/AIO)
+  - `.dateline` / `.byline` / autor del JSON-LD → `author`
+  - `.conversion-band` / `.cta-primary` / `.cta-close` → CTA (las primarias primero); `.lead-magnet` → CTA secundaria
+  - `#related` / `h2#related` → `related_links` (consume solo el `<ul>/<ol>` que le sigue)
+  - `footer.sources` / `p.sources` → `sources`
+  - `<script type="application/ld+json">` **o** sidecar `<nombre>.schema.json` → `seo_schema`
+- Captura `metadata["slug"]` (último segmento de la URL) y `metadata["url_section"]`
+  (primer segmento → usado por el ruteo, ver §8).
+- El cuerpo de cada sección se conserva **tal cual** como HTML.
+
+### 12.2 CMS Stage 8 (`.docx` con contenido)
+Lector: `ingest/cms.py` (adaptador Stage 8) vía `ingest/docx_reader.py`.
+- Se reconoce por el banner **`CMS Stage N`** + marcadores **`[AIO BLOCK]`**.
+- `[AIO BLOCK 1 — speakable]` → `geo_answer`.
+- Descarta los marcadores de producción (`[AIO/PHOTO/INFOGRAPHIC …]`).
+- **Tablas** se conservan como HTML.
+- **FAQs** → repetidor `faqs`.
+- **Sources & Citations** → `sources` (descarta rutas internas `.md`/`.csv`).
+- Recupera **Meta Title / Meta Description** del documento.
+- Corta la basura final del pipeline (`VERIFY Summary`, `WF5-7`, etc.).
+- Captura `url_section` desde la línea `Slug:`.
+
+### 12.3 Editor Copy (verde, `.docx`)
+- **NO es contenido** — son instrucciones para el editor (resaltadas en verde).
+- **No se ingiere.** Si te llega este archivo, no se sube al sistema.
+
+## 13. Troubleshooting
+
+### 13.1 Operativo (qué revisar cuando algo falla)
+
+| Síntoma | Causa | Qué hacer |
+|---|---|---|
+| Actions falla con error de autenticación | `WP_USERNAME`/`WP_APP_PASSWORD` mal o caducados | Revisar los secrets del repo; regenerar el Application Password |
+| “A page with slug … already exists. Refusing to overwrite” | El slug ya existe y `update_existing` está en off | Publicar con `update_existing: true` (o cambiar el slug) |
+| La página se publica sin parent / el grupo ACF no aparece | El parent (slug) no existe o `gp_page_type` no coincide | Crear la página parent con ese slug; verificar el ruteo por URL (§8) |
+| n8n: error en un nodo HTTP (401/403) | Falta la credencial o el token sin permisos | Credencial en los 3 nodos; token con Contents + Actions (§9.1) |
+| Un repetidor no guarda en el admin | Claves ACF sin prefijo `field_` | Re-importar el grupo corregido (§10) |
+| Schema duplicado en la página | El plugin SEO también emite JSON-LD | Apagar el schema del plugin (pendiente: sección SEO) |
+
+### 13.2 Historial de bugs resueltos
 
 | Problema | Causa | Solución aplicada |
 |---|---|---|
@@ -272,10 +320,13 @@ versión responsive.
 | Imágenes de Feature Sections se borraban al republicar | El match de filas fallaba con WYSIWYG normalizado por WordPress | Normalizar (quitar tags/entidades) antes de comparar; preservar medios no gestionados |
 | Feature Sections no guardaba nada en el admin (islas) | Las 99 claves del grupo de islas no tenían prefijo `field_` | Re-clave a `field_isl_…` + re-importar el grupo |
 
+> **Pendiente:** la sección **SEO (Rank Math vs Yoast + apagar schema del plugin)**
+> aún no se documenta aquí (se agregará cuando cerremos ese tema).
+
 ---
 
 ## Referencias
 
-Documentación técnica complementaria en `docs/`: `SETUP.md`, `WORKFLOW.md`,
-`PUBLISH_VIA_GITHUB.md`, `AUTHORING_GUIDE.md`, `ACF.md`, `TEMPLATES.md`,
-`WILDLIFE_TEMPLATE.md`, `NEW_SITE.md`, `TROUBLESHOOTING.md`.
+Documentación técnica complementaria en `docs/` (inglés) y su traducción en
+`docs/es/` (español): `SETUP`, `WORKFLOW`, `PUBLISH_VIA_GITHUB`, `AUTHORING_GUIDE`,
+`ACF`, `TEMPLATES`, `WILDLIFE_TEMPLATE`, `NEW_SITE`, `TROUBLESHOOTING`.
