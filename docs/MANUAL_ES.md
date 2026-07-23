@@ -42,42 +42,28 @@ El sistema entiende **tres formatos**. Es clave mandar el correcto:
 - Si te llega un **CMS Stage 8** (Word con contenido) → sube solo ese `.docx`.
 - El **Editor Copy verde** es solo para leer las indicaciones — **nunca se sube**.
 
-## 3. Publicar con n8n (paso a paso)
+## 3. Publicar con n8n (uso)
 
-El equipo publica a través de un **formulario de n8n** que armamos. Hace todo el
-circuito: guarda el documento, lo publica como borrador y lo deja en WordPress.
+El sistema ya está **configurado y activo** — solo tienes que usar el formulario.
+Publicar es subir el documento y enviar; el resto es automático.
 
-### 3.1 Primera vez: configurar la credencial (una sola vez)
+### Cómo publicar
 
-El workflow ya está importado en n8n. Solo necesita **una credencial de GitHub**:
-
-1. n8n → **Credentials → Add credential → Header Auth**.
-2. Llena:
-   - **Name:** `GitHub Publisher Authorization`
-   - **Header Name:** `Authorization`
-   - **Header Value:** `Bearer TU_TOKEN`  ← el token va con la palabra `Bearer` y un espacio.
-3. El token de GitHub necesita permisos **Contents: Read and write** + **Actions: Read and write** sobre el repo `voyagerscontent/galapagos-wp-publisher-`.
-4. Asigna esa credencial a los **3 nodos HTTP** del workflow: *Guardar documento*, *Guardar schema* y *Publicar*.
-
-> ⚠️ El token **nunca** se escribe en el JSON ni se comparte por chat — solo vive
-> dentro de la credencial de n8n.
-
-### 3.2 Publicar un documento
-
-1. Abre el workflow **“Publicar página Galápagos (borrador test)”** en n8n.
-2. Abre el nodo **“Form: subir documento”** y copia su **URL del formulario**
-   (Test URL para pruebas; Production URL cuando el workflow está en *Publish*).
-3. Abre esa URL en el navegador:
+1. Abre la **URL del formulario** de n8n (te la comparte el equipo técnico; es fija).
+2. Llena el formulario:
    - **Documento**: sube el HTML o el `.docx` (CMS Stage 8).
-   - **Schema JSON** (opcional): si el HTML trae el schema aparte, sube el `.json`.
-4. Envía el formulario.
-5. En ~1 minuto el borrador estará en WordPress.
+   - **Schema JSON** (opcional): solo si es un HTML cuyo schema viene aparte, sube el `.json`.
+3. Presiona **enviar**.
+4. En **~1 minuto** el borrador estará en WordPress.
 
-### 3.3 Qué revisar después
+Eso es todo. No hay que activar nada, ni tocar n8n, ni elegir el tipo de página
+(se detecta solo por la URL del documento).
 
-- **GitHub → Actions**: verás el proceso `Publish to WordPress` ejecutándose.
+### Qué revisar después
+
 - **WordPress**: aparece un borrador nuevo con el sufijo **`-test`** en la URL.
-- Revisa el contenido, imágenes y el diseño (lo pinta Elementor).
+- Revisa el contenido, las imágenes y el diseño (lo pinta Elementor).
+- Si algo se ve mal, corrige el documento y **vuelve a subirlo** (ver §4).
 
 ## 4. Republicar / corregir sin perder imágenes
 
@@ -179,12 +165,26 @@ Workflow **“Publicar página Galápagos (borrador test)”** — 6 nodos en ca
 6. **Publicar** (HTTP POST) — dispara `publish.yml` con
    `mode=publish-draft`, `test_mode=true`, `update_existing=true`.
 
-**Credenciales:** una sola credencial *Header Auth* (`Authorization: Bearer <token>`)
-en los 3 nodos HTTP. El token necesita **Contents: write** + **Actions: write**.
-
 **Rama:** los commits y el dispatch van a `claude/wordpress-automation-system-wlnxlp`
 (la misma que usa `publish.yml`). Si se mergea a `main`, actualizar `branch`/`ref`
 en los nodos HTTP.
+
+### 9.1 Configuración inicial (una sola vez — técnico)
+
+El workflow (`n8n-galapagos-v3-FINAL.json`) se importa en n8n una vez y se deja
+activo. Solo necesita **una credencial de GitHub**:
+
+1. n8n → **Credentials → Add credential → Header Auth**.
+2. **Header Name:** `Authorization` · **Header Value:** `Bearer <TOKEN>`.
+3. El token de GitHub necesita **Contents: write** + **Actions: write** sobre
+   `voyagerscontent/galapagos-wp-publisher-`.
+4. Asignar esa credencial a los **3 nodos HTTP**: *Guardar documento*,
+   *Guardar schema* y *Publicar*.
+5. **Save** → **Publish** (deja el formulario en su Production URL, fija, para
+   compartir con marketing).
+
+> ⚠️ El token vive **solo** dentro de la credencial de n8n — nunca en el JSON del
+> workflow ni en texto plano.
 
 ### 9.1 El workflow de GitHub Actions (`publish.yml`)
 
