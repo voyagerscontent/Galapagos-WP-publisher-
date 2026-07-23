@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import html
+import re
+
 from pydantic import BaseModel
 
 from ..config import Settings
@@ -208,7 +211,13 @@ def _is_blank(value) -> bool:
 
 
 def _norm(value) -> str:
-    return " ".join(str(value).split()).strip().lower()
+    """Normalize a managed field for matching. Strips HTML tags and decodes
+    entities so a WYSIWYG sub-field still matches after WordPress rewrites it on
+    save (wpautop, entity-encoding, stray newlines) — otherwise a title-less
+    card's content would drift and its uploaded image would be dropped."""
+    text = re.sub(r"<[^>]+>", " ", str(value))  # drop tags -> compare visible text
+    text = html.unescape(text)                  # &amp;/&#8594; -> &/→
+    return " ".join(text.split()).strip().lower()
 
 
 def _as_acf_value(value):

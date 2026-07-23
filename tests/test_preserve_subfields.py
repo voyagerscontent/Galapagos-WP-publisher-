@@ -60,6 +60,40 @@ def test_no_acf_is_safe():
     assert payload == {"title": "x"}
 
 
+def test_preserves_image_on_titleless_row_when_wysiwyg_drifted():
+    """Bartolomé case: a title-less feature card whose WYSIWYG content WordPress
+    normalized on save (so it no longer matches the engine's HTML). With an equal
+    row count, the image is still carried over by position."""
+    existing = {"acf": {"feature_sections": [
+        {"title": "Overview", "content": "<p>Intro</p>", "image": 101},
+        {"content": "<p>A visitor tip.</p>\n", "image": 202},
+    ]}}
+    payload = {"acf": {"feature_sections": [
+        {"title": "Overview", "content": "<p>Intro</p>"},
+        {"content": "<p>A visitor tip.</p>"},  # same text, WP added a trailing newline live
+    ]}}
+    _preserve_unmanaged_subfields(existing, payload)
+    assert payload["acf"]["feature_sections"][0]["image"] == 101
+    assert payload["acf"]["feature_sections"][1]["image"] == 202
+
+
+def test_genuinely_different_rows_are_not_matched_by_position():
+    """Same row count but the content was truly replaced (not just re-normalized):
+    the image must NOT be guessed onto an unrelated card — matching is by text, not
+    by position."""
+    existing = {"acf": {"feature_sections": [
+        {"content": "<p>Card about penguins</p>", "image": 11},
+        {"content": "<p>Card about sea lions</p>", "image": 22},
+    ]}}
+    payload = {"acf": {"feature_sections": [
+        {"content": "<p>A totally different topic</p>"},
+        {"content": "<p>Another unrelated card</p>"},
+    ]}}
+    _preserve_unmanaged_subfields(existing, payload)
+    assert "image" not in payload["acf"]["feature_sections"][0]
+    assert "image" not in payload["acf"]["feature_sections"][1]
+
+
 def test_unreadable_live_acf_drops_repeaters_instead_of_wiping():
     """If the live ACF can't be read, repeaters are removed from the payload
     (left untouched on the page) and a warning is recorded — never wiped."""
