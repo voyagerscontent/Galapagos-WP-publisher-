@@ -309,7 +309,7 @@ Lector: `ingest/cms.py` (adaptador Stage 8) vía `ingest/docx_reader.py`.
 | La página se publica sin parent / el grupo ACF no aparece | El parent (slug) no existe o `gp_page_type` no coincide | Crear la página parent con ese slug; verificar el ruteo por URL (§8) |
 | n8n: error en un nodo HTTP (401/403) | Falta la credencial o el token sin permisos | Credencial en los 3 nodos; token con Contents + Actions (§9.1) |
 | Un repetidor no guarda en el admin | Claves ACF sin prefijo `field_` | Re-importar el grupo corregido (§10) |
-| Schema duplicado en la página | El plugin SEO también emite JSON-LD | Apagar el schema del plugin (pendiente: sección SEO) |
+| Schema duplicado en la página | El plugin SEO también emite JSON-LD | Apagar el schema del plugin (§14) |
 
 ### 13.2 Historial de bugs resueltos
 
@@ -322,8 +322,61 @@ Lector: `ingest/cms.py` (adaptador Stage 8) vía `ingest/docx_reader.py`.
 | Imágenes de Feature Sections se borraban al republicar | El match de filas fallaba con WYSIWYG normalizado por WordPress | Normalizar (quitar tags/entidades) antes de comparar; preservar medios no gestionados |
 | Feature Sections no guardaba nada en el admin (islas) | Las 99 claves del grupo de islas no tenían prefijo `field_` | Re-clave a `field_isl_…` + re-importar el grupo |
 
-> **Pendiente:** la sección **SEO (Rank Math vs Yoast + apagar schema del plugin)**
-> aún no se documenta aquí (se agregará cuando cerremos ese tema).
+## 14. SEO: plugin y schema
+
+El sistema deja parte del SEO listo, pero **la configuración del plugin SEO y el
+`noindex` son responsabilidad del equipo** (ver también §4).
+
+### 14.1 Qué hace el motor (automático)
+
+- Al **detectar el plugin activo**, escribe **meta title**, **meta description** y
+  **focus keyword** en las claves de ese plugin (Rank Math: `rank_math_title`,
+  `rank_math_description`, `rank_math_focus_keyword`; Yoast: `_yoast_wpseo_*`).
+- Genera el **schema JSON-LD** de la página (desde el documento) y lo entrega en el
+  campo ACF `seo_schema`, que pinta el widget **“Island Schema”**.
+- **No** pone `noindex` — es manual.
+
+### 14.2 Plugin recomendado: Rank Math
+
+Se usa **Rank Math** por sus funciones de SEO/GEO en el tier gratuito (varias
+keywords, señales AIO, redirecciones). Yoast también funciona, pero se aprovecha
+menos.
+
+**Reglas de oro:**
+
+1. **Un solo plugin activo.** Nunca Yoast y Rank Math a la vez: duplican metas y
+   schema, y el motor **detecta Yoast primero** (escribiría en el plugin equivocado).
+2. **Apaga el schema del plugin.** El sistema ya emite su propio JSON-LD (widget
+   “Island Schema”). Si el plugin también lo emite, hay **schema duplicado** — malo
+   para GEO/AIO y para los rich results.
+
+### 14.3 Configurar Rank Math (una vez)
+
+1. Deja **solo Rank Math activo** (Yoast desactivado/eliminado tras migrar, §14.4).
+2. **Rank Math → Titles & Meta →** por cada tipo de contenido (Posts, Pages y los
+   CPT de islas/wildlife) → **Schema Type = None / Off**.
+3. Revisa que **Sitemaps** y **Breadcrumbs** no dupliquen lo que ya hace el tema.
+
+### 14.4 Migrar de Yoast a Rank Math
+
+1. **Backup** de la base de datos (o export) antes de empezar.
+2. Deja **Yoast activo**; instala y activa **Rank Math** (los dos activos **solo**
+   durante la importación — no publiques/republiques en esa ventana).
+3. **Rank Math → Status & Tools → Import & Export → Import from Yoast**: importa
+   **Titles & Meta**, **focus keywords**, **robots meta (`noindex`)** y
+   **redirecciones**.
+4. Verifica en 2–3 páginas que llegaron meta title/description, focus keyword y `noindex`.
+5. **Desactiva y elimina Yoast.** Queda solo Rank Math activo.
+6. Aplica §14.3 (apagar el schema del plugin).
+
+> El motor no necesita cambios: en la siguiente publicación detecta Rank Math y
+> escribe las metas en `rank_math_*` automáticamente.
+
+### 14.5 Checklist SEO por página (antes de publicar)
+
+- [ ] `noindex` puesto mientras la página sea `-test` / no aprobada (§4).
+- [ ] Meta title, meta description y keyword revisados y completados.
+- [ ] **Un solo** bloque de schema en la página (el del sistema, no el del plugin).
 
 ---
 

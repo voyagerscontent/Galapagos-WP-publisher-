@@ -307,7 +307,7 @@ Reader: `ingest/cms.py` (Stage 8 adapter) via `ingest/docx_reader.py`.
 | The page publishes without a parent / the ACF group does not appear | The parent (slug) does not exist or `gp_page_type` does not match | Create the parent page with that slug; check the URL routing (§8) |
 | n8n: error on an HTTP node (401/403) | The credential is missing or the token lacks permissions | Credential on the 3 nodes; token with Contents + Actions (§9.1) |
 | A repeater does not save in the admin | ACF keys without the `field_` prefix | Re-import the corrected group (§10) |
-| Duplicate schema on the page | The SEO plugin also emits JSON-LD | Turn off the plugin's schema (pending: SEO section) |
+| Duplicate schema on the page | The SEO plugin also emits JSON-LD | Turn off the plugin's schema (§14) |
 
 ### 13.2 History of resolved bugs
 
@@ -320,8 +320,64 @@ Reader: `ingest/cms.py` (Stage 8 adapter) via `ingest/docx_reader.py`.
 | Feature Sections images were deleted when republishing | The row match failed with WYSIWYG normalized by WordPress | Normalize (strip tags/entities) before comparing; preserve unmanaged media |
 | Feature Sections saved nothing in the admin (islands) | The 99 keys of the islands group had no `field_` prefix | Re-key to `field_isl_…` + re-import the group |
 
-> **Pending:** the **SEO section (Rank Math vs Yoast + turning off the plugin's
-> schema)** is not yet documented here (it will be added when we close that topic).
+## 14. SEO: plugin and schema
+
+The system pre-fills part of the SEO, but **configuring the SEO plugin and setting
+`noindex` are the team's responsibility** (see also §4).
+
+### 14.1 What the engine does (automatic)
+
+- On **detecting the active plugin**, it writes the **meta title**, **meta
+  description** and **focus keyword** to that plugin's keys (Rank Math:
+  `rank_math_title`, `rank_math_description`, `rank_math_focus_keyword`; Yoast:
+  `_yoast_wpseo_*`).
+- It generates the page's **schema JSON-LD** (from the document) and delivers it in
+  the ACF field `seo_schema`, rendered by the **“Island Schema”** widget.
+- It does **not** set `noindex` — that is manual.
+
+### 14.2 Recommended plugin: Rank Math
+
+**Rank Math** is used for its SEO/GEO features in the free tier (multiple keywords,
+AIO signals, redirects). Yoast also works, but you get less out of it.
+
+**Golden rules:**
+
+1. **Only one plugin active.** Never Yoast and Rank Math at the same time: they
+   duplicate meta and schema, and the engine **detects Yoast first** (it would
+   write to the wrong plugin).
+2. **Turn off the plugin's schema.** The system already emits its own JSON-LD
+   (“Island Schema” widget). If the plugin emits it too, you get **duplicate
+   schema** — bad for GEO/AIO and for rich results.
+
+### 14.3 Configure Rank Math (once)
+
+1. Leave **only Rank Math active** (Yoast deactivated/deleted after migrating, §14.4).
+2. **Rank Math → Titles & Meta →** for each content type (Posts, Pages and the
+   islands/wildlife CPTs) → **Schema Type = None / Off**.
+3. Check that **Sitemaps** and **Breadcrumbs** don't duplicate what the theme
+   already does.
+
+### 14.4 Migrate from Yoast to Rank Math
+
+1. **Back up** the database (or export) before starting.
+2. Keep **Yoast active**; install and activate **Rank Math** (both active **only**
+   during the import — do not publish/republish in that window).
+3. **Rank Math → Status & Tools → Import & Export → Import from Yoast**: import
+   **Titles & Meta**, **focus keywords**, **robots meta (`noindex`)** and
+   **redirects**.
+4. Verify on 2–3 pages that the meta title/description, focus keyword and `noindex`
+   came over.
+5. **Deactivate and delete Yoast.** Only Rank Math stays active.
+6. Apply §14.3 (turn off the plugin's schema).
+
+> The engine needs no changes: on the next publish it detects Rank Math and writes
+> the meta to `rank_math_*` automatically.
+
+### 14.5 Per-page SEO checklist (before publishing)
+
+- [ ] `noindex` set while the page is `-test` / not approved (§4).
+- [ ] Meta title, meta description and keyword reviewed and completed.
+- [ ] **Only one** schema block on the page (the system's, not the plugin's).
 
 ---
 
