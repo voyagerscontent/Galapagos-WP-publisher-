@@ -24,7 +24,12 @@ Tú subes un documento. El sistema lo lee, detecta **qué tipo de página** es (
 URL), arma el contenido, lo optimiza para SEO, genera el schema (los datos que
 Google usa para los resultados enriquecidos) y crea un **borrador** en WordPress
 rellenando los campos ACF. El tema de WordPress (con Elementor) se encarga del
-diseño. Tú solo revisas el borrador y lo publicas cuando esté listo.
+diseño.
+
+El sistema deja un **borrador**, pero **no** lo deja listo para publicar por sí
+solo. Antes de publicar, una persona debe **revisar, validar y completar** algunas
+cosas a mano — sobre todo el **SEO** y la **desindexación** (`noindex`), que el
+sistema **no** pone. Ver el checklist obligatorio en la [§4](#4-antes-de-publicar--checklist-obligatorio).
 
 ## 2. Los 3 formatos de documento
 
@@ -63,9 +68,39 @@ Eso es todo. No hay que activar nada, ni tocar n8n, ni elegir el tipo de página
 
 - **WordPress**: aparece un borrador nuevo con el sufijo **`-test`** en la URL.
 - Revisa el contenido, las imágenes y el diseño (lo pinta Elementor).
-- Si algo se ve mal, corrige el documento y **vuelve a subirlo** (ver §4).
+- Si algo se ve mal, corrige el documento y **vuelve a subirlo** (ver §5).
 
-## 4. Republicar / corregir sin perder imágenes
+## 4. Antes de publicar — checklist obligatorio
+
+El borrador **no está listo tal cual sale**. El sistema arma el contenido y
+pre-rellena parte del SEO, pero **tú debes revisar, validar y completar** esto en
+WordPress **antes** de publicar:
+
+**1. Desindexar la página (`noindex`) — el sistema NO lo hace.**
+- En el plugin SEO (Rank Math / Yoast) de la página, pon **`noindex`** (robots:
+  no index, no follow) mientras sea una página de prueba/`-test` o no esté aprobada.
+- Así Google no la indexa antes de tiempo. Solo se quita el `noindex` cuando la
+  página final se aprueba para salir en vivo.
+
+**2. Validar y completar el SEO — a mano.**
+El sistema puede pre-rellenar el **meta title**, la **meta description** y el
+**focus keyword**, pero **no confíes en que estén completos ni finales**. Revisa y
+completa en el plugin SEO:
+- **Meta title** — correcto, con la keyword, dentro del largo recomendado.
+- **Meta description** — atractiva y dentro del largo.
+- **Focus keyword / keywords** — ponlas/ajústalas tú.
+- **Schema** — el sistema genera el JSON-LD; verifica que corresponda a la página.
+
+**3. Validar el contenido y el diseño.**
+- Textos, imágenes, tablas, FAQs y el render de Elementor.
+
+**4. Recién ahí, publicar.**
+- Cambia el estado a publicado **solo cuando** 1–3 estén hechos y aprobados.
+
+> En resumen: el sistema te ahorra el 80% del trabajo, pero el **SEO final y el
+> `noindex` son responsabilidad del revisor**, no del sistema.
+
+## 5. Republicar / corregir sin perder imágenes
 
 Si corriges el documento y lo vuelves a subir, el sistema **no crea un duplicado**:
 encuentra el borrador `-test` con el mismo slug y lo **actualiza**.
@@ -75,14 +110,15 @@ encuentra el borrador `-test` con el mismo slug y lo **actualiza**.
 - El **texto** sí se reemplaza con la versión nueva del documento.
 - En el repositorio queda guardada una copia de cada documento subido (historial).
 
-## 5. Errores comunes y qué hacer
+## 6. Errores comunes y qué hacer
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
 | El borrador salió sin schema | Subiste solo el HTML y el schema venía aparte | Vuelve a subir el HTML **con** su `.json` |
+| La página aparece indexada / sin SEO | El sistema no pone `noindex` ni finaliza el SEO | Complétalo a mano (ver §4) |
 | Se publicó pero con tipo de página equivocado | La URL del documento no cae en una sección conocida | Avisa al técnico: hay que mapear esa sección de URL |
 | Un campo (imagen/texto) no se guarda en WordPress | Problema de configuración del grupo ACF | Avisa al técnico (ver Parte B §10) |
-| El formulario da error en un nodo | Falta la credencial o el token no tiene permisos | Revisa §3.1 (credencial en los 3 nodos, permisos Contents + Actions) |
+| El formulario da error en un nodo | Falta la credencial o el token no tiene permisos | Avisa al técnico (config en Parte B §9.1) |
 
 ---
 
