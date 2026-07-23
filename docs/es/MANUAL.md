@@ -329,9 +329,10 @@ El sistema deja parte del SEO listo, pero **la configuración del plugin SEO y e
 
 ### 14.1 Qué hace el motor (automático)
 
-- Al **detectar el plugin activo**, escribe **meta title**, **meta description** y
-  **focus keyword** en las claves de ese plugin (Rank Math: `rank_math_title`,
-  `rank_math_description`, `rank_math_focus_keyword`; Yoast: `_yoast_wpseo_*`).
+- Escribe **meta title**, **meta description** y **focus keyword** en las claves
+  del plugin configurado en `config/site.yaml` → `seo.seo_plugin` (fijado a
+  **`rankmath`**: `rank_math_title`, `rank_math_description`,
+  `rank_math_focus_keyword`). Con `auto` detecta el plugin activo (Yoast primero).
 - Genera el **schema JSON-LD** de la página (desde el documento) y lo entrega en el
   campo ACF `seo_schema`, que pinta el widget **“Island Schema”**.
 - **No** pone `noindex` — es manual.

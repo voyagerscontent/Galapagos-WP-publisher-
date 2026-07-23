@@ -32,8 +32,13 @@ seo:
   title_max: 60
   meta_description_max: 156
   meta_description_min: 70
-  # Yoast / RankMath meta keys are written if the plugin is detected.
-  seo_plugin: "auto"   # auto | yoast | rankmath | none
+  # Which SEO plugin's meta keys to write (title / description / focus keyword).
+  # Pinned to rankmath: the site standardized on Rank Math, so the engine always
+  # targets rank_math_* — even during a Yoast->Rank Math migration window when both
+  # plugins are briefly active (auto-detect would pick Yoast first). The page's
+  # JSON-LD schema is unaffected: it is always delivered via the `seo_schema` ACF
+  # field / "Island Schema" widget, so Rank Math's own schema must stay OFF.
+  seo_plugin: "rankmath"   # auto | yoast | rankmath | none
 
 media:
   # Default behavior when a template needs an image and none is supplied.

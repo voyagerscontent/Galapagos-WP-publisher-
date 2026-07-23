@@ -327,10 +327,10 @@ The system pre-fills part of the SEO, but **configuring the SEO plugin and setti
 
 ### 14.1 What the engine does (automatic)
 
-- On **detecting the active plugin**, it writes the **meta title**, **meta
-  description** and **focus keyword** to that plugin's keys (Rank Math:
-  `rank_math_title`, `rank_math_description`, `rank_math_focus_keyword`; Yoast:
-  `_yoast_wpseo_*`).
+- It writes the **meta title**, **meta description** and **focus keyword** to the
+  keys of the plugin set in `config/site.yaml` → `seo.seo_plugin` (pinned to
+  **`rankmath`**: `rank_math_title`, `rank_math_description`,
+  `rank_math_focus_keyword`). With `auto` it detects the active plugin (Yoast first).
 - It generates the page's **schema JSON-LD** (from the document) and delivers it in
   the ACF field `seo_schema`, rendered by the **“Island Schema”** widget.
 - It does **not** set `noindex` — that is manual.
