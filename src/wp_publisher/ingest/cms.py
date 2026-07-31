@@ -383,8 +383,18 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
             sections.append(Section(title=cur_title, level=2, slug=cur_slug, blocks=blocks))
         buf.clear()
 
+    # Bold section titles carry a font size (H2 bigger than H3). The largest size
+    # among body headings is the top level; smaller bold headings are subsections
+    # that nest INSIDE the current section instead of starting a new one. When no
+    # size data is present (e.g. hand-built test items) every heading stays level 2.
+    _head_sizes = [
+        s for k, v, b, s in (_kind_val_bold(it) for it in items[idx:])
+        if k == "p" and b and s and (_is_heading(_strip_marks(str(v))) or _is_bold_heading(_strip_marks(str(v))))
+    ]
+    h2_size = max(_head_sizes) if _head_sizes else None
+
     for item in items[idx:]:
-        kind, val, bold = _kind_val_bold(item)
+        kind, val, bold, size = _kind_val_bold(item)
         if kind == "table":
             if mode == "cta":
                 cta_blocks.extend(_stage8_cta_from_table(val, meta))
@@ -434,7 +444,8 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
             continue
 
         stripped = _strip_marks(line)
-        heading = _is_heading(stripped) or (bold and _is_bold_heading(stripped))
+        in_faq = mode == "faq"
+        heading = _is_heading(stripped) or (bold and _is_bold_heading(stripped, in_faq=in_faq))
         if heading:
             h = _strip_marks(line)
             low = h.lower()
@@ -451,7 +462,14 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
                 mode = "cta"
                 cur_title, cur_slug = h, section_slug(h)
                 continue
-            # A normal section heading (skip a duplicate of the current one).
+            # Subsection (smaller bold heading): nest it INSIDE the current section
+            # as an <h3> instead of starting a new feature section — so e.g. "What
+            # Darwin Actually Did" stays under "The Misconception: …".
+            is_sub = bold and size and h2_size and size < h2_size
+            if is_sub and (cur_title or "".join(buf).strip()) and mode == "body":
+                buf.append(f"<h3>{_esc(h)}</h3>")
+                continue
+            # A normal (top-level) section heading (skip a duplicate of the current).
             new_slug = section_slug(h)
             if not (new_slug == cur_slug and not "".join(buf).strip()):
                 flush()
@@ -495,12 +513,15 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
     return doc
 
 
-def _kind_val_bold(item) -> tuple[str, object, bool]:
-    """Unpack an ordered block tolerantly: ('p', text[, bold]) / ('table', rows)."""
+def _kind_val_bold(item) -> tuple[str, object, bool, float | None]:
+    """Unpack an ordered block tolerantly:
+    ('p', text[, bold[, size_pt]]) / ('table', rows). Older 2-tuples (tests) and
+    3-tuples still work — missing bold is False, missing size is None."""
     kind = item[0]
     val = item[1] if len(item) > 1 else ""
     bold = bool(item[2]) if len(item) > 2 else False
-    return kind, val, bold
+    size = item[3] if len(item) > 3 else None
+    return kind, val, bold, size
 
 
 def _apply_header_kv(key: str, value: str, meta: dict) -> None:
@@ -538,7 +559,7 @@ def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
     """
     aio_idx = None
     for i, item in enumerate(items):
-        kind, val, _ = _kind_val_bold(item)
+        kind, val, _, _ = _kind_val_bold(item)
         if kind == "p" and _AIO_MARK.search(str(val)):
             aio_idx = i
             break
@@ -547,7 +568,7 @@ def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
     bold_title = ""
     plain_title = ""
     for i in range(scan_end):
-        kind, val, bold = _kind_val_bold(items[i])
+        kind, val, bold, _ = _kind_val_bold(items[i])
         if kind == "table":
             continue
         line = str(val).strip()
@@ -568,13 +589,20 @@ def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
     return body_start, title
 
 
-def _is_bold_heading(line: str) -> bool:
+def _is_bold_heading(line: str, *, in_faq: bool = False) -> bool:
     """A bold paragraph that reads as a section title (used when the text-length
-    heuristic in ``_is_heading`` is too strict — e.g. a long title with a colon)."""
+    heuristic in ``_is_heading`` is too strict — e.g. a long title with a colon).
+
+    Inside a FAQ block a bold '…?' line is a question, not a heading, so it is
+    rejected there; in the body a '…?' heading (e.g. 'How Did This Happen?') is
+    allowed.
+    """
     line = line.strip()
     if not line or line[0] not in _UPPER:
         return False
     if line.endswith((".", ",", ";")):   # a sentence, not a heading
+        return False
+    if in_faq and line.endswith("?"):     # a FAQ question, not a section heading
         return False
     if line.startswith("[") or line.lower().startswith("www."):
         return False

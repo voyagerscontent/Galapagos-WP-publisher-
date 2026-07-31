@@ -711,10 +711,15 @@ def _ordered_blocks(document) -> list:
             para = Paragraph(child, document)
             runs = [r for r in para.runs if r.text.strip()]
             bold = bool(runs) and all(r.bold for r in runs)
-            out.append(("p", _p_text(para), bold))
+            size = None
+            for r in runs:
+                if r.font.size is not None:
+                    size = r.font.size.pt
+                    break
+            out.append(("p", _p_text(para), bold, size))
         elif isinstance(child, CT_Tbl):
             tbl = Table(child, document)
-            out.append(("table", [[_cell_text(c) for c in row.cells] for row in tbl.rows], False))
+            out.append(("table", [[_cell_text(c) for c in row.cells] for row in tbl.rows], False, None))
     return out
 
 

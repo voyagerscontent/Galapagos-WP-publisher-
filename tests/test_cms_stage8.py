@@ -105,6 +105,38 @@ def test_stage8_publisher_header_block_variant():
     assert "NOT PUBLISHED" not in bodies
 
 
+def test_stage8_subsections_nest_by_font_size():
+    """A smaller bold heading (H3) nests INSIDE the current H2 section as an <h3>
+    instead of starting a new feature section. Items are ('p', text, bold, size)."""
+    items = [
+        ("p", "Site | CMS Stage 8 | Doc | v1", False, 10.0),
+        ("p", "Slug: /wildlife/darwin-finches/", False, 10.0),
+        ("p", "Darwin's Finches — The Birds That Changed Everything", True, 22.0),
+        ("p", "AIO SUMMARY BLOCK: Darwin's finches are 18 endemic species.", True, 11.0),
+        ("p", "The Misconception: Who Actually Identified the Finches", True, 16.0),  # H2
+        ("p", "The popular story is a myth.", False, 11.0),
+        ("p", "What Darwin Actually Did on the Islands", True, 13.0),               # H3
+        ("p", "He collected birds but kept poor records.", False, 11.0),
+        ("p", "John Gould's Role", True, 13.0),                                     # H3
+        ("p", "Gould identified them as one group.", False, 11.0),
+        ("p", "Adaptive Radiation: One Ancestor, 18 Species", True, 16.0),          # H2
+        ("p", "One ancestor diversified across the islands.", False, 11.0),
+    ]
+    texts = [v for k, v, *_ in items]
+    doc = build_cms_stage8_document(items, texts, "darwin.docx")
+    titles = [s.title for s in doc.sections]
+    # Two H2 feature sections; the H3s are NOT separate sections.
+    assert any(t.startswith("The Misconception") for t in titles)
+    assert any(t.startswith("Adaptive Radiation") for t in titles)
+    assert "What Darwin Actually Did on the Islands" not in titles
+    assert "John Gould's Role" not in titles
+    # The H3s live inside the H2 section as <h3> blocks.
+    misc = next(s for s in doc.sections if s.title.startswith("The Misconception"))
+    html = "".join(b.html for b in misc.blocks if b.html)
+    assert "<h3>What Darwin Actually Did on the Islands</h3>" in html
+    assert "<h3>John Gould's Role</h3>" in html
+
+
 def test_stage8_extraction():
     doc = build_cms_stage8_document(_ITEMS, _TEXTS, "bartolome.docx")
     m = doc.metadata
