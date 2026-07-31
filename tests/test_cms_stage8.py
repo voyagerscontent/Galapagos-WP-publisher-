@@ -3,7 +3,12 @@ FAQ/sources, and the trailing pipeline/audit block that must be dropped."""
 
 from __future__ import annotations
 
-from wp_publisher.ingest.cms import build_cms_stage8_document, looks_like_stage8
+from wp_publisher.ingest.cms import (
+    build_cms_stage8_document,
+    looks_like_stage8,
+    looks_like_stage8_fulltext,
+    scan_stage8_fulltext,
+)
 
 # An ordered block list as _ordered_blocks() would produce from the .docx.
 _ITEMS = [
@@ -103,6 +108,31 @@ def test_stage8_publisher_header_block_variant():
     bodies = "".join(b.html for s in doc.sections for b in s.blocks if b.html)
     assert "PUBLISHER HEADER BLOCK" not in bodies
     assert "NOT PUBLISHED" not in bodies
+
+
+def test_stage8_textbox_header_variant():
+    """Some docs author the whole Stage-8 header (banner/slug/AIO) in a TEXT BOX
+    that python-docx's .paragraphs skips, and use the 'AIO/GEO SUMMARY:' marker.
+    Detection and header metadata must come from the raw text, so the page still
+    routes (url_section/slug) and gets its geo answer."""
+    # The raw text as _docx_full_text() would return it (text box + body).
+    full_text = "\n".join([
+        "■ CMS STAGE 8 — PUBLISHER HEADER BLOCK",
+        "SITE: GalapagosIslands.travel",
+        "SLUG: /wildlife/galapagos-shark/",
+        "CANONICAL URL: https://www.galapagosislands.travel/wildlife/galapagos-shark/",
+        "AIO/GEO SUMMARY: The Galápagos hosts five major shark species in a protected reserve.",
+        "Galápagos Sharks — The Archipelago's Most Misunderstood Predator",
+        "Why the Galápagos Is a Global Shark Stronghold",
+        "The Galápagos Marine Reserve is a fully protected shark sanctuary.",
+    ])
+    assert looks_like_stage8_fulltext(full_text)             # banner + AIO/GEO SUMMARY
+    assert not looks_like_stage8_fulltext("just some doc\nno banner")
+    meta: dict = {}
+    scan_stage8_fulltext(full_text, meta)
+    assert meta["slug"] == "galapagos-shark"
+    assert meta["url_section"] == "wildlife"
+    assert "five major shark species" in meta["geo_answer"]
 
 
 def test_stage8_subsections_nest_by_font_size():

@@ -303,11 +303,12 @@ _STAGE8_JUNK = re.compile(
 )
 
 
-# The AIO/answer marker comes in two house variants: the bracketed
-# "[AIO BLOCK 1 — speakable]" (answer on the next line) and the inline
-# "AIO SUMMARY BLOCK (≤50 words …): <answer>" (answer after the colon).
-_AIO_MARK = re.compile(r"\bAIO\s+(?:SUMMARY\s+)?BLOCK", re.I)
-_AIO_SUMMARY = re.compile(r"^AIO\s+SUMMARY\s+BLOCK\b[^:]*:\s*(.+)$", re.I)
+# The AIO/answer marker comes in a few house variants, all "AIO … BLOCK/SUMMARY":
+#   "[AIO BLOCK 1 — speakable]"      (Bartolomé — answer on the next line)
+#   "AIO SUMMARY BLOCK (≤50 …): …"   (Darwin — answer after the colon)
+#   "AIO/GEO SUMMARY: …"             (Shark — answer after the colon)
+_AIO_MARK = re.compile(r"\bAIO\b[\s/A-Za-z]{0,12}\b(?:BLOCK|SUMMARY)\b", re.I)
+_AIO_SUMMARY = re.compile(r"^AIO\b[\s/A-Za-z]{0,12}(?:BLOCK|SUMMARY)\b[^:]*:\s*(.+)$", re.I)
 # Internal scaffold lines in the header block — never the page title/content.
 _SCAFFOLD_RE = re.compile(
     r"^(?:■|▪|□|▶|●)|^INTERNAL\b|^JSON-?LD\b|^ENTITY RULES\b|^PUBLISH URL\b|"
@@ -324,6 +325,30 @@ def looks_like_stage8(texts: list[str]) -> bool:
     banner = _STAGE8_BANNER.search(texts[0]) if texts else None
     has_aio = any(_AIO_MARK.search(t) for t in texts[:60])
     return bool(banner) and has_aio
+
+
+def looks_like_stage8_fulltext(full_text: str) -> bool:
+    """Detect a Stage-8 doc from the RAW text (text boxes included). Some docs put
+    the whole header block in a text box that python-docx's ``.paragraphs`` skips,
+    so ``looks_like_stage8`` (which sees only paragraphs) would miss them."""
+    ft = full_text or ""
+    return bool(_STAGE8_BANNER.search(ft)) and bool(_AIO_MARK.search(ft))
+
+
+def scan_stage8_fulltext(full_text: str, meta: dict) -> None:
+    """Pull header metadata (slug/url_section/page type/author/geo) from the raw
+    doc text, so a Stage-8 header authored in a text box still routes the page.
+    Uses setdefault semantics — an in-stream header already parsed wins."""
+    for raw in (full_text or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        m = _KV.match(line)
+        if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
+            _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
+        ms = _AIO_SUMMARY.match(line)
+        if ms and not meta.get("geo_answer"):
+            meta["geo_answer"] = f"<p>{_esc(_strip_tags(ms.group(1).strip()))}</p>"
 
 
 def _esc(s: str) -> str:
@@ -529,9 +554,9 @@ def _apply_header_kv(key: str, value: str, meta: dict) -> None:
     if key == "slug":
         segs = [s for s in value.strip("/").split("/") if s]
         if segs:
-            meta["slug"] = to_slug(segs[-1])
+            meta.setdefault("slug", to_slug(segs[-1]))
             if len(segs) > 1:
-                meta["url_section"] = segs[0]  # /wildlife/darwin-finches/ -> wildlife
+                meta.setdefault("url_section", segs[0])  # /wildlife/darwin-finches/ -> wildlife
     elif key in ("canonical url", "canonical"):
         tail = value.split("://", 1)[-1]
         segs = [s for s in tail.split("/")[1:] if s]  # drop the domain
@@ -563,30 +588,46 @@ def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
         if kind == "p" and _AIO_MARK.search(str(val)):
             aio_idx = i
             break
-    scan_end = aio_idx if aio_idx is not None else len(items)
 
-    bold_title = ""
-    plain_title = ""
-    for i in range(scan_end):
-        kind, val, bold, _ = _kind_val_bold(items[i])
+    if aio_idx is not None:
+        # Header is in-stream (banner / KV / H1) and ends at the AIO marker.
+        bold_title = ""
+        plain_title = ""
+        for i in range(aio_idx):
+            kind, val, bold, _ = _kind_val_bold(items[i])
+            if kind == "table":
+                continue
+            line = str(val).strip()
+            if not line or _STAGE8_BANNER.search(line):
+                continue
+            m = _KV.match(line)
+            if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
+                _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
+                continue
+            if _is_scaffold_line(line):
+                continue
+            plain_title = line          # last non-scaffold content line (fallback)
+            if bold:
+                bold_title = line       # last bold non-scaffold line (preferred H1)
+        return aio_idx, (bold_title or plain_title)
+
+    # No AIO marker in the paragraph stream: the Stage-8 header was authored in a
+    # text box that python-docx's .paragraphs skips (its slug/AIO/etc. are scanned
+    # from the raw text via scan_stage8_fulltext). Here the first real content line
+    # is the H1; the body starts right after it.
+    for i, item in enumerate(items):
+        kind, val, _, _ = _kind_val_bold(item)
         if kind == "table":
             continue
         line = str(val).strip()
-        if not line or _STAGE8_BANNER.search(line):
+        if not line or _STAGE8_BANNER.search(line) or _is_scaffold_line(line):
             continue
         m = _KV.match(line)
         if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
             _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
             continue
-        if _is_scaffold_line(line):
-            continue
-        plain_title = line          # last non-scaffold content line (fallback)
-        if bold:
-            bold_title = line       # last bold non-scaffold line (preferred H1)
-
-    title = bold_title or plain_title
-    body_start = aio_idx if aio_idx is not None else scan_end
-    return body_start, title
+        return i + 1, line
+    return 0, ""
 
 
 def _is_bold_heading(line: str, *, in_faq: bool = False) -> bool:

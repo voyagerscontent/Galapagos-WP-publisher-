@@ -1637,15 +1637,20 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
         build_cms_stage8_document,
         looks_like_cms,
         looks_like_stage8,
+        looks_like_stage8_fulltext,
+        scan_stage8_fulltext,
     )
 
     all_texts = [p.text for p in docx.paragraphs]
     is_species = _norm_page_type(page_type) in _SPECIES_PAGE_TYPES or _looks_like_species(full_text)
     is_informative = _norm_page_type(page_type) in _INFORMATIVE_PAGE_TYPES
-    # Stage-8 "CMS-READY" docs (banner + [AIO BLOCK] markers + data tables) have
-    # their own adapter that keeps tables and drops the trailing pipeline logs.
-    if looks_like_stage8([t for t in all_texts if t.strip()]):
+    # Stage-8 "CMS-READY" docs (banner + AIO markers + data tables) have their own
+    # adapter that keeps tables and drops the trailing pipeline logs. Detect on the
+    # RAW text too: some docs author the whole header block (banner/slug/AIO) in a
+    # text box that .paragraphs skips, so scan the header metadata from full_text.
+    if looks_like_stage8([t for t in all_texts if t.strip()]) or looks_like_stage8_fulltext(full_text):
         s8 = build_cms_stage8_document(_ordered_blocks(docx), all_texts, path.name)
+        scan_stage8_fulltext(full_text, s8.metadata)  # header authored in a text box
         if schema_block:
             s8.metadata.setdefault("schema_jsonld", schema_block)
         return s8
