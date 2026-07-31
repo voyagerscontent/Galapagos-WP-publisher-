@@ -135,6 +135,24 @@ def test_stage8_textbox_header_variant():
     assert "five major shark species" in meta["geo_answer"]
 
 
+def test_scan_fulltext_geo_answer_block_next_line():
+    """The 'GEO ANSWER BLOCK (…):' variant puts the answer on the FOLLOWING line,
+    and the header uses 'Slug:'/'Canonical:'. Routing metadata and the geo answer
+    must still be pulled from the raw text (this doc skips the Stage 8 adapter)."""
+    full_text = "\n".join([
+        "Slug:          /wildlife/sea-turtle/",
+        "Canonical:     https://www.galapagosislands.travel/wildlife/sea-turtle/",
+        "GEO ANSWER BLOCK (≤50 words — direct answer for LLMs):",
+        "The Galápagos hold one of the largest green turtle nesting aggregations in the Pacific.",
+        "Galápagos Sea Turtles",
+    ])
+    meta: dict = {}
+    scan_stage8_fulltext(full_text, meta)
+    assert meta["slug"] == "sea-turtle"
+    assert meta["url_section"] == "wildlife"
+    assert "green turtle nesting" in meta["geo_answer"]
+
+
 def test_stage8_subsections_nest_by_font_size():
     """A smaller bold heading (H3) nests INSIDE the current H2 section as an <h3>
     instead of starting a new feature section. Items are ('p', text, bold, size)."""

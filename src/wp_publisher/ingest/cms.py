@@ -303,12 +303,19 @@ _STAGE8_JUNK = re.compile(
 )
 
 
-# The AIO/answer marker comes in a few house variants, all "AIO … BLOCK/SUMMARY":
+# The AIO marker (used to ROUTE a doc to the Stage-8 adapter) — kept strict so it
+# doesn't fire on table-based species docs that merely have a "GEO ANSWER" line:
 #   "[AIO BLOCK 1 — speakable]"      (Bartolomé — answer on the next line)
 #   "AIO SUMMARY BLOCK (≤50 …): …"   (Darwin — answer after the colon)
 #   "AIO/GEO SUMMARY: …"             (Shark — answer after the colon)
 _AIO_MARK = re.compile(r"\bAIO\b[\s/A-Za-z]{0,12}\b(?:BLOCK|SUMMARY)\b", re.I)
 _AIO_SUMMARY = re.compile(r"^AIO\b[\s/A-Za-z]{0,12}(?:BLOCK|SUMMARY)\b[^:]*:\s*(.+)$", re.I)
+# The broader "answer box" family — used ONLY to pull the geo answer out of the raw
+# header text (never for routing), so it also matches "GEO ANSWER BLOCK".
+_ANSWER_MARK = re.compile(r"^\W*(?:AIO|GEO)\b[\s/A-Za-z]{0,15}\b(?:BLOCK|SUMMARY|ANSWER)\b", re.I)
+_ANSWER_INLINE = re.compile(
+    r"^\W*(?:AIO|GEO)\b[\s/A-Za-z]{0,15}(?:BLOCK|SUMMARY|ANSWER)\b[^:]*:\s*(.+)$", re.I
+)
 # Internal scaffold lines in the header block — never the page title/content.
 _SCAFFOLD_RE = re.compile(
     r"^(?:■|▪|□|▶|●)|^INTERNAL\b|^JSON-?LD\b|^ENTITY RULES\b|^PUBLISH URL\b|"
@@ -337,18 +344,27 @@ def looks_like_stage8_fulltext(full_text: str) -> bool:
 
 def scan_stage8_fulltext(full_text: str, meta: dict) -> None:
     """Pull header metadata (slug/url_section/page type/author/geo) from the raw
-    doc text, so a Stage-8 header authored in a text box still routes the page.
-    Uses setdefault semantics — an in-stream header already parsed wins."""
-    for raw in (full_text or "").splitlines():
-        line = raw.strip()
+    doc text, so a header authored in a text box (or a doc that skipped the Stage-8
+    adapter) still routes the page and gets its geo answer. setdefault semantics —
+    anything already parsed from the in-stream header wins."""
+    lines = [ln.strip() for ln in (full_text or "").splitlines()]
+    for i, line in enumerate(lines):
         if not line:
             continue
         m = _KV.match(line)
         if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
             _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
-        ms = _AIO_SUMMARY.match(line)
-        if ms and not meta.get("geo_answer"):
-            meta["geo_answer"] = f"<p>{_esc(_strip_tags(ms.group(1).strip()))}</p>"
+        if meta.get("geo_answer"):
+            continue
+        inline = _ANSWER_INLINE.match(line)
+        if inline:
+            meta["geo_answer"] = f"<p>{_esc(_strip_tags(inline.group(1).strip()))}</p>"
+        elif _ANSWER_MARK.match(line):
+            # marker line with the answer on the following non-empty line(s)
+            for nxt in lines[i + 1:i + 4]:
+                if nxt and not _ANSWER_MARK.match(nxt) and not _KV.match(nxt):
+                    meta["geo_answer"] = f"<p>{_esc(_strip_tags(nxt))}</p>"
+                    break
 
 
 def _esc(s: str) -> str:

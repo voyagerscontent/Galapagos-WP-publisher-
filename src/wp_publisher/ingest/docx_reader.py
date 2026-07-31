@@ -1656,11 +1656,15 @@ def read_docx(path: str | Path, *, page_type: str | None = None) -> Document:
         return s8
     if not is_species and looks_like_cms([t for t in all_texts if t.strip()]):
         cms_doc = build_cms_document(all_texts, path.name)
+        scan_stage8_fulltext(full_text, cms_doc.metadata)
         if schema_block:
             cms_doc.metadata["schema_jsonld"] = schema_block
         return cms_doc
 
     doc = Document(source_name=path.name, source_kind="docx")
+    # A CMS header (Slug:/Canonical:/geo) can live in a text box python-docx skips
+    # — scan the raw text so ANY doc still routes by its canonical URL section.
+    scan_stage8_fulltext(full_text, doc.metadata)
     if schema_block:
         doc.metadata["schema_jsonld"] = schema_block
 
