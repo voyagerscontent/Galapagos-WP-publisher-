@@ -113,8 +113,22 @@ jobs:
               echo "::error::ALL_WILDLIFE matched no content/wildlife/*.docx files"; exit 1
             fi
           else
+            # The file may have been committed microseconds before this run was
+            # dispatched — n8n commits the doc then immediately fires the dispatch,
+            # and GitHub can resolve the ref to the PRE-commit SHA (replication
+            # lag), so checkout@v4 lands before the file exists. Re-fetch the
+            # branch tip and retry so the automation self-heals that race.
             if [ ! -f "${IN_FILE}" ]; then
-              echo "::error::File not found in repo: ${IN_FILE}"; exit 1
+              for attempt in 1 2 3 4 5; do
+                echo "::notice::'${IN_FILE}' not present yet (attempt ${attempt}); re-fetching ${GITHUB_REF_NAME}…"
+                git fetch --quiet origin "${GITHUB_REF_NAME}" || true
+                git checkout --quiet FETCH_HEAD -- "${IN_FILE}" 2>/dev/null || true
+                if [ -f "${IN_FILE}" ]; then break; fi
+                sleep 5
+              done
+            fi
+            if [ ! -f "${IN_FILE}" ]; then
+              echo "::error::File not found in repo after retries: ${IN_FILE}"; exit 1
             fi
             FILES=("${IN_FILE}")
           fi
