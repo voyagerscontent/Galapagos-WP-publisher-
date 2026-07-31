@@ -303,9 +303,26 @@ _STAGE8_JUNK = re.compile(
 )
 
 
+# The AIO/answer marker comes in two house variants: the bracketed
+# "[AIO BLOCK 1 — speakable]" (answer on the next line) and the inline
+# "AIO SUMMARY BLOCK (≤50 words …): <answer>" (answer after the colon).
+_AIO_MARK = re.compile(r"\bAIO\s+(?:SUMMARY\s+)?BLOCK", re.I)
+_AIO_SUMMARY = re.compile(r"^AIO\s+SUMMARY\s+BLOCK\b[^:]*:\s*(.+)$", re.I)
+# Internal scaffold lines in the header block — never the page title/content.
+_SCAFFOLD_RE = re.compile(
+    r"^(?:■|▪|□|▶|●)|^INTERNAL\b|^JSON-?LD\b|^ENTITY RULES\b|^PUBLISH URL\b|"
+    r"PUBLISHER HEADER BLOCK|NOT PUBLISHED|^SITE\b|^TIER\b|^ROBOTS\b",
+    re.I,
+)
+
+
+def _is_scaffold_line(line: str) -> bool:
+    return bool(_SCAFFOLD_RE.search(line.strip()))
+
+
 def looks_like_stage8(texts: list[str]) -> bool:
     banner = _STAGE8_BANNER.search(texts[0]) if texts else None
-    has_aio = any("[AIO BLOCK" in t.upper() for t in texts[:60])
+    has_aio = any(_AIO_MARK.search(t) for t in texts[:60])
     return bool(banner) and has_aio
 
 
@@ -366,7 +383,8 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
             sections.append(Section(title=cur_title, level=2, slug=cur_slug, blocks=blocks))
         buf.clear()
 
-    for kind, val in items[idx:]:
+    for item in items[idx:]:
+        kind, val, bold = _kind_val_bold(item)
         if kind == "table":
             if mode == "cta":
                 cta_blocks.extend(_stage8_cta_from_table(val, meta))
@@ -376,11 +394,17 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
                 buf.append(_table_html(val))
             continue
 
-        line = val.strip()
+        line = str(val).strip()
         if not line:
             continue
         if _STAGE8_JUNK.match(line):
             break  # trailing pipeline/audit scaffold — stop here
+
+        # Inline AIO summary: "AIO SUMMARY BLOCK (…): <answer>" -> geo_answer.
+        m_sum = _AIO_SUMMARY.match(line)
+        if m_sum:
+            meta.setdefault("geo_answer", f"<p>{_esc(_strip_tags(m_sum.group(1).strip()))}</p>")
+            continue
 
         # The speakable answer box: the paragraph right after the AIO-1 marker.
         if expect_geo and not _BRACKET_MARK.match(line):
@@ -409,7 +433,8 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
                 sources.append(src)
             continue
 
-        heading = _is_heading(_strip_marks(line))
+        stripped = _strip_marks(line)
+        heading = _is_heading(stripped) or (bold and _is_bold_heading(stripped))
         if heading:
             h = _strip_marks(line)
             low = h.lower()
@@ -470,36 +495,92 @@ def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -
     return doc
 
 
+def _kind_val_bold(item) -> tuple[str, object, bool]:
+    """Unpack an ordered block tolerantly: ('p', text[, bold]) / ('table', rows)."""
+    kind = item[0]
+    val = item[1] if len(item) > 1 else ""
+    bold = bool(item[2]) if len(item) > 2 else False
+    return kind, val, bold
+
+
+def _apply_header_kv(key: str, value: str, meta: dict) -> None:
+    """Store a known header KV. Routing keys (slug/url) win over content."""
+    if key == "slug":
+        segs = [s for s in value.strip("/").split("/") if s]
+        if segs:
+            meta["slug"] = to_slug(segs[-1])
+            if len(segs) > 1:
+                meta["url_section"] = segs[0]  # /wildlife/darwin-finches/ -> wildlife
+    elif key in ("canonical url", "canonical"):
+        tail = value.split("://", 1)[-1]
+        segs = [s for s in tail.split("/")[1:] if s]  # drop the domain
+        if segs:
+            meta.setdefault("slug", to_slug(segs[-1]))
+            if len(segs) > 1:
+                meta.setdefault("url_section", segs[0])
+    elif key == "page type":
+        meta.setdefault("page_type", value.split("|")[0].strip())
+    elif key == "primary cta":
+        meta.setdefault("primary_cta", value.split("|")[0].strip())
+    elif key == "author":
+        meta.setdefault("author", value.split(",")[0].strip())
+
+
 def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
-    title = ""
-    idx = 0
-    for kind, val in items:
-        idx += 1
-        if kind == "table":
+    """Consume the header block and return ``(body_start, title)``.
+
+    The body starts at the first AIO marker; everything before it is header —
+    banner, KV lines (some docs wrap them in a large "PUBLISHER HEADER BLOCK" with
+    JSON-LD, internal links and entity rules) and the H1 title. The title is the
+    last bold, non-scaffold line before the AIO marker; when bold data is absent
+    (e.g. hand-built test items) it falls back to the last non-banner / non-KV /
+    non-scaffold line.
+    """
+    aio_idx = None
+    for i, item in enumerate(items):
+        kind, val, _ = _kind_val_bold(item)
+        if kind == "p" and _AIO_MARK.search(str(val)):
+            aio_idx = i
             break
-        line = val.strip()
-        if not line:
+    scan_end = aio_idx if aio_idx is not None else len(items)
+
+    bold_title = ""
+    plain_title = ""
+    for i in range(scan_end):
+        kind, val, bold = _kind_val_bold(items[i])
+        if kind == "table":
             continue
-        if _STAGE8_BANNER.search(line):
+        line = str(val).strip()
+        if not line or _STAGE8_BANNER.search(line):
             continue
         m = _KV.match(line)
         if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
-            key = m.group(1).strip().lower()
-            value = m.group(2).strip()
-            if key == "slug":
-                segs = [s for s in value.strip("/").split("/") if s]
-                if segs:
-                    meta["slug"] = to_slug(segs[-1])
-                    if len(segs) > 1:
-                        meta["url_section"] = segs[0]  # /islands/bartolome/ -> islands
-            elif key == "page type":
-                meta["page_type"] = value.split("|")[0].strip()
-            elif key == "primary cta":
-                meta["primary_cta"] = value.split("|")[0].strip()
+            _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
             continue
-        title = line  # first line that isn't the banner or a known header key
-        break
-    return idx, title
+        if _is_scaffold_line(line):
+            continue
+        plain_title = line          # last non-scaffold content line (fallback)
+        if bold:
+            bold_title = line       # last bold non-scaffold line (preferred H1)
+
+    title = bold_title or plain_title
+    body_start = aio_idx if aio_idx is not None else scan_end
+    return body_start, title
+
+
+def _is_bold_heading(line: str) -> bool:
+    """A bold paragraph that reads as a section title (used when the text-length
+    heuristic in ``_is_heading`` is too strict — e.g. a long title with a colon)."""
+    line = line.strip()
+    if not line or line[0] not in _UPPER:
+        return False
+    if line.endswith((".", ",", ";")):   # a sentence, not a heading
+        return False
+    if line.startswith("[") or line.lower().startswith("www."):
+        return False
+    if len(line) > 100:
+        return False
+    return len(line.split()) <= 16
 
 
 def _stage8_cta_from_table(rows: list[list[str]], meta: dict) -> list[dict]:

@@ -282,8 +282,13 @@ Reader: `ingest/html_reader.py`. It is the **canonical path**.
 
 ### 12.2 CMS Stage 8 (`.docx` with content)
 Reader: `ingest/cms.py` (Stage 8 adapter) via `ingest/docx_reader.py`.
-- Recognized by the **`CMS Stage N`** banner + **`[AIO BLOCK]`** markers.
-- `[AIO BLOCK 1 — speakable]` → `geo_answer`.
+- Recognized by the **`CMS Stage N`** banner + an AIO marker, in two variants:
+  **`[AIO BLOCK …]`** (bracketed) or **`AIO SUMMARY BLOCK (…): <answer>`** (inline).
+- Supports the large **"PUBLISHER HEADER BLOCK"** header (JSON-LD, internal links,
+  entity rules) — all of it is skipped up to the real title (H1).
+- **Section titles are bold** (no heading styles); they are detected from the
+  `.docx` bold run, so long titles are segmented too.
+- `[AIO BLOCK 1 — speakable]` or `AIO SUMMARY BLOCK (…):` → `geo_answer`.
 - Discards the production markers (`[AIO/PHOTO/INFOGRAPHIC …]`).
 - **Tables** are kept as HTML.
 - **FAQs** → `faqs` repeater.
@@ -319,6 +324,7 @@ Reader: `ingest/cms.py` (Stage 8 adapter) via `ingest/docx_reader.py`.
 | Double ACF group on a page | Outdated parent and `gp_page_type` attracted 2 groups | `parent=0` when there is no parent + always stamp `gp_page_type` |
 | Feature Sections images were deleted when republishing | The row match failed with WYSIWYG normalized by WordPress | Normalize (strip tags/entities) before comparing; preserve unmanaged media |
 | Feature Sections saved nothing in the admin (islands) | The 99 keys of the islands group had no `field_` prefix | Re-key to `field_isl_…` + re-import the group |
+| A CMS Stage 8 doc did not segment (everything fell into hero/intro) | Variant with `AIO SUMMARY BLOCK` (no brackets) + bold titles → did not enter the Stage 8 adapter | Tolerant detection (accepts `AIO SUMMARY BLOCK`), "PUBLISHER HEADER BLOCK" header skipped, and bold-based headings |
 
 ## 14. SEO: plugin and schema
 

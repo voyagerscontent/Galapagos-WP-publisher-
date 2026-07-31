@@ -284,8 +284,13 @@ Lector: `ingest/html_reader.py`. Es el **camino canónico**.
 
 ### 12.2 CMS Stage 8 (`.docx` con contenido)
 Lector: `ingest/cms.py` (adaptador Stage 8) vía `ingest/docx_reader.py`.
-- Se reconoce por el banner **`CMS Stage N`** + marcadores **`[AIO BLOCK]`**.
-- `[AIO BLOCK 1 — speakable]` → `geo_answer`.
+- Se reconoce por el banner **`CMS Stage N`** + un marcador AIO, en dos variantes:
+  **`[AIO BLOCK …]`** (con corchetes) o **`AIO SUMMARY BLOCK (…): <respuesta>`** (en línea).
+- Soporta el header grande **"PUBLISHER HEADER BLOCK"** (JSON-LD, enlaces internos,
+  reglas de entidad) — se salta todo eso hasta el título real (H1).
+- Los **títulos de sección van en negrita** (sin estilos de encabezado); se detectan
+  por la negrita del `.docx`, así también entran los títulos largos.
+- `[AIO BLOCK 1 — speakable]` o `AIO SUMMARY BLOCK (…):` → `geo_answer`.
 - Descarta los marcadores de producción (`[AIO/PHOTO/INFOGRAPHIC …]`).
 - **Tablas** se conservan como HTML.
 - **FAQs** → repetidor `faqs`.
@@ -321,6 +326,7 @@ Lector: `ingest/cms.py` (adaptador Stage 8) vía `ingest/docx_reader.py`.
 | Doble grupo ACF en una página | Parent y `gp_page_type` desactualizados atraían 2 grupos | `parent=0` cuando no hay parent + estampar siempre `gp_page_type` |
 | Imágenes de Feature Sections se borraban al republicar | El match de filas fallaba con WYSIWYG normalizado por WordPress | Normalizar (quitar tags/entidades) antes de comparar; preservar medios no gestionados |
 | Feature Sections no guardaba nada en el admin (islas) | Las 99 claves del grupo de islas no tenían prefijo `field_` | Re-clave a `field_isl_…` + re-importar el grupo |
+| Un CMS Stage 8 no se segmentó (todo cayó en el hero/intro) | Variante con `AIO SUMMARY BLOCK` (sin corchetes) + títulos en negrita → no entraba al adapter Stage 8 | Detección tolerante (acepta `AIO SUMMARY BLOCK`), header "PUBLISHER HEADER BLOCK" saltado, y títulos por negrita |
 
 ## 14. SEO: plugin y schema
 

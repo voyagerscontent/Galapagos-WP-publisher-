@@ -693,7 +693,13 @@ def _cell_text(cell) -> str:
 
 
 def _ordered_blocks(document) -> list:
-    """Paragraphs and tables in document order: [('p', text) | ('table', rows)]."""
+    """Paragraphs and tables in document order:
+    ``[('p', text, bold) | ('table', rows, False)]``.
+
+    The third element flags a fully-bold paragraph. House CMS docs mark section
+    titles with bold text (no Word heading styles), so the Stage-8 adapter uses it
+    to segment sections even when a title is too long for the text heuristic.
+    """
     from docx.oxml.table import CT_Tbl
     from docx.oxml.text.paragraph import CT_P
     from docx.table import Table
@@ -702,10 +708,13 @@ def _ordered_blocks(document) -> list:
     out: list = []
     for child in document.element.body.iterchildren():
         if isinstance(child, CT_P):
-            out.append(("p", _p_text(Paragraph(child, document))))
+            para = Paragraph(child, document)
+            runs = [r for r in para.runs if r.text.strip()]
+            bold = bool(runs) and all(r.bold for r in runs)
+            out.append(("p", _p_text(para), bold))
         elif isinstance(child, CT_Tbl):
             tbl = Table(child, document)
-            out.append(("table", [[_cell_text(c) for c in row.cells] for row in tbl.rows]))
+            out.append(("table", [[_cell_text(c) for c in row.cells] for row in tbl.rows], False))
     return out
 
 
