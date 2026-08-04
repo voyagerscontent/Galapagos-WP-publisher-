@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.2
+ * Version:     0.4.3
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2330,20 +2330,26 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E}
               {{WRAPPER}} .ifs-tbl tbody tr:nth-child(even){background:#F5EEE4}
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
-              @media(max-width:760px){{{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important}{{WRAPPER}} .ifb-image.rev .ifb-img{order:0}{{WRAPPER}} .ifb-image.stick .ifb-img{position:static!important}{{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}}
-              /* Tablet & phone: stack the image/text band and never let content
-                 overflow the screen (the 2-column band was still side by side at
-                 tablet widths, pushing the text off-screen). */
+              /* Tablet & phone: image bands stack as TITLE -> IMAGE -> TEXT, full
+                 text (no truncation), and icon sections keep the icon beside the
+                 text. Desktop (>1024px) is untouched. display:contents dissolves the
+                 text column so its title/body become siblings of the image and can
+                 be reordered. */
               @media(max-width:1024px){
-                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important;gap:20px}
-                {{WRAPPER}} .ifb-image>*{min-width:0}
-                {{WRAPPER}} .ifb-image.rev .ifb-img{order:0}
-                {{WRAPPER}} .ifb-image.stick .ifb-img{position:static!important}
-                {{WRAPPER}} .ifb-tx{min-width:0}
+                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{display:flex!important;flex-direction:column!important;gap:16px;grid-template-columns:none!important}
+                {{WRAPPER}} .ifb-image>*{min-width:0;width:100%}
+                {{WRAPPER}} .ifb-image .ifb-tx{display:contents}
+                {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{order:1}
+                {{WRAPPER}} .ifb-image .ifb-img{order:2;position:static!important;height:220px;width:100%}
+                {{WRAPPER}} .ifb-image .ifb-body,{{WRAPPER}} .ifb-image .ifb-btn{order:3}
                 {{WRAPPER}} .ifb-title,{{WRAPPER}} .ifb-body{overflow-wrap:break-word}
                 {{WRAPPER}} .ifb img{max-width:100%;height:auto}
                 {{WRAPPER}} .ifb .ifs-tbl{overflow-x:auto;max-width:100%}
-                {{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}
+                /* No truncation on phones: show the full text (kill the hover-clamp). */
+                {{WRAPPER}} .ifb.hx .ifb-body{max-height:none!important;overflow:visible!important}
+                {{WRAPPER}} .ifb.hx .ifb-body::after{display:none!important}
+                /* Icon sections: icon beside the text on the same line (do not stack). */
+                {{WRAPPER}} .ifb-iconrow{grid-template-columns:auto 1fr!important;align-items:start;gap:14px}
               }
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
@@ -2825,6 +2831,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
               {{WRAPPER}} .icta-btn{align-self:stretch;text-align:center;position:relative;z-index:1;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
               @media(max-width:680px){{{WRAPPER}} .icta-grid{grid-template-columns:1fr!important}}
+              /* Phone: centre the "Plan Your Visit" heading + intro. */
+              @media(max-width:767px){
+                {{WRAPPER}} .icta-head{text-align:center}
+                {{WRAPPER}} .icta-intro{text-align:center;margin-left:auto;margin-right:auto}
+              }
             </style>';
             if ($title) {
                 echo '<' . $htag . ' class="icta-head">' . esc_html($title) . '</' . $htag . '>';
