@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.0
+ * Version:     0.4.1
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1500,6 +1500,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
                 'selectors' => ['{{WRAPPER}} .wcal-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
             ]);
+            $this->add_control('mobile_carousel', ['label' => 'Mobile: swipe carousel', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On phones, show the season cards as a horizontal swipeable carousel (one at a time, peeking the next) instead of a tall stack.']);
             $this->add_control('period_tag', ['label' => 'Period tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
             $this->add_control('show_label', ['label' => 'Show season label', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->end_controls_section();
@@ -1568,13 +1570,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wcal-label{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:20px;color:#fff}
               {{WRAPPER}} .wcal-hl{margin:0;font-size:13.7px;line-height:1.6;color:#3a2c22}{{WRAPPER}} .wcal-hl p{margin:0 0 8px}{{WRAPPER}} .wcal-hl :last-child{margin-bottom:0}
               @media(max-width:680px){{{WRAPPER}} .wcal-grid{grid-template-columns:1fr!important}}
+              /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). */
+              @media(max-width:767px){
+                {{WRAPPER}} .wcal-grid.wcal-carousel{display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;padding:2px 4px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+                {{WRAPPER}} .wcal-grid.wcal-carousel::-webkit-scrollbar{display:none}
+                {{WRAPPER}} .wcal-grid.wcal-carousel>.wcal-card{flex:0 0 86%;scroll-snap-align:center;min-width:0}
+              }
             </style>';
             $hidden = array_filter(array_map('intval', preg_split('/[\s,]+/', (string) ($s['hide_on_ids'] ?? ''))));
             $show_title = ($s['show_title'] ?? 'yes') === 'yes' && !in_array((int) $pid, $hidden, true);
             if ($show_title && !empty($s['title_text'])) {
                 echo '<' . $htag . ' class="wcal-h">' . esc_html($s['title_text']) . '</' . $htag . '>';
             }
-            echo '<div class="wcal-grid">';
+            $mcar = ($s['mobile_carousel'] ?? 'yes') === 'yes';
+            echo '<div class="wcal-grid' . ($mcar ? ' wcal-carousel' : '') . '">';
             $i = 0;
             foreach ($rows as $r) {
                 $c = $acc[$i % 4];
