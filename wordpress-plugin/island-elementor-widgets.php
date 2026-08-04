@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.5
+ * Version:     0.3.6
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3852,6 +3852,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'label' => 'Append "At a Glance" facts', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'Adds the quick_facts rows (Lifespan, Weight…), skipping any already shown above (scientific name, population, IUCN).',
             ]);
+            $this->add_control('mobile_carousel', [
+                'label' => 'Mobile: swipe carousel', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On phones, show the facts as a horizontal swipeable carousel (one fact card at a time) instead of a tall list — so the card stays compact and nothing is cut off.',
+            ]);
             $this->end_controls_section();
 
             /* CARD */
@@ -3965,6 +3969,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wag-l{margin:0 0 2px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8a7360;font-weight:700}
               {{WRAPPER}} .wag-v{margin:0;font-family:Merriweather,Georgia,serif;font-size:18px;line-height:1.25;color:#5A3D2B;font-variant-numeric:tabular-nums}
               {{WRAPPER}} .wag-sci{font-style:italic}
+              /* Never let the card inherit a tall paired-column height on phones. */
+              @media(max-width:767px){
+                {{WRAPPER}} .elementor-widget-container{height:auto!important}
+                {{WRAPPER}} .wag-card{height:auto}
+                /* Facts as a horizontal swipe carousel (CSS scroll-snap, no JS).
+                   Peeking the next card is the swipe affordance. */
+                {{WRAPPER}} .wag-list.wag-carousel{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin:14px -4px 0;padding:2px 4px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+                {{WRAPPER}} .wag-list.wag-carousel::-webkit-scrollbar{display:none}
+                {{WRAPPER}} .wag-list.wag-carousel>.wag-row{flex:0 0 auto;min-width:60%;scroll-snap-align:start;border-bottom:0;border:1px solid rgba(90,61,43,.14);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.55)}
+              }
             </style>';
 
             echo '<div class="wag-card">';
@@ -3976,7 +3990,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '<div><span class="wag-badge" style="' . esc_attr($badgeStyle) . '"><span class="wag-dot" style="' . esc_attr($dotStyle) . '"></span>IUCN &middot; ' . esc_html($status) . '</span></div>';
             }
             if ($rows) {
-                echo '<dl class="wag-list">';
+                $mcar = ($s['mobile_carousel'] ?? 'yes') === 'yes';
+                echo '<dl class="wag-list' . ($mcar ? ' wag-carousel' : '') . '">';
                 foreach ($rows as $r) {
                     echo '<div class="wag-row"><dt class="wag-l">' . esc_html($r[0]) . '</dt><dd class="wag-v">' . $r[1] . '</dd></div>';
                 }
@@ -4140,6 +4155,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'condition' => ['hover_expand' => 'yes']]);
             $this->add_control('open_h', ['label' => 'Open height (max)', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 200, 'max' => 1600]],
                 'default' => ['size' => 700, 'unit' => 'px'], 'condition' => ['hover_expand' => 'yes']]);
+            $this->add_control('mobile_carousel', ['label' => 'Mobile: swipe carousel', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'condition' => ['layout' => 'cards'],
+                'description' => 'On phones, show the numbered cards as a horizontal swipeable carousel (one card at a time, peeking the next) instead of a tall stack.']);
             $this->end_controls_section();
 
             $this->start_controls_section('style', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -4199,6 +4217,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts.hx .wts-item:hover .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item:focus-within .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc::after{opacity:0}
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wts.hx .wts-desc,{{WRAPPER}} .wts.hx .wts-desc::after{transition:none}}
               @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
+              /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). The
+                 peek of the next card is the swipe affordance. */
+              @media(max-width:767px){
+                {{WRAPPER}} .wts-cards.wts-carousel{display:flex;grid-template-columns:none;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -4px;padding:2px 4px 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+                {{WRAPPER}} .wts-cards.wts-carousel::-webkit-scrollbar{display:none}
+                {{WRAPPER}} .wts-cards.wts-carousel>.wts-card{flex:0 0 85%;scroll-snap-align:center}
+              }
             </style>';
 
             $hx = ($s['hover_expand'] ?? '') === 'yes';
@@ -4225,7 +4250,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 }
                 echo '</div>';
             } elseif ($rows) {
-                echo '<div class="wts-cards">';
+                $mcar = ($s['mobile_carousel'] ?? 'yes') === 'yes';
+                echo '<div class="wts-cards' . ($mcar ? ' wts-carousel' : '') . '">';
                 $i = 0;
                 foreach ($rows as $r) {
                     $i++;
