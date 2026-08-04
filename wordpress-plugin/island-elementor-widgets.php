@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.3
+ * Version:     0.4.4
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2330,13 +2330,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E}
               {{WRAPPER}} .ifs-tbl tbody tr:nth-child(even){background:#F5EEE4}
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
-              /* Tablet & phone: image bands stack as TITLE -> IMAGE -> TEXT, full
-                 text (no truncation), and icon sections keep the icon beside the
-                 text. Desktop (>1024px) is untouched. display:contents dissolves the
-                 text column so its title/body become siblings of the image and can
-                 be reordered. */
-              @media(max-width:1024px){
-                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{display:flex!important;flex-direction:column!important;gap:16px;grid-template-columns:none!important}
+              /* Tablet & phone: every band collapses to ONE column. Image bands
+                 stack as TITLE -> IMAGE -> TEXT with the heading centred; icon
+                 sections keep the icon beside the text; nothing is truncated.
+                 Desktop (>1200px) is untouched. display:contents dissolves the text
+                 column so its title/body become siblings of the image and reorder;
+                 grid-template-columns:1fr is a belt-and-braces single-column fallback
+                 in case a browser ignores the flex switch. */
+              @media(max-width:1200px){
+                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{display:flex!important;flex-direction:column!important;grid-template-columns:1fr!important;gap:16px}
                 {{WRAPPER}} .ifb-image>*{min-width:0;width:100%}
                 {{WRAPPER}} .ifb-image .ifb-tx{display:contents}
                 {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{order:1}
@@ -2345,11 +2347,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifb-title,{{WRAPPER}} .ifb-body{overflow-wrap:break-word}
                 {{WRAPPER}} .ifb img{max-width:100%;height:auto}
                 {{WRAPPER}} .ifb .ifs-tbl{overflow-x:auto;max-width:100%}
-                /* No truncation on phones: show the full text (kill the hover-clamp). */
+                /* Centre the band headings. Image bands + plain text bands centre
+                   their eyebrow/title; bands with an icon keep it beside the text
+                   (left-aligned) so the icon+title never look detached. */
+                {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{text-align:center}
+                {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:center}
+                /* No truncation on small screens: show the full copy. */
                 {{WRAPPER}} .ifb.hx .ifb-body{max-height:none!important;overflow:visible!important}
                 {{WRAPPER}} .ifb.hx .ifb-body::after{display:none!important}
-                /* Icon sections: icon beside the text on the same line (do not stack). */
+                /* Icon sections keep the icon on the SAME line as the text. The
+                   grid layout (.ifb-iconrow) already does; the table/plain layout
+                   puts its icon inline via a float so it sits beside the title. */
                 {{WRAPPER}} .ifb-iconrow{grid-template-columns:auto 1fr!important;align-items:start;gap:14px}
+                {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:left;margin:0 14px 8px 0}
+                {{WRAPPER}} .ifb-inner>.ifb-tx::after{content:"";display:block;clear:both}
               }
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
@@ -2831,8 +2842,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
               {{WRAPPER}} .icta-btn{align-self:stretch;text-align:center;position:relative;z-index:1;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
               @media(max-width:680px){{{WRAPPER}} .icta-grid{grid-template-columns:1fr!important}}
-              /* Phone: centre the "Plan Your Visit" heading + intro. */
-              @media(max-width:767px){
+              /* Tablet & phone: centre the "Plan Your Visit" heading + intro. */
+              @media(max-width:1200px){
                 {{WRAPPER}} .icta-head{text-align:center}
                 {{WRAPPER}} .icta-intro{text-align:center;margin-left:auto;margin-right:auto}
               }
