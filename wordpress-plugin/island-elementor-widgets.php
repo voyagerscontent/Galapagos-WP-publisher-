@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.6
+ * Version:     0.3.7
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3853,8 +3853,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'Adds the quick_facts rows (Lifespan, Weight…), skipping any already shown above (scientific name, population, IUCN).',
             ]);
             $this->add_control('mobile_carousel', [
-                'label' => 'Mobile: swipe carousel', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-                'description' => 'On phones, show the facts as a horizontal swipeable carousel (one fact card at a time) instead of a tall list — so the card stays compact and nothing is cut off.',
+                'label' => 'Mobile: swipe carousel', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Optional. On phones, show the facts as a horizontal swipeable carousel (one fact card at a time). Off by default so the FULL list of facts shows stacked; the card auto-collapses so Feature Sections sits right below it.',
             ]);
             $this->end_controls_section();
 
@@ -3998,6 +3998,28 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</dl>';
             }
             echo '</div>';
+
+            // MOBILE ONLY: the "At a Glance" card sits in a column that is stretched
+            // to match the (tall) Feature Sections column on desktop. When the two
+            // columns stack on a phone, that column keeps its height and leaves a big
+            // empty (brown) gap under the card, pushing Feature Sections far down.
+            // Collapse the column to the card's height on phones so Feature Sections
+            // sits directly below. Desktop is untouched — inline styles are cleared
+            // above 767px. Printed once per request.
+            static $wagFit = false;
+            if (!$wagFit) {
+                $wagFit = true;
+                echo '<script>(function(){if(window.__wagFit)return;window.__wagFit=1;'
+                    . 'function colOf(w){var g=w.closest(".elementor-widget")||w;'
+                    . 'return g.closest(".elementor-column")||g.closest(".e-con.e-child")||g.closest(".e-con");}'
+                    . 'function fit(){var m=window.matchMedia("(max-width:767px)").matches;'
+                    . 'document.querySelectorAll(".wag-card").forEach(function(c){var col=colOf(c);if(!col)return;'
+                    . 'if(m){col.style.minHeight="0";col.style.height="auto";}else{col.style.minHeight="";col.style.height="";}});}'
+                    . 'var t;function later(){clearTimeout(t);t=setTimeout(fit,60);}'
+                    . 'window.addEventListener("resize",later);'
+                    . 'if(document.readyState!=="loading"){fit();}else{document.addEventListener("DOMContentLoaded",fit);}'
+                    . 'window.addEventListener("load",function(){fit();setTimeout(fit,400);});})();</script>';
+            }
         }
     }
 
