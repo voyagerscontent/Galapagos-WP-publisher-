@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.7
+ * Version:     0.3.8
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3999,26 +3999,33 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '</div>';
 
-            // MOBILE ONLY: the "At a Glance" card sits in a column that is stretched
-            // to match the (tall) Feature Sections column on desktop. When the two
-            // columns stack on a phone, that column keeps its height and leaves a big
-            // empty (brown) gap under the card, pushing Feature Sections far down.
-            // Collapse the column to the card's height on phones so Feature Sections
-            // sits directly below. Desktop is untouched — inline styles are cleared
-            // above 767px. Printed once per request.
-            static $wagFit = false;
-            if (!$wagFit) {
-                $wagFit = true;
-                echo '<script>(function(){if(window.__wagFit)return;window.__wagFit=1;'
+            // NARROW SCREENS: the "At a Glance" card and the "Feature Sections"
+            // column are two columns in one row. On desktop they sit side by side.
+            // On tablet/phone widths Elementor may keep them side by side, which
+            // squeezes the right column until it is unreadable. Below 1024px, stack
+            // the row (At a Glance full-width on top, Feature Sections full-width
+            // below) — this also removes the empty gap. Desktop (>1024px) is
+            // untouched: the inline styles are cleared above the breakpoint. Scoped
+            // to the row that actually contains an At a Glance card. Once per request.
+            static $wagStack = false;
+            if (!$wagStack) {
+                $wagStack = true;
+                echo '<script>(function(){if(window.__wagStack)return;window.__wagStack=1;var BP=1024;'
                     . 'function colOf(w){var g=w.closest(".elementor-widget")||w;'
                     . 'return g.closest(".elementor-column")||g.closest(".e-con.e-child")||g.closest(".e-con");}'
-                    . 'function fit(){var m=window.matchMedia("(max-width:767px)").matches;'
-                    . 'document.querySelectorAll(".wag-card").forEach(function(c){var col=colOf(c);if(!col)return;'
-                    . 'if(m){col.style.minHeight="0";col.style.height="auto";}else{col.style.minHeight="";col.style.height="";}});}'
-                    . 'var t;function later(){clearTimeout(t);t=setTimeout(fit,60);}'
+                    . 'function cols(row){return Array.prototype.filter.call(row.children,function(x){'
+                    . 'return x.matches&&(x.matches(".elementor-column")||x.matches(".e-con.e-child")||x.matches(".e-con"));});}'
+                    . 'function apply(){var n=window.matchMedia("(max-width:"+BP+"px)").matches;'
+                    . 'document.querySelectorAll(".wag-card").forEach(function(c){var col=colOf(c);if(!col||!col.parentElement)return;'
+                    . 'var row=col.parentElement,cs=cols(row);if(cs.length<2)return;'
+                    . 'if(n){row.style.flexDirection="column";row.style.flexWrap="nowrap";'
+                    . 'cs.forEach(function(x){x.style.width="100%";x.style.maxWidth="100%";x.style.flexBasis="100%";x.style.minHeight="0";});}'
+                    . 'else{row.style.flexDirection="";row.style.flexWrap="";'
+                    . 'cs.forEach(function(x){x.style.width="";x.style.maxWidth="";x.style.flexBasis="";x.style.minHeight="";});}});}'
+                    . 'var t;function later(){clearTimeout(t);t=setTimeout(apply,60);}'
                     . 'window.addEventListener("resize",later);'
-                    . 'if(document.readyState!=="loading"){fit();}else{document.addEventListener("DOMContentLoaded",fit);}'
-                    . 'window.addEventListener("load",function(){fit();setTimeout(fit,400);});})();</script>';
+                    . 'if(document.readyState!=="loading"){apply();}else{document.addEventListener("DOMContentLoaded",apply);}'
+                    . 'window.addEventListener("load",function(){apply();setTimeout(apply,400);});})();</script>';
             }
         }
     }
