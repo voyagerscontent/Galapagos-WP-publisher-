@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.4
+ * Version:     0.4.5
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1971,15 +1971,25 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-info-frame{display:block;width:100%;border-radius:14px;overflow:hidden}
               {{WRAPPER}} .ifs-info-frame img{width:100%;height:auto;display:block}
               {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
-              @media(max-width:760px){{{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}{{WRAPPER}} .ifs-tbl{margin:14px 16px 20px}}
-              /* Tablet & phone: stack the row and keep content within the screen. */
-              @media(max-width:1024px){
-                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}
-                {{WRAPPER}} .ifs-top>*{min-width:0}
-                {{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}
+              /* Tablet & phone: rows collapse to ONE column, stacked as
+                 TITLE -> IMAGE -> TEXT with the heading centred and no truncation
+                 (same as the colour bands). Desktop (>1200px) keeps the two-column
+                 zig-zag. display:contents dissolves the text column so its
+                 title/body reorder around the image; grid-template-columns:1fr is a
+                 single-column fallback if a browser ignores the flex switch. */
+              @media(max-width:1200px){
+                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{display:flex!important;flex-direction:column!important;grid-template-columns:1fr!important;gap:16px}
+                {{WRAPPER}} .ifs-top>*{min-width:0;width:100%}
+                {{WRAPPER}} .ifs-tx{display:contents}
+                {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{order:1;text-align:center}
+                {{WRAPPER}} .ifs-top .ifs-img,{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:2;height:220px;width:100%}
+                {{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-btn{order:3}
                 {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-info{overflow-wrap:break-word}
                 {{WRAPPER}} .ifs-row img{max-width:100%;height:auto}
-                {{WRAPPER}} .ifs-tbl{overflow-x:auto;max-width:100%}
+                {{WRAPPER}} .ifs-tbl{overflow-x:auto;max-width:100%;margin:14px 16px 20px}
+                /* No truncation on small screens: show the full copy. */
+                {{WRAPPER}} .ifs.hx .ifs-body{max-height:none!important;overflow:visible!important}
+                {{WRAPPER}} .ifs.hx .ifs-body::after{display:none!important}
               }
               {{WRAPPER}} .ifs-scrollwrap{position:relative}
               {{WRAPPER}} .ifs-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
