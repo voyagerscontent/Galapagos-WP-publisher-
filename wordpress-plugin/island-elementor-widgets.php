@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.1
+ * Version:     0.4.2
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4084,21 +4084,24 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (!$wagStack) {
                 $wagStack = true;
                 echo '<script>(function(){if(window.__wagStack)return;window.__wagStack=1;var BP=1024;'
-                    . 'function colOf(w){var g=w.closest(".elementor-widget")||w;'
-                    . 'return g.closest(".elementor-column")||g.closest(".e-con.e-child")||g.closest(".e-con");}'
-                    . 'function cols(row){return Array.prototype.filter.call(row.children,function(x){'
-                    . 'return x.matches&&(x.matches(".elementor-column")||x.matches(".e-con.e-child")||x.matches(".e-con"));});}'
+                    // Walk up from the card to the real row that lays it out beside a
+                    // sibling — the first FLEX-row or multi-column GRID ancestor with 2+
+                    // children. Works regardless of Elementor class names / structure.
+                    . 'function findRow(c){var el=c;while(el&&el.parentElement&&el!==document.body){var p=el.parentElement;'
+                    . 'var cs=getComputedStyle(p),kids=p.children.length;'
+                    . 'if((cs.display==="flex"||cs.display==="inline-flex")&&cs.flexDirection.indexOf("row")===0&&kids>=2)return{row:p,grid:false};'
+                    . 'if(cs.display==="grid"){var tc=(cs.gridTemplateColumns||"").split(" ").filter(Boolean);if(tc.length>=2&&kids>=2)return{row:p,grid:true};}'
+                    . 'el=p;}return null;}'
                     . 'function apply(){var n=window.matchMedia("(max-width:"+BP+"px)").matches;'
-                    . 'document.querySelectorAll(".wag-card").forEach(function(c){var col=colOf(c);if(!col||!col.parentElement)return;'
-                    . 'var row=col.parentElement,cs=cols(row);if(cs.length<2)return;'
-                    . 'if(n){row.style.flexDirection="column";row.style.flexWrap="nowrap";'
-                    . 'cs.forEach(function(x){x.style.width="100%";x.style.maxWidth="100%";x.style.flexBasis="100%";x.style.minHeight="0";});}'
-                    . 'else{row.style.flexDirection="";row.style.flexWrap="";'
-                    . 'cs.forEach(function(x){x.style.width="";x.style.maxWidth="";x.style.flexBasis="";x.style.minHeight="";});}});}'
+                    . 'document.querySelectorAll(".wag-card").forEach(function(c){var r=c.__wr||findRow(c);if(!r)return;c.__wr=r;var row=r.row;'
+                    . 'if(n){row.setAttribute("data-wagstk","1");if(r.grid){row.style.gridTemplateColumns="1fr";}else{row.style.flexDirection="column";row.style.flexWrap="nowrap";}'
+                    . 'Array.prototype.forEach.call(row.children,function(x){x.style.width="100%";x.style.maxWidth="100%";x.style.flexBasis="100%";x.style.minHeight="0";});}'
+                    . 'else if(row.getAttribute("data-wagstk")){row.style.gridTemplateColumns="";row.style.flexDirection="";row.style.flexWrap="";'
+                    . 'Array.prototype.forEach.call(row.children,function(x){x.style.width="";x.style.maxWidth="";x.style.flexBasis="";x.style.minHeight="";});}});}'
                     . 'var t;function later(){clearTimeout(t);t=setTimeout(apply,60);}'
                     . 'window.addEventListener("resize",later);'
                     . 'if(document.readyState!=="loading"){apply();}else{document.addEventListener("DOMContentLoaded",apply);}'
-                    . 'window.addEventListener("load",function(){apply();setTimeout(apply,400);});})();</script>';
+                    . 'window.addEventListener("load",function(){apply();setTimeout(apply,500);setTimeout(apply,1200);});})();</script>';
             }
         }
     }
