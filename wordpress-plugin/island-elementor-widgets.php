@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.8
+ * Version:     0.3.9
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -339,6 +339,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'condition' => ['card_style!' => 'editorial'],
                 'selectors' => ['{{WRAPPER}} .iw2-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)'],
             ]);
+            $this->add_control('mobile_carousel', [
+                'label' => 'Mobile: swipe carousel', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'condition' => ['card_style!' => 'editorial'],
+                'description' => 'On phones, show the wildlife cards as a horizontal swipeable carousel (one card at a time, peeking the next) instead of a tall stack.',
+            ]);
             $this->add_control('reveal', [
                 'label' => 'Long text', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'expand',
                 'options' => ['expand' => 'Clamp + reveal (hover / tap)', 'full' => 'Always show full'],
@@ -492,11 +497,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .iw2-ofc .iw2-meta{color:#e6d5c4}
               {{WRAPPER}} .iw2-ofc .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
               @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:96px 1fr;gap:14px}{{WRAPPER}} .iw2-ed .iw2-num{display:none}}
+              /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). */
+              @media(max-width:767px){
+                {{WRAPPER}} .iw2-grid.iw2-carousel{display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;padding:2px 4px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+                {{WRAPPER}} .iw2-grid.iw2-carousel::-webkit-scrollbar{display:none}
+                {{WRAPPER}} .iw2-grid.iw2-carousel>*{flex:0 0 88%;scroll-snap-align:center}
+              }
             </style>';
 
             $i = 0;
             $isgrid = ($style !== 'editorial');
-            echo '<div class="iw2 ' . ($isgrid ? 'iw2-grid' : 'iw2-list') . '">';
+            $mcar = $isgrid && ($s['mobile_carousel'] ?? 'yes') === 'yes';
+            echo '<div class="iw2 ' . ($isgrid ? 'iw2-grid' : 'iw2-list') . ($mcar ? ' iw2-carousel' : '') . '">';
             foreach ($rows as $w) {
                 $i++;
                 $img = island_ew_image_src($w['image'] ?? '');
@@ -588,6 +600,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             ]);
             $this->add_control('show_detail', [
                 'label' => 'Show detail line', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            ]);
+            $this->add_control('mobile_carousel', [
+                'label' => 'Mobile: swipe carousel', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On phones, show the facts as a horizontal swipeable carousel (one card at a time, peeking the next) instead of a stacked list.',
             ]);
             $rep = new \Elementor\Repeater();
             $rep->add_control('ic', ['label' => 'Icon', 'type' => \Elementor\Controls_Manager::ICONS, 'skin' => 'inline']);
@@ -721,13 +737,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .qf-l{margin:0 0 3px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px}
               {{WRAPPER}} .qf-t{margin:0 0 3px;font-weight:700;font-size:15px;color:#3a2c22}
               {{WRAPPER}} .qf-d{margin:0;font-size:14px;line-height:1.5}
+              /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). */
+              @media(max-width:767px){
+                {{WRAPPER}} .qf-grid.qf-carousel{display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:2px 4px 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+                {{WRAPPER}} .qf-grid.qf-carousel::-webkit-scrollbar{display:none}
+                {{WRAPPER}} .qf-grid.qf-carousel>.qf-item{flex:0 0 84%;scroll-snap-align:center;border:1px solid #D3BAA3;border-radius:10px}
+                {{WRAPPER}} .qf-grid.qf-carousel>.qf-span{flex:0 0 84%;justify-content:flex-start}
+              }
             </style>';
             $cols = (int) ($s['columns'] ?? 2) ?: 2;
             $n = count($rows);
             if ($panel) {
                 echo '<div class="qf-card">';
             }
-            echo '<div class="qf-grid ' . ($panel ? 'qf-panel' : 'qf-cards') . '">';
+            $mcar = ($s['mobile_carousel'] ?? 'yes') === 'yes';
+            echo '<div class="qf-grid ' . ($panel ? 'qf-panel' : 'qf-cards') . ($mcar ? ' qf-carousel' : '') . '">';
             $overrides = is_array($s['row_icons'] ?? null) ? $s['row_icons'] : [];
             $i = 0;
             foreach ($rows as $r) {
@@ -845,6 +869,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('show_wildlife', ['label' => 'Show Key Wildlife', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->add_control('show_desc', ['label' => 'Show Description', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
             $this->add_control('show_badge', ['label' => 'Show badge', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('mobile_carousel', ['label' => 'Mobile: swipe carousel (cards)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'condition' => ['layout!' => 'table'],
+                'description' => 'On phones, show the site cards as a horizontal swipeable carousel (one card at a time, peeking the next) instead of a tall stack.']);
+            $this->add_responsive_control('intro_pad', [
+                'label' => 'Intro text padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px'],
+                'default' => ['top' => '0', 'right' => '0', 'bottom' => '0', 'left' => '0', 'unit' => 'px'],
+                'mobile_default' => ['top' => '0', 'right' => '6', 'bottom' => '0', 'left' => '6', 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .vs-intro' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}'],
+                'description' => 'Breathing room around the group intro text. Default 0 on desktop, a little on phones.',
+            ]);
             $this->end_controls_section();
 
             /* CARD */
@@ -1341,6 +1375,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .vs-intro :first-child{margin-top:0}{{WRAPPER}} .vs-intro :last-child{margin-bottom:0}
               .vs-grid{display:grid;gap:18px}
               .vs-card{background:#faf9f7;border:1px solid #D3BAA3;border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
+              /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). */
+              @media(max-width:767px){
+                {{WRAPPER}} .vs-grid.vs-carousel{display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;padding:2px 4px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+                {{WRAPPER}} .vs-grid.vs-carousel::-webkit-scrollbar{display:none}
+                {{WRAPPER}} .vs-grid.vs-carousel>.vs-card{flex:0 0 86%;scroll-snap-align:center}
+              }
               .vs-ph{position:relative;height:150px;overflow:hidden;background:repeating-linear-gradient(45deg,#e3d6c8,#e3d6c8 10px,#d8c8b8 10px,#d8c8b8 20px);display:flex;align-items:center;justify-content:center}
               .vs-img{width:100%;height:100%;object-fit:cover;display:block}
               {{WRAPPER}} .vs-noimg{color:#8a7058;font-size:13px}
@@ -1359,7 +1399,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 if ($intro) {
                     echo '<div class="vs-intro">' . wp_kses_post($intro) . '</div>';
                 }
-                echo '<div class="vs-grid">';
+                $mcar = ($s['mobile_carousel'] ?? 'yes') === 'yes';
+                echo '<div class="vs-grid' . ($mcar ? ' vs-carousel' : '') . '">';
                 foreach ($grows as $r) {
                     echo $this->card($r, $s);
                 }
