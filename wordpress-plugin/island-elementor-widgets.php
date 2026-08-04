@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.3.9
+ * Version:     0.4.0
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1963,6 +1963,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-info-frame img{width:100%;height:auto;display:block}
               {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
               @media(max-width:760px){{{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}{{WRAPPER}} .ifs-tbl{margin:14px 16px 20px}}
+              /* Tablet & phone: stack the row and keep content within the screen. */
+              @media(max-width:1024px){
+                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr!important}
+                {{WRAPPER}} .ifs-top>*{min-width:0}
+                {{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:0}
+                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-info{overflow-wrap:break-word}
+                {{WRAPPER}} .ifs-row img{max-width:100%;height:auto}
+                {{WRAPPER}} .ifs-tbl{overflow-x:auto;max-width:100%}
+              }
               {{WRAPPER}} .ifs-scrollwrap{position:relative}
               {{WRAPPER}} .ifs-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
               {{WRAPPER}} .ifs-scroll::-webkit-scrollbar{width:8px}
@@ -2313,6 +2322,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl tbody tr:nth-child(even){background:#F5EEE4}
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
               @media(max-width:760px){{{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important}{{WRAPPER}} .ifb-image.rev .ifb-img{order:0}{{WRAPPER}} .ifb-image.stick .ifb-img{position:static!important}{{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}}
+              /* Tablet & phone: stack the image/text band and never let content
+                 overflow the screen (the 2-column band was still side by side at
+                 tablet widths, pushing the text off-screen). */
+              @media(max-width:1024px){
+                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr!important;gap:20px}
+                {{WRAPPER}} .ifb-image>*{min-width:0}
+                {{WRAPPER}} .ifb-image.rev .ifb-img{order:0}
+                {{WRAPPER}} .ifb-image.stick .ifb-img{position:static!important}
+                {{WRAPPER}} .ifb-tx{min-width:0}
+                {{WRAPPER}} .ifb-title,{{WRAPPER}} .ifb-body{overflow-wrap:break-word}
+                {{WRAPPER}} .ifb img{max-width:100%;height:auto}
+                {{WRAPPER}} .ifb .ifs-tbl{overflow-x:auto;max-width:100%}
+                {{WRAPPER}} .ifb-iconrow{grid-template-columns:1fr}
+              }
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
             // It cycles across the sections in order. A row MAY still override
