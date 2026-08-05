@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.22
+ * Version:     0.4.23
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4870,16 +4870,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             echo '<style>
               {{WRAPPER}}.elementor-widget.elementor-element{width:100%!important;max-width:100%!important;flex-grow:1!important;flex-shrink:0!important;align-self:stretch!important}
-              {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:320px 1fr;gap:40px;align-items:start}
+              /* MOBILE-FIRST: base = single column (glance stacks above the
+                 features). Desktop 2-col rail is layered at min-width below, so a
+                 stripped media query degrades to the safe stacked layout instead
+                 of a crushed 2-col grid. */
+              {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:1fr;gap:26px}
               {{WRAPPER}} .wgf.wgf-solo{display:block!important;width:100%}
               {{WRAPPER}} .wgf-solo .wgf-col{width:100%}
               {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0;width:100%}
               {{WRAPPER}} .wgf-solo .wgf-fade{display:none}
-              {{WRAPPER}} .wgf-solo .wgf-feats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;width:100%}
+              {{WRAPPER}} .wgf-solo .wgf-feats{display:grid!important;grid-template-columns:1fr;gap:20px;align-items:start;width:100%}
               {{WRAPPER}} .wgf-solo .wgf-feats .wgf-feat.wtab{grid-column:1/-1}
               {{WRAPPER}} .wgf-solo .wgf-feat{grid-template-columns:1fr!important;min-width:0}
               {{WRAPPER}} .wgf-solo .wgf-feat .wgf-media{order:-1;min-height:170px}
-              @media(max-width:820px){{{WRAPPER}} .wgf-solo .wgf-feats{grid-template-columns:1fr}}
               {{WRAPPER}} .wgf-glance{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:18px;box-shadow:0 16px 44px rgba(60,40,25,.14);padding:24px 26px;align-self:start}
               {{WRAPPER}} .wgf-eyebrow{display:block;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:700;color:#a07a44;margin:0 0 14px}
               {{WRAPPER}} .wgf-badge{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12px;padding:6px 13px;border-radius:999px;border:1px solid transparent}
@@ -4899,15 +4902,22 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-scroll::-webkit-scrollbar-thumb{background:#c8ad82;border-radius:999px}
               {{WRAPPER}} .wgf-scroll::-webkit-scrollbar-track{background:transparent}
               {{WRAPPER}} .wgf-feats{display:flex;flex-direction:column;gap:18px}
-              {{WRAPPER}} .wgf-feat{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:16px;box-shadow:0 10px 26px rgba(60,40,25,.10);overflow:hidden;display:grid;grid-template-columns:1.3fr 1fr}
-              {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
+              /* MOBILE-FIRST: card is a single column by default; the 2-col
+                 image/text split is layered at min-width below. min-width:0 lets
+                 the card shrink so a wide table scrolls INSIDE .wgf-tbl instead of
+                 stretching the card past the viewport. */
+              {{WRAPPER}} .wgf-feat{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:16px;box-shadow:0 10px 26px rgba(60,40,25,.10);overflow:hidden;display:grid;grid-template-columns:1fr;min-width:0}
+              {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr}
               {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr!important}
-              {{WRAPPER}} .wgf-tx{padding:22px 24px;display:flex;flex-direction:column;justify-content:center}
+              {{WRAPPER}} .wgf-tx{padding:22px 24px;display:flex;flex-direction:column;justify-content:center;min-width:0}
               {{WRAPPER}} .wgf-feat.rev .wgf-tx{order:2}
               {{WRAPPER}} .wgf-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a07a44;font-weight:700;margin:0 0 8px}
               {{WRAPPER}} .wgf-feat h3{margin:0 0 9px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;line-height:1.2;color:#5A3D2B}
               {{WRAPPER}} .wgf-body{margin:0;color:#3A2A1E;font-size:14px;line-height:1.6}{{WRAPPER}} .wgf-body p{margin:0 0 10px}{{WRAPPER}} .wgf-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .wgf-tbl{margin:12px 0;border:1px solid rgba(90,61,43,.14);border-radius:12px;overflow-x:auto}
+              {{WRAPPER}} .wgf-tbl{margin:12px 0;max-width:100%;border:1px solid rgba(90,61,43,.14);border-radius:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
+              {{WRAPPER}} .wgf-tbl::-webkit-scrollbar{height:8px}
+              {{WRAPPER}} .wgf-tbl::-webkit-scrollbar-thumb{background:#c8ad82;border-radius:999px}
+              {{WRAPPER}} .wgf-tbl::-webkit-scrollbar-track{background:transparent}
               {{WRAPPER}} .wgf-tbl table{border-collapse:collapse;width:100%;min-width:480px;font-size:13px}
               {{WRAPPER}} .wgf-tbl th,{{WRAPPER}} .wgf-tbl td{border:1px solid rgba(90,61,43,.12);padding:8px 10px;text-align:left;vertical-align:top;color:#3A2A1E}
               {{WRAPPER}} .wgf-tbl thead th{background:rgba(90,61,43,.06);font-weight:700}
@@ -4943,7 +4953,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-info-cap{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:#7a6a5c}
               {{WRAPPER}} .wgf-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--wgf-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
               {{WRAPPER}} .wgf-col.is-of .wgf-fade{opacity:1}
-              @media(max-width:820px){{{WRAPPER}} .wgf{grid-template-columns:1fr}{{WRAPPER}} .wgf-scroll{max-height:none!important;overflow:visible;padding-right:0}{{WRAPPER}} .wgf-fade{display:none}{{WRAPPER}} .wgf-feat,{{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr}{{WRAPPER}} .wgf-feat.rev .wgf-media{order:0}}
+              /* DESKTOP (>=821px): layer the 2-col rail + 2-col feature cards on
+                 top of the mobile-first base. Matches the JS breakpoint (<=820 is
+                 mobile). Solo (no glance) fans the features into 2 columns. */
+              @media(min-width:821px){
+                {{WRAPPER}} .wgf{grid-template-columns:320px 1fr;gap:40px;align-items:start}
+                {{WRAPPER}} .wgf-feat{grid-template-columns:1.3fr 1fr}
+                {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
+                {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr!important}
+                {{WRAPPER}} .wgf-solo .wgf-feats{grid-template-columns:repeat(2,minmax(0,1fr))}
+              }
             </style>';
 
             // When the page has no At a Glance data, the features take the full
