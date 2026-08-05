@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.13
+ * Version:     0.4.14
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -93,6 +93,34 @@ if (!function_exists('island_ew_image_src')) {
             return wp_get_attachment_image_url((int) $img, $size) ?: '';
         }
         return is_string($img) ? $img : '';            // Return Format: Image URL
+    }
+}
+
+/**
+ * Shared MOBILE clamp + tappable arrow used by the feature-section bands, rows and
+ * the wildlife cards. Prints once per page (JS-guarded). On phones/tablets it clamps
+ * ONLY the text that actually overflows, injects an arrow, and toggles a PERSISTENT
+ * `.is-open` class on tap (it does not close while scrolling). Desktop is untouched.
+ */
+if (!function_exists('island_ew_clip_script')) {
+    function island_ew_clip_script()
+    {
+        echo '<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;'
+            . 'var mq=window.matchMedia("(max-width:1366px)");'
+            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"]];'
+            . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b);});});}'
+            . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-label","Ver mas o menos");a.setAttribute("aria-expanded","false");a.innerHTML="<span class=\"ic-more-ic\">▾</span>";'
+            . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");});it.__more=a;return a;}'
+            . 'function refresh(){var m=mq.matches;each(function(it,b){var a=it.__more;'
+            . 'if(!m){it.classList.remove("clip-m");if(a)a.style.display="none";return;}'
+            . 'it.classList.add("clip-m");'
+            . 'var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+2;'
+            . 'if(over){ensure(it,b).style.display="";}else{it.classList.remove("clip-m");if(a)a.style.display="none";}});}'
+            . 'function run(){refresh();setTimeout(refresh,400);setTimeout(refresh,1200);}'
+            . 'if(document.readyState!=="loading")run();else document.addEventListener("DOMContentLoaded",run);'
+            . 'window.addEventListener("load",run);'
+            . 'var t;window.addEventListener("resize",function(){clearTimeout(t);t=setTimeout(refresh,200);});'
+            . '})();</script>';
     }
 }
 
@@ -471,6 +499,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  always show the whole description. The paragraph clamp (with its fade and
                  hover/tap expand) is layered back on only on desktop, below. */
               {{WRAPPER}} .iw2-desc.clip{position:relative}
+              /* MOBILE clamp + tappable arrow (added by JS as .clip-m on the card only
+                 when its description overflows). Tapping the arrow toggles .is-open,
+                 which persists while scrolling. Desktop keeps its hover clamp above. */
+              {{WRAPPER}} .rev.clip-m .iw2-desc{position:relative;max-height:calc(var(--tl,3) * 1.62em);overflow:hidden}
+              {{WRAPPER}} .rev.clip-m .iw2-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none}
+              {{WRAPPER}} .rev.clip-m.is-open .iw2-desc{max-height:none}
+              {{WRAPPER}} .rev.clip-m.is-open .iw2-desc::after{opacity:0}
+              {{WRAPPER}} .ic-more{display:none}
+              {{WRAPPER}} .rev.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-top:10px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;cursor:pointer;opacity:.85}
+              {{WRAPPER}} .ic-more-ic{font-size:21px;line-height:1;transition:transform .25s ease}
+              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
               {{WRAPPER}} .rev{cursor:pointer}
               {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:9px 0 0;font-size:13px;color:#5a4636}{{WRAPPER}} .iw2-meta li{margin:0 0 2px}
               {{WRAPPER}} .iw2-btn{align-self:flex-start;display:inline-block;color:#64402c;background:transparent;border:1px solid #D3BAA3;font-weight:600;text-decoration:none;font-size:13px;margin-top:12px;padding:7px 14px;border-radius:6px}
@@ -561,7 +600,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '</div>';
             // Mobile / click: tap a card to toggle its expanded state (bound once).
             echo '<script>if(!window.__iw2tap){window.__iw2tap=1;document.addEventListener("click",function(e){'
-                . 'if(e.target.closest(".iw2 a"))return;var c=e.target.closest(".iw2 .rev");if(c)c.classList.toggle("is-open");});}</script>';
+                . 'if(e.target.closest(".iw2 a")||e.target.closest(".ic-more"))return;var c=e.target.closest(".iw2 .rev");if(c)c.classList.toggle("is-open");});}</script>';
+            island_ew_clip_script();  // shared mobile clamp + tappable arrow
         }
     }
 
@@ -1959,6 +1999,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e;text-align:center}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C;text-align:center}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
+              /* MOBILE clamp + tappable arrow (added by JS as .clip-m only when the
+                 body overflows). Tapping the arrow toggles .is-open, which persists
+                 while scrolling. Desktop keeps its hover clamp (min-width block). */
+              {{WRAPPER}} .ifs-row.clip-m .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden}
+              {{WRAPPER}} .ifs-row.clip-m .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none}
+              {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body{max-height:none}
+              {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body::after{opacity:0}
+              {{WRAPPER}} .ic-more{display:none}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;margin-top:12px;padding:0;border:1px solid #64402C;border-radius:50%;background:transparent;color:#64402C;cursor:pointer;opacity:.85}
+              {{WRAPPER}} .ic-more-ic{font-size:22px;line-height:1;transition:transform .25s ease}
+              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
               /* The .ifs.hx hover-clamp (shorten long copy, expand on hover) needs a
                  mouse, so it lives in the desktop @media(min-width:1367px) block below.
                  Mobile therefore always shows the full text — no truncation. */
@@ -2126,12 +2177,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // MUST print right after the .ifs container: it binds via
             // currentScript.previousElementSibling, so nothing may sit between.
             if ($hx) {
+                // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
+                // script (touchstart removed — it toggled while scrolling).
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
                     . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".ifs-row").forEach(function(c){'
                     . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
-                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
             }
+            island_ew_clip_script();  // shared mobile clamp + tappable arrow
             // Lightbox assets come AFTER the hover script so they don't break the
             // previousElementSibling lookup above.
             if ($info_any) {
@@ -2329,6 +2382,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:var(--t-title)}
               {{WRAPPER}} .ifb-body{font-size:15px;line-height:1.7;color:var(--t-body)}
               {{WRAPPER}} .ifb-body p{margin:0 0 12px}{{WRAPPER}} .ifb-body :last-child{margin-bottom:0}
+              /* MOBILE clamp + tappable arrow. JS adds .clip-m only to bands whose
+                 body actually overflows on phones/tablets, and injects the .ic-more
+                 arrow. Tapping the arrow toggles .is-open, which PERSISTS while
+                 scrolling until tapped again. Desktop keeps its hover clamp (below). */
+              {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden}
+              {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none}
+              {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body{max-height:none}
+              {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body::after{opacity:0}
+              {{WRAPPER}} .ic-more{display:none}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;margin-top:12px;padding:0;border:1px solid var(--t-title);border-radius:50%;background:transparent;color:var(--t-title);cursor:pointer;opacity:.85}
+              {{WRAPPER}} .ic-more-ic{font-size:22px;line-height:1;transition:transform .25s ease}
+              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
               /* The .ifb.hx hover-clamp (shorten long copy, expand on hover) needs a
                  mouse, so it lives in the desktop @media(min-width:1367px) block below.
                  Mobile therefore always shows the full text — no truncation. */
@@ -2343,12 +2408,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:left;margin:0 14px 8px 0}
               {{WRAPPER}} .ifb-inner>.ifb-tx::after{content:"";display:block;clear:both}
               {{WRAPPER}} .ifb-img{width:100%;height:220px;min-height:220px;margin:0 0 16px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
-              /* MOBILE-FIRST icon band: icon floats beside the heading and the body
-                 text flows FULL WIDTH below it (not trapped in a narrow column). The
-                 desktop two-column icon+text grid is restored in the min-width block. */
-              {{WRAPPER}} .ifb-iconrow{display:block}
-              {{WRAPPER}} .ifb-iconrow .ifb-ic{float:left;margin:0 16px 10px 0}
-              {{WRAPPER}} .ifb-iconrow::after{content:"";display:block;clear:both}
+              /* MOBILE-FIRST icon band: icon + heading share the top row (so every
+                 title line stays aligned in the column beside the icon) and the body
+                 text spans the FULL WIDTH below. Desktop restores icon-beside-all-text
+                 in the min-width block. */
+              {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;column-gap:16px;align-items:start;grid-template-areas:"ic head" "body body"}
+              {{WRAPPER}} .ifb-iconrow .ifb-ic{grid-area:ic}
+              {{WRAPPER}} .ifb-iconrow .ifb-head{grid-area:head;align-self:center}
+              {{WRAPPER}} .ifb-iconrow .ifb-tx{grid-area:body;min-width:0}
               {{WRAPPER}} .ifb-ic{display:flex;align-items:center;justify-content:center;flex:none;line-height:1;overflow:hidden}
               {{WRAPPER}} .ifb-ic-img{width:62%;height:62%;object-fit:contain;display:block}
               {{WRAPPER}} .ifb-ic-mask{background-color:currentColor;-webkit-mask:var(--ic-mask) center/contain no-repeat;mask:var(--ic-mask) center/contain no-repeat}
@@ -2378,8 +2445,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  mobile-first single column. Additive — if a CSS optimiser strips this
                  block, the page keeps the safe single-column layout. */
               @media(min-width:1367px){
-                {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
-                {{WRAPPER}} .ifb-iconrow .ifb-ic{float:none;margin:0}
+                {{WRAPPER}} .ifb-iconrow{column-gap:20px;grid-template-areas:"ic head" "ic body"}
+                {{WRAPPER}} .ifb-iconrow .ifb-head{align-self:end}
                 {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;grid-template-rows:auto auto;column-gap:32px;align-items:center}
                 {{WRAPPER}} .ifb-image .ifb-head{grid-column:2;grid-row:1;align-self:end;margin:0}
                 {{WRAPPER}} .ifb-image .ifb-tx{grid-column:2;grid-row:2;align-self:start;min-width:0}
@@ -2495,9 +2562,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo '<div class="ifb-tx">' . $body . $btn . '</div>';
                     echo '</div>';
                 } elseif ($rl === 'icon' && $has_icon) {
+                    // Heading is a direct child so icon + title sit in one clean row
+                    // (every title line aligned in the column beside the icon) and the
+                    // body flows full-width below on mobile.
                     echo '<div class="ifb-iconrow">';
                     echo '<div class="ifb-ic">' . $icon_inner . '</div>';
-                    echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
+                    echo '<div class="ifb-head">' . $head . '</div>';
+                    echo '<div class="ifb-tx">' . $body . $btn . '</div>';
                     echo '</div>';
                 } else {
                     // Plain single-column text band. Reached by the 'table' layout
@@ -2568,12 +2639,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // currentScript.previousElementSibling, so it MUST print right after
             // the .ifb container with nothing in between.
             if ($hx) {
+                // Desktop hover only. The mobile tap-to-expand is handled by the
+                // shared clip/arrow script below (touchstart used to fire on scroll,
+                // which collapsed the text while scrolling — that is now removed).
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
                     . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".ifb-band").forEach(function(c){'
                     . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
-                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
             }
+            island_ew_clip_script();  // shared mobile clamp + tappable arrow
         }
     }
 
