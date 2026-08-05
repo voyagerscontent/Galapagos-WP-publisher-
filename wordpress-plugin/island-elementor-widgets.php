@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.10
+ * Version:     0.4.11
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2321,16 +2321,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:var(--t-title)}
               {{WRAPPER}} .ifb-body{font-size:15px;line-height:1.7;color:var(--t-body)}
               {{WRAPPER}} .ifb-body p{margin:0 0 12px}{{WRAPPER}} .ifb-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
-              {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body{max-height:var(--open,1200px)}
-              {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
-              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{transition:none}{{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{transition:none}}
-              {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;gap:32px;align-items:center}
-              {{WRAPPER}} .ifb-image.stick{align-items:start}
-              {{WRAPPER}} .ifb-image.stick .ifb-img{position:sticky;top:26px;align-self:start}
-              {{WRAPPER}} .ifb-image.rev .ifb-img{order:2}
-              {{WRAPPER}} .ifb-img{height:300px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
+              /* The .ifb.hx hover-clamp (shorten long copy, expand on hover) needs a
+                 mouse, so it lives in the desktop @media(min-width:1367px) block below.
+                 Mobile therefore always shows the full text — no truncation. */
+              /* MOBILE-FIRST: image bands default to a SINGLE column (no media query),
+                 so the mobile layout applies even if a CSS optimiser strips media
+                 queries. Stacks TITLE -> FULL-WIDTH IMAGE -> TEXT. The two-column
+                 desktop layout is layered on via @media(min-width:1367px) below. */
+              {{WRAPPER}} .ifb-image{display:block}
+              {{WRAPPER}} .ifb-image .ifb-head{margin:0 0 14px}
+              {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{text-align:center}
+              {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:center}
+              {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:left;margin:0 14px 8px 0}
+              {{WRAPPER}} .ifb-inner>.ifb-tx::after{content:"";display:block;clear:both}
+              {{WRAPPER}} .ifb-img{width:100%;height:220px;min-height:220px;margin:0 0 16px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
               {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
               {{WRAPPER}} .ifb-ic{display:flex;align-items:center;justify-content:center;flex:none;line-height:1;overflow:hidden}
               {{WRAPPER}} .ifb-ic-img{width:62%;height:62%;object-fit:contain;display:block}
@@ -2353,34 +2357,29 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-tbl tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E}
               {{WRAPPER}} .ifs-tbl tbody tr:nth-child(even){background:#F5EEE4}
               {{WRAPPER}} .ifs-tbl td:first-child{font-weight:700;color:#64402C}
-              /* Tablet & phone: every band collapses to ONE column. Image bands
-                 stack as TITLE -> IMAGE -> TEXT with the heading centred; icon
-                 sections keep the icon beside the text; nothing is truncated.
-                 Desktop (>1366px) is untouched. display:block (not grid, flex, or
-                 display:contents) is plain block flow that physically cannot split
-                 into two columns or strand the title: the image sits on top, then
-                 the centred heading, then the text. */
-              @media(max-width:1366px){
-                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{display:block!important;grid-template-columns:1fr!important}
-                {{WRAPPER}} .ifb-image .ifb-tx{display:block!important;min-width:0}
-                {{WRAPPER}} .ifb-image .ifb-img{position:static!important;height:220px;width:100%;margin:0 0 16px;display:block}
-                {{WRAPPER}} .ifb-title,{{WRAPPER}} .ifb-body{overflow-wrap:break-word}
-                {{WRAPPER}} .ifb img{max-width:100%;height:auto}
-                {{WRAPPER}} .ifb .ifs-tbl{overflow-x:auto;max-width:100%}
-                /* Centre the band headings. Image bands + plain text bands centre
-                   their eyebrow/title; bands with an icon keep it beside the text
-                   (left-aligned) so the icon+title never look detached. */
-                {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{text-align:center}
-                {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:center}
-                /* No truncation on small screens: show the full copy. */
-                {{WRAPPER}} .ifb.hx .ifb-body{max-height:none!important;overflow:visible!important}
-                {{WRAPPER}} .ifb.hx .ifb-body::after{display:none!important}
-                /* Icon sections keep the icon on the SAME line as the text. The
-                   grid layout (.ifb-iconrow) already does; the table/plain layout
-                   puts its icon inline via a float so it sits beside the title. */
-                {{WRAPPER}} .ifb-iconrow{grid-template-columns:auto 1fr!important;align-items:start;gap:14px}
-                {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:left;margin:0 14px 8px 0}
-                {{WRAPPER}} .ifb-inner>.ifb-tx::after{content:"";display:block;clear:both}
+              {{WRAPPER}} .ifb-title,{{WRAPPER}} .ifb-body{overflow-wrap:break-word}
+              {{WRAPPER}} .ifb img{max-width:100%;height:auto}
+              {{WRAPPER}} .ifb .ifs-tbl{overflow-x:auto;max-width:100%}
+              /* DESKTOP ONLY (min-width:1367px): layer the two-column image band, the
+                 left-aligned headings, sticky image and the hover-clamp on top of the
+                 mobile-first single column. Additive — if a CSS optimiser strips this
+                 block, the page keeps the safe single-column layout. */
+              @media(min-width:1367px){
+                {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;grid-template-rows:auto auto;column-gap:32px;align-items:center}
+                {{WRAPPER}} .ifb-image .ifb-head{grid-column:2;grid-row:1;align-self:end;margin:0}
+                {{WRAPPER}} .ifb-image .ifb-tx{grid-column:2;grid-row:2;align-self:start;min-width:0}
+                {{WRAPPER}} .ifb-image .ifb-img{grid-column:1;grid-row:1 / 3;align-self:center;width:auto;height:300px;margin:0}
+                {{WRAPPER}} .ifb-image.rev .ifb-img{grid-column:2}
+                {{WRAPPER}} .ifb-image.rev .ifb-head,{{WRAPPER}} .ifb-image.rev .ifb-tx{grid-column:1}
+                {{WRAPPER}} .ifb-image.stick{align-items:start}
+                {{WRAPPER}} .ifb-image.stick .ifb-img{position:sticky;top:26px;align-self:start}
+                {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{text-align:left}
+                {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:left}
+                {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:none;margin:0 0 14px}
+                {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
+                {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
+                {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body{max-height:var(--open,1200px)}
+                {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
               }
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
@@ -2472,9 +2471,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '<section class="ifb-band ifb-' . $tone . $bleed . '" style="' . esc_attr($sec_style) . '"' . $tabidx . '><div class="ifb-inner">';
                 if ($rl === 'image' && $img) {
                     $stick = ($s['bd_img_sticky'] ?? 'yes') === 'yes' ? ' stick' : '';
+                    // Heading, image and body are direct children so the desktop
+                    // grid can place image-left / text-right while the mobile-first
+                    // default stacks TITLE -> FULL-WIDTH IMAGE -> TEXT.
                     echo '<div class="ifb-image' . $rev . $stick . '">';
+                    echo '<div class="ifb-head">' . $head . '</div>';
                     echo '<div class="ifb-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
-                    echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
+                    echo '<div class="ifb-tx">' . $body . $btn . '</div>';
                     echo '</div>';
                 } elseif ($rl === 'icon' && $has_icon) {
                     echo '<div class="ifb-iconrow">';
