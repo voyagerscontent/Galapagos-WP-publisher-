@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.18
+ * Version:     0.4.19
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -870,7 +870,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 // In panel mode, a lone item on the last row spans + centers.
                 $span = $panel && $i === $n && ($n % $cols) === 1 && $cols > 1;
                 echo '<div class="qf-item' . ($span ? ' qf-span' : '') . '">';
-                echo '<span class="qf-ic">' . $glyph . '</span>';
+                // TEMP DIAGNOSTIC: exposes what the server sees for this row's icon so
+                // an empty circle can be traced (raw ACF value, its type, resolved URL).
+                $qf_dbg = wp_json_encode([
+                    'raw' => $r['icon'] ?? null,
+                    'type' => gettype($r['icon'] ?? null),
+                    'src' => island_ew_image_src($r['icon'] ?? ''),
+                    'fa' => $r['icon_fa'] ?? null,
+                    'recolor' => $s['icon_recolor'] ?? null,
+                ]);
+                echo '<span class="qf-ic" data-qfdbg="' . esc_attr($qf_dbg) . '">' . $glyph . '</span>';
                 echo '<div class="qf-tx">';
                 echo '<p class="qf-l">' . esc_html($r['label'] ?? '') . '</p>';
                 echo '<p class="qf-t">' . esc_html($title) . '</p>';
