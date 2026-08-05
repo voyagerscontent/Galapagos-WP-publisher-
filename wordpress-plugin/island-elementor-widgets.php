@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.26
+ * Version:     0.4.27
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4917,7 +4917,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr!important}
               {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr!important}
               {{WRAPPER}} .wgf-tx{padding:22px 24px;display:flex;flex-direction:column;justify-content:center;min-width:0}
-              {{WRAPPER}} .wgf-feat.rev .wgf-tx{order:2}
+              {{WRAPPER}} .wgf.is-wide:not(.wgf-solo) .wgf-feat.rev .wgf-tx{order:2}
               {{WRAPPER}} .wgf-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#a07a44;font-weight:700;margin:0 0 8px}
               {{WRAPPER}} .wgf-feat h3{margin:0 0 9px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;line-height:1.2;color:#5A3D2B}
               {{WRAPPER}} .wgf-body{margin:0;color:#3A2A1E;font-size:14px;line-height:1.6}{{WRAPPER}} .wgf-body p{margin:0 0 10px}{{WRAPPER}} .wgf-body :last-child{margin-bottom:0}
@@ -4948,7 +4948,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .wgf-feat.clip-m .ic-more:hover{text-decoration:underline}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
-              {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
+              /* MOBILE: image always on TOP of each card (title/text below). The
+                 desktop 2-col ordering is restored under .is-wide (glance mode). */
+              {{WRAPPER}} .wgf-feat .wgf-media{order:-1}
+              {{WRAPPER}} .wgf.is-wide:not(.wgf-solo) .wgf-feat .wgf-media{order:0}
+              {{WRAPPER}} .wgf.is-wide:not(.wgf-solo) .wgf-feat.rev .wgf-media{order:1}
               {{WRAPPER}} .wgf-info{grid-column:1/-1;margin-top:14px;order:3}
               {{WRAPPER}} .wgf-info-title{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:16px;color:#64402C}
               /* Controlled-height banner (cropped preview) with a View full
