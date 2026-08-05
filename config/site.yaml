@@ -53,6 +53,11 @@ defaults:
   status: "draft"          # draft | pending | publish
   comment_status: "closed"
   ping_status: "closed"
+  # This site publishes PAGES. Force every upload to a WordPress page unless the
+  # doc explicitly declares its own `post_type` — so a doc the heuristic routes
+  # to a post-typed profile (tour/cruise/blog_post) still lands as a page, not a
+  # post. Set to "" to fall back to each template's own post_type.
+  post_type: "page"
 
 routing:
   # Auto page-type by the canonical URL's first path segment. Leave the CLI
@@ -70,3 +75,9 @@ routing:
     islands: destination
     cruises: informative
     galapagos-cruises: informative
+  # Fallback page-type when a doc declares no type, matches no URL section, and
+  # scores no strong heuristic signal. This site publishes PAGES, so undetected
+  # docs default to `informative` (post_type: page) instead of the engine's
+  # built-in `blog_post` (post_type: post) — otherwise a plain guide uploaded
+  # via the n8n form would land as a WordPress post, not a page.
+  default_type: informative

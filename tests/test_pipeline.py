@@ -31,7 +31,9 @@ def test_build_page_basic_fields():
     doc = read_file(SAMPLE)
     page, template, _reason = build_page(doc, _ctx())
     assert template.key == "cruise"
-    assert page.post_type == "post"
+    # This site sets defaults.post_type = page, which overrides the cruise
+    # template's own post_type so every upload publishes as a WordPress page.
+    assert page.post_type == "page"
     assert page.slug.startswith("8-day-galapagos-cruise")
     assert page.status == "draft"
     assert "Galapagos Cruises" in page.categories

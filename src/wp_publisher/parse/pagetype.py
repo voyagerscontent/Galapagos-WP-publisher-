@@ -115,8 +115,15 @@ def detect_page_type(
     doc: Document,
     registry: TemplateRegistry,
     url_sections: dict | None = None,
+    default_type: str | None = None,
 ) -> tuple[str, str]:
-    """Return (template_key, reason)."""
+    """Return (template_key, reason).
+
+    ``default_type`` is the site-configured fallback (site.yaml
+    ``routing.default_type``) used when nothing else matches. It exists so a
+    pages-based site can default undetected docs to a page-type profile
+    (e.g. ``informative``) instead of the built-in ``blog_post`` (a WP post).
+    """
     # 0) Canonical URL section (authoritative placement): a doc under /wildlife/
     #    is a wildlife page, /islands/ a destination, etc. Configured per site in
     #    site.yaml routing.url_sections, so each URL section carries its own
@@ -167,6 +174,14 @@ def detect_page_type(
         if scores[best] > 0:
             return best, f"matched signals (score {scores[best]:.1f})"
 
-    # 3) Safe default.
+    # 3) Safe default. Prefer the site-configured default_type (mapped through
+    #    the same aliases), so a pages-based site lands undetected docs on a
+    #    page-type profile instead of the built-in blog_post (a WP post).
+    if default_type:
+        norm = str(default_type).strip().lower().replace(" ", "_")
+        key = _ALIASES.get(norm, norm)
+        if key in registry:
+            return key, f"defaulted to configured default_type '{default_type}'"
+
     fallback = "blog_post" if "blog_post" in registry else registry.keys()[0]
     return fallback, "defaulted (no strong signal)"

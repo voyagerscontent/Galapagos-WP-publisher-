@@ -36,6 +36,15 @@ class Settings:
         self.wp_default_status = os.getenv(
             "WP_DEFAULT_STATUS", self.site.get("defaults", {}).get("status", "draft")
         )
+        # Site-wide default WP object type. On a pages-based site set this to
+        # "page" so any doc that doesn't explicitly declare its own post_type is
+        # published as a PAGE — regardless of which template the heuristic picks
+        # (tour/cruise/blog_post are post-typed profiles). Empty -> fall back to
+        # the per-template post_type (engine default). A doc's own `post_type`
+        # metadata still wins over this.
+        self.wp_default_post_type = os.getenv(
+            "WP_DEFAULT_POST_TYPE", self.site.get("defaults", {}).get("post_type", "")
+        )
         author = os.getenv("WP_DEFAULT_AUTHOR_ID")
         self.wp_default_author_id = int(author) if author else None
 

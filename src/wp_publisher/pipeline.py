@@ -59,7 +59,10 @@ def build_page(
         ctx.registry.get(key)  # validate
     else:
         key, reason = detect_page_type(
-            doc, ctx.registry, ctx.settings.routing.get("url_sections")
+            doc,
+            ctx.registry,
+            ctx.settings.routing.get("url_sections"),
+            ctx.settings.routing.get("default_type"),
         )
     template = ctx.registry.get(key)
 
@@ -147,7 +150,15 @@ def build_page(
     final_status = status or template.status or settings.wp_default_status
     categories = _csv(doc.metadata.get("categories")) or list(template.categories)
     tags = _csv(doc.metadata.get("tags")) or list(template.tags)
-    post_type = _normalize_post_type(doc.metadata.get("post_type")) or template.post_type
+    # Precedence: the doc's own post_type wins; then the site-wide default
+    # (defaults.post_type / WP_DEFAULT_POST_TYPE) — set to "page" on a pages-only
+    # site so every upload lands as a PAGE even when the heuristic routes it to a
+    # post-typed profile (tour/cruise/blog_post); then the template's post_type.
+    post_type = (
+        _normalize_post_type(doc.metadata.get("post_type"))
+        or _normalize_post_type(getattr(settings, "wp_default_post_type", ""))
+        or template.post_type
+    )
 
     # Assign the WordPress page template (REST `template` field) when the profile
     # declares one, so a "Page Template == X" ACF group attaches on publish.
