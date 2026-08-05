@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.25
+ * Version:     0.4.26
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4753,10 +4753,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             /* LAYOUT */
             $this->start_controls_section('layout_s', ['label' => 'Layout', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            // These emit CSS VARIABLES only — never grid-template-columns/gap
+            // directly on .wgf. Elementor bakes control CSS into the high-specificity
+            // post-*.css file with NO media query; if this set the grid directly it
+            // would force 2 columns on every width (mobile included) and override the
+            // mobile-first base. The 2-col rail is built solely by .wgf.is-wide
+            // (JS-gated >=1025px) consuming these variables.
             $this->add_responsive_control('rail_w', ['label' => 'At a Glance width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 240, 'max' => 460]],
-                'default' => ['size' => 320, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => 'grid-template-columns:{{SIZE}}{{UNIT}} 1fr']]);
+                'default' => ['size' => 320, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => '--wgf-rail:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('gap', ['label' => 'Column gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 12, 'max' => 80]],
-                'default' => ['size' => 40, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => 'gap:{{SIZE}}{{UNIT}}']]);
+                'default' => ['size' => 40, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf' => '--wgf-gap:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('feat_gap', ['label' => 'Feature card gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 8, 'max' => 48]],
                 'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-feats' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_control('min_h', ['label' => 'Minimum scroll height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 320, 'min' => 200,
@@ -4790,10 +4796,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('feat_pad', ['label' => 'Card padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px'],
                 'default' => ['top' => 22, 'right' => 24, 'bottom' => 22, 'left' => 24, 'unit' => 'px', 'isLinked' => false],
                 'selectors' => ['{{WRAPPER}} .wgf-tx' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            // Variable only (see rail_w note): the 2-col card split is applied by
+            // .wgf.is-wide .wgf-feat, so mobile cards stay stacked (image over text).
             $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 60]],
                 'default' => ['size' => 43, 'unit' => '%'], 'selectors' => [
-                    '{{WRAPPER}} .wgf-feat' => 'grid-template-columns:{{SIZE}}% 1fr',
-                    '{{WRAPPER}} .wgf-feat.rev' => 'grid-template-columns:1fr {{SIZE}}%']]);
+                    '{{WRAPPER}} .wgf-feat' => '--wgf-img:{{SIZE}}%']]);
             $this->add_responsive_control('media_h', ['label' => 'Image min height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 100, 'max' => 400]],
                 'default' => ['size' => 150, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-media' => 'min-height:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
@@ -4874,7 +4881,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  features). Desktop 2-col rail is layered at min-width below, so a
                  stripped media query degrades to the safe stacked layout instead
                  of a crushed 2-col grid. */
-              {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:1fr;gap:26px}
+              {{WRAPPER}} .wgf{width:100%;box-sizing:border-box;display:grid;grid-template-columns:1fr!important;gap:26px}
               {{WRAPPER}} .wgf.wgf-solo{display:block!important;width:100%}
               {{WRAPPER}} .wgf-solo .wgf-col{width:100%}
               {{WRAPPER}} .wgf-solo .wgf-scroll{overflow:visible;max-height:none!important;padding-right:0;width:100%}
@@ -4906,8 +4913,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  image/text split is layered at min-width below. min-width:0 lets
                  the card shrink so a wide table scrolls INSIDE .wgf-tbl instead of
                  stretching the card past the viewport. */
-              {{WRAPPER}} .wgf-feat{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:16px;box-shadow:0 10px 26px rgba(60,40,25,.10);overflow:hidden;display:grid;grid-template-columns:1fr;min-width:0}
-              {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr}
+              {{WRAPPER}} .wgf-feat{background:#FCF9F5;border:1px solid rgba(90,61,43,.16);border-radius:16px;box-shadow:0 10px 26px rgba(60,40,25,.10);overflow:hidden;display:grid;grid-template-columns:1fr!important;min-width:0}
+              {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr!important}
               {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr!important}
               {{WRAPPER}} .wgf-tx{padding:22px 24px;display:flex;flex-direction:column;justify-content:center;min-width:0}
               {{WRAPPER}} .wgf-feat.rev .wgf-tx{order:2}
@@ -4959,9 +4966,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  rail apply on mobile. A plain class selector cannot be flattened,
                  so the base (single stacked column) holds until JS opts a wide
                  viewport (>=1025px) into the rail. See the sync() script below. */
-              {{WRAPPER}} .wgf.is-wide{grid-template-columns:320px 1fr;gap:40px;align-items:start}
-              {{WRAPPER}} .wgf.is-wide .wgf-feat{grid-template-columns:1.3fr 1fr}
-              {{WRAPPER}} .wgf.is-wide .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
+              {{WRAPPER}} .wgf.is-wide{grid-template-columns:var(--wgf-rail,320px) 1fr!important;gap:var(--wgf-gap,40px);align-items:start}
+              {{WRAPPER}} .wgf.is-wide .wgf-feat{grid-template-columns:var(--wgf-img,43%) 1fr!important}
+              {{WRAPPER}} .wgf.is-wide .wgf-feat.rev{grid-template-columns:1fr var(--wgf-img,43%)!important}
               {{WRAPPER}} .wgf.is-wide .wgf-feat.noimg{grid-template-columns:1fr!important}
               {{WRAPPER}} .wgf.is-wide.wgf-solo .wgf-feats{grid-template-columns:repeat(2,minmax(0,1fr))}
             </style>';
