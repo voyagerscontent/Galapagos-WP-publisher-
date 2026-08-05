@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.5
+ * Version:     0.4.6
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1973,11 +1973,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
               /* Tablet & phone: rows collapse to ONE column, stacked as
                  TITLE -> IMAGE -> TEXT with the heading centred and no truncation
-                 (same as the colour bands). Desktop (>1200px) keeps the two-column
+                 (same as the colour bands). Desktop (>1366px) keeps the two-column
                  zig-zag. display:contents dissolves the text column so its
                  title/body reorder around the image; grid-template-columns:1fr is a
                  single-column fallback if a browser ignores the flex switch. */
-              @media(max-width:1200px){
+              @media(max-width:1366px){
                 {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{display:flex!important;flex-direction:column!important;grid-template-columns:1fr!important;gap:16px}
                 {{WRAPPER}} .ifs-top>*{min-width:0;width:100%}
                 {{WRAPPER}} .ifs-tx{display:contents}
@@ -2343,11 +2343,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               /* Tablet & phone: every band collapses to ONE column. Image bands
                  stack as TITLE -> IMAGE -> TEXT with the heading centred; icon
                  sections keep the icon beside the text; nothing is truncated.
-                 Desktop (>1200px) is untouched. display:contents dissolves the text
+                 Desktop (>1366px) is untouched. display:contents dissolves the text
                  column so its title/body become siblings of the image and reorder;
                  grid-template-columns:1fr is a belt-and-braces single-column fallback
                  in case a browser ignores the flex switch. */
-              @media(max-width:1200px){
+              @media(max-width:1366px){
                 {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{display:flex!important;flex-direction:column!important;grid-template-columns:1fr!important;gap:16px}
                 {{WRAPPER}} .ifb-image>*{min-width:0;width:100%}
                 {{WRAPPER}} .ifb-image .ifb-tx{display:contents}
@@ -2466,17 +2466,24 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     echo '<div class="ifb-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
                     echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
                     echo '</div>';
-                } elseif ($rl === 'icon') {
+                } elseif ($rl === 'icon' && $has_icon) {
                     echo '<div class="ifb-iconrow">';
-                    echo '<div class="ifb-ic">' . ($has_icon ? $icon_inner : '&#9670;') . '</div>';
+                    echo '<div class="ifb-ic">' . $icon_inner . '</div>';
                     echo '<div class="ifb-tx">' . $head . $body . $btn . '</div>';
                     echo '</div>';
                 } else {
+                    // Plain single-column text band. Reached by the 'table' layout
+                    // and by icon-less 'icon' bands (no image, no table, no icon) —
+                    // those must NOT become a two-column icon row with a filler
+                    // diamond; they stack title -> body in one column at every width.
                     echo '<div class="ifb-tx">';
                     if ($has_icon) {
                         echo '<div class="ifb-ic ifb-ic-inline">' . $icon_inner . '</div>';
                     }
                     echo $head . $body;
+                    if ($rl === 'icon') {
+                        echo $btn;  // table bands render the button after the table (below)
+                    }
                     echo '</div>';
                 }
                 if ($segs) {
@@ -2853,7 +2860,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-btn{align-self:stretch;text-align:center;position:relative;z-index:1;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
               @media(max-width:680px){{{WRAPPER}} .icta-grid{grid-template-columns:1fr!important}}
               /* Tablet & phone: centre the "Plan Your Visit" heading + intro. */
-              @media(max-width:1200px){
+              @media(max-width:1366px){
                 {{WRAPPER}} .icta-head{text-align:center}
                 {{WRAPPER}} .icta-intro{text-align:center;margin-left:auto;margin-right:auto}
               }
