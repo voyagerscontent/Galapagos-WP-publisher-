@@ -66,6 +66,32 @@ def build_page(
         )
     template = ctx.registry.get(key)
 
+    # Pages-only site: if the heuristic auto-picked a POST-typed profile
+    # (tour/cruise/blog_post), it is the wrong template here — its ACF group and
+    # the theme's Elementor rendering target posts, so forcing it onto a page
+    # yields a page with no ACF group attached (fields don't show). Re-route to
+    # the configured page default_type (e.g. informative) so the page gets a
+    # matching ACF group + renderer. Only when auto-detected (an explicit
+    # --page-type is always honored) and only when a page default_type exists.
+    if (
+        not page_type
+        and reason.startswith("matched signals")  # heuristic guess only, never a declared/URL type
+        and _normalize_post_type(getattr(settings, "wp_default_post_type", "")) == "page"
+        and template.post_type in ("post", "posts")
+    ):
+        default_key = str(ctx.settings.routing.get("default_type") or "").strip().lower().replace(" ", "_")
+        if (
+            default_key
+            and default_key in ctx.registry
+            and ctx.registry.get(default_key).post_type in ("page", "pages")
+        ):
+            reason = (
+                f"{reason}; re-routed '{key}' (a post profile) -> '{default_key}' "
+                f"because this site publishes pages"
+            )
+            key = default_key
+            template = ctx.registry.get(key)
+
     # ACF mapping profile follows the page type (config/acf/<profile>.yaml),
     # falling back to the default config/acf.yaml.
     acf_config = ctx.acf_config or get_acf_config(template.acf_profile)
