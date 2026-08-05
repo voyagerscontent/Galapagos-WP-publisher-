@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.16
+ * Version:     0.4.17
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -87,10 +87,22 @@ if (!function_exists('island_ew_image_src')) {
             return '';
         }
         if (is_array($img)) {                         // Return Format: Image Array
-            return $img['sizes'][$size] ?? ($img['url'] ?? '');
+            // SVGs have no generated sizes; ACF may include an EMPTY-STRING 'large'
+            // key, and `??` only falls back on null — so test for a real value and
+            // fall back to the original URL.
+            $u = $img['sizes'][$size] ?? '';
+            if (!is_string($u) || $u === '') {
+                $u = $img['url'] ?? '';
+            }
+            return is_string($u) ? $u : '';
         }
         if (is_numeric($img)) {                        // Return Format: Image ID
-            return wp_get_attachment_image_url((int) $img, $size) ?: '';
+            // 'large' does not exist for SVGs (returns false); fall back to full.
+            $u = wp_get_attachment_image_url((int) $img, $size);
+            if (!$u) {
+                $u = wp_get_attachment_image_url((int) $img, 'full');
+            }
+            return $u ?: '';
         }
         return is_string($img) ? $img : '';            // Return Format: Image URL
     }
