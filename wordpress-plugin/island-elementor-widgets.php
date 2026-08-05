@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.15
+ * Version:     0.4.16
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -107,7 +107,7 @@ if (!function_exists('island_ew_clip_script')) {
     {
         echo '<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;'
             . 'var mq=window.matchMedia("(max-width:1366px)");'
-            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"]];'
+            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"],[".wts.hx .wts-item",".wts-desc"],[".wgf.hx .wgf-feat",".wgf-body"]];'
             . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b);});});}'
             . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-label","Ver mas o menos");a.setAttribute("aria-expanded","false");a.innerHTML="<span class=\"ic-more-ic\">▾</span>";'
             . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");});it.__more=a;return a;}'
@@ -757,6 +757,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
         }
 
+        // Declare Font Awesome so icons typed as FA classes (fa-solid fa-…) render —
+        // Elementor enqueues these in the head, before the widget prints, which a
+        // render-time enqueue cannot do. This is the usual cause of empty icon circles.
+        public function get_style_depends()
+        {
+            return ['elementor-icons-fa-solid', 'elementor-icons-fa-regular', 'elementor-icons-fa-brands'];
+        }
+
         protected function render()
         {
             if (!function_exists('get_field')) {
@@ -768,9 +776,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (!$rows) {
                 return;
             }
-            // Load Font Awesome so any icons typed as FA classes (fa-solid fa-…) on a
-            // page's fact rows actually render — otherwise the icon circle looks empty
-            // when the theme/page hasn't already pulled Font Awesome in.
+            // Belt-and-braces: also try to enqueue Font Awesome at render time.
             foreach (['elementor-icons-fa-solid', 'elementor-icons-fa-regular', 'elementor-icons-fa-brands'] as $fa_handle) {
                 if (wp_style_is($fa_handle, 'registered') && !wp_style_is($fa_handle, 'enqueued')) {
                     wp_enqueue_style($fa_handle);
@@ -4471,6 +4477,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts.hx .wts-item:hover .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item:focus-within .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc::after{opacity:0}
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wts.hx .wts-desc,{{WRAPPER}} .wts.hx .wts-desc::after{transition:none}}
               @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
+              /* MOBILE clamp + tappable arrow (added by JS as .clip-m per item when it
+                 overflows). Tapping the arrow toggles .is-open, which persists while
+                 scrolling. Desktop keeps its hover clamp above. */
+              {{WRAPPER}} .wts-item.clip-m .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden}
+              {{WRAPPER}} .wts-item.clip-m .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none}
+              {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none}
+              {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc::after{opacity:0}
+              {{WRAPPER}} .ic-more{display:none}
+              {{WRAPPER}} .wts-item.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-top:10px;padding:0;border:1px solid #64402C;border-radius:50%;background:transparent;color:#64402C;cursor:pointer;opacity:.85}
+              {{WRAPPER}} .ic-more-ic{font-size:21px;line-height:1;transition:transform .25s ease}
+              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). The
                  peek of the next card is the swipe affordance. */
               @media(max-width:767px){
@@ -4518,12 +4535,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // Hover / tap to expand each site's description (JS-driven so it never
             // depends on CSS :hover, which the Elementor overlay can swallow).
             if ($hx) {
+                // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
+                // script (touchstart removed — it toggled while scrolling).
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
                     . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wts-item").forEach(function(c){'
                     . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
-                    . 'c.addEventListener("touchstart",function(e){if(!e.target.closest("a"))c.classList.toggle("is-open");},{passive:true});});})();</script>';
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
             }
+            island_ew_clip_script();  // shared mobile clamp + tappable arrow
         }
     }
     } // end: Island_WhereToSee_Widget guard
@@ -4875,6 +4894,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body{max-height:var(--wgf-open,900px)}
               {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body::after{opacity:0}
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wgf.hx .wgf-body,{{WRAPPER}} .wgf.hx .wgf-body::after{transition:none}}
+              /* MOBILE clamp + tappable arrow (added by JS as .clip-m per feature when
+                 it overflows). Tapping the arrow toggles .is-open, persistent while
+                 scrolling. Desktop keeps its hover clamp above. */
+              {{WRAPPER}} .wgf-feat.clip-m .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden}
+              {{WRAPPER}} .wgf-feat.clip-m .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none}
+              {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none}
+              {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body::after{opacity:0}
+              {{WRAPPER}} .ic-more{display:none}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-top:10px;padding:0;border:1px solid #64402C;border-radius:50%;background:transparent;color:#64402C;cursor:pointer;opacity:.85}
+              {{WRAPPER}} .ic-more-ic{font-size:21px;line-height:1;transition:transform .25s ease}
+              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
               {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
               {{WRAPPER}} .wgf-info{grid-column:1/-1;margin-top:14px;order:3}
@@ -4982,13 +5012,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // toggling). Binds via previousElementSibling — must print right after
             // the .wgf.
             if ($hx) {
+                // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
+                // script (touchstart removed — it toggled while scrolling).
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
                     . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
                     . 'var tx=c.querySelector(".wgf-tx");'
                     . 'if(tx)tx.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});'
-                    . 'c.addEventListener("touchstart",function(e){if(e.target.closest("a")||e.target.closest(".wgf-info"))return;c.classList.toggle("is-open");},{passive:true});});})();</script>';
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
             }
+            island_ew_clip_script();  // shared mobile clamp + tappable arrow
 
             // Infographic lightbox — printed AFTER the hover script so it never
             // sits between .wgf and that script's previousElementSibling lookup.
