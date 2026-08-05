@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.14
+ * Version:     0.4.15
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -768,6 +768,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (!$rows) {
                 return;
             }
+            // Load Font Awesome so any icons typed as FA classes (fa-solid fa-…) on a
+            // page's fact rows actually render — otherwise the icon circle looks empty
+            // when the theme/page hasn't already pulled Font Awesome in.
+            foreach (['elementor-icons-fa-solid', 'elementor-icons-fa-regular', 'elementor-icons-fa-brands'] as $fa_handle) {
+                if (wp_style_is($fa_handle, 'registered') && !wp_style_is($fa_handle, 'enqueued')) {
+                    wp_enqueue_style($fa_handle);
+                }
+            }
             $panel = ($s['layout'] ?? 'panel') === 'panel';
             echo '<style>
               {{WRAPPER}} .qf-grid{display:grid}
@@ -780,7 +788,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .qf-ic{flex:0 0 auto;width:46px;height:46px;border-radius:50%;background:#64402C;display:flex;align-items:center;justify-content:center}
               {{WRAPPER}} .qf-ic img{object-fit:contain}
               {{WRAPPER}} .qf-ic i{line-height:1}
-              {{WRAPPER}} .qf-glyph{display:inline-block}
+              {{WRAPPER}} .qf-glyph{display:inline-block;width:22px;height:22px;background-color:#F1EAE4}
+              {{WRAPPER}} .qf-ic img,{{WRAPPER}} .qf-ic svg{width:22px;height:22px}
+              {{WRAPPER}} .qf-ic i{color:#F1EAE4;font-size:20px}
               {{WRAPPER}} .qf-tx{flex:1;min-width:0}
               {{WRAPPER}} .qf-l{margin:0 0 3px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px}
               {{WRAPPER}} .qf-t{margin:0 0 3px;font-weight:700;font-size:15px;color:#3a2c22}
