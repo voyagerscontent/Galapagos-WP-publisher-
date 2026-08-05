@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.20
+ * Version:     0.4.21
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -124,13 +124,13 @@ if (!function_exists('island_ew_clip_script')) {
     {
         echo '<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;'
             . 'var mq=window.matchMedia("(max-width:1366px)");'
-            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"],[".wts.hx .wts-item",".wts-desc"],[".wgf.hx .wgf-feat",".wgf-body"]];'
-            . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b);});});}'
+            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",0],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",0],[".iw2 .rev",".iw2-desc.clip",1],[".wts.hx .wts-item",".wts-desc",1],[".wgf.hx .wgf-feat",".wgf-body",1]];'
+            . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b,g[2]);});});}'
             . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-expanded","false");a.textContent="Read More";'
             . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");a.textContent=o?"Read Less":"Read More";'
             . 'if(!o){var y=it.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop||0)-80;window.scrollTo({top:y<0?0:y,behavior:"smooth"});}});it.__more=a;return a;}'
-            . 'function refresh(){var m=mq.matches;each(function(it,b){var a=it.__more;'
-            . 'if(!m){it.classList.remove("clip-m");if(a)a.style.display="none";return;}'
+            . 'function refresh(){each(function(it,b,always){var a=it.__more;var on=always||mq.matches;'
+            . 'if(!on){it.classList.remove("clip-m");if(a)a.style.display="none";return;}'
             . 'it.classList.add("clip-m");'
             . 'var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+2;'
             . 'if(over){ensure(it,b).style.display="";}else{it.classList.remove("clip-m");if(a)a.style.display="none";}});}'
@@ -4507,7 +4507,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .wts-item.clip-m .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden}
               {{WRAPPER}} .wts-item.clip-m .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none}
-              {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none}
+              {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none!important}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
               {{WRAPPER}} .wts-item.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
@@ -4558,15 +4558,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '</div>';
             // Hover / tap to expand each site's description (JS-driven so it never
             // depends on CSS :hover, which the Elementor overlay can swallow).
-            if ($hx) {
-                // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
-                // script (touchstart removed — it toggled while scrolling).
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wts-item").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
-            }
-            island_ew_clip_script();  // shared mobile clamp + tappable arrow
+            // Expand/collapse is driven entirely by the "Read More" link (all widths),
+            // so the old hover JS is gone — its mouseleave collapsed a Read-More-opened
+            // item on desktop.
+            island_ew_clip_script();  // shared clamp + "Read More" toggle
         }
     }
     } // end: Island_WhereToSee_Widget guard
@@ -4911,7 +4906,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-tbl{margin:12px 0;border:1px solid rgba(90,61,43,.14);border-radius:12px;overflow-x:auto}
               {{WRAPPER}} .wgf-tbl table{border-collapse:collapse;width:100%;min-width:480px;font-size:13px}
               {{WRAPPER}} .wgf-tbl th,{{WRAPPER}} .wgf-tbl td{border:1px solid rgba(90,61,43,.12);padding:8px 10px;text-align:left;vertical-align:top;color:#3A2A1E}
-              {{WRAPPER}} .wgf-tbl thead th,{{WRAPPER}} .wgf-tbl tr:first-child td{background:rgba(90,61,43,.06);font-weight:700}
+              {{WRAPPER}} .wgf-tbl thead th{background:rgba(90,61,43,.06);font-weight:700}
+              /* Only treat the first ROW as a header when the table has no <thead>
+                 (otherwise the first data row was wrongly bolded/shaded like a 2nd header). */
+              {{WRAPPER}} .wgf-tbl table:not(:has(thead)) tr:first-child td{background:rgba(90,61,43,.06);font-weight:700}
               {{WRAPPER}} .wgf-tbl caption{caption-side:top;text-align:left;font-size:12px;color:#6a5646;padding:6px 2px}
               {{WRAPPER}} .wgf.hx .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;transition:max-height .45s ease}
               {{WRAPPER}} .wgf.hx .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
@@ -4923,7 +4921,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .wgf-feat.clip-m .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden}
               {{WRAPPER}} .wgf-feat.clip-m .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none}
-              {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none}
+              {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none!important}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
               {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
@@ -5034,16 +5032,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // the infographic is left alone (so the infographic opens instead of
             // toggling). Binds via previousElementSibling — must print right after
             // the .wgf.
-            if ($hx) {
-                // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
-                // script (touchstart removed — it toggled while scrolling).
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
-                    . 'var tx=c.querySelector(".wgf-tx");'
-                    . 'if(tx)tx.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
-            }
-            island_ew_clip_script();  // shared mobile clamp + tappable arrow
+            // Expand/collapse is driven entirely by the "Read More" link (all widths),
+            // so the old hover JS is gone — its mouseleave collapsed a Read-More-opened
+            // item on desktop.
+            island_ew_clip_script();  // shared clamp + "Read More" toggle
 
             // Infographic lightbox — printed AFTER the hover script so it never
             // sits between .wgf and that script's previousElementSibling lookup.
