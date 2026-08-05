@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.19
+ * Version:     0.4.20
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -126,8 +126,9 @@ if (!function_exists('island_ew_clip_script')) {
             . 'var mq=window.matchMedia("(max-width:1366px)");'
             . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"],[".wts.hx .wts-item",".wts-desc"],[".wgf.hx .wgf-feat",".wgf-body"]];'
             . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b);});});}'
-            . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-label","Ver mas o menos");a.setAttribute("aria-expanded","false");a.innerHTML="<span class=\"ic-more-ic\">▾</span>";'
-            . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");});it.__more=a;return a;}'
+            . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-expanded","false");a.textContent="Read More";'
+            . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");a.textContent=o?"Read Less":"Read More";'
+            . 'if(!o){var y=it.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop||0)-80;window.scrollTo({top:y<0?0:y,behavior:"smooth"});}});it.__more=a;return a;}'
             . 'function refresh(){var m=mq.matches;each(function(it,b){var a=it.__more;'
             . 'if(!m){it.classList.remove("clip-m");if(a)a.style.display="none";return;}'
             . 'it.classList.add("clip-m");'
@@ -524,9 +525,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc{max-height:none}
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .rev.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-top:10px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;cursor:pointer;opacity:.85}
-              {{WRAPPER}} .ic-more-ic{font-size:21px;line-height:1;transition:transform .25s ease}
-              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
+              {{WRAPPER}} .rev.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .rev.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .iw2-ov .ic-more,{{WRAPPER}} .iw2-ofc .ic-more{color:#f0d9c4}
               {{WRAPPER}} .rev{cursor:pointer}
               {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:9px 0 0;font-size:13px;color:#5a4636}{{WRAPPER}} .iw2-meta li{margin:0 0 2px}
               {{WRAPPER}} .iw2-btn{align-self:flex-start;display:inline-block;color:#64402c;background:transparent;border:1px solid #D3BAA3;font-weight:600;text-decoration:none;font-size:13px;margin-top:12px;padding:7px 14px;border-radius:6px}
@@ -2049,9 +2050,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body{max-height:none}
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;margin-top:12px;padding:0;border:1px solid #64402C;border-radius:50%;background:transparent;color:#64402C;cursor:pointer;opacity:.85}
-              {{WRAPPER}} .ic-more-ic{font-size:22px;line-height:1;transition:transform .25s ease}
-              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more:hover{text-decoration:underline}
               /* The .ifs.hx hover-clamp (shorten long copy, expand on hover) needs a
                  mouse, so it lives in the desktop @media(min-width:1367px) block below.
                  Mobile therefore always shows the full text — no truncation. */
@@ -2433,9 +2433,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body{max-height:none}
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;margin-top:12px;padding:0;border:1px solid var(--t-title);border-radius:50%;background:transparent;color:var(--t-title);cursor:pointer;opacity:.85}
-              {{WRAPPER}} .ic-more-ic{font-size:22px;line-height:1;transition:transform .25s ease}
-              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:var(--t-title);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more:hover{text-decoration:underline}
               /* The .ifb.hx hover-clamp (shorten long copy, expand on hover) needs a
                  mouse, so it lives in the desktop @media(min-width:1367px) block below.
                  Mobile therefore always shows the full text — no truncation. */
@@ -4511,9 +4510,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wts-item.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-top:10px;padding:0;border:1px solid #64402C;border-radius:50%;background:transparent;color:#64402C;cursor:pointer;opacity:.85}
-              {{WRAPPER}} .ic-more-ic{font-size:21px;line-height:1;transition:transform .25s ease}
-              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
+              {{WRAPPER}} .wts-item.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wts-item.clip-m .ic-more:hover{text-decoration:underline}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). The
                  peek of the next card is the swipe affordance. */
               @media(max-width:767px){
@@ -4928,9 +4926,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-top:10px;padding:0;border:1px solid #64402C;border-radius:50%;background:transparent;color:#64402C;cursor:pointer;opacity:.85}
-              {{WRAPPER}} .ic-more-ic{font-size:21px;line-height:1;transition:transform .25s ease}
-              {{WRAPPER}} .clip-m.is-open .ic-more-ic{transform:rotate(180deg)}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more:hover{text-decoration:underline}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
               {{WRAPPER}} .wgf-feat.rev .wgf-media{order:1}
               {{WRAPPER}} .wgf-info{grid-column:1/-1;margin-top:14px;order:3}
