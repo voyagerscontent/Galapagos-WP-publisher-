@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.7
+ * Version:     0.4.8
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1939,12 +1939,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:40px;--open:900px}
               {{WRAPPER}} .ifs-row{background:#FBF8F4;border:1px solid rgba(100,64,44,.14);border-radius:16px;box-shadow:0 10px 30px rgba(60,40,25,.10);overflow:hidden;display:flex;flex-direction:column}
-              {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;gap:32px;align-items:center;padding:28px}
-              {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%}
-              {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr!important}
-              {{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:2}
+              {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;column-gap:32px;align-items:center;padding:28px;grid-template-areas:"img head" "img body"}
+              {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%;grid-template-areas:"head img" "body img"}
+              {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr!important;grid-template-areas:"head" "body"}
+              {{WRAPPER}} .ifs-head{grid-area:head}
+              {{WRAPPER}} .ifs-tx{grid-area:body;min-width:0}
               {{WRAPPER}} .ifs-row.has-table .ifs-top{padding-bottom:4px}
-              {{WRAPPER}} .ifs-img{height:300px;border-radius:12px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 8px 22px rgba(60,40,25,.10)}
+              {{WRAPPER}} .ifs-img{grid-area:img;height:300px;border-radius:12px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 8px 22px rgba(60,40,25,.10)}
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
@@ -1973,14 +1974,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
               /* Tablet & phone: rows collapse to ONE column using display:block —
                  NOT grid, flex, or display:contents. Plain block flow physically
-                 cannot produce two columns or strand the title in a separate cell,
-                 and it overrides any grid-template-columns an Elementor control may
-                 have set for tablet/mobile. Order follows the DOM: image, then the
-                 centred heading, then the text. Desktop (>1366px) is untouched. */
+                 cannot produce two columns or strand the title, and it overrides any
+                 grid-template-areas/columns the desktop rules set. Because heading,
+                 image and body are direct children in that DOM order, they stack as
+                 TITLE -> FULL-WIDTH IMAGE -> TEXT. Desktop (>1366px) is untouched. */
               @media(max-width:1366px){
                 {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top,{{WRAPPER}} .ifs-row.noimg .ifs-top{display:block!important;grid-template-columns:1fr!important}
-                {{WRAPPER}} .ifs-tx{display:block!important}
-                {{WRAPPER}} .ifs-img{height:220px!important;width:100%!important;margin:0 0 16px!important;display:block}
+                {{WRAPPER}} .ifs-head,{{WRAPPER}} .ifs-tx{display:block!important;width:auto!important}
+                {{WRAPPER}} .ifs-head{margin:0 0 14px}
+                {{WRAPPER}} .ifs-img{height:220px!important;width:100%!important;margin:0 0 16px!important;display:block!important}
                 {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{text-align:center}
                 {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-info{overflow-wrap:break-word}
                 {{WRAPPER}} .ifs-row img{max-width:100%;height:auto}
@@ -2034,14 +2036,22 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     : '';
                 echo '<article class="ifs-row' . $rev . $noimg . ($has_table ? ' has-table' : '') . '" tabindex="0">';
                 echo '<div class="ifs-top">';
-                if ($img) {
-                    echo '<div class="ifs-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
-                }
-                echo '<div class="ifs-tx">';
+                // Heading (eyebrow + title), image and body are all DIRECT children
+                // of .ifs-top. The desktop grid places them by area (image spanning
+                // the left, heading + body stacked on the right) regardless of DOM
+                // order, while a single-column mobile view is plain block flow —
+                // title, then FULL-WIDTH image, then text — with nothing that can
+                // split into two columns. DOM order = heading, image, body.
+                echo '<div class="ifs-head">';
                 if (!empty($r['subtitle'])) {
                     echo '<p class="ifs-eyebrow">' . esc_html($r['subtitle']) . '</p>';
                 }
                 echo '<' . $tag . ' class="ifs-title">' . esc_html($r['title'] ?? '') . '</' . $tag . '>';
+                echo '</div>';
+                if ($img) {
+                    echo '<div class="ifs-img" style="background-image:url(\'' . esc_url($img) . '\')"></div>';
+                }
+                echo '<div class="ifs-tx">';
                 if (trim(wp_strip_all_tags($before)) !== '') {
                     echo '<div class="ifs-body">' . wp_kses_post($before) . '</div>';
                 }
