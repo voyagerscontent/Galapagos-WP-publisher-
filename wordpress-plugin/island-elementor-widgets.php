@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.12
+ * Version:     0.4.13
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2343,7 +2343,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:left;margin:0 14px 8px 0}
               {{WRAPPER}} .ifb-inner>.ifb-tx::after{content:"";display:block;clear:both}
               {{WRAPPER}} .ifb-img{width:100%;height:220px;min-height:220px;margin:0 0 16px;border-radius:16px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 10px 30px rgba(30,20,12,.18)}
-              {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+              /* MOBILE-FIRST icon band: icon floats beside the heading and the body
+                 text flows FULL WIDTH below it (not trapped in a narrow column). The
+                 desktop two-column icon+text grid is restored in the min-width block. */
+              {{WRAPPER}} .ifb-iconrow{display:block}
+              {{WRAPPER}} .ifb-iconrow .ifb-ic{float:left;margin:0 16px 10px 0}
+              {{WRAPPER}} .ifb-iconrow::after{content:"";display:block;clear:both}
               {{WRAPPER}} .ifb-ic{display:flex;align-items:center;justify-content:center;flex:none;line-height:1;overflow:hidden}
               {{WRAPPER}} .ifb-ic-img{width:62%;height:62%;object-fit:contain;display:block}
               {{WRAPPER}} .ifb-ic-mask{background-color:currentColor;-webkit-mask:var(--ic-mask) center/contain no-repeat;mask:var(--ic-mask) center/contain no-repeat}
@@ -2373,6 +2378,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  mobile-first single column. Additive — if a CSS optimiser strips this
                  block, the page keeps the safe single-column layout. */
               @media(min-width:1367px){
+                {{WRAPPER}} .ifb-iconrow{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+                {{WRAPPER}} .ifb-iconrow .ifb-ic{float:none;margin:0}
                 {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;grid-template-rows:auto auto;column-gap:32px;align-items:center}
                 {{WRAPPER}} .ifb-image .ifb-head{grid-column:2;grid-row:1;align-self:end;margin:0}
                 {{WRAPPER}} .ifb-image .ifb-tx{grid-column:2;grid-row:2;align-self:start;min-width:0}
@@ -2867,8 +2874,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             echo '<style>
-              {{WRAPPER}} .icta-head{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:24px;color:#64402C}
-              {{WRAPPER}} .icta-intro{margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a3a2c;max-width:70ch}
+              /* "Plan Your Visit" heading + intro are centred in the BASE (no media
+                 query) so they stay centred on every width and both templates, even
+                 if a CSS optimiser strips media queries. */
+              {{WRAPPER}} .icta-head{margin:0 0 8px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:24px;color:#64402C;text-align:center}
+              {{WRAPPER}} .icta-intro{margin:0 auto 20px;font-size:15px;line-height:1.6;color:#4a3a2c;max-width:70ch;text-align:center}
               {{WRAPPER}} .icta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
               {{WRAPPER}} .icta-card{position:relative;overflow:hidden;background:#64402C;border-radius:12px;padding:24px 26px;display:flex;flex-direction:column;box-shadow:0 8px 22px rgba(60,40,25,.14)}
               {{WRAPPER}} .icta-card>:not(.icta-bg):not(.icta-ov):not(.icta-btn){position:relative;z-index:1;max-width:var(--cw,100%)}
@@ -2880,11 +2890,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .icta-x{font-size:14px;line-height:1.6;color:#f3e9df}{{WRAPPER}} .icta-x p{margin:0 0 10px}{{WRAPPER}} .icta-x :last-child{margin-bottom:0}
               {{WRAPPER}} .icta-btn{align-self:stretch;text-align:center;position:relative;z-index:1;margin-top:16px;font-size:13.5px;font-weight:700;text-decoration:none;background:#ECE5DE;color:#64402C;border-radius:8px;padding:11px 18px}
               @media(max-width:680px){{{WRAPPER}} .icta-grid{grid-template-columns:1fr!important}}
-              /* Tablet & phone: centre the "Plan Your Visit" heading + intro. */
-              @media(max-width:1366px){
-                {{WRAPPER}} .icta-head{text-align:center}
-                {{WRAPPER}} .icta-intro{text-align:center;margin-left:auto;margin-right:auto}
-              }
             </style>';
             if ($title) {
                 echo '<' . $htag . ' class="icta-head">' . esc_html($title) . '</' . $htag . '>';
