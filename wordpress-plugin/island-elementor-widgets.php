@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.29
+ * Version:     0.4.30
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2087,16 +2087,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  optimiser, the page still renders as a clean mobile-style single
                  column, which is the safe fallback. */
               @media(min-width:1367px){
-                {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;grid-template-rows:auto auto;column-gap:32px;align-items:center}
-                {{WRAPPER}} .ifs-head{grid-column:2;grid-row:1;align-self:end;margin:0}
-                {{WRAPPER}} .ifs-tx{grid-column:2;grid-row:2;align-self:start;min-width:0}
-                {{WRAPPER}} .ifs-img{grid-column:1;grid-row:1 / 3;align-self:center;width:auto;height:300px;margin:0}
+                /* grid-template-AREAS (not per-element grid-column): the title
+                   (head) and text (body) area names are FIXED on the elements; only
+                   the .ifs-top area map swaps for rev/noimg. So the title can never
+                   land in a different column than its text — even if the rev rule is
+                   dropped by a CSS optimiser it degrades to head+body together on the
+                   side opposite the image. */
+                {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;column-gap:32px;align-items:center;grid-template-areas:"img head" "img body"}
+                {{WRAPPER}} .ifs-head{grid-area:head;align-self:end;margin:0}
+                {{WRAPPER}} .ifs-tx{grid-area:body;align-self:start;min-width:0}
+                {{WRAPPER}} .ifs-img{grid-area:img;align-self:center;width:auto;height:300px;margin:0}
                 {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{text-align:left}
-                {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%}
-                {{WRAPPER}} .ifs-row.rev .ifs-head,{{WRAPPER}} .ifs-row.rev .ifs-tx{grid-column:1}
-                {{WRAPPER}} .ifs-row.rev .ifs-img{grid-column:2}
-                {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr}
-                {{WRAPPER}} .ifs-row.noimg .ifs-head,{{WRAPPER}} .ifs-row.noimg .ifs-tx{grid-column:1}
+                {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%;grid-template-areas:"head img" "body img"}
+                {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr;grid-template-areas:"head" "body"}
                 /* No-photo row keeps its centered title/eyebrow on desktop too. */
                 {{WRAPPER}} .ifs-row.noimg .ifs-eyebrow,{{WRAPPER}} .ifs-row.noimg .ifs-title{text-align:center}
                 {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
@@ -2502,12 +2505,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               @media(min-width:1367px){
                 {{WRAPPER}} .ifb-iconrow{column-gap:20px;grid-template-areas:"ic head" "ic body"}
                 {{WRAPPER}} .ifb-iconrow .ifb-head{align-self:end}
-                {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;grid-template-rows:auto auto;column-gap:32px;align-items:center}
-                {{WRAPPER}} .ifb-image .ifb-head{grid-column:2;grid-row:1;align-self:end;margin:0}
-                {{WRAPPER}} .ifb-image .ifb-tx{grid-column:2;grid-row:2;align-self:start;min-width:0}
-                {{WRAPPER}} .ifb-image .ifb-img{grid-column:1;grid-row:1 / 3;align-self:center;width:auto;height:300px;margin:0}
-                {{WRAPPER}} .ifb-image.rev .ifb-img{grid-column:2}
-                {{WRAPPER}} .ifb-image.rev .ifb-head,{{WRAPPER}} .ifb-image.rev .ifb-tx{grid-column:1}
+                /* grid-template-AREAS so the title (head) always stays with its text
+                   (body), opposite the image, and the rev swap is a single container
+                   rule that cannot split the title away from the text. */
+                {{WRAPPER}} .ifb-image{display:grid;grid-template-columns:44% 1fr;column-gap:32px;align-items:center;grid-template-areas:"img head" "img body"}
+                {{WRAPPER}} .ifb-image .ifb-head{grid-area:head;align-self:end;margin:0}
+                {{WRAPPER}} .ifb-image .ifb-tx{grid-area:body;align-self:start;min-width:0}
+                {{WRAPPER}} .ifb-image .ifb-img{grid-area:img;align-self:center;width:auto;height:300px;margin:0}
+                {{WRAPPER}} .ifb-image.rev{grid-template-columns:1fr 44%;grid-template-areas:"head img" "body img"}
                 {{WRAPPER}} .ifb-image.stick{align-items:start}
                 {{WRAPPER}} .ifb-image.stick .ifb-img{position:sticky;top:26px;align-self:start}
                 {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{text-align:left}
