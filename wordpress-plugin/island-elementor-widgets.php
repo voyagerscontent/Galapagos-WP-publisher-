@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.28
+ * Version:     0.4.29
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2052,6 +2052,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ic-more{display:none}
               {{WRAPPER}} .ifs-row.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .ifs-row.clip-m .ic-more:hover{text-decoration:underline}
+              /* No-photo row = full-width text/table section: never truncate — no
+                 clamp, no fade, no Read More (title centering handled below). */
+              {{WRAPPER}} .ifs-row.noimg .ifs-body{max-height:none!important;overflow:visible!important}
+              {{WRAPPER}} .ifs-row.noimg .ifs-body::after{display:none!important}
+              {{WRAPPER}} .ifs-row.noimg .ic-more{display:none!important}
               /* The .ifs.hx hover-clamp (shorten long copy, expand on hover) needs a
                  mouse, so it lives in the desktop @media(min-width:1367px) block below.
                  Mobile therefore always shows the full text — no truncation. */
@@ -2092,6 +2097,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifs-row.rev .ifs-img{grid-column:2}
                 {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr}
                 {{WRAPPER}} .ifs-row.noimg .ifs-head,{{WRAPPER}} .ifs-row.noimg .ifs-tx{grid-column:1}
+                /* No-photo row keeps its centered title/eyebrow on desktop too. */
+                {{WRAPPER}} .ifs-row.noimg .ifs-eyebrow,{{WRAPPER}} .ifs-row.noimg .ifs-title{text-align:center}
                 {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
                 {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
                 {{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
@@ -2435,6 +2442,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ic-more{display:none}
               {{WRAPPER}} .ifb-band.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:var(--t-title);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .ifb-band.clip-m .ic-more:hover{text-decoration:underline}
+              /* Plain band = no icon AND no photo (else-branch .ifb-tx is a direct
+                 child of .ifb-inner and carries no inline icon). These are full-width
+                 text/table bands, so they must NEVER truncate: no clamp, no fade, no
+                 Read More — show the whole thing. (Title centering handled below.) */
+              {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-body{max-height:none!important;overflow:visible!important}
+              {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-body::after{display:none!important}
+              {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ic-more{display:none!important}
               /* The .ifb.hx hover-clamp (shorten long copy, expand on hover) needs a
                  mouse, so it lives in the desktop @media(min-width:1367px) block below.
                  Mobile therefore always shows the full text — no truncation. */
@@ -2497,7 +2511,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifb-image.stick{align-items:start}
                 {{WRAPPER}} .ifb-image.stick .ifb-img{position:sticky;top:26px;align-self:start}
                 {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{text-align:left}
-                {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:left}
+                /* Plain no-icon/no-photo band keeps its centered title on desktop too
+                   (image bands and icon rows still left-align via their own rules). */
+                {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:center}
                 {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:none;margin:0 0 14px}
                 {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
                 {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
