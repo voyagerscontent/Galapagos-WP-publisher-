@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.27
+ * Version:     0.4.28
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2094,8 +2094,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifs-row.noimg .ifs-head,{{WRAPPER}} .ifs-row.noimg .ifs-tx{grid-column:1}
                 {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
                 {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
-                {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body::after{opacity:0}
+                {{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
+                {{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body::after{opacity:0}
               }
               {{WRAPPER}} .ifs-scrollwrap{position:relative}
               {{WRAPPER}} .ifs-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
@@ -2222,7 +2222,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
                 // script (touchstart removed — it toggled while scrolling).
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".ifs-row").forEach(function(c){'
+                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".ifs-row").forEach(function(c){'
                     . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
                     . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
             }
@@ -2501,8 +2501,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:none;margin:0 0 14px}
                 {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
                 {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body{max-height:var(--open,1200px)}
-                {{WRAPPER}} .ifb.hx .ifb-band:hover .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band:focus-within .ifb-tx .ifb-body::after,{{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
+                {{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body{max-height:var(--open,1200px)}
+                {{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
               }
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
@@ -2684,7 +2684,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 // shared clip/arrow script below (touchstart used to fire on scroll,
                 // which collapsed the text while scrolling — that is now removed).
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".ifb-band").forEach(function(c){'
+                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".ifb-band").forEach(function(c){'
                     . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
                     . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
             }
@@ -4498,8 +4498,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts-r .wts-isl{padding-top:3px}
               {{WRAPPER}} .wts.hx .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden;transition:max-height .4s ease}
               {{WRAPPER}} .wts.hx .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .wts.hx .wts-item:hover .wts-desc,{{WRAPPER}} .wts.hx .wts-item:focus-within .wts-desc,{{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc{max-height:var(--wts-open,700px)}
-              {{WRAPPER}} .wts.hx .wts-item:hover .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item:focus-within .wts-desc::after,{{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc::after{opacity:0}
+              {{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc{max-height:var(--wts-open,700px)}
+              {{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc::after{opacity:0}
               @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wts.hx .wts-desc,{{WRAPPER}} .wts.hx .wts-desc::after{transition:none}}
               @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
               /* MOBILE clamp + tappable arrow (added by JS as .clip-m per item when it
@@ -4561,7 +4561,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // swallow). Mobile keeps the tappable "Read More" link only.
             if ($hx) {
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wts-item").forEach(function(c){'
+                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".wts-item").forEach(function(c){'
                     . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
                     . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
             }
@@ -5067,7 +5067,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // after the .wgf. Mobile keeps the tappable "Read More" link only.
             if ($hx) {
                 echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
+                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
                     . 'var tx=c.querySelector(".wgf-tx");'
                     . 'if(tx)tx.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
                     . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
