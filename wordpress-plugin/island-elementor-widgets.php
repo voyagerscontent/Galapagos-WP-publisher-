@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.11
+ * Version:     0.4.12
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -466,11 +466,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .iw2-sci{display:block;font-style:italic;font-size:12.5px;color:#8a7058;margin:-2px 0 7px}
               {{WRAPPER}} .iw2-desc{--tl:3;--fade:#faf9f7;font-size:13.5px;line-height:1.62;color:#333}
               {{WRAPPER}} .iw2-desc p{margin:0 0 8px}{{WRAPPER}} .iw2-desc :last-child{margin-bottom:0}
-              /* Paragraph-safe clamp: max-height on the whole block + a fade, opens on hover/tap. */
-              {{WRAPPER}} .iw2-desc.clip{position:relative;max-height:calc(var(--tl) * 1.62em);overflow:hidden;transition:max-height .45s ease}
-              {{WRAPPER}} .iw2-desc.clip::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .rev.is-open .iw2-desc.clip,{{WRAPPER}} .rev:hover .iw2-desc.clip{max-height:2000px}
-              {{WRAPPER}} .rev.is-open .iw2-desc.clip::after,{{WRAPPER}} .rev:hover .iw2-desc.clip::after{opacity:0}
+              /* MOBILE-FIRST: NO truncation by default (full text), so touch devices —
+                 where hover-to-expand does not work, e.g. the island wildlife carousel —
+                 always show the whole description. The paragraph clamp (with its fade and
+                 hover/tap expand) is layered back on only on desktop, below. */
+              {{WRAPPER}} .iw2-desc.clip{position:relative}
               {{WRAPPER}} .rev{cursor:pointer}
               {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:9px 0 0;font-size:13px;color:#5a4636}{{WRAPPER}} .iw2-meta li{margin:0 0 2px}
               {{WRAPPER}} .iw2-btn{align-self:flex-start;display:inline-block;color:#64402c;background:transparent;border:1px solid #D3BAA3;font-weight:600;text-decoration:none;font-size:13px;margin-top:12px;padding:7px 14px;border-radius:6px}
@@ -496,6 +496,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .iw2-ofc .iw2-desc{color:#f3e9df;--fade:#64402c}
               {{WRAPPER}} .iw2-ofc .iw2-meta{color:#e6d5c4}
               {{WRAPPER}} .iw2-ofc .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
+              /* Desktop (min-width:1367px): restore the paragraph clamp + hover/tap
+                 expand — a mouse is available there to reveal the full text. */
+              @media(min-width:1367px){
+                {{WRAPPER}} .iw2-desc.clip{max-height:calc(var(--tl) * 1.62em);overflow:hidden;transition:max-height .45s ease}
+                {{WRAPPER}} .iw2-desc.clip::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none;transition:opacity .3s ease}
+                {{WRAPPER}} .rev.is-open .iw2-desc.clip,{{WRAPPER}} .rev:hover .iw2-desc.clip{max-height:2000px}
+                {{WRAPPER}} .rev.is-open .iw2-desc.clip::after,{{WRAPPER}} .rev:hover .iw2-desc.clip::after{opacity:0}
+              }
               @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:96px 1fr;gap:14px}{{WRAPPER}} .iw2-ed .iw2-num{display:none}}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). */
               @media(max-width:767px){
