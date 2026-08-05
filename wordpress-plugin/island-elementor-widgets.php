@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.24
+ * Version:     0.4.25
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4953,19 +4953,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-info-cap{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:#7a6a5c}
               {{WRAPPER}} .wgf-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--wgf-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
               {{WRAPPER}} .wgf-col.is-of .wgf-fade{opacity:1}
-              /* DESKTOP (>=1025px): layer the 2-col rail + 2-col feature cards on
-                 top of the mobile-first base. Phones AND tablets (<=1024) keep the
-                 stacked layout — At a Glance on top, Feature Sections full-width
-                 below — which is what the responsive view should show. Matches the
-                 JS breakpoint (<=1024 is treated as stacked/no internal scroll).
-                 Solo (no glance) fans the features into 2 columns. */
-              @media(min-width:1025px){
-                {{WRAPPER}} .wgf{grid-template-columns:320px 1fr;gap:40px;align-items:start}
-                {{WRAPPER}} .wgf-feat{grid-template-columns:1.3fr 1fr}
-                {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
-                {{WRAPPER}} .wgf-feat.noimg{grid-template-columns:1fr!important}
-                {{WRAPPER}} .wgf-solo .wgf-feats{grid-template-columns:repeat(2,minmax(0,1fr))}
-              }
+              /* DESKTOP layout is gated by a JS-added .is-wide class, NOT a media
+                 query. The page cache / CSS optimizer on this site mangles media
+                 queries (strips OR flattens them), which made the desktop 2-col
+                 rail apply on mobile. A plain class selector cannot be flattened,
+                 so the base (single stacked column) holds until JS opts a wide
+                 viewport (>=1025px) into the rail. See the sync() script below. */
+              {{WRAPPER}} .wgf.is-wide{grid-template-columns:320px 1fr;gap:40px;align-items:start}
+              {{WRAPPER}} .wgf.is-wide .wgf-feat{grid-template-columns:1.3fr 1fr}
+              {{WRAPPER}} .wgf.is-wide .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
+              {{WRAPPER}} .wgf.is-wide .wgf-feat.noimg{grid-template-columns:1fr!important}
+              {{WRAPPER}} .wgf.is-wide.wgf-solo .wgf-feats{grid-template-columns:repeat(2,minmax(0,1fr))}
             </style>';
 
             // When the page has no At a Glance data, the features take the full
@@ -5107,9 +5105,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $done = true;
             echo '<script>(function(){if(window.__islandGfSync)return;window.__islandGfSync=1;'
                 . 'function sync(){document.querySelectorAll(".wgf").forEach(function(w){'
+                // Gate the desktop 2-col rail via a class (media queries get mangled
+                // by the site cache/optimizer). >=1025px = wide/desktop.
+                . 'var wide=window.innerWidth>=1025;w.classList.toggle("is-wide",wide);'
                 . 'var g=w.querySelector(".wgf-glance"),sc=w.querySelector(".wgf-scroll"),rh=w.querySelector(".wgf-rhead"),col=w.querySelector(".wgf-col");'
                 . 'if(!g||!sc)return;'
-                . 'if(window.innerWidth<=1024){sc.style.maxHeight="";if(col)col.classList.remove("is-of");return;}'
+                . 'if(!wide){sc.style.maxHeight="";if(col)col.classList.remove("is-of");return;}'
                 . 'sc.style.maxHeight="none";var head=rh?rh.offsetHeight:0;'
                 . 'var mn=parseInt(w.getAttribute("data-min"),10)||320;var h=Math.max(mn,g.offsetHeight-head-14);'
                 . 'sc.style.maxHeight=h+"px";if(col)col.classList.toggle("is-of",sc.scrollHeight>sc.clientHeight+2);});}'
