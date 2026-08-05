@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.23
+ * Version:     0.4.24
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4953,10 +4953,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-info-cap{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:#7a6a5c}
               {{WRAPPER}} .wgf-fade{position:absolute;left:0;right:10px;bottom:0;height:54px;background:linear-gradient(rgba(0,0,0,0),var(--wgf-fade,#efe7dd));pointer-events:none;opacity:0;transition:opacity .2s}
               {{WRAPPER}} .wgf-col.is-of .wgf-fade{opacity:1}
-              /* DESKTOP (>=821px): layer the 2-col rail + 2-col feature cards on
-                 top of the mobile-first base. Matches the JS breakpoint (<=820 is
-                 mobile). Solo (no glance) fans the features into 2 columns. */
-              @media(min-width:821px){
+              /* DESKTOP (>=1025px): layer the 2-col rail + 2-col feature cards on
+                 top of the mobile-first base. Phones AND tablets (<=1024) keep the
+                 stacked layout — At a Glance on top, Feature Sections full-width
+                 below — which is what the responsive view should show. Matches the
+                 JS breakpoint (<=1024 is treated as stacked/no internal scroll).
+                 Solo (no glance) fans the features into 2 columns. */
+              @media(min-width:1025px){
                 {{WRAPPER}} .wgf{grid-template-columns:320px 1fr;gap:40px;align-items:start}
                 {{WRAPPER}} .wgf-feat{grid-template-columns:1.3fr 1fr}
                 {{WRAPPER}} .wgf-feat.rev{grid-template-columns:1fr 1.3fr}
@@ -5106,7 +5109,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . 'function sync(){document.querySelectorAll(".wgf").forEach(function(w){'
                 . 'var g=w.querySelector(".wgf-glance"),sc=w.querySelector(".wgf-scroll"),rh=w.querySelector(".wgf-rhead"),col=w.querySelector(".wgf-col");'
                 . 'if(!g||!sc)return;'
-                . 'if(window.innerWidth<=820){sc.style.maxHeight="";if(col)col.classList.remove("is-of");return;}'
+                . 'if(window.innerWidth<=1024){sc.style.maxHeight="";if(col)col.classList.remove("is-of");return;}'
                 . 'sc.style.maxHeight="none";var head=rh?rh.offsetHeight:0;'
                 . 'var mn=parseInt(w.getAttribute("data-min"),10)||320;var h=Math.max(mn,g.offsetHeight-head-14);'
                 . 'sc.style.maxHeight=h+"px";if(col)col.classList.toggle("is-of",sc.scrollHeight>sc.clientHeight+2);});}'
