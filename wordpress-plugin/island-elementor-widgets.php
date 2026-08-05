@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.9
+ * Version:     0.4.10
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1939,24 +1939,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:40px;--open:900px}
               {{WRAPPER}} .ifs-row{background:#FBF8F4;border:1px solid rgba(100,64,44,.14);border-radius:16px;box-shadow:0 10px 30px rgba(60,40,25,.10);overflow:hidden;display:flex;flex-direction:column}
-              {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;grid-template-rows:auto auto;column-gap:32px;align-items:center;padding:28px}
-              {{WRAPPER}} .ifs-head{grid-column:2;grid-row:1;align-self:end}
-              {{WRAPPER}} .ifs-tx{grid-column:2;grid-row:2;align-self:start;min-width:0}
-              {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%}
-              {{WRAPPER}} .ifs-row.rev .ifs-head,{{WRAPPER}} .ifs-row.rev .ifs-tx{grid-column:1}
-              {{WRAPPER}} .ifs-row.rev .ifs-img{grid-column:2}
-              {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr!important}
-              {{WRAPPER}} .ifs-row.noimg .ifs-head,{{WRAPPER}} .ifs-row.noimg .ifs-tx{grid-column:1!important}
+              /* MOBILE-FIRST: the default (NO media query) is a SINGLE column, so it
+                 works even if a CSS optimiser strips or reorders media queries, or the
+                 mobile viewport is wider than expected. Stacks TITLE -> FULL-WIDTH
+                 IMAGE -> TEXT (that DOM order). The two-column desktop layout is added
+                 on top via @media(min-width:1367px) further down — additive only. */
+              {{WRAPPER}} .ifs-top{display:block;padding:28px}
+              {{WRAPPER}} .ifs-head{margin:0 0 14px}
               {{WRAPPER}} .ifs-row.has-table .ifs-top{padding-bottom:4px}
-              {{WRAPPER}} .ifs-img{grid-column:1;grid-row:1 / 3;align-self:center;height:300px;min-height:220px;border-radius:12px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 8px 22px rgba(60,40,25,.10)}
-              {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e}
-              {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C}
+              {{WRAPPER}} .ifs-img{width:100%;height:220px;min-height:220px;margin:0 0 16px;border-radius:12px;background:#e3d6c8 center/cover no-repeat;box-shadow:0 8px 22px rgba(60,40,25,.10)}
+              {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e;text-align:center}
+              {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C;text-align:center}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
-              {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
-              {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body::after{opacity:0}
-              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .ifs.hx .ifs-body{transition:none}{{WRAPPER}} .ifs.hx .ifs-body::after{transition:none}}
+              /* The .ifs.hx hover-clamp (shorten long copy, expand on hover) needs a
+                 mouse, so it lives in the desktop @media(min-width:1367px) block below.
+                 Mobile therefore always shows the full text — no truncation. */
               {{WRAPPER}} .ifs-btn{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;text-decoration:none;color:#64402C;border:1px solid #D3BAA3;border-radius:7px;padding:10px 18px}
               {{WRAPPER}} .ifs-tbl{overflow-x:auto;margin:16px 28px 26px;border:1px solid rgba(100,64,44,.14);border-radius:12px}
               {{WRAPPER}} .ifs-tbl table{border-collapse:collapse;width:100%;min-width:520px;font-size:13px}
@@ -1975,24 +1972,29 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-info-frame{display:block;width:100%;border-radius:14px;overflow:hidden}
               {{WRAPPER}} .ifs-info-frame img{width:100%;height:auto;display:block}
               {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
-              /* Tablet & phone: rows collapse to ONE column using display:block —
-                 NOT grid, flex, or display:contents. Plain block flow physically
-                 cannot produce two columns or strand the title, and it overrides any
-                 grid-template-areas/columns the desktop rules set. Because heading,
-                 image and body are direct children in that DOM order, they stack as
-                 TITLE -> FULL-WIDTH IMAGE -> TEXT. Desktop (>1366px) is untouched. */
-              @media(max-width:1366px){
-                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top,{{WRAPPER}} .ifs-row.noimg .ifs-top{display:block!important;grid-template-columns:1fr!important}
-                {{WRAPPER}} .ifs-head,{{WRAPPER}} .ifs-tx{display:block!important;width:auto!important}
-                {{WRAPPER}} .ifs-head{margin:0 0 14px}
-                {{WRAPPER}} .ifs-img{height:220px!important;min-height:220px!important;width:100%!important;margin:0 0 16px!important;display:block!important;grid-column:auto!important;grid-row:auto!important}
-                {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{text-align:center}
-                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-info{overflow-wrap:break-word}
-                {{WRAPPER}} .ifs-row img{max-width:100%;height:auto}
-                {{WRAPPER}} .ifs-tbl{overflow-x:auto;max-width:100%;margin:14px 16px 20px}
-                /* No truncation on small screens: show the full copy. */
-                {{WRAPPER}} .ifs.hx .ifs-body{max-height:none!important;overflow:visible!important}
-                {{WRAPPER}} .ifs.hx .ifs-body::after{display:none!important}
+              {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-info{overflow-wrap:break-word}
+              {{WRAPPER}} .ifs-row img{max-width:100%;height:auto}
+              {{WRAPPER}} .ifs-tbl{max-width:100%}
+              /* DESKTOP ONLY (min-width:1367px): layer the two-column zig-zag (image
+                 beside the text) and the hover-clamp on top of the mobile single
+                 column. Purely additive — if this whole block is stripped by a CSS
+                 optimiser, the page still renders as a clean mobile-style single
+                 column, which is the safe fallback. */
+              @media(min-width:1367px){
+                {{WRAPPER}} .ifs-top{display:grid;grid-template-columns:42% 1fr;grid-template-rows:auto auto;column-gap:32px;align-items:center}
+                {{WRAPPER}} .ifs-head{grid-column:2;grid-row:1;align-self:end;margin:0}
+                {{WRAPPER}} .ifs-tx{grid-column:2;grid-row:2;align-self:start;min-width:0}
+                {{WRAPPER}} .ifs-img{grid-column:1;grid-row:1 / 3;align-self:center;width:auto;height:300px;margin:0}
+                {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{text-align:left}
+                {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%}
+                {{WRAPPER}} .ifs-row.rev .ifs-head,{{WRAPPER}} .ifs-row.rev .ifs-tx{grid-column:1}
+                {{WRAPPER}} .ifs-row.rev .ifs-img{grid-column:2}
+                {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr}
+                {{WRAPPER}} .ifs-row.noimg .ifs-head,{{WRAPPER}} .ifs-row.noimg .ifs-tx{grid-column:1}
+                {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
+                {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
+                {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
+                {{WRAPPER}} .ifs.hx .ifs-row:hover .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row:focus-within .ifs-body::after,{{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body::after{opacity:0}
               }
               {{WRAPPER}} .ifs-scrollwrap{position:relative}
               {{WRAPPER}} .ifs-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
