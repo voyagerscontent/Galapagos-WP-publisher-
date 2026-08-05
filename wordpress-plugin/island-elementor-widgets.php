@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.21
+ * Version:     0.4.22
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -124,7 +124,7 @@ if (!function_exists('island_ew_clip_script')) {
     {
         echo '<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;'
             . 'var mq=window.matchMedia("(max-width:1366px)");'
-            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",0],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",0],[".iw2 .rev",".iw2-desc.clip",1],[".wts.hx .wts-item",".wts-desc",1],[".wgf.hx .wgf-feat",".wgf-body",1]];'
+            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",0],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",0],[".iw2 .rev",".iw2-desc.clip",0],[".wts.hx .wts-item",".wts-desc",0],[".wgf.hx .wgf-feat",".wgf-body",0]];'
             . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b,g[2]);});});}'
             . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-expanded","false");a.textContent="Read More";'
             . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");a.textContent=o?"Read Less":"Read More";'
@@ -4556,12 +4556,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div>';
             }
             echo '</div>';
-            // Hover / tap to expand each site's description (JS-driven so it never
-            // depends on CSS :hover, which the Elementor overlay can swallow).
-            // Expand/collapse is driven entirely by the "Read More" link (all widths),
-            // so the old hover JS is gone — its mouseleave collapsed a Read-More-opened
-            // item on desktop.
-            island_ew_clip_script();  // shared clamp + "Read More" toggle
+            // Desktop: hover to expand each site's description (JS-driven so it
+            // never depends on CSS :hover, which the Elementor overlay can
+            // swallow). Mobile keeps the tappable "Read More" link only.
+            if ($hx) {
+                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
+                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wts-item").forEach(function(c){'
+                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
+            }
+            island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
         }
     }
     } // end: Island_WhereToSee_Widget guard
@@ -5024,18 +5028,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '</div></div><div class="wgf-fade"></div></div>';  // .wgf-feats .wgf-scroll .wgf-fade
             echo '</div>';  // .wgf
 
-            // Hover / tap to expand each feature. The clamp opens ONLY when the
+            // Desktop: hover to expand each feature. The clamp opens ONLY when the
             // cursor is over the TEXT (.wgf-tx), and stays open while the cursor
             // moves anywhere else in the card — so reaching the infographic below
             // doesn't reflow it away and it stays clickable. Collapses on leaving
-            // the whole card. Touch: a tap toggles the text, but tapping a link OR
-            // the infographic is left alone (so the infographic opens instead of
-            // toggling). Binds via previousElementSibling — must print right after
-            // the .wgf.
-            // Expand/collapse is driven entirely by the "Read More" link (all widths),
-            // so the old hover JS is gone — its mouseleave collapsed a Read-More-opened
-            // item on desktop.
-            island_ew_clip_script();  // shared clamp + "Read More" toggle
+            // the whole card. Binds via previousElementSibling — must print right
+            // after the .wgf. Mobile keeps the tappable "Read More" link only.
+            if ($hx) {
+                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
+                    . 'if(!w||!w.querySelectorAll)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
+                    . 'var tx=c.querySelector(".wgf-tx");'
+                    . 'if(tx)tx.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
+                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
+            }
+            island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
 
             // Infographic lightbox — printed AFTER the hover script so it never
             // sits between .wgf and that script's previousElementSibling lookup.
