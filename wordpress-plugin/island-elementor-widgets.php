@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.30
+ * Version:     0.4.31
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2042,6 +2042,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9c7b4e;text-align:center}
               {{WRAPPER}} .ifs-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:#64402C;text-align:center}
               {{WRAPPER}} .ifs-body{font-size:15px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .ifs-body p{margin:0 0 12px}{{WRAPPER}} .ifs-body :last-child{margin-bottom:0}
+              /* Nested headings inside the body copy: graduated serif subheadings so
+                 an h3 reads as a heading (smaller than the section title, larger than
+                 body text) instead of looking like a normal paragraph. */
+              {{WRAPPER}} .ifs-body h2,{{WRAPPER}} .ifs-after h2,{{WRAPPER}} .ifs-body h3,{{WRAPPER}} .ifs-after h3,{{WRAPPER}} .ifs-body h4,{{WRAPPER}} .ifs-after h4,{{WRAPPER}} .ifs-body h5,{{WRAPPER}} .ifs-after h5,{{WRAPPER}} .ifs-body h6,{{WRAPPER}} .ifs-after h6{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;color:#64402C;line-height:1.3;margin:18px 0 6px}
+              {{WRAPPER}} .ifs-body h2,{{WRAPPER}} .ifs-after h2{font-size:23px}
+              {{WRAPPER}} .ifs-body h3,{{WRAPPER}} .ifs-after h3{font-size:20px}
+              {{WRAPPER}} .ifs-body h4,{{WRAPPER}} .ifs-after h4{font-size:17px}
+              {{WRAPPER}} .ifs-body h5,{{WRAPPER}} .ifs-after h5,{{WRAPPER}} .ifs-body h6,{{WRAPPER}} .ifs-after h6{font-size:15.5px}
               /* MOBILE clamp + tappable arrow (added by JS as .clip-m only when the
                  body overflows). Tapping the arrow toggles .is-open, which persists
                  while scrolling. Desktop keeps its hover clamp (min-width block). */
@@ -2434,6 +2442,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-title{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:26px;line-height:1.2;color:var(--t-title)}
               {{WRAPPER}} .ifb-body{font-size:15px;line-height:1.7;color:var(--t-body)}
               {{WRAPPER}} .ifb-body p{margin:0 0 12px}{{WRAPPER}} .ifb-body :last-child{margin-bottom:0}
+              /* Nested headings inside the body copy: graduated serif subheadings so
+                 an h3 reads as a heading (smaller than the section title, larger than
+                 body text) instead of a normal paragraph. .ifb-body also covers the
+                 after-table text (.ifb-body.ifb-after). */
+              {{WRAPPER}} .ifb-body h2,{{WRAPPER}} .ifb-body h3,{{WRAPPER}} .ifb-body h4,{{WRAPPER}} .ifb-body h5,{{WRAPPER}} .ifb-body h6{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;color:var(--t-title);line-height:1.3;margin:18px 0 6px}
+              {{WRAPPER}} .ifb-body h2{font-size:23px}
+              {{WRAPPER}} .ifb-body h3{font-size:20px}
+              {{WRAPPER}} .ifb-body h4{font-size:17px}
+              {{WRAPPER}} .ifb-body h5,{{WRAPPER}} .ifb-body h6{font-size:15.5px}
               /* MOBILE clamp + tappable arrow. JS adds .clip-m only to bands whose
                  body actually overflows on phones/tablets, and injects the .ic-more
                  arrow. Tapping the arrow toggles .is-open, which PERSISTS while
