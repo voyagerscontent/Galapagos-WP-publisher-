@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.6
+ * Version:     0.4.7
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1971,19 +1971,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-info-frame{display:block;width:100%;border-radius:14px;overflow:hidden}
               {{WRAPPER}} .ifs-info-frame img{width:100%;height:auto;display:block}
               {{WRAPPER}} .ifs-info-cap{margin:12px 0 0;font-size:13px;line-height:1.6;color:#7a6a5c}
-              /* Tablet & phone: rows collapse to ONE column, stacked as
-                 TITLE -> IMAGE -> TEXT with the heading centred and no truncation
-                 (same as the colour bands). Desktop (>1366px) keeps the two-column
-                 zig-zag. display:contents dissolves the text column so its
-                 title/body reorder around the image; grid-template-columns:1fr is a
-                 single-column fallback if a browser ignores the flex switch. */
+              /* Tablet & phone: rows collapse to ONE column using display:block —
+                 NOT grid, flex, or display:contents. Plain block flow physically
+                 cannot produce two columns or strand the title in a separate cell,
+                 and it overrides any grid-template-columns an Elementor control may
+                 have set for tablet/mobile. Order follows the DOM: image, then the
+                 centred heading, then the text. Desktop (>1366px) is untouched. */
               @media(max-width:1366px){
-                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top{display:flex!important;flex-direction:column!important;grid-template-columns:1fr!important;gap:16px}
-                {{WRAPPER}} .ifs-top>*{min-width:0;width:100%}
-                {{WRAPPER}} .ifs-tx{display:contents}
-                {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{order:1;text-align:center}
-                {{WRAPPER}} .ifs-top .ifs-img,{{WRAPPER}} .ifs-row.rev .ifs-top .ifs-img{order:2;height:220px;width:100%}
-                {{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-btn{order:3}
+                {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-row.rev .ifs-top,{{WRAPPER}} .ifs-row.noimg .ifs-top{display:block!important;grid-template-columns:1fr!important}
+                {{WRAPPER}} .ifs-tx{display:block!important}
+                {{WRAPPER}} .ifs-img{height:220px!important;width:100%!important;margin:0 0 16px!important;display:block}
+                {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{text-align:center}
                 {{WRAPPER}} .ifs-top,{{WRAPPER}} .ifs-info{overflow-wrap:break-word}
                 {{WRAPPER}} .ifs-row img{max-width:100%;height:auto}
                 {{WRAPPER}} .ifs-tbl{overflow-x:auto;max-width:100%;margin:14px 16px 20px}
@@ -2343,17 +2341,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               /* Tablet & phone: every band collapses to ONE column. Image bands
                  stack as TITLE -> IMAGE -> TEXT with the heading centred; icon
                  sections keep the icon beside the text; nothing is truncated.
-                 Desktop (>1366px) is untouched. display:contents dissolves the text
-                 column so its title/body become siblings of the image and reorder;
-                 grid-template-columns:1fr is a belt-and-braces single-column fallback
-                 in case a browser ignores the flex switch. */
+                 Desktop (>1366px) is untouched. display:block (not grid, flex, or
+                 display:contents) is plain block flow that physically cannot split
+                 into two columns or strand the title: the image sits on top, then
+                 the centred heading, then the text. */
               @media(max-width:1366px){
-                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{display:flex!important;flex-direction:column!important;grid-template-columns:1fr!important;gap:16px}
-                {{WRAPPER}} .ifb-image>*{min-width:0;width:100%}
-                {{WRAPPER}} .ifb-image .ifb-tx{display:contents}
-                {{WRAPPER}} .ifb-image .ifb-eyebrow,{{WRAPPER}} .ifb-image .ifb-title{order:1}
-                {{WRAPPER}} .ifb-image .ifb-img{order:2;position:static!important;height:220px;width:100%}
-                {{WRAPPER}} .ifb-image .ifb-body,{{WRAPPER}} .ifb-image .ifb-btn{order:3}
+                {{WRAPPER}} .ifb-image,{{WRAPPER}} .ifb-image.rev{display:block!important;grid-template-columns:1fr!important}
+                {{WRAPPER}} .ifb-image .ifb-tx{display:block!important;min-width:0}
+                {{WRAPPER}} .ifb-image .ifb-img{position:static!important;height:220px;width:100%;margin:0 0 16px;display:block}
                 {{WRAPPER}} .ifb-title,{{WRAPPER}} .ifb-body{overflow-wrap:break-word}
                 {{WRAPPER}} .ifb img{max-width:100%;height:auto}
                 {{WRAPPER}} .ifb .ifs-tbl{overflow-x:auto;max-width:100%}
