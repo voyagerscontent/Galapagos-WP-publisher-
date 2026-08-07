@@ -1,10 +1,10 @@
 [
     {
-        "key": "group_67b77d6d5089b",
-        "title": "Cruise",
+        "key": "group_cruise_page_2026",
+        "title": "Cruise Page",
         "fields": [
             {
-                "key": "field_cr_tab_cruise",
+                "key": "field_cp_tab_cruise",
                 "label": "Cruise",
                 "name": "",
                 "aria-label": "",
@@ -22,7 +22,7 @@
                 "selected": 0
             },
             {
-                "key": "field_67b77ee3ea734",
+                "key": "field_cp_cover",
                 "label": "Cover",
                 "name": "cover",
                 "aria-label": "",
@@ -48,7 +48,7 @@
                 "preview_size": "medium"
             },
             {
-                "key": "field_67d899cd38110",
+                "key": "field_cp_price",
                 "label": "Price",
                 "name": "price",
                 "aria-label": "",
@@ -71,7 +71,7 @@
                 "append": ""
             },
             {
-                "key": "field_67b783cc40d0f",
+                "key": "field_cp_category",
                 "label": "Category",
                 "name": "category",
                 "aria-label": "",
@@ -103,7 +103,7 @@
                 "save_options": 0
             },
             {
-                "key": "field_67bf9e5b39e7e",
+                "key": "field_cp_availability_id",
                 "label": "Availability ID",
                 "name": "availability_id",
                 "aria-label": "",
@@ -124,7 +124,7 @@
                 "append": ""
             },
             {
-                "key": "field_67b7851722d67",
+                "key": "field_cp_type",
                 "label": "Type",
                 "name": "type",
                 "aria-label": "",
@@ -155,7 +155,7 @@
                 "save_options": 0
             },
             {
-                "key": "field_67b7853b22d68",
+                "key": "field_cp_capacity",
                 "label": "Capacity",
                 "name": "capacity",
                 "aria-label": "",
@@ -178,7 +178,7 @@
                 "append": ""
             },
             {
-                "key": "field_681e8af288d70",
+                "key": "field_cp_review_count",
                 "label": "Review Count",
                 "name": "review_count",
                 "aria-label": "",
@@ -201,7 +201,7 @@
                 "append": ""
             },
             {
-                "key": "field_67bf4cbc52642",
+                "key": "field_cp_video",
                 "label": "Video",
                 "name": "video",
                 "aria-label": "",
@@ -219,7 +219,7 @@
                 "placeholder": ""
             },
             {
-                "key": "field_67b77e8bea732",
+                "key": "field_cp_technical_specifications",
                 "label": "Technical Specifications",
                 "name": "technical_specifications",
                 "aria-label": "",
@@ -240,7 +240,7 @@
                 "delay": 0
             },
             {
-                "key": "field_67b7814b0f17e",
+                "key": "field_cp_gallery",
                 "label": "Gallery",
                 "name": "gallery",
                 "aria-label": "",
@@ -268,7 +268,7 @@
                 "preview_size": "medium"
             },
             {
-                "key": "field_67b8e5ba5c3dd",
+                "key": "field_cp_deck_plans",
                 "label": "Deck Plans",
                 "name": "deck_plans",
                 "aria-label": "",
@@ -296,7 +296,7 @@
                 "preview_size": "medium"
             },
             {
-                "key": "field_67bcb00cd8b89",
+                "key": "field_cp_rates",
                 "label": "Rates",
                 "name": "rates",
                 "aria-label": "",
@@ -318,7 +318,7 @@
                 "rows_per_page": 20,
                 "sub_fields": [
                     {
-                        "key": "field_67bcb017d8b8a",
+                        "key": "field_cp_rates_duration",
                         "label": "Duration",
                         "name": "duration",
                         "aria-label": "",
@@ -339,10 +339,10 @@
                         "step": "",
                         "prepend": "",
                         "append": "",
-                        "parent_repeater": "field_67bcb00cd8b89"
+                        "parent_repeater": "field_cp_rates"
                     },
                     {
-                        "key": "field_67bcb023d8b8b",
+                        "key": "field_cp_rates_price",
                         "label": "Price",
                         "name": "price",
                         "aria-label": "",
@@ -363,12 +363,12 @@
                         "step": "",
                         "prepend": "",
                         "append": "",
-                        "parent_repeater": "field_67bcb00cd8b89"
+                        "parent_repeater": "field_cp_rates"
                     }
                 ]
             },
             {
-                "key": "field_67bdda3192b30",
+                "key": "field_cp_includes",
                 "label": "Includes",
                 "name": "includes",
                 "aria-label": "",
@@ -389,7 +389,7 @@
                 "delay": 0
             },
             {
-                "key": "field_67bdda4492b31",
+                "key": "field_cp_not_included",
                 "label": "Not Included",
                 "name": "not_included",
                 "aria-label": "",
@@ -410,8 +410,8 @@
                 "delay": 0
             },
             {
-                "key": "field_cr_tab_test",
-                "label": "Cruise Test",
+                "key": "field_cp_tab_page",
+                "label": "Cruise Page",
                 "name": "",
                 "aria-label": "",
                 "type": "tab",
@@ -428,12 +428,12 @@
                 "selected": 0
             },
             {
-                "key": "field_cr_feature_sections",
+                "key": "field_cp_feature_sections",
                 "label": "Sections (add rows)",
                 "name": "feature_sections",
                 "aria-label": "",
                 "type": "repeater",
-                "instructions": "Each row renders as a section: Title (H2) + Image + Content, alternating left/right. Add as many rows as you need.",
+                "instructions": "Each row renders as a section: Title (H2) + Image + Content, alternating left/right. Add one row per document section (Vessel at a Glance, History, Cabins, Onboard, Itineraries, Expedition, Sustainability, Who it's for, Comparison, How to book).",
                 "required": 0,
                 "conditional_logic": 0,
                 "wrapper": {
@@ -445,12 +445,12 @@
                 "pagination": 0,
                 "min": 0,
                 "max": 0,
-                "collapsed": "field_cr_fs_title",
+                "collapsed": "field_cp_fs_title",
                 "button_label": "Add Section Row",
                 "rows_per_page": 20,
                 "sub_fields": [
                     {
-                        "key": "field_cr_fs_title",
+                        "key": "field_cp_fs_title",
                         "label": "Title (H2)",
                         "name": "title",
                         "aria-label": "",
@@ -463,16 +463,16 @@
                             "class": "",
                             "id": ""
                         },
+                        "allow_in_bindings": 0,
+                        "parent_repeater": "field_cp_feature_sections",
                         "default_value": "",
                         "maxlength": "",
-                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": "",
-                        "parent_repeater": "field_cr_feature_sections"
+                        "append": ""
                     },
                     {
-                        "key": "field_cr_fs_subtitle",
+                        "key": "field_cp_fs_subtitle",
                         "label": "Eyebrow / Subtitle",
                         "name": "subtitle",
                         "aria-label": "",
@@ -485,16 +485,16 @@
                             "class": "",
                             "id": ""
                         },
+                        "allow_in_bindings": 0,
+                        "parent_repeater": "field_cp_feature_sections",
                         "default_value": "",
                         "maxlength": "",
-                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": "",
-                        "parent_repeater": "field_cr_feature_sections"
+                        "append": ""
                     },
                     {
-                        "key": "field_cr_fs_image",
+                        "key": "field_cp_fs_image",
                         "label": "Image",
                         "name": "image",
                         "aria-label": "",
@@ -507,6 +507,8 @@
                             "class": "",
                             "id": ""
                         },
+                        "allow_in_bindings": 0,
+                        "parent_repeater": "field_cp_feature_sections",
                         "return_format": "array",
                         "library": "all",
                         "min_width": "",
@@ -516,12 +518,10 @@
                         "max_height": "",
                         "max_size": "",
                         "mime_types": "",
-                        "allow_in_bindings": 0,
-                        "preview_size": "medium",
-                        "parent_repeater": "field_cr_feature_sections"
+                        "preview_size": "medium"
                     },
                     {
-                        "key": "field_cr_fs_content",
+                        "key": "field_cp_fs_content",
                         "label": "Content",
                         "name": "content",
                         "aria-label": "",
@@ -534,16 +534,16 @@
                             "class": "",
                             "id": ""
                         },
-                        "default_value": "",
                         "allow_in_bindings": 0,
+                        "parent_repeater": "field_cp_feature_sections",
+                        "default_value": "",
                         "tabs": "all",
                         "toolbar": "full",
                         "media_upload": 1,
-                        "delay": 0,
-                        "parent_repeater": "field_cr_feature_sections"
+                        "delay": 0
                     },
                     {
-                        "key": "field_cr_fs_btnlabel",
+                        "key": "field_cp_fs_btnlabel",
                         "label": "Button label",
                         "name": "button_label",
                         "aria-label": "",
@@ -556,16 +556,16 @@
                             "class": "",
                             "id": ""
                         },
+                        "allow_in_bindings": 0,
+                        "parent_repeater": "field_cp_feature_sections",
                         "default_value": "",
                         "maxlength": "",
-                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": "",
-                        "parent_repeater": "field_cr_feature_sections"
+                        "append": ""
                     },
                     {
-                        "key": "field_cr_fs_btnurl",
+                        "key": "field_cp_fs_btnurl",
                         "label": "Button URL",
                         "name": "button_url",
                         "aria-label": "",
@@ -578,15 +578,15 @@
                             "class": "",
                             "id": ""
                         },
-                        "default_value": "",
                         "allow_in_bindings": 0,
-                        "placeholder": "",
-                        "parent_repeater": "field_cr_feature_sections"
+                        "parent_repeater": "field_cp_feature_sections",
+                        "default_value": "",
+                        "placeholder": ""
                     }
                 ]
             },
             {
-                "key": "field_cr_tab_cta",
+                "key": "field_cp_tab_cta",
                 "label": "Plan Your Visit",
                 "name": "",
                 "aria-label": "",
@@ -604,7 +604,7 @@
                 "selected": 0
             },
             {
-                "key": "field_cr_cta_title",
+                "key": "field_cp_cta_title",
                 "label": "CTA Title",
                 "name": "cta_title",
                 "aria-label": "",
@@ -625,7 +625,7 @@
                 "append": ""
             },
             {
-                "key": "field_cr_cta_intro",
+                "key": "field_cp_cta_intro",
                 "label": "CTA Intro",
                 "name": "cta_intro",
                 "aria-label": "",
@@ -646,12 +646,12 @@
                 "delay": 0
             },
             {
-                "key": "field_cr_cta",
+                "key": "field_cp_cta",
                 "label": "CTA Cards (add rows)",
                 "name": "cta",
                 "aria-label": "",
                 "type": "repeater",
-                "instructions": "Each row is a CTA card: Title + Text + optional Audience badge, Image and Button. Add as many rows as you need.",
+                "instructions": "Each row is a CTA card: Title + Text + optional Audience badge, Image and Button.",
                 "required": 0,
                 "conditional_logic": 0,
                 "wrapper": {
@@ -663,12 +663,12 @@
                 "pagination": 0,
                 "min": 0,
                 "max": 0,
-                "collapsed": "field_cr_cta_c_title",
+                "collapsed": "field_cp_cta_c_title",
                 "button_label": "Add CTA Row",
                 "rows_per_page": 20,
                 "sub_fields": [
                     {
-                        "key": "field_cr_cta_c_title",
+                        "key": "field_cp_cta_c_title",
                         "label": "Title",
                         "name": "title",
                         "aria-label": "",
@@ -682,7 +682,7 @@
                             "id": ""
                         },
                         "allow_in_bindings": 0,
-                        "parent_repeater": "field_cr_cta",
+                        "parent_repeater": "field_cp_cta",
                         "default_value": "",
                         "maxlength": "",
                         "placeholder": "",
@@ -690,7 +690,7 @@
                         "append": ""
                     },
                     {
-                        "key": "field_cr_cta_c_text",
+                        "key": "field_cp_cta_c_text",
                         "label": "Text",
                         "name": "text",
                         "aria-label": "",
@@ -704,15 +704,15 @@
                             "id": ""
                         },
                         "allow_in_bindings": 0,
-                        "parent_repeater": "field_cr_cta",
+                        "parent_repeater": "field_cp_cta",
                         "default_value": "",
                         "tabs": "all",
-                        "toolbar": "basic",
-                        "media_upload": 0,
+                        "toolbar": "full",
+                        "media_upload": 1,
                         "delay": 0
                     },
                     {
-                        "key": "field_cr_cta_c_audience",
+                        "key": "field_cp_cta_c_audience",
                         "label": "Audience badge",
                         "name": "audience",
                         "aria-label": "",
@@ -726,7 +726,7 @@
                             "id": ""
                         },
                         "allow_in_bindings": 0,
-                        "parent_repeater": "field_cr_cta",
+                        "parent_repeater": "field_cp_cta",
                         "default_value": "",
                         "maxlength": "",
                         "placeholder": "",
@@ -734,7 +734,7 @@
                         "append": ""
                     },
                     {
-                        "key": "field_cr_cta_c_image",
+                        "key": "field_cp_cta_c_image",
                         "label": "Image",
                         "name": "image",
                         "aria-label": "",
@@ -748,7 +748,7 @@
                             "id": ""
                         },
                         "allow_in_bindings": 0,
-                        "parent_repeater": "field_cr_cta",
+                        "parent_repeater": "field_cp_cta",
                         "return_format": "array",
                         "library": "all",
                         "min_width": "",
@@ -761,7 +761,7 @@
                         "preview_size": "medium"
                     },
                     {
-                        "key": "field_cr_cta_c_btnlabel",
+                        "key": "field_cp_cta_c_btnlabel",
                         "label": "Button label",
                         "name": "button_label",
                         "aria-label": "",
@@ -775,7 +775,7 @@
                             "id": ""
                         },
                         "allow_in_bindings": 0,
-                        "parent_repeater": "field_cr_cta",
+                        "parent_repeater": "field_cp_cta",
                         "default_value": "",
                         "maxlength": "",
                         "placeholder": "",
@@ -783,7 +783,7 @@
                         "append": ""
                     },
                     {
-                        "key": "field_cr_cta_c_btnurl",
+                        "key": "field_cp_cta_c_btnurl",
                         "label": "Button URL",
                         "name": "button_url",
                         "aria-label": "",
@@ -797,14 +797,14 @@
                             "id": ""
                         },
                         "allow_in_bindings": 0,
-                        "parent_repeater": "field_cr_cta",
+                        "parent_repeater": "field_cp_cta",
                         "default_value": "",
                         "placeholder": ""
                     }
                 ]
             },
             {
-                "key": "field_cr_tab_faq",
+                "key": "field_cp_tab_faq",
                 "label": "FAQ",
                 "name": "",
                 "aria-label": "",
@@ -822,7 +822,7 @@
                 "selected": 0
             },
             {
-                "key": "field_cr_faqs",
+                "key": "field_cp_faqs",
                 "label": "FAQs",
                 "name": "faqs",
                 "aria-label": "",
@@ -839,12 +839,12 @@
                 "pagination": 0,
                 "min": 0,
                 "max": 0,
-                "collapsed": "field_cr_faq_q",
+                "collapsed": "field_cp_faq_q",
                 "button_label": "Add FAQ",
                 "rows_per_page": 20,
                 "sub_fields": [
                     {
-                        "key": "field_cr_faq_q",
+                        "key": "field_cp_faq_q",
                         "label": "Question",
                         "name": "question",
                         "aria-label": "",
@@ -857,16 +857,16 @@
                             "class": "",
                             "id": ""
                         },
+                        "allow_in_bindings": 0,
+                        "parent_repeater": "field_cp_faqs",
                         "default_value": "",
                         "maxlength": "",
-                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": "",
-                        "parent_repeater": "field_cr_faqs"
+                        "append": ""
                     },
                     {
-                        "key": "field_cr_faq_a",
+                        "key": "field_cp_faq_a",
                         "label": "Answer",
                         "name": "answer",
                         "aria-label": "",
@@ -879,13 +879,13 @@
                             "class": "",
                             "id": ""
                         },
-                        "default_value": "",
                         "allow_in_bindings": 0,
+                        "parent_repeater": "field_cp_faqs",
+                        "default_value": "",
                         "tabs": "all",
-                        "toolbar": "basic",
-                        "media_upload": 0,
-                        "delay": 0,
-                        "parent_repeater": "field_cr_faqs"
+                        "toolbar": "full",
+                        "media_upload": 1,
+                        "delay": 0
                     }
                 ]
             }
@@ -907,99 +907,9 @@
         "hide_on_screen": "",
         "active": true,
         "description": "",
-        "show_in_rest": 0,
+        "show_in_rest": 1,
         "display_title": "",
         "allow_ai_access": false,
         "ai_description": ""
-    },
-    {
-        "key": "post_type_67b73fd58ac65",
-        "title": "Cruises",
-        "menu_order": 0,
-        "active": true,
-        "post_type": "cruise",
-        "advanced_configuration": false,
-        "import_source": "",
-        "import_date": "",
-        "allow_ai_access": false,
-        "ai_description": "",
-        "labels": {
-            "name": "Cruises",
-            "singular_name": "Cruise",
-            "menu_name": "Cruises",
-            "all_items": "All Cruises",
-            "edit_item": "Edit Cruise",
-            "view_item": "View Cruise",
-            "view_items": "View Cruises",
-            "add_new_item": "Add New Cruise",
-            "add_new": "Add New Cruise",
-            "new_item": "New Cruise",
-            "parent_item_colon": "Parent Cruise:",
-            "search_items": "Search Cruises",
-            "not_found": "No cruises found",
-            "not_found_in_trash": "No cruises found in Trash",
-            "archives": "Cruise Archives",
-            "attributes": "Cruise Attributes",
-            "featured_image": "",
-            "set_featured_image": "",
-            "remove_featured_image": "",
-            "use_featured_image": "",
-            "insert_into_item": "Insert into cruise",
-            "uploaded_to_this_item": "Uploaded to this cruise",
-            "filter_items_list": "Filter cruises list",
-            "filter_by_date": "Filter cruises by date",
-            "items_list_navigation": "Cruises list navigation",
-            "items_list": "Cruises list",
-            "item_published": "Cruise published.",
-            "item_published_privately": "Cruise published privately.",
-            "item_reverted_to_draft": "Cruise reverted to draft.",
-            "item_scheduled": "Cruise scheduled.",
-            "item_updated": "Cruise updated.",
-            "item_link": "Cruise Link",
-            "item_link_description": "A link to a cruise."
-        },
-        "description": "",
-        "public": true,
-        "hierarchical": false,
-        "exclude_from_search": false,
-        "publicly_queryable": true,
-        "show_ui": true,
-        "show_in_menu": true,
-        "admin_menu_parent": "",
-        "show_in_admin_bar": true,
-        "show_in_nav_menus": true,
-        "show_in_rest": true,
-        "rest_base": "",
-        "rest_namespace": "wp/v2",
-        "rest_controller_class": "WP_REST_Posts_Controller",
-        "menu_position": "",
-        "menu_icon": {
-            "type": "dashicons",
-            "value": "dashicons-admin-post"
-        },
-        "rename_capabilities": false,
-        "singular_capability_name": "post",
-        "plural_capability_name": "posts",
-        "supports": [
-            "title",
-            "editor",
-            "thumbnail",
-            "custom-fields"
-        ],
-        "taxonomies": "",
-        "has_archive": false,
-        "has_archive_slug": "",
-        "rewrite": {
-            "permalink_rewrite": "post_type_key",
-            "with_front": "1",
-            "feeds": "0",
-            "pages": "1"
-        },
-        "query_var": "post_type_key",
-        "query_var_name": "",
-        "can_export": true,
-        "delete_with_user": false,
-        "register_meta_box_cb": "",
-        "enter_title_here": ""
     }
 ]
