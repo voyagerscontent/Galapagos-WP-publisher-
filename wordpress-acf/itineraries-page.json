@@ -4,32 +4,11 @@
         "title": "Itineraries",
         "fields": [
             {
-                "key": "field_itin_hero_title",
-                "label": "Hero Title (H1)",
-                "name": "hero_title",
+                "key": "field_itin_tab_glance",
+                "label": "At a Glance",
+                "name": "",
                 "aria-label": "",
-                "type": "text",
-                "instructions": "The single H1 / page title.",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "allow_in_bindings": 1,
-                "default_value": "",
-                "maxlength": "",
-                "placeholder": "",
-                "prepend": "",
-                "append": ""
-            },
-            {
-                "key": "field_itin_hero_subtitle",
-                "label": "Hero Eyebrow / Subtitle",
-                "name": "hero_subtitle",
-                "aria-label": "",
-                "type": "text",
+                "type": "tab",
                 "instructions": "",
                 "required": 0,
                 "conditional_logic": 0,
@@ -38,80 +17,9 @@
                     "class": "",
                     "id": ""
                 },
-                "allow_in_bindings": 1,
-                "default_value": "",
-                "maxlength": "",
-                "placeholder": "",
-                "prepend": "",
-                "append": ""
-            },
-            {
-                "key": "field_itin_hero_image",
-                "label": "Hero Image",
-                "name": "hero_image",
-                "aria-label": "",
-                "type": "image",
-                "instructions": "",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "allow_in_bindings": 1,
-                "return_format": "array",
-                "preview_size": "medium",
-                "library": "all",
-                "min_width": "",
-                "min_height": "",
-                "min_size": "",
-                "max_width": "",
-                "max_height": "",
-                "max_size": "",
-                "mime_types": ""
-            },
-            {
-                "key": "field_itin_hero_image_alt",
-                "label": "Hero Image Alt",
-                "name": "hero_image_alt",
-                "aria-label": "",
-                "type": "text",
-                "instructions": "",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "allow_in_bindings": 1,
-                "default_value": "",
-                "maxlength": "",
-                "placeholder": "",
-                "prepend": "",
-                "append": ""
-            },
-            {
-                "key": "field_itin_intro",
-                "label": "Intro / Lead paragraph",
-                "name": "intro",
-                "aria-label": "",
-                "type": "wysiwyg",
-                "instructions": "Opening paragraph before the first section.",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "allow_in_bindings": 1,
-                "default_value": "",
-                "tabs": "all",
-                "toolbar": "full",
-                "media_upload": 1,
-                "delay": 0
+                "placement": "top",
+                "endpoint": 0,
+                "selected": 0
             },
             {
                 "key": "field_itin_qf_title",
@@ -133,27 +41,6 @@
                 "placeholder": "",
                 "prepend": "",
                 "append": ""
-            },
-            {
-                "key": "field_itin_qf_intro",
-                "label": "At a Glance — Intro",
-                "name": "quick_facts_intro",
-                "aria-label": "",
-                "type": "wysiwyg",
-                "instructions": "",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "allow_in_bindings": 1,
-                "default_value": "",
-                "tabs": "all",
-                "toolbar": "full",
-                "media_upload": 1,
-                "delay": 0
             },
             {
                 "key": "field_itin_quick_facts",
@@ -263,9 +150,49 @@
                         "default_value": "",
                         "maxlength": "",
                         "rows": 4,
-                        "new_lines": ""
+                        "new_lines": "",
+                        "placeholder": ""
                     }
                 ]
+            },
+            {
+                "key": "field_itin_tab_itin",
+                "label": "Itinerary",
+                "name": "",
+                "aria-label": "",
+                "type": "tab",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "placement": "top",
+                "endpoint": 0,
+                "selected": 0
+            },
+            {
+                "key": "field_itin_intro",
+                "label": "Intro / Lead paragraph",
+                "name": "intro",
+                "aria-label": "",
+                "type": "wysiwyg",
+                "instructions": "Opening paragraph before the first section.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "allow_in_bindings": 1,
+                "default_value": "",
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
             },
             {
                 "key": "field_itin_feature_sections",
@@ -522,7 +449,8 @@
                         "default_value": "",
                         "maxlength": "",
                         "rows": 4,
-                        "new_lines": ""
+                        "new_lines": "",
+                        "placeholder": ""
                     },
                     {
                         "key": "field_itin_day_notes",
@@ -542,9 +470,28 @@
                         "default_value": "",
                         "maxlength": "",
                         "rows": 4,
-                        "new_lines": ""
+                        "new_lines": "",
+                        "placeholder": ""
                     }
                 ]
+            },
+            {
+                "key": "field_itin_tab_faqcta",
+                "label": "FAQ & CTA",
+                "name": "",
+                "aria-label": "",
+                "type": "tab",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "placement": "top",
+                "endpoint": 0,
+                "selected": 0
             },
             {
                 "key": "field_itin_faqs",
@@ -807,6 +754,24 @@
                 ]
             },
             {
+                "key": "field_itin_tab_seo",
+                "label": "SEO & Links",
+                "name": "",
+                "aria-label": "",
+                "type": "tab",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "placement": "top",
+                "endpoint": 0,
+                "selected": 0
+            },
+            {
                 "key": "field_itin_related_links",
                 "label": "Related Guides",
                 "name": "related_links",
@@ -908,7 +873,8 @@
                 "default_value": "",
                 "maxlength": "",
                 "rows": 6,
-                "new_lines": ""
+                "new_lines": "",
+                "placeholder": ""
             }
         ],
         "location": [
@@ -928,6 +894,9 @@
         "hide_on_screen": "",
         "active": true,
         "description": "Itinerary single page (Galápagos Page Type == Itineraries).",
-        "show_in_rest": 1
+        "show_in_rest": 1,
+        "display_title": "",
+        "allow_ai_access": false,
+        "ai_description": ""
     }
 ]
