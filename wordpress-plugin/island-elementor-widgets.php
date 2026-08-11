@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.40
+ * Version:     0.4.41
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5254,6 +5254,262 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
     /* ===================================================================
+     *  ISLAND ITINERARY (full page) — faithful port of the theme's
+     *  single-itinerary template. Reads the itinerary's own fields AND
+     *  follows the linked `cruise` post object for the hero image, the
+     *  price (rates matched by duration), Includes and Not Included. Renders
+     *  the whole two-column layout (content + sticky Book Now sidebar) with
+     *  self-contained styles so it does not depend on the theme's CSS.
+     * =================================================================== */
+    class Island_Itinerary_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_itinerary';
+        }
+        public function get_title()
+        {
+            return 'Island Itinerary (full page)';
+        }
+        public function get_icon()
+        {
+            return 'eicon-single-page';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('form_shortcode', ['label' => 'Booking form shortcode', 'type' => \Elementor\Controls_Manager::TEXT,
+                'default' => '[contact_form_vue form="tour"]']);
+            $this->add_control('show_hero', ['label' => 'Show hero image (cruise photo)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('show_breadcrumb', ['label' => 'Show breadcrumb', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->end_controls_section();
+        }
+        // Shared settings page (travel tips / weather / fitness / accommodation),
+        // mirrors the theme's get_page_id(): only for galapagos-cruise-tour posts.
+        private function ii_settings_page($pid)
+        {
+            return has_term('galapagos-cruise-tour', 'category', $pid) ? 35952 : null;
+        }
+        private function ii_card($icon, $title, $html)
+        {
+            if (trim(wp_strip_all_tags((string) $html)) === '') {
+                return '';
+            }
+            return '<div class="iit-card"><div class="iit-card-h"><span class="iit-ic"><i class="fa-solid ' . esc_attr($icon) . '"></i></span>'
+                . '<h2 class="iit-sub">' . esc_html($title) . '</h2></div><div class="iit-list">' . wp_kses_post($html) . '</div></div>';
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            if (!$pid) {
+                return;
+            }
+            $cruises = get_field('cruise', $pid);
+            $cruise = (!empty($cruises) && is_array($cruises)) ? $cruises[0] : (is_object($cruises) ? $cruises : null);
+            $cid = ($cruise && isset($cruise->ID)) ? $cruise->ID : 0;
+
+            $duration = get_field('duration', $pid);
+            $price = '';
+            if ($cid) {
+                $rates = (array) get_field('rates', $cid);
+                foreach ($rates as $r) {
+                    if (isset($r['duration']) && (string) $r['duration'] === (string) $duration) {
+                        $price = $r['price'] ?? '';
+                        break;
+                    }
+                }
+            }
+            $includes = $cid ? get_field('includes', $cid) : '';
+            $not_included = $cid ? get_field('not_included', $cid) : '';
+            $hero_url = $cid ? get_the_post_thumbnail_url($cid, 'full') : '';
+            $sp = $this->ii_settings_page($pid);
+
+            $letter = get_field('letter', $pid);
+            $title = get_the_title($pid);
+            $form = (string) ($s['form_shortcode'] ?? '[contact_form_vue form="tour"]');
+
+            echo '<style>
+              {{WRAPPER}} .iit{--brand:#64402C;--soft:#F5F0EA;--line:rgba(100,64,44,.14);color:#3A2A1E}
+              {{WRAPPER}} .iit-hero{width:100%;height:320px;object-fit:cover;display:block;border-radius:0}
+              {{WRAPPER}} .iit-bc{background:var(--brand);color:#fff;font-size:13px;padding:10px 0;margin:0 0 8px}
+              {{WRAPPER}} .iit-bc ul{display:flex;gap:8px;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+              {{WRAPPER}} .iit-bc a{color:#fff;text-decoration:none}
+              {{WRAPPER}} .iit-title{text-align:center;font-size:24px;font-weight:700;color:var(--brand);margin:18px 0 6px;font-family:Merriweather,Georgia,serif}
+              {{WRAPPER}} .iit-grid{display:grid;grid-template-columns:1fr;gap:32px;align-items:start}
+              @media(min-width:900px){ {{WRAPPER}} .iit-grid{grid-template-columns:2fr 1fr} }
+              {{WRAPPER}} .iit-sub{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:20px;color:var(--brand);margin:0}
+              {{WRAPPER}} .iit-itin-h{text-align:center;margin:18px 0 10px}
+              {{WRAPPER}} .iit-content{font-size:15px;line-height:1.7}{{WRAPPER}} .iit-content p{margin:0 0 12px}
+              {{WRAPPER}} .iit-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:16px 0}
+              @media(min-width:700px){ {{WRAPPER}} .iit-gallery{grid-template-columns:repeat(4,1fr)} }
+              {{WRAPPER}} .iit-gimg{display:block;padding-top:72%;background:#e3d6c8 center/cover no-repeat;border-radius:8px}
+              {{WRAPPER}} .iit-day-h{background:var(--soft);border-radius:10px;padding:10px 14px;margin:14px 0 6px}
+              {{WRAPPER}} .iit-day-h .iit-sub{font-size:17px}
+              {{WRAPPER}} .iit-meals{display:flex;align-items:center;gap:10px;margin:8px 0 4px;color:#7a6a5c;font-weight:600;font-size:14px}
+              {{WRAPPER}} .iit-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#F1EAE4;flex:0 0 auto}
+              {{WRAPPER}} .iit-ic.sm{width:28px;height:28px;font-size:13px}
+              {{WRAPPER}} .iit-card{background:var(--soft);border-radius:12px;padding:18px 20px;margin:16px 0}
+              {{WRAPPER}} .iit-card-h{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+              {{WRAPPER}} .iit-list ul{margin:0;padding-left:18px}{{WRAPPER}} .iit-list li{margin:4px 0;line-height:1.6}
+              {{WRAPPER}} .iit-list p{margin:0 0 10px}
+              {{WRAPPER}} .iit-side{position:sticky;top:28px;display:flex;flex-direction:column;gap:16px}
+              {{WRAPPER}} .iit-book{border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(60,40,25,.10);background:#fff}
+              {{WRAPPER}} .iit-book-h{background:var(--brand);color:#fff;text-align:center;padding:14px}
+              {{WRAPPER}} .iit-book-h b{display:block;font-weight:700}
+              {{WRAPPER}} .iit-price{font-size:22px;font-weight:700}
+              {{WRAPPER}} .iit-book-b{padding:20px}
+              {{WRAPPER}} .iit-meta{display:flex;flex-direction:column;gap:8px}
+              {{WRAPPER}} .iit-meta-row{display:flex;align-items:center;gap:10px;font-size:15px}
+            </style>';
+
+            echo '<div class="iit">';
+            if (($s['show_hero'] ?? 'yes') === 'yes' && $hero_url) {
+                echo '<img class="iit-hero" src="' . esc_url($hero_url) . '" alt="' . esc_attr(($cruise->post_title ?? '') . ' | Galapagos Cruise') . '">';
+            }
+            if (($s['show_breadcrumb'] ?? 'yes') === 'yes') {
+                echo '<div class="iit-bc"><div class="iit-wrap"><ul>';
+                echo '<li><a href="' . esc_url(home_url('/')) . '">Home</a> /</li>';
+                if ($cruise) {
+                    echo '<li><a href="' . esc_url(home_url('/cruise/' . $cruise->post_name)) . '">' . esc_html($cruise->post_title) . '</a> /</li>';
+                }
+                echo '<li>' . esc_html($title) . '</li></ul></div></div>';
+            }
+            echo '<h1 class="iit-title">' . esc_html($title) . ($letter ? ' (' . esc_html($letter) . ')' : '') . '</h1>';
+
+            echo '<div class="iit-grid">';
+
+            /* ---- LEFT COLUMN ---- */
+            echo '<div class="iit-main">';
+            echo '<div class="iit-content">' . apply_filters('the_content', get_post_field('post_content', $pid)) . '</div>';
+
+            // Gallery
+            $gallery = get_field('gallery', $pid);
+            if ($gallery && is_array($gallery)) {
+                echo '<div class="iit-gallery">';
+                foreach ($gallery as $img) {
+                    $u = '';
+                    if (is_array($img)) {
+                        $u = $img['sizes']['medium_large'] ?? ($img['url'] ?? '');
+                    } elseif (is_numeric($img)) {
+                        $u = wp_get_attachment_image_url((int) $img, 'medium_large');
+                    }
+                    if ($u) {
+                        echo '<span class="iit-gimg" style="background-image:url(\'' . esc_url($u) . '\')"></span>';
+                    }
+                }
+                echo '</div>';
+            }
+
+            // Itinerary day-by-day
+            $days = (array) get_field('day_by_day', $pid);
+            if ($days) {
+                echo '<div class="iit-itin-h"><h2 class="iit-sub">Itinerary</h2></div>';
+                $n = count($days);
+                foreach ($days as $i => $day) {
+                    $dnum = trim((string) ($day['day'] ?? ''));
+                    $dtitle = ucwords(mb_strtolower((string) ($day['title'] ?? '')));
+                    echo '<div class="iit-day-h"><h3 class="iit-sub">Day ' . esc_html($dnum) . ' : ' . esc_html($dtitle) . '</h3></div>';
+                    echo '<div class="iit-content">' . wp_kses_post($day['details'] ?? '') . '</div>';
+                    $meals = (array) ($day['meals'] ?? []);
+                    echo '<div class="iit-meals"><span class="iit-ic sm"><i class="fa-solid fa-utensils"></i></span><span>';
+                    if ($meals) {
+                        $labels = [];
+                        foreach ($meals as $m) {
+                            if (is_array($m)) {
+                                $labels[] = ucfirst((string) ($m['label'] ?? $m['value'] ?? ''));
+                            } else {
+                                $labels[] = ucfirst((string) $m);
+                            }
+                        }
+                        echo esc_html(implode(' / ', array_filter($labels)));
+                    } else {
+                        // Same sensible fallback the theme uses.
+                        if ($i === 0) {
+                            echo 'Lunch / Dinner';
+                        } elseif ($i === $n - 1) {
+                            echo 'Breakfast';
+                        } else {
+                            echo 'Breakfast / Lunch / Dinner';
+                        }
+                    }
+                    echo '</span></div>';
+                }
+            }
+
+            // Highlights (itinerary field), Includes / Not Included (from the cruise)
+            echo $this->ii_card('fa-eye', 'Highlights', get_field('highlights', $pid));
+            echo $this->ii_card('fa-check', 'Includes', $includes);
+            echo $this->ii_card('fa-xmark', 'Not Included', $not_included);
+
+            // Shared settings-page cards (only on galapagos-cruise-tour posts).
+            if ($sp) {
+                echo $this->ii_card('fa-lightbulb', 'Travel Tips', get_field('travel_tips', $sp));
+                echo $this->ii_card('fa-cloud-sun', 'Weather Preparedness', get_field('weather_preparedness', $sp));
+                echo $this->ii_card('fa-person-hiking', 'Fitness Requirements', get_field('fitness_requirements', $sp));
+                echo $this->ii_card('fa-bed', 'Accommodation', get_field('accommodation', $sp));
+            }
+            echo '</div>';  // .iit-main
+
+            /* ---- RIGHT COLUMN (sticky) ---- */
+            echo '<div class="iit-side">';
+            echo '<div class="iit-book"><div class="iit-book-h"><b>Book Now</b>';
+            if ($price !== '') {
+                echo '<div>From <span class="iit-price">USD ' . esc_html($price) . ',00</span> pp</div>';
+            }
+            echo '</div><div class="iit-book-b">' . do_shortcode($form) . '</div></div>';
+
+            echo '<div class="iit-meta">';
+            $dest = get_field('destination', $pid);
+            if ($dest) {
+                echo '<div class="iit-meta-row"><span class="iit-ic sm"><i class="fa-solid fa-location-dot"></i></span><span>' . esc_html($dest) . '</span></div>';
+            }
+            if ($duration !== '' && $duration !== null) {
+                $dtxt = ((int) $duration > 1) ? ($duration . ' Days') : ($duration . ' Day');
+                echo '<div class="iit-meta-row"><span class="iit-ic sm"><i class="fa-regular fa-calendar"></i></span><span>' . esc_html($dtxt) . '</span></div>';
+            }
+            $phys = get_field('physical_rating', $pid);
+            if ($phys) {
+                echo '<div class="iit-meta-row"><span class="iit-ic sm"><i class="fa-solid fa-person-walking"></i></span><span>' . esc_html($phys) . '</span></div>';
+            }
+            $age = get_field('age_recomendation', $pid);
+            if ($age) {
+                echo '<div class="iit-meta-row"><span class="iit-ic sm"><i class="fa-regular fa-user"></i></span><span>' . esc_html($age) . '</span></div>';
+            }
+            echo '</div>';  // .iit-meta
+
+            // FAQs: prefer the shared settings page (theme), fall back to the
+            // itinerary's own faqs field.
+            $faqs = (array) ($sp ? get_field('faqs', $sp) : []);
+            if (!$faqs) {
+                $faqs = (array) get_field('faqs', $pid);
+            }
+            if ($faqs) {
+                echo '<div><div class="iit-card-h"><span class="iit-ic sm"><i class="fa-solid fa-question"></i></span><h2 class="iit-sub">FAQs</h2></div>';
+                echo '<div class="ifaq">';
+                foreach ($faqs as $j => $faq) {
+                    $open = $j === 0 ? ' open' : '';
+                    echo '<details class="ifaq-item"' . $open . '><summary class="ifaq-q">' . esc_html($faq['question'] ?? '')
+                        . '</summary><div class="ifaq-a">' . wp_kses_post($faq['answer'] ?? '') . '</div></details>';
+                }
+                echo '</div></div>';
+            }
+            echo '</div>';  // .iit-side
+
+            echo '</div>';  // .iit-grid
+            echo '</div>';  // .iit
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND DAY BY DAY — day cards from the `day_by_day` ACF repeater
      *  (Day, Title, Details WYSIWYG, Meals checkbox). Renders each day as a
      *  card with a header bar, rich description, and meal badges — matching
@@ -5465,6 +5721,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Seasonality_Widget',
         'Island_ItineraryDays_Widget',
         'Island_DayByDay_Widget',
+        'Island_Itinerary_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
