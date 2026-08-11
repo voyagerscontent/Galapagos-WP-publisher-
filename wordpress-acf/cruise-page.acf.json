@@ -4,6 +4,412 @@
         "title": "Cruise Page",
         "fields": [
             {
+                "key": "field_cp_tab_cruise",
+                "label": "Cruise",
+                "name": "",
+                "aria-label": "",
+                "type": "tab",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "placement": "top",
+                "endpoint": 0,
+                "selected": 0
+            },
+            {
+                "key": "field_cp_cover",
+                "label": "Cover",
+                "name": "cover",
+                "aria-label": "",
+                "type": "image",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "return_format": "url",
+                "library": "all",
+                "min_width": "",
+                "min_height": "",
+                "min_size": "",
+                "max_width": "",
+                "max_height": "",
+                "max_size": "",
+                "mime_types": "",
+                "allow_in_bindings": 0,
+                "preview_size": "medium"
+            },
+            {
+                "key": "field_cp_price",
+                "label": "Price",
+                "name": "price",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "min": "",
+                "max": "",
+                "allow_in_bindings": 0,
+                "placeholder": "",
+                "step": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_cp_category",
+                "label": "Category",
+                "name": "category",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Luxury Class": "Luxury Class",
+                    "First Class": "First Class",
+                    "Tourist Superior Class": "Tourist Superior Class",
+                    "Economy Class": "Economy Class",
+                    "Diving Class": "Diving Class"
+                },
+                "default_value": false,
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "allow_in_bindings": 1,
+                "ui": 0,
+                "ajax": 0,
+                "placeholder": "",
+                "create_options": 0,
+                "save_options": 0
+            },
+            {
+                "key": "field_cp_availability_id",
+                "label": "Availability ID",
+                "name": "availability_id",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "allow_in_bindings": 0,
+                "placeholder": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_cp_type",
+                "label": "Type",
+                "name": "type",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Yacht": "Yacht",
+                    "Catamaran": "Catamaran",
+                    "Sail Boat": "Sail Boat",
+                    "Expedition Ship": "Expedition Ship"
+                },
+                "default_value": false,
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "allow_in_bindings": 0,
+                "ui": 0,
+                "ajax": 0,
+                "placeholder": "",
+                "create_options": 0,
+                "save_options": 0
+            },
+            {
+                "key": "field_cp_capacity",
+                "label": "Capacity",
+                "name": "capacity",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "min": "",
+                "max": "",
+                "allow_in_bindings": 0,
+                "placeholder": "",
+                "step": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_cp_review_count",
+                "label": "Review Count",
+                "name": "review_count",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "min": "",
+                "max": "",
+                "allow_in_bindings": 0,
+                "placeholder": "",
+                "step": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_cp_video",
+                "label": "Video",
+                "name": "video",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "allow_in_bindings": 0,
+                "placeholder": ""
+            },
+            {
+                "key": "field_cp_technical_specifications",
+                "label": "Technical Specifications",
+                "name": "technical_specifications",
+                "aria-label": "",
+                "type": "wysiwyg",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "allow_in_bindings": 0,
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            },
+            {
+                "key": "field_cp_gallery",
+                "label": "Gallery",
+                "name": "gallery",
+                "aria-label": "",
+                "type": "gallery",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "return_format": "array",
+                "library": "all",
+                "min": "",
+                "max": "",
+                "min_width": "",
+                "min_height": "",
+                "min_size": "",
+                "max_width": "",
+                "max_height": "",
+                "max_size": "",
+                "mime_types": "",
+                "insert": "append",
+                "preview_size": "medium"
+            },
+            {
+                "key": "field_cp_deck_plans",
+                "label": "Deck Plans",
+                "name": "deck_plans",
+                "aria-label": "",
+                "type": "gallery",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "return_format": "array",
+                "library": "all",
+                "min": "",
+                "max": "",
+                "min_width": "",
+                "min_height": "",
+                "min_size": "",
+                "max_width": "",
+                "max_height": "",
+                "max_size": "",
+                "mime_types": "",
+                "insert": "append",
+                "preview_size": "medium"
+            },
+            {
+                "key": "field_cp_rates",
+                "label": "Rates",
+                "name": "rates",
+                "aria-label": "",
+                "type": "repeater",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "layout": "table",
+                "pagination": 0,
+                "min": 0,
+                "max": 0,
+                "collapsed": "",
+                "button_label": "Add Row",
+                "rows_per_page": 20,
+                "sub_fields": [
+                    {
+                        "key": "field_cp_rates_duration",
+                        "label": "Duration",
+                        "name": "duration",
+                        "aria-label": "",
+                        "type": "number",
+                        "instructions": "",
+                        "required": 0,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "",
+                            "class": "",
+                            "id": ""
+                        },
+                        "default_value": "",
+                        "min": "",
+                        "max": "",
+                        "allow_in_bindings": 0,
+                        "placeholder": "",
+                        "step": "",
+                        "prepend": "",
+                        "append": "",
+                        "parent_repeater": "field_cp_rates"
+                    },
+                    {
+                        "key": "field_cp_rates_price",
+                        "label": "Price",
+                        "name": "price",
+                        "aria-label": "",
+                        "type": "number",
+                        "instructions": "",
+                        "required": 0,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "",
+                            "class": "",
+                            "id": ""
+                        },
+                        "default_value": "",
+                        "min": "",
+                        "max": "",
+                        "allow_in_bindings": 0,
+                        "placeholder": "",
+                        "step": "",
+                        "prepend": "",
+                        "append": "",
+                        "parent_repeater": "field_cp_rates"
+                    }
+                ]
+            },
+            {
+                "key": "field_cp_includes",
+                "label": "Includes",
+                "name": "includes",
+                "aria-label": "",
+                "type": "wysiwyg",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "allow_in_bindings": 0,
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            },
+            {
+                "key": "field_cp_not_included",
+                "label": "Not Included",
+                "name": "not_included",
+                "aria-label": "",
+                "type": "wysiwyg",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "allow_in_bindings": 0,
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            },
+            {
                 "key": "field_cp_tab_glance",
                 "label": "At a Glance",
                 "name": "",
@@ -22,54 +428,12 @@
                 "selected": 0
             },
             {
-                "key": "field_cp_quick_facts_title",
-                "label": "At a Glance — Title",
-                "name": "quick_facts_title",
-                "aria-label": "",
-                "type": "text",
-                "instructions": "Heading text for the At a Glance divider.",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "default_value": "At a Glance",
-                "maxlength": "",
-                "allow_in_bindings": 1,
-                "placeholder": "",
-                "prepend": "",
-                "append": ""
-            },
-            {
-                "key": "field_cp_quick_facts_intro",
-                "label": "At a Glance — Intro",
-                "name": "quick_facts_intro",
-                "aria-label": "",
-                "type": "wysiwyg",
-                "instructions": "Short intro paragraph above the facts grid.",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "default_value": "",
-                "allow_in_bindings": 1,
-                "tabs": "all",
-                "toolbar": "basic",
-                "media_upload": 0,
-                "delay": 0
-            },
-            {
                 "key": "field_cp_quick_facts",
                 "label": "At a Glance",
                 "name": "quick_facts",
                 "aria-label": "",
                 "type": "repeater",
-                "instructions": "Key facts (Island QuickFacts widget). e.g. Capacity 16, Type Yacht, Cabins 9, Length 44 m, Year 1928.",
+                "instructions": "Key facts shown as an At-a-Glance grid (rendered by the Island QuickFacts widget). e.g. Capacity 16 guests, Type Yacht, Cabins 9, Length 44 m, Year 1928, Cruising speed 12 kn.",
                 "required": 0,
                 "conditional_logic": 0,
                 "wrapper": {
@@ -99,13 +463,13 @@
                             "class": "",
                             "id": ""
                         },
-                        "allow_in_bindings": 0,
-                        "parent_repeater": "field_cp_quick_facts",
                         "default_value": "",
                         "maxlength": "",
+                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": ""
+                        "append": "",
+                        "parent_repeater": "field_cp_quick_facts"
                     },
                     {
                         "key": "field_cp_qf_icon",
@@ -113,7 +477,7 @@
                         "name": "icon",
                         "aria-label": "",
                         "type": "image",
-                        "instructions": "",
+                        "instructions": "Optional. Used if no Font Awesome class is set.",
                         "required": 0,
                         "conditional_logic": 0,
                         "wrapper": {
@@ -121,8 +485,6 @@
                             "class": "",
                             "id": ""
                         },
-                        "allow_in_bindings": 0,
-                        "parent_repeater": "field_cp_quick_facts",
                         "return_format": "id",
                         "library": "all",
                         "min_width": "",
@@ -132,7 +494,9 @@
                         "max_height": "",
                         "max_size": "",
                         "mime_types": "",
-                        "preview_size": "thumbnail"
+                        "allow_in_bindings": 0,
+                        "preview_size": "thumbnail",
+                        "parent_repeater": "field_cp_quick_facts"
                     },
                     {
                         "key": "field_cp_qf_label",
@@ -148,13 +512,13 @@
                             "class": "",
                             "id": ""
                         },
-                        "allow_in_bindings": 0,
-                        "parent_repeater": "field_cp_quick_facts",
                         "default_value": "",
                         "maxlength": "",
+                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": ""
+                        "append": "",
+                        "parent_repeater": "field_cp_quick_facts"
                     },
                     {
                         "key": "field_cp_qf_value",
@@ -170,12 +534,13 @@
                             "class": "",
                             "id": ""
                         },
-                        "allow_in_bindings": 0,
-                        "parent_repeater": "field_cp_quick_facts",
                         "default_value": "",
                         "maxlength": "",
                         "rows": 2,
-                        "new_lines": ""
+                        "new_lines": "",
+                        "allow_in_bindings": 0,
+                        "placeholder": "",
+                        "parent_repeater": "field_cp_quick_facts"
                     }
                 ]
             },
@@ -203,7 +568,7 @@
                 "name": "feature_sections",
                 "aria-label": "",
                 "type": "repeater",
-                "instructions": "Each row = Title (H2) + Image + Content, zig-zag (Feature Sections widget). One row per document section.",
+                "instructions": "Each row renders as a section: Title (H2) + Image + Content, alternating left/right. Add one row per document section (Vessel at a Glance, History, Cabins, Onboard, Itineraries, Expedition, Sustainability, Who it's for, Comparison, How to book).",
                 "required": 0,
                 "conditional_logic": 0,
                 "wrapper": {
@@ -247,7 +612,7 @@
                         "name": "subtitle",
                         "aria-label": "",
                         "type": "text",
-                        "instructions": "",
+                        "instructions": "Small label above the title (optional).",
                         "required": 0,
                         "conditional_logic": 0,
                         "wrapper": {
@@ -421,7 +786,7 @@
                 "name": "cta",
                 "aria-label": "",
                 "type": "repeater",
-                "instructions": "Each row is a CTA card (Island CTA widget).",
+                "instructions": "Each row is a CTA card: Title + Text + optional Audience badge, Image and Button.",
                 "required": 0,
                 "conditional_logic": 0,
                 "wrapper": {
@@ -597,7 +962,7 @@
                 "name": "faqs",
                 "aria-label": "",
                 "type": "repeater",
-                "instructions": "Island FAQs widget (accordion + FAQ schema).",
+                "instructions": "Rendered by the Island FAQs widget (accordion + FAQ schema).",
                 "required": 0,
                 "conditional_logic": 0,
                 "wrapper": {
@@ -669,7 +1034,7 @@
                 }
             ]
         ],
-        "menu_order": 1,
+        "menu_order": 0,
         "position": "normal",
         "style": "default",
         "label_placement": "top",
@@ -677,6 +1042,9 @@
         "hide_on_screen": "",
         "active": true,
         "description": "",
-        "show_in_rest": 1
+        "show_in_rest": 1,
+        "display_title": "",
+        "allow_ai_access": false,
+        "ai_description": ""
     }
 ]
