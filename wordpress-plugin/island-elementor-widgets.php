@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.39
+ * Version:     0.4.40
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5254,6 +5254,109 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
     /* ===================================================================
+     *  ISLAND DAY BY DAY — day cards from the `day_by_day` ACF repeater
+     *  (Day, Title, Details WYSIWYG, Meals checkbox). Renders each day as a
+     *  card with a header bar, rich description, and meal badges — matching
+     *  the cruise-itinerary layout. Auto-hides when the repeater is empty.
+     * =================================================================== */
+    class Island_DayByDay_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_day_by_day';
+        }
+        public function get_title()
+        {
+            return 'Island Day by Day';
+        }
+        public function get_icon()
+        {
+            return 'eicon-post-list';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('day_prefix', ['label' => 'Day label prefix', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Day',
+                'description' => 'Shown before the day number, e.g. "Day 1: Title". Leave blank to show just the title.']);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_responsive_control('gap', ['label' => 'Gap between days', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 14, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .idd' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('head_bg', ['label' => 'Day header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F1EBE4',
+                'selectors' => ['{{WRAPPER}} .idd-head' => 'background:{{VALUE}}']]);
+            $this->add_control('title_color', ['label' => 'Day title color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .idd-title' => 'color:{{VALUE}}']]);
+            $this->add_control('body_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
+                'selectors' => ['{{WRAPPER}} .idd-body,{{WRAPPER}} .idd-body p' => 'color:{{VALUE}}']]);
+            $this->add_control('meal_color', ['label' => 'Meals badge color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#7a6a5c',
+                'selectors' => ['{{WRAPPER}} .idd-meals' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $rows = get_field('day_by_day', $pid) ?: [];
+            if (!$rows) {
+                return;
+            }
+            $prefix = trim((string) ($s['day_prefix'] ?? 'Day'));
+            $meal_labels = ['breakfast' => 'Breakfast', 'lunch' => 'Lunch', 'dinner' => 'Dinner', 'box lunch' => 'Box Lunch'];
+            echo '<style>
+              {{WRAPPER}} .idd{display:flex;flex-direction:column;gap:14px}
+              {{WRAPPER}} .idd-item{border:1px solid rgba(100,64,44,.14);border-radius:12px;overflow:hidden;background:#fff}
+              {{WRAPPER}} .idd-head{background:#F1EBE4;padding:14px 20px}
+              {{WRAPPER}} .idd-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px;color:#64402C;line-height:1.3}
+              {{WRAPPER}} .idd-bd{padding:16px 20px}
+              {{WRAPPER}} .idd-body{font-size:14.5px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .idd-body p{margin:0 0 10px}{{WRAPPER}} .idd-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .idd-meals{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(100,64,44,.10);font-size:13px;font-weight:600;color:#7a6a5c}
+              {{WRAPPER}} .idd-meals svg{width:16px;height:16px;flex:0 0 auto;fill:currentColor}
+            </style>';
+            // Fork-and-knife glyph (inline SVG so it needs no icon font).
+            $fork = '<svg viewBox="0 0 448 512" aria-hidden="true"><path d="M416 0c-17.7 0-32 14.3-32 32V416H344V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V416H240V32c0-17.7-14.3-32-32-32S176 14.3 176 32V208c0 53 43 96 96 96v176c0 17.7 14.3 32 32 32s32-14.3 32-32V304c53 0 96-43 96-96V32c0-17.7-14.3-32-32-32zM64 0C46.3 0 32 14.3 32 32V160c0 35.3 28.7 64 64 64V480c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32S96 14.3 96 32V160H64V32C64 14.3 49.7 0 32 0z"/></svg>';
+            echo '<div class="idd">';
+            foreach ($rows as $r) {
+                $day = trim((string) ($r['day'] ?? ''));
+                $title = trim((string) ($r['title'] ?? ''));
+                $head = '';
+                if ($day !== '' && $prefix !== '') {
+                    $head = esc_html($prefix . ' ' . $day) . ($title !== '' ? ': ' . esc_html($title) : '');
+                } elseif ($day !== '') {
+                    $head = esc_html($day) . ($title !== '' ? ': ' . esc_html($title) : '');
+                } else {
+                    $head = esc_html($title);
+                }
+                echo '<article class="idd-item">';
+                if ($head !== '') {
+                    echo '<div class="idd-head"><p class="idd-title">' . $head . '</p></div>';
+                }
+                echo '<div class="idd-bd">';
+                echo '<div class="idd-body">' . wp_kses_post($r['details'] ?? '') . '</div>';
+                $meals = $r['meals'] ?? [];
+                if (is_array($meals) && $meals) {
+                    $names = [];
+                    foreach ($meals as $m) {
+                        $key = strtolower(trim((string) $m));
+                        $names[] = $meal_labels[$key] ?? ucwords($key);
+                    }
+                    echo '<div class="idd-meals">' . $fork . '<span>' . esc_html(implode(' / ', $names)) . '</span></div>';
+                }
+                echo '</div></article>';
+            }
+            echo '</div>';
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND ITINERARY DAYS — day-by-day table from the `itinerary_days`
      *  ACF repeater (Day, Base island, Activity, Sites, Notes). Scrolls
      *  horizontally on small screens; auto-hides when the repeater is empty.
@@ -5361,6 +5464,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_WhereToSee_Widget',
         'Island_Seasonality_Widget',
         'Island_ItineraryDays_Widget',
+        'Island_DayByDay_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
