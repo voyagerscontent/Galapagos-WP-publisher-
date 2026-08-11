@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.36
+ * Version:     0.4.37
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1778,8 +1778,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('fade_color', ['label' => 'Fade color (hint of “more”)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
                 'condition' => ['hover_expand' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs' => '--fade:{{VALUE}}'],
                 'description' => 'Set this to the page/section background so the text fades softly into it (elegant “there’s more” cue instead of a hard line).']);
-            $this->add_responsive_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 100]],
-                'default' => ['size' => 48, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_responsive_control('gap', ['label' => 'Row gap', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 160]],
+                'default' => ['size' => 48, 'unit' => 'px'],
+                // Drives a CSS variable that the inline <style> reads
+                // (gap:var(--ifs-gap,40px)). A plain "gap:" selector here loses to
+                // that inline rule (same specificity, inline loads later), so the
+                // slider looked dead — the variable indirection makes it win and
+                // survives the site's CSS optimiser.
+                'selectors' => ['{{WRAPPER}} .ifs' => '--ifs-gap:{{SIZE}}{{UNIT}}']]);
             $this->add_responsive_control('img_w', ['label' => 'Image width', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['%' => ['min' => 25, 'max' => 65]],
                 'default' => ['size' => 42, 'unit' => '%'], 'selectors' => [
                     '{{WRAPPER}} .ifs-top' => 'grid-template-columns:{{SIZE}}% 1fr',
@@ -2031,7 +2037,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $alt = $s['alternate'] === 'yes';
             $showimg = $s['show_img'] === 'yes';
             echo '<style>
-              {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:40px;--open:900px}
+              {{WRAPPER}} .ifs{display:flex;flex-direction:column;gap:var(--ifs-gap,40px);--open:900px}
               {{WRAPPER}} .ifs-row{background:#FBF8F4;border:1px solid rgba(100,64,44,.14);border-radius:16px;box-shadow:0 10px 30px rgba(60,40,25,.10);overflow:hidden;display:flex;flex-direction:column}
               /* MOBILE-FIRST: the default (NO media query) is a SINGLE column, so it
                  works even if a CSS optimiser strips or reorders media queries, or the
