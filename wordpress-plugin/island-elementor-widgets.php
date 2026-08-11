@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.34
+ * Version:     0.4.35
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -1974,7 +1974,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('bd_img_sticky_top', ['label' => 'Sticky distance from top', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 200]],
                 'default' => ['size' => 26, 'unit' => 'px'], 'condition' => ['bd_img_sticky' => 'yes'],
                 'description' => 'Raise it if you have a fixed/sticky site header, so the image pins below it.',
-                'selectors' => ['{{WRAPPER}} .ifb-image.stick .ifb-img' => 'top:{{SIZE}}{{UNIT}}']]);
+                'selectors' => [
+                    '{{WRAPPER}} .ifb-image.stick .ifb-img' => 'top:{{SIZE}}{{UNIT}}',
+                    '{{WRAPPER}} .ifs-row.stick .ifs-img' => 'top:{{SIZE}}{{UNIT}}',
+                ]]);
 
             /* Infographic — the row's `infographic` image, rendered below the text
              * as JUST the image with rounded corners (no card / frame / colour). */
@@ -2105,6 +2108,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifs-head{grid-area:head;align-self:end;margin:0}
                 {{WRAPPER}} .ifs-tx{grid-area:body;align-self:start;min-width:0}
                 {{WRAPPER}} .ifs-img{grid-area:img;align-self:start;width:auto;height:300px;margin:0}
+                /* Sticky image (same behaviour as Bands): pins while the text
+                   scrolls past. Desktop only; toggled by the .stick class. */
+                {{WRAPPER}} .ifs-row.stick .ifs-top{align-items:start}
+                {{WRAPPER}} .ifs-row.stick .ifs-img{position:sticky;top:26px;align-self:start}
                 {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{text-align:left}
                 {{WRAPPER}} .ifs-row.rev .ifs-top{grid-template-columns:1fr 42%;grid-template-areas:"head img" "body img"}
                 {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr;grid-template-areas:"head" "body"}
@@ -2158,7 +2165,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $btn = !empty($r['button_url'])
                     ? '<a class="ifs-btn" href="' . esc_url($r['button_url']) . '">' . esc_html($r['button_label'] ?: 'Read more') . ' &rarr;</a>'
                     : '';
-                echo '<article class="ifs-row' . $rev . $noimg . ($has_table ? ' has-table' : '') . '" tabindex="0">';
+                // Same as Bands: the image can pin (sticky) while the text scrolls
+                // past, when "Image stays fixed on scroll" is on and the row has an
+                // image (desktop only; applied via the .stick class below).
+                $stick = (($s['bd_img_sticky'] ?? 'yes') === 'yes' && $img) ? ' stick' : '';
+                echo '<article class="ifs-row' . $rev . $noimg . $stick . ($has_table ? ' has-table' : '') . '" tabindex="0">';
                 echo '<div class="ifs-top">';
                 // Heading (eyebrow + title), image and body are all DIRECT children
                 // of .ifs-top. The desktop grid places them by area (image spanning
