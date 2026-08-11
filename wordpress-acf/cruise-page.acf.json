@@ -22,6 +22,48 @@
                 "selected": 0
             },
             {
+                "key": "field_cp_quick_facts_title",
+                "label": "At a Glance — Title",
+                "name": "quick_facts_title",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Heading text for the At a Glance divider.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "At a Glance",
+                "maxlength": "",
+                "allow_in_bindings": 1,
+                "placeholder": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_cp_quick_facts_intro",
+                "label": "At a Glance — Intro",
+                "name": "quick_facts_intro",
+                "aria-label": "",
+                "type": "wysiwyg",
+                "instructions": "Short intro paragraph above the facts grid.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "allow_in_bindings": 1,
+                "tabs": "all",
+                "toolbar": "basic",
+                "media_upload": 0,
+                "delay": 0
+            },
+            {
                 "key": "field_cp_quick_facts",
                 "label": "At a Glance",
                 "name": "quick_facts",
