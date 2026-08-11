@@ -6,7 +6,11 @@ name: Galapagos Cruise / Ship
 description: >
   A cruise itinerary aboard a specific yacht/ship: the vessel, cabins, deck
   plan, day-by-day route, and rates. Uses TouristTrip schema.
-post_type: post
+# Dedicated "cruise" custom post type: its ACF groups (Cruise / Cruise Page)
+# are located on post_type == cruise, so a cruise must publish to that CPT —
+# not the generic WordPress `post`, and not flattened to `page` by the
+# pages-only site default. See the post_type precedence in pipeline.py.
+post_type: cruise
 status: draft
 schema_type: TouristTrip
 categories:

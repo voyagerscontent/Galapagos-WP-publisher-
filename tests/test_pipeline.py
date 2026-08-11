@@ -31,12 +31,31 @@ def test_build_page_basic_fields():
     doc = read_file(SAMPLE)
     page, template, _reason = build_page(doc, _ctx())
     assert template.key == "cruise"
-    # This site sets defaults.post_type = page, which overrides the cruise
-    # template's own post_type so every upload publishes as a WordPress page.
-    assert page.post_type == "page"
+    # Cruise is a DEDICATED custom post type: its ACF groups are located on
+    # post_type == cruise, so it must publish to that CPT and is NOT flattened
+    # to a page by the pages-only site default (defaults.post_type = page).
+    assert page.post_type == "cruise"
     assert page.slug.startswith("8-day-galapagos-cruise")
     assert page.status == "draft"
     assert "Galapagos Cruises" in page.categories
+
+
+def test_cruise_cpt_via_explicit_page_type():
+    # The dedicated cruise n8n workflow forces page_type=cruise; the resulting
+    # page must publish to the cruise CPT (not flattened to page).
+    doc = read_file(SAMPLE)
+    page, template, _r = build_page(doc, _ctx(), page_type="cruise")
+    assert template.post_type == "cruise"
+    assert page.post_type == "cruise"
+
+
+def test_doc_declared_post_type_still_wins_over_cpt():
+    # An explicit post_type in the document header has the highest precedence,
+    # so an author can still force a cruise doc onto a plain page if needed.
+    doc = read_file(SAMPLE)
+    doc.metadata["post_type"] = "page"
+    page, _t, _r = build_page(doc, _ctx())
+    assert page.post_type == "page"
 
 
 def test_output_is_flat_acf_fields():

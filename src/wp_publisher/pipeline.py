@@ -176,14 +176,19 @@ def build_page(
     final_status = status or template.status or settings.wp_default_status
     categories = _csv(doc.metadata.get("categories")) or list(template.categories)
     tags = _csv(doc.metadata.get("tags")) or list(template.tags)
-    # Precedence: the doc's own post_type wins; then the site-wide default
-    # (defaults.post_type / WP_DEFAULT_POST_TYPE) — set to "page" on a pages-only
-    # site so every upload lands as a PAGE even when the heuristic routes it to a
-    # post-typed profile (tour/cruise/blog_post); then the template's post_type.
+    # Precedence: the doc's own post_type wins; then a DEDICATED custom post type
+    # declared by the profile (e.g. cruise) — a CPT owns its own ACF group, so the
+    # pages-only site default must not flatten it to a page; then the site-wide
+    # default (defaults.post_type / WP_DEFAULT_POST_TYPE) — "page" on a pages-only
+    # site so a doc the heuristic routes to a GENERIC post-typed profile
+    # (tour/blog_post) still lands as a PAGE; then the template's post_type.
+    _tpl_post_type = _normalize_post_type(template.post_type)
+    _dedicated_cpt = _tpl_post_type if _tpl_post_type not in (None, "post", "page") else None
     post_type = (
         _normalize_post_type(doc.metadata.get("post_type"))
+        or _dedicated_cpt
         or _normalize_post_type(getattr(settings, "wp_default_post_type", ""))
-        or template.post_type
+        or _tpl_post_type
     )
 
     # Assign the WordPress page template (REST `template` field) when the profile
