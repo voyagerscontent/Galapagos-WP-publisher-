@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.37
+ * Version:     0.4.38
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -194,6 +194,7 @@ add_action('elementor/elements/categories_registered', function ($mgr) {
 // parent-based rule cannot do.
 add_filter('theme_page_templates', function ($templates) {
     $templates['informative-page'] = 'Informative Page';
+    $templates['itineraries-page'] = 'Itineraries Page';
     return $templates;
 });
 
@@ -225,6 +226,7 @@ add_filter('acf/location/rule_types', function ($choices) {
 });
 add_filter('acf/location/rule_values/gp_page_type', function ($choices) {
     $choices['informative'] = 'Informative';
+    $choices['itineraries'] = 'Itineraries';
     return $choices;
 });
 add_filter('acf/location/rule_match/gp_page_type', function ($match, $rule, $screen) {
@@ -247,8 +249,9 @@ add_action('add_meta_boxes_page', function () {
         echo '<select name="gp_page_type" style="width:100%">';
         echo '<option value=""' . selected($val, '', false) . '>— None (normal page) —</option>';
         echo '<option value="informative"' . selected($val, 'informative', false) . '>Informative Page</option>';
+        echo '<option value="itineraries"' . selected($val, 'itineraries', false) . '>Itineraries Page</option>';
         echo '</select>';
-        echo '<p style="margin:8px 0 0;color:#666;font-size:12px">Choose "Informative Page" to show the Informative Page fields and apply that Elementor template. Leave "None" for a normal page.</p>';
+        echo '<p style="margin:8px 0 0;color:#666;font-size:12px">Choose a page type to show its ACF fields and apply the matching Elementor template. Leave "None" for a normal page.</p>';
     }, 'page', 'side', 'high');
 });
 add_action('save_post_page', function ($post_id) {
@@ -263,8 +266,10 @@ add_action('save_post_page', function ($post_id) {
         return;
     }
     $val = isset($_POST['gp_page_type']) ? sanitize_text_field(wp_unslash($_POST['gp_page_type'])) : '';
-    if ($val === 'informative') {
-        update_post_meta($post_id, 'gp_page_type', 'informative');
+    // Whitelist of accepted page-type markers. Anything else clears it.
+    $allowed = ['informative', 'itineraries'];
+    if (in_array($val, $allowed, true)) {
+        update_post_meta($post_id, 'gp_page_type', $val);
     } else {
         delete_post_meta($post_id, 'gp_page_type');
     }
@@ -314,13 +319,46 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
             }
         }
     }
+    // Same pattern for the "Itineraries Page" marker — a Theme Builder template
+    // can target Include -> Itineraries Page (auto) and cover every page (or a
+    // standalone URL) that carries the itineraries marker.
+    if (!class_exists('Island_Itineraries_Template_Condition')) {
+        class Island_Itineraries_Template_Condition extends \ElementorPro\Modules\ThemeBuilder\Conditions\Condition_Base
+        {
+            public static function get_type()
+            {
+                return 'singular';
+            }
+            public function get_name()
+            {
+                return 'island_itineraries_template';
+            }
+            public function get_label()
+            {
+                return 'Itineraries Page (auto)';
+            }
+            public function get_all_label()
+            {
+                return 'Itineraries Pages (auto)';
+            }
+            public function check($args)
+            {
+                $id = get_queried_object_id();
+                if (!$id) {
+                    $id = get_the_ID();
+                }
+                return $id && get_post_meta($id, 'gp_page_type', true) === 'itineraries';
+            }
+        }
+    }
     try {
         $singular = $conditions_manager->get_condition('singular');
         if ($singular) {
             $singular->register_sub_condition(new Island_Informative_Template_Condition());
+            $singular->register_sub_condition(new Island_Itineraries_Template_Condition());
         }
     } catch (\Throwable $e) {
-        error_log('[island-widgets] informative condition skipped: ' . $e->getMessage());
+        error_log('[island-widgets] page-type conditions skipped: ' . $e->getMessage());
     }
 });
 
