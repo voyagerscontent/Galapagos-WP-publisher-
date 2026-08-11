@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.41
+ * Version:     0.4.42
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5295,6 +5295,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         {
             return has_term('galapagos-cruise-tour', 'category', $pid) ? 35952 : null;
         }
+        private function ii_is_editing()
+        {
+            return class_exists('\Elementor\Plugin')
+                && \Elementor\Plugin::$instance
+                && \Elementor\Plugin::$instance->editor
+                && \Elementor\Plugin::$instance->editor->is_edit_mode();
+        }
+        private function ii_notice($msg)
+        {
+            echo '<div style="background:#fff3cd;border:1px solid #e0c86a;padding:10px 14px;border-radius:8px;'
+                . 'margin:0 0 12px;font-size:13px;color:#5a4a20;line-height:1.5">' . $msg . '</div>';
+        }
         private function ii_card($icon, $title, $html)
         {
             if (trim(wp_strip_all_tags((string) $html)) === '') {
@@ -5311,6 +5323,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $s = $this->get_settings_for_display();
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
             if (!$pid) {
+                if ($this->ii_is_editing()) {
+                    $this->ii_notice('<strong>Island Itinerary:</strong> no hay contexto de post. Fija el control <em>"Page ID (blank = current)"</em> con el ID de un itinerario para previsualizar en el editor, o aplica esta plantilla a un itinerario real.');
+                }
                 return;
             }
             $cruises = get_field('cruise', $pid);
@@ -5336,6 +5351,25 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $letter = get_field('letter', $pid);
             $title = get_the_title($pid);
             $form = (string) ($s['form_shortcode'] ?? '[contact_form_vue form="tour"]');
+
+            // Diagnostic (editor, or ?iit_debug=1 for an editor). Turns a blank
+            // widget into an explanation of exactly what was found.
+            $days_dbg = (array) get_field('day_by_day', $pid);
+            $has_content = trim(wp_strip_all_tags((string) get_post_field('post_content', $pid))) !== '';
+            $has_hl = trim(wp_strip_all_tags((string) get_field('highlights', $pid))) !== '';
+            $has_gal = !empty(get_field('gallery', $pid));
+            if ($this->ii_is_editing() || (isset($_GET['iit_debug']) && current_user_can('edit_posts'))) {
+                $this->ii_notice(
+                    '<strong>Itinerary diagnostic</strong> (solo editor/admin) — post #' . (int) $pid
+                    . ' &middot; cruise: ' . ($cid ? ('#' . (int) $cid) : '<b>NO</b>')
+                    . ' &middot; day_by_day: ' . count($days_dbg)
+                    . ' &middot; content: ' . ($has_content ? 'sí' : 'no')
+                    . ' &middot; gallery: ' . ($has_gal ? 'sí' : 'no')
+                    . ' &middot; highlights: ' . ($has_hl ? 'sí' : 'no')
+                    . ' &middot; price: ' . ($price !== '' ? esc_html((string) $price) : '<b>NO</b>')
+                    . '.<br>Si <b>cruise=NO</b>: falta enlazar el campo <em>Cruise</em>. Si todo es 0/no: la página no tiene datos o el <em>Page ID</em> apunta al post equivocado.'
+                );
+            }
 
             echo '<style>
               {{WRAPPER}} .iit{--brand:#64402C;--soft:#F5F0EA;--line:rgba(100,64,44,.14);color:#3A2A1E}
