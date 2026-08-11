@@ -4,6 +4,210 @@
         "title": "Itineraries",
         "fields": [
             {
+                "key": "field_itin_tab_details",
+                "label": "Trip Details",
+                "name": "",
+                "aria-label": "",
+                "type": "tab",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "placement": "top",
+                "endpoint": 0,
+                "selected": 0
+            },
+            {
+                "key": "field_itin_duration",
+                "label": "Duration",
+                "name": "duration",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "min": "",
+                "max": "",
+                "allow_in_bindings": 0,
+                "placeholder": "",
+                "step": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_itin_letter",
+                "label": "Letter",
+                "name": "letter",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "allow_in_bindings": 0,
+                "placeholder": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_itin_destination",
+                "label": "Destination",
+                "name": "destination",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "allow_in_bindings": 0,
+                "placeholder": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_itin_highlights",
+                "label": "Highlights",
+                "name": "highlights",
+                "aria-label": "",
+                "type": "wysiwyg",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "allow_in_bindings": 0,
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            },
+            {
+                "key": "field_itin_gallery",
+                "label": "Gallery",
+                "name": "gallery",
+                "aria-label": "",
+                "type": "gallery",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "return_format": "array",
+                "library": "all",
+                "min": "",
+                "max": "",
+                "min_width": "",
+                "min_height": "",
+                "min_size": "",
+                "max_width": "",
+                "max_height": "",
+                "max_size": "",
+                "mime_types": "",
+                "insert": "append",
+                "preview_size": "medium"
+            },
+            {
+                "key": "field_itin_map",
+                "label": "Map",
+                "name": "map",
+                "aria-label": "",
+                "type": "repeater",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "layout": "row",
+                "pagination": 0,
+                "min": 0,
+                "max": 0,
+                "collapsed": "",
+                "button_label": "Add Row",
+                "rows_per_page": 20,
+                "sub_fields": [
+                    {
+                        "key": "field_itin_map_location",
+                        "label": "Location",
+                        "name": "location",
+                        "aria-label": "",
+                        "type": "google_map",
+                        "instructions": "",
+                        "required": 0,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "",
+                            "class": "",
+                            "id": ""
+                        },
+                        "center_lat": "",
+                        "center_lng": "",
+                        "zoom": "",
+                        "height": 300,
+                        "allow_in_bindings": 0,
+                        "parent_repeater": "field_itin_map"
+                    }
+                ]
+            },
+            {
+                "key": "field_itin_cruise",
+                "label": "Cruise",
+                "name": "cruise",
+                "aria-label": "",
+                "type": "post_object",
+                "instructions": "",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "post_type": [
+                    "cruise"
+                ],
+                "post_status": "",
+                "taxonomy": "",
+                "return_format": "object",
+                "multiple": 1,
+                "allow_null": 0,
+                "allow_in_bindings": 0,
+                "bidirectional": 0,
+                "ui": 1,
+                "bidirectional_target": []
+            },
+            {
                 "key": "field_itin_tab_glance",
                 "label": "At a Glance",
                 "name": "",
@@ -347,12 +551,12 @@
                 ]
             },
             {
-                "key": "field_itin_itinerary_days",
-                "label": "Day-by-Day (table)",
-                "name": "itinerary_days",
+                "key": "field_itin_day_by_day",
+                "label": "Day by Day",
+                "name": "day_by_day",
                 "aria-label": "",
                 "type": "repeater",
-                "instructions": "One row per day (Island Itinerary Days widget renders the responsive table).",
+                "instructions": "",
                 "required": 0,
                 "conditional_logic": 0,
                 "wrapper": {
@@ -364,17 +568,17 @@
                 "pagination": 0,
                 "min": 0,
                 "max": 0,
-                "collapsed": "field_itin_day_num",
-                "button_label": "Add Day",
-                "rows_per_page": 30,
+                "collapsed": "",
+                "button_label": "Add Row",
+                "rows_per_page": 20,
                 "sub_fields": [
                     {
-                        "key": "field_itin_day_num",
+                        "key": "field_itin_dbd_day",
                         "label": "Day",
                         "name": "day",
                         "aria-label": "",
                         "type": "text",
-                        "instructions": "e.g. 1 or 13-14.",
+                        "instructions": "",
                         "required": 0,
                         "conditional_logic": 0,
                         "wrapper": {
@@ -382,17 +586,18 @@
                             "class": "",
                             "id": ""
                         },
-                        "parent_repeater": "field_itin_itinerary_days",
                         "default_value": "",
                         "maxlength": "",
+                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": ""
+                        "append": "",
+                        "parent_repeater": "field_itin_day_by_day"
                     },
                     {
-                        "key": "field_itin_day_base",
-                        "label": "Base island",
-                        "name": "base_island",
+                        "key": "field_itin_dbd_title",
+                        "label": "Title",
+                        "name": "title",
                         "aria-label": "",
                         "type": "text",
                         "instructions": "",
@@ -403,19 +608,20 @@
                             "class": "",
                             "id": ""
                         },
-                        "parent_repeater": "field_itin_itinerary_days",
                         "default_value": "",
                         "maxlength": "",
+                        "allow_in_bindings": 0,
                         "placeholder": "",
                         "prepend": "",
-                        "append": ""
+                        "append": "",
+                        "parent_repeater": "field_itin_day_by_day"
                     },
                     {
-                        "key": "field_itin_day_activity",
-                        "label": "Typical activity",
-                        "name": "activity",
+                        "key": "field_itin_dbd_details",
+                        "label": "Details",
+                        "name": "details",
                         "aria-label": "",
-                        "type": "text",
+                        "type": "wysiwyg",
                         "instructions": "",
                         "required": 0,
                         "conditional_logic": 0,
@@ -424,19 +630,20 @@
                             "class": "",
                             "id": ""
                         },
-                        "parent_repeater": "field_itin_itinerary_days",
                         "default_value": "",
-                        "maxlength": "",
-                        "placeholder": "",
-                        "prepend": "",
-                        "append": ""
+                        "allow_in_bindings": 0,
+                        "tabs": "all",
+                        "toolbar": "full",
+                        "media_upload": 1,
+                        "delay": 0,
+                        "parent_repeater": "field_itin_day_by_day"
                     },
                     {
-                        "key": "field_itin_day_sites",
-                        "label": "Sites (Park-listed)",
-                        "name": "sites",
+                        "key": "field_itin_dbd_meals",
+                        "label": "Meals",
+                        "name": "meals",
                         "aria-label": "",
-                        "type": "textarea",
+                        "type": "checkbox",
                         "instructions": "",
                         "required": 0,
                         "conditional_logic": 0,
@@ -445,33 +652,21 @@
                             "class": "",
                             "id": ""
                         },
-                        "parent_repeater": "field_itin_itinerary_days",
-                        "default_value": "",
-                        "maxlength": "",
-                        "rows": 4,
-                        "new_lines": "",
-                        "placeholder": ""
-                    },
-                    {
-                        "key": "field_itin_day_notes",
-                        "label": "Notes",
-                        "name": "notes",
-                        "aria-label": "",
-                        "type": "textarea",
-                        "instructions": "",
-                        "required": 0,
-                        "conditional_logic": 0,
-                        "wrapper": {
-                            "width": "",
-                            "class": "",
-                            "id": ""
+                        "choices": {
+                            "breakfast": "Breakfast",
+                            "lunch": "Lunch",
+                            "dinner": "Dinner",
+                            "box lunch": "Box Lunch"
                         },
-                        "parent_repeater": "field_itin_itinerary_days",
-                        "default_value": "",
-                        "maxlength": "",
-                        "rows": 4,
-                        "new_lines": "",
-                        "placeholder": ""
+                        "default_value": [],
+                        "return_format": "value",
+                        "allow_custom": 0,
+                        "allow_in_bindings": 0,
+                        "layout": "vertical",
+                        "toggle": 0,
+                        "save_custom": 0,
+                        "custom_choice_button_text": "Add new choice",
+                        "parent_repeater": "field_itin_day_by_day"
                     }
                 ]
             },
