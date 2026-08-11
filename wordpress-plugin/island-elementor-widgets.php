@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.35
+ * Version:     0.4.36
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2109,7 +2109,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifs-tx{grid-area:body;align-self:start;min-width:0}
                 {{WRAPPER}} .ifs-img{grid-area:img;align-self:start;width:auto;height:300px;margin:0}
                 /* Sticky image (same behaviour as Bands): pins while the text
-                   scrolls past. Desktop only; toggled by the .stick class. */
+                   scrolls past. Desktop only; toggled by the .stick class.
+                   overflow:visible is REQUIRED — the base .ifs-row uses
+                   overflow:hidden (rounded corners), and any clipping ancestor
+                   disables position:sticky. */
+                {{WRAPPER}} .ifs-row.stick{overflow:visible}
                 {{WRAPPER}} .ifs-row.stick .ifs-top{align-items:start}
                 {{WRAPPER}} .ifs-row.stick .ifs-img{position:sticky;top:26px;align-self:start}
                 {{WRAPPER}} .ifs-eyebrow,{{WRAPPER}} .ifs-title{text-align:left}
@@ -2142,6 +2146,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<div class="ifs' . $hx . '">';
             $i = 0;
             foreach ($rows as $r) {
+                // Validation: skip a row whose ACF fields are all empty. An empty
+                // repeater row (no title, no body text, no image, no eyebrow)
+                // should not render a blank card — if the fields do not exist,
+                // the section is not shown.
+                $row_content = trim(wp_strip_all_tags((string) ($r['content'] ?? '')));
+                $has_any = trim((string) ($r['title'] ?? '')) !== ''
+                    || $row_content !== ''
+                    || !empty($r['image'])
+                    || trim((string) ($r['subtitle'] ?? '')) !== '';
+                if (!$has_any) {
+                    continue;
+                }
                 $img = $showimg ? island_ew_image_src($r['image'] ?? '') : '';
                 $rev = ($alt && ($i % 2 === 1)) ? ' rev' : '';
                 $noimg = $img ? '' : ' noimg';
@@ -2563,6 +2579,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $ifb_info_any = false;  // set true when a lightbox infographic banner is printed
             $i = 0;
             foreach ($rows as $r) {
+                // Validation: skip a row whose ACF fields are all empty, so a
+                // blank repeater row never renders an empty band.
+                $band_content = trim(wp_strip_all_tags((string) ($r['content'] ?? '')));
+                $band_any = trim((string) ($r['title'] ?? '')) !== ''
+                    || $band_content !== ''
+                    || !empty($r['image'])
+                    || trim((string) ($r['subtitle'] ?? '')) !== '';
+                if (!$band_any) {
+                    continue;
+                }
                 $ovr = trim((string) ($r['bg_color'] ?? ''));  // optional per-row override
                 $palTone = 'auto';
                 if ($ovr !== '') {
