@@ -49,6 +49,18 @@ def test_cruise_cpt_via_explicit_page_type():
     assert page.post_type == "cruise"
 
 
+def test_cruise_maps_into_cruise_page_widget_fields():
+    # The cruise profile must fill the "Cruise Page" group's widget repeaters
+    # (feature_sections, faqs) from the document — not fall back to the bare
+    # config/acf.yaml, which left them empty.
+    doc = read_file(SAMPLE)
+    page, template, _r = build_page(doc, _ctx(), page_type="cruise")
+    assert template.acf_profile == "cruise"
+    assert len(page.acf.get("feature_sections") or []) > 0
+    assert page.acf["feature_sections"][0]["title"]
+    assert len(page.acf.get("faqs") or []) > 0
+
+
 def test_doc_declared_post_type_still_wins_over_cpt():
     # An explicit post_type in the document header has the highest precedence,
     # so an author can still force a cruise doc onto a plain page if needed.
@@ -64,9 +76,12 @@ def test_output_is_flat_acf_fields():
     # post_content is empty; content lives in flat ACF fields (Elementor-bound).
     assert page.content_html == ""
     acf = page.acf
-    assert acf["hero_heading"]
-    assert "<p>" in acf["body"] and "<!-- wp:" not in acf["body"]
-    assert isinstance(acf["faq"], list) and acf["faq"][0]["question"]
+    # The cruise sample maps via the cruise profile into feature_sections; the
+    # body HTML is plain semantic HTML, never Gutenberg block markup.
+    sections = acf.get("feature_sections") or []
+    assert sections and sections[0]["title"]
+    assert "<p>" in sections[0]["content"] and "<!-- wp:" not in sections[0]["content"]
+    assert isinstance(acf.get("faqs"), list) and acf["faqs"][0]["question"]
     # Schema is never generated: a doc with no schema block leaves seo_schema empty.
     assert not acf.get("seo_schema")
 

@@ -11,6 +11,11 @@ description: >
 # not the generic WordPress `post`, and not flattened to `page` by the
 # pages-only site default. See the post_type precedence in pipeline.py.
 post_type: cruise
+# Map the document into the "Cruise Page" content group's widget fields
+# (quick_facts, feature_sections, cta, faqs) — see config/acf/cruise.yaml.
+# Without this, cruise fell back to the bare config/acf.yaml (hero/body/cta
+# only) and the Cruise Page repeaters were left empty.
+acf_profile: cruise
 status: draft
 schema_type: TouristTrip
 categories:
