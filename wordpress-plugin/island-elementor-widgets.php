@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.38
+ * Version:     0.4.39
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5253,6 +5253,89 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . '})();</script>';
         }
     }
+    /* ===================================================================
+     *  ISLAND ITINERARY DAYS — day-by-day table from the `itinerary_days`
+     *  ACF repeater (Day, Base island, Activity, Sites, Notes). Scrolls
+     *  horizontally on small screens; auto-hides when the repeater is empty.
+     * =================================================================== */
+    class Island_ItineraryDays_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_itinerary_days';
+        }
+        public function get_title()
+        {
+            return 'Island Itinerary Days';
+        }
+        public function get_icon()
+        {
+            return 'eicon-table';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('caption', ['label' => 'Caption (optional)', 'type' => \Elementor\Controls_Manager::TEXT,
+                'description' => 'Small italic line below the table, e.g. "Representative 14-day land-tour day plan".']);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('head_bg', ['label' => 'Header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .idt thead th' => 'background:{{VALUE}}']]);
+            $this->add_control('head_color', ['label' => 'Header text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F6EFE7',
+                'selectors' => ['{{WRAPPER}} .idt thead th' => 'color:{{VALUE}}']]);
+            $this->add_control('accent', ['label' => 'First-column color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .idt td:first-child' => 'color:{{VALUE}}']]);
+            $this->add_responsive_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 24]],
+                'default' => ['size' => 12, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .idt-wrap' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $rows = get_field('itinerary_days', $pid) ?: [];
+            if (!$rows) {
+                return;   // no days -> render nothing
+            }
+            echo '<style>
+              {{WRAPPER}} .idt-wrap{overflow-x:auto;border:1px solid rgba(100,64,44,.14);border-radius:12px}
+              {{WRAPPER}} .idt{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+              {{WRAPPER}} .idt thead th{background:#64402C;color:#F6EFE7;text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:13px 16px;white-space:nowrap}
+              {{WRAPPER}} .idt tbody td{padding:13px 16px;border-top:1px solid rgba(100,64,44,.14);vertical-align:top;color:#3A2A1E;line-height:1.55}
+              {{WRAPPER}} .idt tbody tr:nth-child(even){background:#F5EEE4}
+              {{WRAPPER}} .idt tbody tr:hover{background:rgba(100,64,44,.06)}
+              {{WRAPPER}} .idt td:first-child{font-weight:700;color:#64402C;white-space:nowrap}
+              {{WRAPPER}} .idt-cap{margin:10px 2px 0;font-size:12.5px;color:#7a6a5c;font-style:italic}
+            </style>';
+            echo '<div class="idt-wrap"><table class="idt"><thead><tr>'
+                . '<th>Day</th><th>Base island</th><th>Typical activity</th><th>Sites (Park-listed)</th><th>Notes</th>'
+                . '</tr></thead><tbody>';
+            foreach ($rows as $r) {
+                echo '<tr>'
+                    . '<td>' . esc_html($r['day'] ?? '') . '</td>'
+                    . '<td>' . esc_html($r['base_island'] ?? '') . '</td>'
+                    . '<td>' . esc_html($r['activity'] ?? '') . '</td>'
+                    . '<td>' . esc_html($r['sites'] ?? '') . '</td>'
+                    . '<td>' . esc_html($r['notes'] ?? '') . '</td>'
+                    . '</tr>';
+            }
+            echo '</tbody></table></div>';
+            $cap = trim((string) ($s['caption'] ?? ''));
+            if ($cap !== '') {
+                echo '<p class="idt-cap">' . esc_html($cap) . '</p>';
+            }
+        }
+    }
+
     } // end: Island_GlanceFeatures_Widget guard
 
     $widgets_manager->register(new Island_Wildlife_Widget());
@@ -5277,6 +5360,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Subspecies_Widget',
         'Island_WhereToSee_Widget',
         'Island_Seasonality_Widget',
+        'Island_ItineraryDays_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
