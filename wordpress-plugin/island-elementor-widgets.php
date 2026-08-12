@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.43
+ * Version:     0.4.44
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -110,6 +110,41 @@ if (!function_exists('island_ew_image_src')) {
             return $u ?: '';
         }
         return is_string($img) ? $img : '';            // Return Format: Image URL
+    }
+}
+
+/**
+ * Render the `map` ACF repeater (rows with a google_map sub-field named
+ * `location`) as pins on a Leaflet + OpenStreetMap map — no API key. Shared by
+ * the full itinerary widget and the standalone map widget. Prints nothing when
+ * there are no valid points.
+ */
+if (!function_exists('island_ew_itinerary_map')) {
+    function island_ew_itinerary_map($pid)
+    {
+        if (!$pid || !function_exists('get_field')) {
+            return;
+        }
+        $points = [];
+        foreach ((array) get_field('map', $pid) as $row) {
+            $loc = is_array($row) ? ($row['location'] ?? null) : null;
+            if (is_array($loc) && isset($loc['lat'], $loc['lng']) && $loc['lat'] !== '' && $loc['lng'] !== '') {
+                $points[] = ['lat' => (float) $loc['lat'], 'lng' => (float) $loc['lng'], 'label' => (string) ($loc['address'] ?? '')];
+            }
+        }
+        if (!$points) {
+            return;
+        }
+        $uid = 'iitmap_' . (int) $pid . '_' . substr(md5(wp_json_encode($points)), 0, 6);
+        echo '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">';
+        echo '<div id="' . esc_attr($uid) . '" class="iit-map" style="height:420px;border-radius:12px;overflow:hidden;border:1px solid rgba(100,64,44,.14);margin:16px 0;z-index:0"></div>';
+        echo '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>';
+        echo '<script>(function(){var pts=' . wp_json_encode($points) . ';function go(){if(!window.L){return setTimeout(go,120);}'
+            . 'var el=document.getElementById("' . esc_js($uid) . '");if(!el||el.dataset.init)return;el.dataset.init=1;'
+            . 'var m=L.map(el,{scrollWheelZoom:false});'
+            . 'L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap"}).addTo(m);'
+            . 'var g=[];pts.forEach(function(p){var mk=L.marker([p.lat,p.lng]).addTo(m);if(p.label){mk.bindPopup(p.label);}g.push([p.lat,p.lng]);});'
+            . 'if(g.length===1){m.setView(g[0],9);}else{m.fitBounds(g,{padding:[30,30]});}}go();})();</script>';
     }
 }
 
@@ -5315,30 +5350,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             return '<div class="iit-card"><div class="iit-card-h"><span class="iit-ic"><i class="fa-solid ' . esc_attr($icon) . '"></i></span>'
                 . '<h2 class="iit-sub">' . esc_html($title) . '</h2></div><div class="iit-list">' . wp_kses_post($html) . '</div></div>';
         }
-        // Render the `map` repeater (rows of a google_map sub-field) as pins on a
-        // Leaflet + OpenStreetMap map — no Google/Mapbox API key needed.
+        // Render the `map` repeater as pins on a Leaflet/OSM map (shared helper).
         private function ii_map($pid)
         {
-            $points = [];
-            foreach ((array) get_field('map', $pid) as $row) {
-                $loc = is_array($row) ? ($row['location'] ?? null) : null;
-                if (is_array($loc) && isset($loc['lat'], $loc['lng']) && $loc['lat'] !== '' && $loc['lng'] !== '') {
-                    $points[] = ['lat' => (float) $loc['lat'], 'lng' => (float) $loc['lng'], 'label' => (string) ($loc['address'] ?? '')];
-                }
-            }
-            if (!$points) {
-                return;
-            }
-            $uid = 'iitmap_' . (int) $pid . '_' . substr(md5(wp_json_encode($points)), 0, 6);
-            echo '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">';
-            echo '<div id="' . esc_attr($uid) . '" class="iit-map"></div>';
-            echo '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>';
-            echo '<script>(function(){var pts=' . wp_json_encode($points) . ';function go(){if(!window.L){return setTimeout(go,120);}'
-                . 'var el=document.getElementById("' . esc_js($uid) . '");if(!el||el.dataset.init)return;el.dataset.init=1;'
-                . 'var m=L.map(el,{scrollWheelZoom:false});'
-                . 'L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap"}).addTo(m);'
-                . 'var g=[];pts.forEach(function(p){var mk=L.marker([p.lat,p.lng]).addTo(m);if(p.label){mk.bindPopup(p.label);}g.push([p.lat,p.lng]);});'
-                . 'if(g.length===1){m.setView(g[0],9);}else{m.fitBounds(g,{padding:[30,30]});}}go();})();</script>';
+            island_ew_itinerary_map($pid);
         }
         protected function render()
         {
@@ -5576,6 +5591,137 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND ITINERARY MAP — standalone map of the `map` google_map
+     *  repeater (Leaflet + OpenStreetMap, no API key). Auto-hides when empty.
+     * =================================================================== */
+    class Island_ItineraryMap_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_itinerary_map';
+        }
+        public function get_title()
+        {
+            return 'Island Itinerary Map';
+        }
+        public function get_icon()
+        {
+            return 'eicon-google-maps';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_responsive_control('height', ['label' => 'Height', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 200, 'max' => 700]],
+                'default' => ['size' => 420, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iit-map' => 'height:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            island_ew_itinerary_map($pid);
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND CRUISE INFO — follows the itinerary's `cruise` post object and
+     *  renders one piece from that cruise: Includes, Not Included, or the
+     *  Book Now price box (rate matched to the itinerary duration + form).
+     *  Auto-hides when the chosen piece is empty.
+     * =================================================================== */
+    class Island_CruiseInfo_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_cruise_info';
+        }
+        public function get_title()
+        {
+            return 'Island Cruise Info (from linked cruise)';
+        }
+        public function get_icon()
+        {
+            return 'eicon-info-circle-o';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('part', ['label' => 'Show', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'includes',
+                'options' => ['includes' => 'Includes', 'not_included' => 'Not Included', 'book' => 'Book Now (price + form)']]);
+            $this->add_control('form_shortcode', ['label' => 'Booking form shortcode', 'type' => \Elementor\Controls_Manager::TEXT,
+                'default' => '[contact_form_vue form="tour"]', 'condition' => ['part' => 'book']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            if (!$pid) {
+                return;
+            }
+            $cruises = get_field('cruise', $pid);
+            $cruise = (!empty($cruises) && is_array($cruises)) ? $cruises[0] : (is_object($cruises) ? $cruises : null);
+            $cid = ($cruise && isset($cruise->ID)) ? $cruise->ID : 0;
+            if (!$cid) {
+                return;
+            }
+            $part = $s['part'] ?? 'includes';
+            echo '<style>
+              {{WRAPPER}} .ici-card{background:#F5F0EA;border-radius:12px;padding:18px 20px;margin:0 0 8px}
+              {{WRAPPER}} .ici-h{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+              {{WRAPPER}} .ici-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#64402C;color:#F1EAE4;flex:0 0 auto}
+              {{WRAPPER}} .ici-sub{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:20px;color:#64402C;margin:0}
+              {{WRAPPER}} .ici-list ul{margin:0;padding-left:18px}{{WRAPPER}} .ici-list li{margin:4px 0;line-height:1.6}
+              {{WRAPPER}} .ici-book{border:1px solid rgba(100,64,44,.14);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(60,40,25,.10);background:#fff}
+              {{WRAPPER}} .ici-book-h{background:#64402C;color:#fff;text-align:center;padding:14px}
+              {{WRAPPER}} .ici-price{font-size:22px;font-weight:700}
+              {{WRAPPER}} .ici-book-b{padding:20px}
+            </style>';
+            if ($part === 'includes' || $part === 'not_included') {
+                $html = get_field($part, $cid);
+                if (trim(wp_strip_all_tags((string) $html)) === '') {
+                    return;
+                }
+                $icon = $part === 'includes' ? 'fa-check' : 'fa-xmark';
+                $label = $part === 'includes' ? 'Includes' : 'Not Included';
+                echo '<div class="ici-card"><div class="ici-h"><span class="ici-ic"><i class="fa-solid ' . esc_attr($icon) . '"></i></span>'
+                    . '<h2 class="ici-sub">' . esc_html($label) . '</h2></div><div class="ici-list">' . wp_kses_post($html) . '</div></div>';
+                return;
+            }
+            // Book Now: price (rate matched to the itinerary duration) + form.
+            $duration = get_field('duration', $pid);
+            $price = '';
+            foreach ((array) get_field('rates', $cid) as $r) {
+                if (isset($r['duration']) && (float) preg_replace('/[^0-9.]/', '', (string) $r['duration']) === (float) preg_replace('/[^0-9.]/', '', (string) $duration)) {
+                    $price = $r['price'] ?? '';
+                    break;
+                }
+            }
+            echo '<div class="ici-book"><div class="ici-book-h"><b>Book Now</b>';
+            if ($price !== '') {
+                echo '<div>From <span class="ici-price">USD ' . esc_html((string) $price) . ',00</span> pp</div>';
+            }
+            echo '</div><div class="ici-book-b">' . do_shortcode((string) ($s['form_shortcode'] ?? '[contact_form_vue form="tour"]')) . '</div></div>';
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND DAY BY DAY — day cards from the `day_by_day` ACF repeater
      *  (Day, Title, Details WYSIWYG, Meals checkbox). Renders each day as a
      *  card with a header bar, rich description, and meal badges — matching
@@ -5788,6 +5934,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_ItineraryDays_Widget',
         'Island_DayByDay_Widget',
         'Island_Itinerary_Widget',
+        'Island_ItineraryMap_Widget',
+        'Island_CruiseInfo_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
