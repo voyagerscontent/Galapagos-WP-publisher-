@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.48
+ * Version:     0.4.49
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -244,18 +244,32 @@ add_action('wp_footer', function () {
 <script id="island-ew-sticky-js">
 (function(){
   var OFFSET = 28, items = [];
-  // Bounding box = the nearest ANCESTOR container (never the element itself), so
-  // it works whether itin-sticky is on an inner section (box = its column) or on
-  // the column (box = its row/section) — the box is the tall element that gives
-  // the panel room to travel.
+  // Bounding box = the nearest ANCESTOR structural container that is genuinely
+  // TALLER than the panel (so it has room to travel). Walking up by height is
+  // key: the immediate .elementor-widget-wrap is only as tall as the panel, which
+  // would make it fall straight to the bottom state and vanish on the first
+  // scroll. We want the stretched column (or the row) instead.
+  function isStruct(p){ return p.classList && (p.classList.contains('elementor-column') || p.classList.contains('elementor-row') || p.classList.contains('elementor-container') || p.classList.contains('e-con') || p.classList.contains('elementor-widget-wrap') || p.tagName === 'SECTION'); }
   function boxOf(el){
-    var start = el.parentElement;
-    if (!start) { return el.parentElement; }
-    return start.closest('.elementor-column, .elementor-widget-wrap, .elementor-row, .elementor-container, .e-con, section') || start;
+    var h = el.getBoundingClientRect().height, p = el.parentElement, fallback = el.parentElement;
+    while (p){
+      if (isStruct(p)){
+        if (p.offsetHeight > h + 24){ return p; }   // a genuinely taller container
+        fallback = p;
+      }
+      p = p.parentElement;
+    }
+    return fallback || el.parentElement;
   }
-  function Item(el){ this.el = el; this.box = boxOf(el); if (this.box && getComputedStyle(this.box).position === 'static') { this.box.style.position = 'relative'; } this.calc(); }
+  function Item(el){ this.el = el; this.calc(); }
   Item.prototype.reset = function(){ var s = this.el.style; s.position=''; s.top=''; s.left=''; s.width=''; };
-  Item.prototype.calc = function(){ this.reset(); var er = this.el.getBoundingClientRect(), br = this.box.getBoundingClientRect(); this.h = er.height; this.w = er.width; this.leftIn = er.left - br.left; this.boxTop = br.top + window.pageYOffset; };
+  Item.prototype.calc = function(){
+    this.reset();
+    this.box = boxOf(this.el);
+    if (this.box && getComputedStyle(this.box).position === 'static'){ this.box.style.position = 'relative'; }
+    var er = this.el.getBoundingClientRect(), br = this.box.getBoundingClientRect();
+    this.h = er.height; this.w = er.width; this.leftIn = er.left - br.left; this.boxTop = br.top + window.pageYOffset;
+  };
   Item.prototype.update = function(){
     if (window.innerWidth <= 1024){ this.reset(); return; }
     var boxH = this.box.offsetHeight, y = window.pageYOffset, s = this.el.style;
