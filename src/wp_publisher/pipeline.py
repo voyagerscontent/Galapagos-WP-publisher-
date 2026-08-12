@@ -66,18 +66,27 @@ def build_page(
         )
     template = ctx.registry.get(key)
 
-    # Pages-only site: if the heuristic auto-picked a POST-typed profile
-    # (tour/cruise/blog_post), it is the wrong template here — its ACF group and
-    # the theme's Elementor rendering target posts, so forcing it onto a page
-    # yields a page with no ACF group attached (fields don't show). Re-route to
-    # the configured page default_type (e.g. informative) so the page gets a
-    # matching ACF group + renderer. Only when auto-detected (an explicit
-    # --page-type is always honored) and only when a page default_type exists.
+    # Pages-only site: re-route to the configured page default_type so an
+    # auto-picked profile does not publish to the wrong object type. Two cases,
+    # both only when NO page_type was explicitly requested (an explicit
+    # --page-type / workflow page_type is always honored, so it skips this):
+    #   1. A heuristic guess ("matched signals") that landed on a POST profile
+    #      (tour/blog_post) — the legacy pages-only guard.
+    #   2. A DEDICATED CPT profile (cruise) reached by ANY means (declared, URL
+    #      or heuristic). A cruise must be published to its CPT ONLY when the
+    #      caller explicitly asks for it (the Cruises workflow sends
+    #      page_type=cruise); the generic "publish a page" workflow must never
+    #      auto-produce one. Post-typed profiles that were declared/URL-routed
+    #      (wildlife tiers, freeform) are untouched.
+    _tpl_pt = _normalize_post_type(template.post_type)
+    _is_dedicated_cpt = _tpl_pt not in (None, "post", "page")
     if (
         not page_type
-        and reason.startswith("matched signals")  # heuristic guess only, never a declared/URL type
         and _normalize_post_type(getattr(settings, "wp_default_post_type", "")) == "page"
-        and template.post_type in ("post", "posts")
+        and (
+            (reason.startswith("matched signals") and template.post_type in ("post", "posts"))
+            or _is_dedicated_cpt
+        )
     ):
         default_key = str(ctx.settings.routing.get("default_type") or "").strip().lower().replace(" ", "_")
         if (
@@ -86,8 +95,8 @@ def build_page(
             and ctx.registry.get(default_key).post_type in ("page", "pages")
         ):
             reason = (
-                f"{reason}; re-routed '{key}' (a post profile) -> '{default_key}' "
-                f"because this site publishes pages"
+                f"{reason}; re-routed '{key}' -> '{default_key}' "
+                f"because this site publishes pages (no explicit page_type)"
             )
             key = default_key
             template = ctx.registry.get(key)

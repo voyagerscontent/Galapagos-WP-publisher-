@@ -29,15 +29,16 @@ def test_detects_declared_type():
 
 def test_build_page_basic_fields():
     doc = read_file(SAMPLE)
-    page, template, _reason = build_page(doc, _ctx())
-    assert template.key == "cruise"
-    # Cruise is a DEDICATED custom post type: its ACF groups are located on
-    # post_type == cruise, so it must publish to that CPT and is NOT flattened
-    # to a page by the pages-only site default (defaults.post_type = page).
-    assert page.post_type == "cruise"
+    page, template, reason = build_page(doc, _ctx())
+    # No explicit page_type (the generic "publish a page" workflow): a pages-only
+    # site never auto-produces a CPT, so the cruise sample is re-routed to the
+    # page default (informative) and published as a PAGE. The cruise CPT is only
+    # reached via an explicit page_type=cruise (see the test below).
+    assert template.post_type == "page"
+    assert "re-routed" in reason
+    assert page.post_type == "page"
     assert page.slug.startswith("8-day-galapagos-cruise")
     assert page.status == "draft"
-    assert "Galapagos Cruises" in page.categories
 
 
 def test_cruise_cpt_via_explicit_page_type():
@@ -127,7 +128,8 @@ def test_seo_fields():
 
 def test_schema_jsonld():
     doc = read_file(SAMPLE)
-    page, _t, _r = build_page(doc, _ctx())
+    # TouristTrip schema is a cruise-profile trait, so request it explicitly.
+    page, _t, _r = build_page(doc, _ctx(), page_type="cruise")
     graph = page.json_ld["@graph"]
     types = {entity["@type"] for entity in graph}
     assert "TouristTrip" in types
@@ -139,7 +141,8 @@ def test_schema_jsonld():
 
 def test_missing_required_section_warns():
     doc = read_file(SAMPLE)
-    # Drop the itinerary to trigger a required-section warning.
+    # Drop the itinerary to trigger a required-section warning (the cruise
+    # profile requires it, so request that profile explicitly).
     doc.sections = [s for s in doc.sections if s.slug != "itinerary"]
-    page, _t, _r = build_page(doc, _ctx())
+    page, _t, _r = build_page(doc, _ctx(), page_type="cruise")
     assert any("itinerary" in w for w in page.warnings)
