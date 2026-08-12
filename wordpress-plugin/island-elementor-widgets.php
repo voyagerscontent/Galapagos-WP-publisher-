@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.44
+ * Version:     0.4.45
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5591,6 +5591,146 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND GALLERY — responsive grid from an ACF gallery field (default
+     *  `gallery`). Uses Elementor's lightbox. Auto-hides when empty. Solves
+     *  the empty Elementor Gallery widget when bound via an ACF dynamic tag.
+     * =================================================================== */
+    class Island_Gallery_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_gallery';
+        }
+        public function get_title()
+        {
+            return 'Island Gallery';
+        }
+        public function get_icon()
+        {
+            return 'eicon-gallery-grid';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('field_name', ['label' => 'ACF field name', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'gallery']);
+            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT,
+                'default' => '3', 'tablet_default' => '3', 'mobile_default' => '2',
+                'options' => ['2' => '2', '3' => '3', '4' => '4', '5' => '5'],
+                'selectors' => ['{{WRAPPER}} .igal' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+            $this->add_responsive_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
+                'default' => ['size' => 8, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .igal-i' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $field = !empty($s['field_name']) ? $s['field_name'] : 'gallery';
+            $imgs = get_field($field, $pid);
+            if (!$imgs || !is_array($imgs)) {
+                return;
+            }
+            echo '<style>
+              {{WRAPPER}} .igal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+              @media(max-width:767px){ {{WRAPPER}} .igal{grid-template-columns:repeat(2,1fr)} }
+              {{WRAPPER}} .igal-i{display:block;padding-top:72%;background:#e3d6c8 center/cover no-repeat;border-radius:8px;cursor:zoom-in}
+            </style>';
+            $slideshow = 'igal_' . (int) $pid . '_' . $this->get_id();
+            echo '<div class="igal">';
+            foreach ($imgs as $img) {
+                $thumb = island_ew_image_src($img, 'medium_large');
+                $full = island_ew_image_src($img, 'full');
+                if (!$thumb) {
+                    continue;
+                }
+                echo '<a class="igal-i" href="' . esc_url($full ?: $thumb) . '" data-elementor-open-lightbox="yes" '
+                    . 'data-elementor-lightbox-slideshow="' . esc_attr($slideshow) . '" '
+                    . 'style="background-image:url(\'' . esc_url($thumb) . '\')"></a>';
+            }
+            echo '</div>';
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND TRIP META — destination / duration / physical rating / age with
+     *  FIXED Font Awesome icons (the icons live in the widget, not the data).
+     *  Auto-hides rows that are empty.
+     * =================================================================== */
+    class Island_TripMeta_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_trip_meta';
+        }
+        public function get_title()
+        {
+            return 'Island Trip Meta';
+        }
+        public function get_icon()
+        {
+            return 'eicon-icon-list';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->end_controls_section();
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('icon_bg', ['label' => 'Icon circle color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
+                'selectors' => ['{{WRAPPER}} .itm-ic' => 'background:{{VALUE}}']]);
+            $this->add_control('text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
+                'selectors' => ['{{WRAPPER}} .itm-row' => 'color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $dest = get_field('destination', $pid);
+            $duration = get_field('duration', $pid);
+            $phys = get_field('physical_rating', $pid);
+            $age = get_field('age_recomendation', $pid);
+            if (!$dest && ($duration === '' || $duration === null) && !$phys && !$age) {
+                return;
+            }
+            echo '<style>
+              {{WRAPPER}} .itm{display:flex;flex-direction:column;gap:10px}
+              {{WRAPPER}} .itm-row{display:flex;align-items:center;gap:10px;font-size:15px;color:#3A2A1E}
+              {{WRAPPER}} .itm-ic{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#64402C;color:#F1EAE4;flex:0 0 auto;font-size:13px}
+            </style><div class="itm">';
+            if ($dest) {
+                echo '<div class="itm-row"><span class="itm-ic"><i class="fa-solid fa-location-dot"></i></span><span>' . esc_html($dest) . '</span></div>';
+            }
+            if ($duration !== '' && $duration !== null) {
+                $dtxt = ((int) $duration > 1) ? ($duration . ' Days') : ($duration . ' Day');
+                echo '<div class="itm-row"><span class="itm-ic"><i class="fa-regular fa-calendar"></i></span><span>' . esc_html($dtxt) . '</span></div>';
+            }
+            if ($phys) {
+                echo '<div class="itm-row"><span class="itm-ic"><i class="fa-solid fa-person-walking"></i></span><span>' . esc_html($phys) . '</span></div>';
+            }
+            if ($age) {
+                echo '<div class="itm-row"><span class="itm-ic"><i class="fa-regular fa-user"></i></span><span>' . esc_html($age) . '</span></div>';
+            }
+            echo '</div>';
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND ITINERARY MAP — standalone map of the `map` google_map
      *  repeater (Leaflet + OpenStreetMap, no API key). Auto-hides when empty.
      * =================================================================== */
@@ -5936,6 +6076,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Itinerary_Widget',
         'Island_ItineraryMap_Widget',
         'Island_CruiseInfo_Widget',
+        'Island_Gallery_Widget',
+        'Island_TripMeta_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
