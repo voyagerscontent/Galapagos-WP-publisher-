@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.45
+ * Version:     0.4.46
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -232,6 +232,18 @@ add_filter('theme_page_templates', function ($templates) {
     $templates['itineraries-page'] = 'Itineraries Page';
     return $templates;
 });
+
+// Pure-CSS sticky helper: add the class "itin-sticky" to any Elementor column
+// (Advanced -> CSS Classes) to make it follow the scroll — no Elementor Pro
+// Motion Effects needed. align-self:flex-start shrinks the column to its
+// content so the panel has room to travel (a stretched full-height column
+// cannot stick). Disabled below the two-column breakpoint.
+add_action('wp_head', function () {
+    echo '<style id="island-ew-sticky">'
+        . '.itin-sticky{position:-webkit-sticky;position:sticky;top:28px;align-self:flex-start}'
+        . '@media(max-width:1024px){.itin-sticky{position:static}}'
+        . '</style>';
+}, 20);
 
 // ── Page-type MARKER (decoupled from the WP page-template) ──────────────────
 // The WP page-template slot is ALSO what Elementor's Theme Builder respects, so
@@ -5891,6 +5903,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
             $this->add_control('day_prefix', ['label' => 'Day label prefix', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Day',
                 'description' => 'Shown before the day number, e.g. "Day 1: Title". Leave blank to show just the title.']);
+            $this->add_control('meals_icon', ['label' => 'Meals icon', 'type' => \Elementor\Controls_Manager::ICONS,
+                'default' => ['value' => 'fas fa-utensils', 'library' => 'fa-solid'],
+                'description' => 'Icono junto a las comidas de cada día. Cambialo por uno más legible aquí (p. ej. fa-bowl-food, fa-plate-wheat).']);
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -5926,11 +5941,23 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .idd-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px;color:#64402C;line-height:1.3}
               {{WRAPPER}} .idd-bd{padding:16px 20px}
               {{WRAPPER}} .idd-body{font-size:14.5px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .idd-body p{margin:0 0 10px}{{WRAPPER}} .idd-body :last-child{margin-bottom:0}
-              {{WRAPPER}} .idd-meals{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(100,64,44,.10);font-size:13px;font-weight:600;color:#7a6a5c}
-              {{WRAPPER}} .idd-meals svg{width:16px;height:16px;flex:0 0 auto;fill:currentColor}
+              {{WRAPPER}} .idd-meals{display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(100,64,44,.10);font-size:13.5px;font-weight:600;color:#7a6a5c}
+              {{WRAPPER}} .idd-meals svg{width:17px;height:17px;flex:0 0 auto;fill:currentColor}
+              {{WRAPPER}} .idd-meals i{font-size:16px;flex:0 0 auto;color:#64402C}
             </style>';
-            // Fork-and-knife glyph (inline SVG so it needs no icon font).
+            // Meals icon: the widget control (default fork/knife). Falls back to
+            // an inline SVG fork so it renders even if the icon font is absent.
             $fork = '<svg viewBox="0 0 448 512" aria-hidden="true"><path d="M416 0c-17.7 0-32 14.3-32 32V416H344V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V416H240V32c0-17.7-14.3-32-32-32S176 14.3 176 32V208c0 53 43 96 96 96v176c0 17.7 14.3 32 32 32s32-14.3 32-32V304c53 0 96-43 96-96V32c0-17.7-14.3-32-32-32zM64 0C46.3 0 32 14.3 32 32V160c0 35.3 28.7 64 64 64V480c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32S96 14.3 96 32V160H64V32C64 14.3 49.7 0 32 0z"/></svg>';
+            $meal_icon = $fork;
+            $mi = $s['meals_icon'] ?? [];
+            if (!empty($mi['value'])) {
+                ob_start();
+                \Elementor\Icons_Manager::render_icon($mi, ['aria-hidden' => 'true']);
+                $rendered = trim((string) ob_get_clean());
+                if ($rendered !== '') {
+                    $meal_icon = $rendered;
+                }
+            }
             echo '<div class="idd">';
             foreach ($rows as $r) {
                 $day = trim((string) ($r['day'] ?? ''));
@@ -5956,7 +5983,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                         $key = strtolower(trim((string) $m));
                         $names[] = $meal_labels[$key] ?? ucwords($key);
                     }
-                    echo '<div class="idd-meals">' . $fork . '<span>' . esc_html(implode(' / ', $names)) . '</span></div>';
+                    echo '<div class="idd-meals">' . $meal_icon . '<span>' . esc_html(implode(' / ', $names)) . '</span></div>';
                 }
                 echo '</div></article>';
             }
