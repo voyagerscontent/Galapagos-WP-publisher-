@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.49
+ * Version:     0.4.50
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -243,12 +243,25 @@ add_action('wp_footer', function () {
 <style id="island-ew-sticky-css">@media(max-width:1024px){.itin-sticky,[itin-sticky],[data-itin-sticky]{position:static !important;top:auto !important;left:auto !important;width:auto !important}}</style>
 <script id="island-ew-sticky-js">
 (function(){
-  var OFFSET = 28, items = [];
+  var items = [], GAP = 28;
+  // Auto-detect a fixed/sticky site header so the panel parks BELOW it instead
+  // of sliding under the menu. Per-element override: set the custom attribute
+  // value, e.g. "itin-sticky|120" -> parks 120px from the top.
+  function headerH(){
+    var best = 0, sel = 'header, [data-elementor-type="header"], .elementor-location-header, #masthead, .site-header, .elementor-sticky--active';
+    document.querySelectorAll(sel).forEach(function(h){
+      var st = getComputedStyle(h), r = h.getBoundingClientRect();
+      if ((st.position === 'fixed' || st.position === 'sticky') && r.top <= 2 && r.height > 0 && r.height < 300){ best = Math.max(best, r.height); }
+    });
+    return best;
+  }
+  var GLOBAL_OFFSET = GAP;
+  function refreshOffset(){ var h = headerH(); GLOBAL_OFFSET = h ? Math.round(h + 16) : GAP; }
   // Bounding box = the nearest ANCESTOR structural container that is genuinely
-  // TALLER than the panel (so it has room to travel). Walking up by height is
-  // key: the immediate .elementor-widget-wrap is only as tall as the panel, which
-  // would make it fall straight to the bottom state and vanish on the first
-  // scroll. We want the stretched column (or the row) instead.
+  // TALLER than the panel (so it has room to travel). The immediate
+  // .elementor-widget-wrap is only as tall as the panel, which would make it
+  // fall straight to the bottom state and vanish on the first scroll — we want
+  // the stretched column (or the row) instead.
   function isStruct(p){ return p.classList && (p.classList.contains('elementor-column') || p.classList.contains('elementor-row') || p.classList.contains('elementor-container') || p.classList.contains('e-con') || p.classList.contains('elementor-widget-wrap') || p.tagName === 'SECTION'); }
   function boxOf(el){
     var h = el.getBoundingClientRect().height, p = el.parentElement, fallback = el.parentElement;
@@ -261,7 +274,13 @@ add_action('wp_footer', function () {
     }
     return fallback || el.parentElement;
   }
-  function Item(el){ this.el = el; this.calc(); }
+  function Item(el){
+    this.el = el;
+    var a = (el.getAttribute('itin-sticky') || el.getAttribute('data-itin-sticky') || '').trim();
+    this.override = /^\d+$/.test(a) ? parseInt(a, 10) : null;
+    this.calc();
+  }
+  Item.prototype.offset = function(){ return this.override != null ? this.override : GLOBAL_OFFSET; };
   Item.prototype.reset = function(){ var s = this.el.style; s.position=''; s.top=''; s.left=''; s.width=''; };
   Item.prototype.calc = function(){
     this.reset();
@@ -272,15 +291,22 @@ add_action('wp_footer', function () {
   };
   Item.prototype.update = function(){
     if (window.innerWidth <= 1024){ this.reset(); return; }
-    var boxH = this.box.offsetHeight, y = window.pageYOffset, s = this.el.style;
-    var start = this.boxTop - OFFSET, end = this.boxTop + boxH - this.h - OFFSET;
-    if (y <= start){ this.reset(); }
-    else if (y >= end){ s.position='absolute'; s.top=(boxH - this.h)+'px'; s.left=this.leftIn+'px'; s.width=this.w+'px'; }
-    else { s.position='fixed'; s.top=OFFSET+'px'; s.left=(this.box.getBoundingClientRect().left + this.leftIn)+'px'; s.width=this.w+'px'; }
+    var off = this.offset(), boxH = this.box.offsetHeight, y = window.pageYOffset, s = this.el.style;
+    var start = this.boxTop - off, end = this.boxTop + boxH - this.h - off;
+    if (y <= start){ this.reset(); return; }
+    // Both the pinned and the end-release states use position:fixed with the
+    // SAME left, so there is no horizontal jump. Past the end we lower `top`
+    // one-for-one with the scroll, which keeps the panel parked at the bottom
+    // of its box and lets it scroll away with the page.
+    var top = (y > end) ? (off - (y - end)) : off;
+    s.position = 'fixed';
+    s.top = top + 'px';
+    s.left = (this.box.getBoundingClientRect().left + this.leftIn) + 'px';
+    s.width = this.w + 'px';
   };
-  function init(){ items = []; document.querySelectorAll('.itin-sticky, [itin-sticky], [data-itin-sticky]').forEach(function(el){ try { items.push(new Item(el)); } catch(e){} }); upd(); }
+  function init(){ refreshOffset(); items = []; document.querySelectorAll('.itin-sticky, [itin-sticky], [data-itin-sticky]').forEach(function(el){ try { items.push(new Item(el)); } catch(e){} }); upd(); }
   function upd(){ for (var i=0;i<items.length;i++) items[i].update(); }
-  function recalc(){ for (var i=0;i<items.length;i++) items[i].calc(); upd(); }
+  function recalc(){ refreshOffset(); for (var i=0;i<items.length;i++) items[i].calc(); upd(); }
   window.addEventListener('scroll', upd, {passive:true});
   window.addEventListener('resize', recalc);
   if (document.readyState !== 'loading'){ setTimeout(init, 300); } else { document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 300); }); }
