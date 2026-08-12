@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.47
+ * Version:     0.4.48
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -240,12 +240,20 @@ add_filter('theme_page_templates', function ($templates) {
 // very common theme rule). Disabled below the two-column breakpoint.
 add_action('wp_footer', function () {
     echo <<<'STICKY'
-<style id="island-ew-sticky-css">@media(max-width:1024px){.itin-sticky{position:static !important;top:auto !important;left:auto !important;width:auto !important}}</style>
+<style id="island-ew-sticky-css">@media(max-width:1024px){.itin-sticky,[itin-sticky],[data-itin-sticky]{position:static !important;top:auto !important;left:auto !important;width:auto !important}}</style>
 <script id="island-ew-sticky-js">
 (function(){
   var OFFSET = 28, items = [];
-  function boxOf(el){ return el.closest('.elementor-widget-wrap') || el.closest('.elementor-column-wrap') || el.closest('.elementor-column') || el.parentElement; }
-  function Item(el){ this.el = el; this.box = boxOf(el); if (getComputedStyle(this.box).position === 'static') { this.box.style.position = 'relative'; } this.calc(); }
+  // Bounding box = the nearest ANCESTOR container (never the element itself), so
+  // it works whether itin-sticky is on an inner section (box = its column) or on
+  // the column (box = its row/section) — the box is the tall element that gives
+  // the panel room to travel.
+  function boxOf(el){
+    var start = el.parentElement;
+    if (!start) { return el.parentElement; }
+    return start.closest('.elementor-column, .elementor-widget-wrap, .elementor-row, .elementor-container, .e-con, section') || start;
+  }
+  function Item(el){ this.el = el; this.box = boxOf(el); if (this.box && getComputedStyle(this.box).position === 'static') { this.box.style.position = 'relative'; } this.calc(); }
   Item.prototype.reset = function(){ var s = this.el.style; s.position=''; s.top=''; s.left=''; s.width=''; };
   Item.prototype.calc = function(){ this.reset(); var er = this.el.getBoundingClientRect(), br = this.box.getBoundingClientRect(); this.h = er.height; this.w = er.width; this.leftIn = er.left - br.left; this.boxTop = br.top + window.pageYOffset; };
   Item.prototype.update = function(){
@@ -256,7 +264,7 @@ add_action('wp_footer', function () {
     else if (y >= end){ s.position='absolute'; s.top=(boxH - this.h)+'px'; s.left=this.leftIn+'px'; s.width=this.w+'px'; }
     else { s.position='fixed'; s.top=OFFSET+'px'; s.left=(this.box.getBoundingClientRect().left + this.leftIn)+'px'; s.width=this.w+'px'; }
   };
-  function init(){ items = []; document.querySelectorAll('.itin-sticky').forEach(function(el){ try { items.push(new Item(el)); } catch(e){} }); upd(); }
+  function init(){ items = []; document.querySelectorAll('.itin-sticky, [itin-sticky], [data-itin-sticky]').forEach(function(el){ try { items.push(new Item(el)); } catch(e){} }); upd(); }
   function upd(){ for (var i=0;i<items.length;i++) items[i].update(); }
   function recalc(){ for (var i=0;i<items.length;i++) items[i].calc(); upd(); }
   window.addEventListener('scroll', upd, {passive:true});
