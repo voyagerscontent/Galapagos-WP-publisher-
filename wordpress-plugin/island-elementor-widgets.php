@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.46
+ * Version:     0.4.47
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -233,16 +233,39 @@ add_filter('theme_page_templates', function ($templates) {
     return $templates;
 });
 
-// Pure-CSS sticky helper: add the class "itin-sticky" to any Elementor column
-// (Advanced -> CSS Classes) to make it follow the scroll — no Elementor Pro
-// Motion Effects needed. align-self:flex-start shrinks the column to its
-// content so the panel has room to travel (a stretched full-height column
-// cannot stick). Disabled below the two-column breakpoint.
-add_action('wp_head', function () {
-    echo '<style id="island-ew-sticky">'
-        . '.itin-sticky{position:-webkit-sticky;position:sticky;top:28px;align-self:flex-start}'
-        . '@media(max-width:1024px){.itin-sticky{position:static}}'
-        . '</style>';
+// JS sticky helper: add the class "itin-sticky" to an element (ideally an inner
+// section wrapping the sidebar widgets) to make it follow the scroll within its
+// containing column. Uses JS position:fixed math instead of CSS position:sticky,
+// which breaks whenever any ancestor has overflow:hidden / overflow-x:hidden (a
+// very common theme rule). Disabled below the two-column breakpoint.
+add_action('wp_footer', function () {
+    echo <<<'STICKY'
+<style id="island-ew-sticky-css">@media(max-width:1024px){.itin-sticky{position:static !important;top:auto !important;left:auto !important;width:auto !important}}</style>
+<script id="island-ew-sticky-js">
+(function(){
+  var OFFSET = 28, items = [];
+  function boxOf(el){ return el.closest('.elementor-widget-wrap') || el.closest('.elementor-column-wrap') || el.closest('.elementor-column') || el.parentElement; }
+  function Item(el){ this.el = el; this.box = boxOf(el); if (getComputedStyle(this.box).position === 'static') { this.box.style.position = 'relative'; } this.calc(); }
+  Item.prototype.reset = function(){ var s = this.el.style; s.position=''; s.top=''; s.left=''; s.width=''; };
+  Item.prototype.calc = function(){ this.reset(); var er = this.el.getBoundingClientRect(), br = this.box.getBoundingClientRect(); this.h = er.height; this.w = er.width; this.leftIn = er.left - br.left; this.boxTop = br.top + window.pageYOffset; };
+  Item.prototype.update = function(){
+    if (window.innerWidth <= 1024){ this.reset(); return; }
+    var boxH = this.box.offsetHeight, y = window.pageYOffset, s = this.el.style;
+    var start = this.boxTop - OFFSET, end = this.boxTop + boxH - this.h - OFFSET;
+    if (y <= start){ this.reset(); }
+    else if (y >= end){ s.position='absolute'; s.top=(boxH - this.h)+'px'; s.left=this.leftIn+'px'; s.width=this.w+'px'; }
+    else { s.position='fixed'; s.top=OFFSET+'px'; s.left=(this.box.getBoundingClientRect().left + this.leftIn)+'px'; s.width=this.w+'px'; }
+  };
+  function init(){ items = []; document.querySelectorAll('.itin-sticky').forEach(function(el){ try { items.push(new Item(el)); } catch(e){} }); upd(); }
+  function upd(){ for (var i=0;i<items.length;i++) items[i].update(); }
+  function recalc(){ for (var i=0;i<items.length;i++) items[i].calc(); upd(); }
+  window.addEventListener('scroll', upd, {passive:true});
+  window.addEventListener('resize', recalc);
+  if (document.readyState !== 'loading'){ setTimeout(init, 300); } else { document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 300); }); }
+  window.addEventListener('load', function(){ setTimeout(recalc, 500); });
+})();
+</script>
+STICKY;
 }, 20);
 
 // ── Page-type MARKER (decoupled from the WP page-template) ──────────────────
@@ -5906,6 +5929,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('meals_icon', ['label' => 'Meals icon', 'type' => \Elementor\Controls_Manager::ICONS,
                 'default' => ['value' => 'fas fa-utensils', 'library' => 'fa-solid'],
                 'description' => 'Icono junto a las comidas de cada día. Cambialo por uno más legible aquí (p. ej. fa-bowl-food, fa-plate-wheat).']);
+            $this->add_control('collapsible', ['label' => 'Collapsible days (accordion)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'Each day opens/closes with an arrow.']);
+            $this->add_control('first_open', ['label' => 'Open the first day', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'condition' => ['collapsible' => 'yes']]);
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -5939,6 +5966,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .idd-item{border:1px solid rgba(100,64,44,.14);border-radius:12px;overflow:hidden;background:#fff}
               {{WRAPPER}} .idd-head{background:#F1EBE4;padding:14px 20px}
               {{WRAPPER}} .idd-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:17px;color:#64402C;line-height:1.3}
+              /* Accordion (collapsible days): the header is a summary with a
+                 chevron that rotates when the day is open. First day open. */
+              {{WRAPPER}} details.idd-item > summary.idd-head{cursor:pointer;list-style:none;position:relative;padding-right:46px;display:block}
+              {{WRAPPER}} details.idd-item > summary.idd-head::-webkit-details-marker{display:none}
+              {{WRAPPER}} details.idd-item > summary.idd-head::after{content:"";position:absolute;right:20px;top:50%;width:9px;height:9px;border-right:2px solid #9c7b4e;border-bottom:2px solid #9c7b4e;transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+              {{WRAPPER}} details.idd-item[open] > summary.idd-head::after{transform:translateY(-30%) rotate(225deg)}
               {{WRAPPER}} .idd-bd{padding:16px 20px}
               {{WRAPPER}} .idd-body{font-size:14.5px;line-height:1.7;color:#3A2A1E}{{WRAPPER}} .idd-body p{margin:0 0 10px}{{WRAPPER}} .idd-body :last-child{margin-bottom:0}
               {{WRAPPER}} .idd-meals{display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(100,64,44,.10);font-size:13.5px;font-weight:600;color:#7a6a5c}
@@ -5958,7 +5991,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     $meal_icon = $rendered;
                 }
             }
+            $collapsible = ($s['collapsible'] ?? 'yes') === 'yes';
+            $first_open = ($s['first_open'] ?? 'yes') === 'yes';
             echo '<div class="idd">';
+            $i = 0;
             foreach ($rows as $r) {
                 $day = trim((string) ($r['day'] ?? ''));
                 $title = trim((string) ($r['title'] ?? ''));
@@ -5970,12 +6006,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 } else {
                     $head = esc_html($title);
                 }
-                echo '<article class="idd-item">';
-                if ($head !== '') {
-                    echo '<div class="idd-head"><p class="idd-title">' . $head . '</p></div>';
-                }
-                echo '<div class="idd-bd">';
-                echo '<div class="idd-body">' . wp_kses_post($r['details'] ?? '') . '</div>';
+                // Body (details + meals) shared by both layouts.
+                $body = '<div class="idd-bd"><div class="idd-body">' . wp_kses_post($r['details'] ?? '') . '</div>';
                 $meals = $r['meals'] ?? [];
                 if (is_array($meals) && $meals) {
                     $names = [];
@@ -5983,9 +6015,25 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                         $key = strtolower(trim((string) $m));
                         $names[] = $meal_labels[$key] ?? ucwords($key);
                     }
-                    echo '<div class="idd-meals">' . $meal_icon . '<span>' . esc_html(implode(' / ', $names)) . '</span></div>';
+                    $body .= '<div class="idd-meals">' . $meal_icon . '<span>' . esc_html(implode(' / ', $names)) . '</span></div>';
                 }
-                echo '</div></article>';
+                $body .= '</div>';
+
+                if ($collapsible) {
+                    // Collapsible: only the first day open by default, the rest
+                    // toggle with the chevron on their header.
+                    $open = ($first_open && $i === 0) ? ' open' : '';
+                    echo '<details class="idd-item"' . $open . '>';
+                    echo '<summary class="idd-head"><p class="idd-title">' . ($head !== '' ? $head : '&nbsp;') . '</p></summary>';
+                    echo $body . '</details>';
+                } else {
+                    echo '<article class="idd-item">';
+                    if ($head !== '') {
+                        echo '<div class="idd-head"><p class="idd-title">' . $head . '</p></div>';
+                    }
+                    echo $body . '</article>';
+                }
+                $i++;
             }
             echo '</div>';
         }
