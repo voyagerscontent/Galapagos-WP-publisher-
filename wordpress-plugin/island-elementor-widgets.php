@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.42
+ * Version:     0.4.43
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5315,6 +5315,31 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             return '<div class="iit-card"><div class="iit-card-h"><span class="iit-ic"><i class="fa-solid ' . esc_attr($icon) . '"></i></span>'
                 . '<h2 class="iit-sub">' . esc_html($title) . '</h2></div><div class="iit-list">' . wp_kses_post($html) . '</div></div>';
         }
+        // Render the `map` repeater (rows of a google_map sub-field) as pins on a
+        // Leaflet + OpenStreetMap map — no Google/Mapbox API key needed.
+        private function ii_map($pid)
+        {
+            $points = [];
+            foreach ((array) get_field('map', $pid) as $row) {
+                $loc = is_array($row) ? ($row['location'] ?? null) : null;
+                if (is_array($loc) && isset($loc['lat'], $loc['lng']) && $loc['lat'] !== '' && $loc['lng'] !== '') {
+                    $points[] = ['lat' => (float) $loc['lat'], 'lng' => (float) $loc['lng'], 'label' => (string) ($loc['address'] ?? '')];
+                }
+            }
+            if (!$points) {
+                return;
+            }
+            $uid = 'iitmap_' . (int) $pid . '_' . substr(md5(wp_json_encode($points)), 0, 6);
+            echo '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">';
+            echo '<div id="' . esc_attr($uid) . '" class="iit-map"></div>';
+            echo '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>';
+            echo '<script>(function(){var pts=' . wp_json_encode($points) . ';function go(){if(!window.L){return setTimeout(go,120);}'
+                . 'var el=document.getElementById("' . esc_js($uid) . '");if(!el||el.dataset.init)return;el.dataset.init=1;'
+                . 'var m=L.map(el,{scrollWheelZoom:false});'
+                . 'L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap"}).addTo(m);'
+                . 'var g=[];pts.forEach(function(p){var mk=L.marker([p.lat,p.lng]).addTo(m);if(p.label){mk.bindPopup(p.label);}g.push([p.lat,p.lng]);});'
+                . 'if(g.length===1){m.setView(g[0],9);}else{m.fitBounds(g,{padding:[30,30]});}}go();})();</script>';
+        }
         protected function render()
         {
             if (!function_exists('get_field')) {
@@ -5337,7 +5362,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if ($cid) {
                 $rates = (array) get_field('rates', $cid);
                 foreach ($rates as $r) {
-                    if (isset($r['duration']) && (string) $r['duration'] === (string) $duration) {
+                    // Tolerant match: compare durations numerically (e.g. "5",
+                    // 5, "5 days" all match a 5-day itinerary).
+                    if (isset($r['duration']) && (float) preg_replace('/[^0-9.]/', '', (string) $r['duration']) === (float) preg_replace('/[^0-9.]/', '', (string) $duration)) {
                         $price = $r['price'] ?? '';
                         break;
                     }
@@ -5403,6 +5430,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .iit-book-b{padding:20px}
               {{WRAPPER}} .iit-meta{display:flex;flex-direction:column;gap:8px}
               {{WRAPPER}} .iit-meta-row{display:flex;align-items:center;gap:10px;font-size:15px}
+              {{WRAPPER}} .iit-map{height:420px;border-radius:12px;overflow:hidden;margin:18px 0;border:1px solid var(--line);z-index:0}
+              {{WRAPPER}} .iit-map .leaflet-pane{z-index:0}
             </style>';
 
             echo '<div class="iit">';
@@ -5483,6 +5512,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo $this->ii_card('fa-eye', 'Highlights', get_field('highlights', $pid));
             echo $this->ii_card('fa-check', 'Includes', $includes);
             echo $this->ii_card('fa-xmark', 'Not Included', $not_included);
+
+            // Map (ACF `map` google_map repeater) — pins on a Leaflet/OSM map.
+            $this->ii_map($pid);
 
             // Shared settings-page cards (only on galapagos-cruise-tour posts).
             if ($sp) {
