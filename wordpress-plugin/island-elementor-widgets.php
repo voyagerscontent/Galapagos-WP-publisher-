@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.52
+ * Version:     0.4.53
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5702,8 +5702,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
             $this->add_control('video_field', ['label' => 'Video URL field (ACF)', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'video']);
             $this->add_control('image_field', ['label' => 'Fallback image field (ACF)', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'cover']);
-            $this->add_control('ratio', ['label' => 'Aspect ratio', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '56.25',
-                'options' => ['56.25' => '16:9', '75' => '4:3', '42.85' => '21:9', '100' => '1:1']]);
+            $this->add_control('ratio', ['label' => 'Aspect ratio', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '16/9',
+                'options' => ['16/9' => '16:9', '4/3' => '4:3', '21/9' => '21:9', '1/1' => '1:1']]);
             $this->add_responsive_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
                 'default' => ['size' => 8, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ivid,{{WRAPPER}} .ivid-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
@@ -5719,7 +5719,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $imf = !empty($s['image_field']) ? $s['image_field'] : 'cover';
             $raw = get_field($vf, $pid);
             $url = trim(is_scalar($raw) ? (string) $raw : '');
-            $ratio = (float) ($s['ratio'] ?? '56.25') ?: 56.25;
+            $ar = in_array($s['ratio'] ?? '', ['16/9', '4/3', '21/9', '1/1'], true) ? $s['ratio'] : '16/9';
 
             // Diagnostic (Elementor editor, or ?ivid_debug=1 for an editor):
             // shows exactly which field/value was read so a "still shows the
@@ -5732,20 +5732,28 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     . '. Si dice VIDEO pero borraste la URL: el campo real no es <code>' . esc_html($vf) . '</code>, o hay <b>caché</b> (purgá y Regenerá CSS).'
                     . '</div>';
             }
+            // The aspect-ratio is forced INLINE on the iframe/video below so a CSS
+            // optimiser cannot strip it (the black-bar / wrong-height bug). The
+            // <style> only handles the wrapper and the image fallback.
+            $istyle = 'display:block;width:100%;height:auto;aspect-ratio:' . $ar . ';border:0';
             echo '<style>
-              {{WRAPPER}} .ivid{position:relative;width:100%;padding-top:' . esc_attr($ratio) . '%;overflow:hidden;border-radius:8px;background:#000}
-              {{WRAPPER}} .ivid iframe,{{WRAPPER}} .ivid video{position:absolute;inset:0;width:100%;height:100%;border:0}
+              {{WRAPPER}} .ivid{width:100%;border-radius:8px;overflow:hidden;background:#000;line-height:0}
+              {{WRAPPER}} .ivid iframe,{{WRAPPER}} .ivid video{display:block;width:100%;height:auto;aspect-ratio:' . esc_attr($ar) . ';border:0}
               {{WRAPPER}} .ivid-img{display:block;width:100%;height:auto;border-radius:8px}
             </style>';
             if ($url !== '') {
-                $embed = wp_oembed_get($url);   // YouTube / Vimeo etc.
+                $embed = wp_oembed_get($url, ['width' => 1280]);   // YouTube / Vimeo etc.
                 if ($embed) {
+                    // Drop the fixed width/height oEmbed sets, and force the
+                    // responsive aspect-ratio inline on the <iframe> itself.
+                    $embed = preg_replace('/\s(width|height)="[^"]*"/i', '', $embed);
+                    $embed = preg_replace('/<iframe\b/i', '<iframe style="' . esc_attr($istyle) . '"', $embed, 1);
                     echo '<div class="ivid">' . $embed . '</div>';
                     return;
                 }
                 // A direct .mp4 URL: play it inline.
                 if (preg_match('/\.(mp4|webm|ogg)(\?|$)/i', $url)) {
-                    echo '<div class="ivid"><video controls preload="metadata" src="' . esc_url($url) . '"></video></div>';
+                    echo '<div class="ivid"><video controls preload="metadata" style="' . esc_attr($istyle) . '" src="' . esc_url($url) . '"></video></div>';
                     return;
                 }
             }
