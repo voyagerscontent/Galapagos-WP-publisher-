@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.53
+ * Version:     0.4.54
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5708,6 +5708,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 8, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ivid,{{WRAPPER}} .ivid-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
         }
+        // Build an autoplay embed URL from a YouTube/Vimeo watch URL, so the
+        // facade can load the player on click. Returns '' for other providers.
+        private function ivid_embed($url)
+        {
+            if (preg_match('~(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|v/)|youtu\.be/)([A-Za-z0-9_-]{11})~i', $url, $m)) {
+                return 'https://www.youtube-nocookie.com/embed/' . $m[1] . '?autoplay=1&rel=0';
+            }
+            if (preg_match('~vimeo\.com/(?:video/)?(\d+)~i', $url, $m)) {
+                return 'https://player.vimeo.com/video/' . $m[1] . '?autoplay=1';
+            }
+            return '';
+        }
         protected function render()
         {
             if (!function_exists('get_field')) {
@@ -5740,27 +5752,49 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ivid{width:100%;border-radius:8px;overflow:hidden;background:#000;line-height:0}
               {{WRAPPER}} .ivid iframe,{{WRAPPER}} .ivid video{display:block;width:100%;height:auto;aspect-ratio:' . esc_attr($ar) . ';border:0}
               {{WRAPPER}} .ivid-img{display:block;width:100%;height:auto;border-radius:8px}
+              {{WRAPPER}} .ivid-facade{position:relative;cursor:pointer}
+              {{WRAPPER}} .ivid-facade .ivid-poster{display:block;width:100%;height:100%;object-fit:cover}
+              {{WRAPPER}} .ivid-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:68px;height:48px;border-radius:12px;background:rgba(20,20,20,.7);pointer-events:none;transition:background .2s}
+              {{WRAPPER}} .ivid-facade:hover .ivid-play,{{WRAPPER}} .ivid-facade:focus .ivid-play{background:#c00}
+              {{WRAPPER}} .ivid-play::after{content:"";position:absolute;left:52%;top:50%;transform:translate(-50%,-50%);border-style:solid;border-width:11px 0 11px 19px;border-color:transparent transparent transparent #fff}
             </style>';
+            $imgsrc = island_ew_image_src(get_field($imf, $pid), 'large');
             if ($url !== '') {
-                $embed = wp_oembed_get($url, ['width' => 1280]);   // YouTube / Vimeo etc.
-                if ($embed) {
-                    // Drop the fixed width/height oEmbed sets, and force the
-                    // responsive aspect-ratio inline on the <iframe> itself.
-                    $embed = preg_replace('/\s(width|height)="[^"]*"/i', '', $embed);
-                    $embed = preg_replace('/<iframe\b/i', '<iframe style="' . esc_attr($istyle) . '"', $embed, 1);
-                    echo '<div class="ivid">' . $embed . '</div>';
+                $embed = $this->ivid_embed($url);
+                // Preferred: ACF cover as the poster + play button; the player
+                // (autoplay) loads only on click. So the thumbnail is YOUR image,
+                // not the YouTube one.
+                if ($embed && $imgsrc) {
+                    $uid = 'ividf-' . $this->get_id();
+                    echo '<div class="ivid ivid-facade" id="' . esc_attr($uid) . '" data-embed="' . esc_url($embed) . '" '
+                        . 'role="button" tabindex="0" aria-label="Play video" style="aspect-ratio:' . esc_attr($ar) . '">'
+                        . '<img class="ivid-poster" src="' . esc_url($imgsrc) . '" alt="" loading="lazy">'
+                        . '<span class="ivid-play"></span></div>';
+                    echo '<script>(function(){var el=document.getElementById(' . wp_json_encode($uid) . ');if(!el||el.__b)return;el.__b=1;'
+                        . 'function go(){var e=el.getAttribute("data-embed");'
+                        . 'el.innerHTML=\'<iframe src="\'+e+\'" style="display:block;width:100%;height:100%;border:0" allow="autoplay;encrypted-media;fullscreen" allowfullscreen></iframe>\';}'
+                        . 'el.addEventListener("click",go);el.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();go();}});})();</script>';
                     return;
                 }
-                // A direct .mp4 URL: play it inline.
+                // Direct video file: use the ACF cover as the poster too.
                 if (preg_match('/\.(mp4|webm|ogg)(\?|$)/i', $url)) {
-                    echo '<div class="ivid"><video controls preload="metadata" style="' . esc_attr($istyle) . '" src="' . esc_url($url) . '"></video></div>';
+                    $poster = $imgsrc ? ' poster="' . esc_url($imgsrc) . '"' : '';
+                    echo '<div class="ivid"><video controls preload="metadata"' . $poster . ' style="' . esc_attr($istyle) . '" src="' . esc_url($url) . '"></video></div>';
+                    return;
+                }
+                // Fallback (no cover, or unknown provider): plain oEmbed, which
+                // uses the platform thumbnail.
+                $oe = wp_oembed_get($url, ['width' => 1280]);
+                if ($oe) {
+                    $oe = preg_replace('/\s(width|height)="[^"]*"/i', '', $oe);
+                    $oe = preg_replace('/<iframe\b/i', '<iframe style="' . esc_attr($istyle) . '"', $oe, 1);
+                    echo '<div class="ivid">' . $oe . '</div>';
                     return;
                 }
             }
-            // No usable video -> fall back to the image.
-            $src = island_ew_image_src(get_field($imf, $pid), 'large');
-            if ($src) {
-                echo '<img class="ivid-img" src="' . esc_url($src) . '" alt="" loading="lazy">';
+            // No usable video -> just show the image.
+            if ($imgsrc) {
+                echo '<img class="ivid-img" src="' . esc_url($imgsrc) . '" alt="" loading="lazy">';
             }
         }
     }
