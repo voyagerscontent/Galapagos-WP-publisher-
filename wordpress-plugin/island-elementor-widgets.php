@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.54
+ * Version:     0.4.55
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5674,6 +5674,115 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND CRUISE ITINERARIES — lists the itinerary posts linked to THIS
+     *  cruise (via the itinerary's `cruise` ACF post-object field). Renders a
+     *  heading + card grid; renders NOTHING (heading included) when the cruise
+     *  has no itineraries — the validation the shortcode could not do.
+     * =================================================================== */
+    class Island_CruiseItineraries_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_cruise_itineraries';
+        }
+        public function get_title()
+        {
+            return 'Island Cruise Itineraries';
+        }
+        public function get_icon()
+        {
+            return 'eicon-post-list';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Cruise ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Itineraries']);
+            $this->add_control('itinerary_cpt', ['label' => 'Itinerary post type', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'itinerary']);
+            $this->add_control('cruise_field', ['label' => 'Link field (on itinerary)', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'cruise']);
+            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '3',
+                'tablet_default' => '2', 'mobile_default' => '1', 'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
+                'selectors' => ['{{WRAPPER}} .icit-grid' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $cid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
+            if (!$cid) {
+                return;
+            }
+            $cpt = !empty($s['itinerary_cpt']) ? $s['itinerary_cpt'] : 'itinerary';
+            $field = !empty($s['cruise_field']) ? $s['cruise_field'] : 'cruise';
+            // Itineraries whose `cruise` post-object field references this cruise.
+            // ACF stores a multi post-object as a serialized array, so the id
+            // appears quoted; a single one is the bare id — match both.
+            $q = new \WP_Query([
+                'post_type' => $cpt,
+                'posts_per_page' => 24,
+                'post_status' => 'publish',
+                'no_found_rows' => true,
+                'orderby' => 'title',
+                'order' => 'ASC',
+                'meta_query' => [
+                    'relation' => 'OR',
+                    ['key' => $field, 'value' => '"' . $cid . '"', 'compare' => 'LIKE'],
+                    ['key' => $field, 'value' => $cid, 'compare' => '='],
+                ],
+            ]);
+            if (!$q->have_posts()) {
+                wp_reset_postdata();
+                return;   // no itineraries -> render nothing (heading included)
+            }
+            echo '<style>
+              {{WRAPPER}} .icit-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:26px;color:#64402C;margin:0 0 18px}
+              {{WRAPPER}} .icit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+              @media(max-width:900px){ {{WRAPPER}} .icit-grid{grid-template-columns:repeat(2,1fr)} }
+              @media(max-width:560px){ {{WRAPPER}} .icit-grid{grid-template-columns:1fr} }
+              {{WRAPPER}} .icit-card{display:flex;flex-direction:column;border:1px solid rgba(100,64,44,.14);border-radius:14px;overflow:hidden;background:#fff;text-decoration:none;box-shadow:0 8px 22px rgba(60,40,25,.08);transition:transform .18s,box-shadow .18s}
+              {{WRAPPER}} .icit-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(60,40,25,.16)}
+              {{WRAPPER}} .icit-img{display:block;width:100%;padding-top:60%;background:#e3d6c8 center/cover no-repeat}
+              {{WRAPPER}} .icit-bd{padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+              {{WRAPPER}} .icit-t{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:16px;color:#64402C;line-height:1.3}
+              {{WRAPPER}} .icit-d{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#7a6a5c}
+              {{WRAPPER}} .icit-d i{color:#64402C}
+            </style>';
+            echo '<div class="icit">';
+            $h = trim((string) ($s['heading'] ?? 'Itineraries'));
+            if ($h !== '') {
+                echo '<h2 class="icit-h">' . esc_html($h) . '</h2>';
+            }
+            echo '<div class="icit-grid">';
+            while ($q->have_posts()) {
+                $q->the_post();
+                $id = get_the_ID();
+                $img = get_the_post_thumbnail_url($id, 'medium_large');
+                if (!$img) {
+                    $img = island_ew_image_src(get_field('cover', $id) ?: get_field('hero_image', $id), 'medium_large');
+                }
+                $dur = get_field('duration', $id);
+                echo '<a class="icit-card" href="' . esc_url(get_permalink($id)) . '">';
+                echo '<span class="icit-img"' . ($img ? ' style="background-image:url(\'' . esc_url($img) . '\')"' : '') . '></span>';
+                echo '<span class="icit-bd"><span class="icit-t">' . esc_html(get_the_title($id)) . '</span>';
+                if ($dur !== '' && $dur !== null) {
+                    $dtxt = ((int) $dur > 1) ? ($dur . ' Days') : ($dur . ' Day');
+                    echo '<span class="icit-d"><i class="fa-regular fa-calendar"></i>' . esc_html($dtxt) . '</span>';
+                }
+                echo '</span></a>';
+            }
+            echo '</div></div>';
+            wp_reset_postdata();
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND VIDEO — plays the ACF video URL if present, else falls back to
      *  an ACF image. Server-side fallback: no Display Conditions needed and no
      *  dead play button when there is no video. Auto-hides when both are empty.
@@ -6328,6 +6437,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Gallery_Widget',
         'Island_TripMeta_Widget',
         'Island_Video_Widget',
+        'Island_CruiseItineraries_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
