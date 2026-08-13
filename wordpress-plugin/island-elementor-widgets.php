@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.50
+ * Version:     0.4.51
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5674,6 +5674,77 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND VIDEO — plays the ACF video URL if present, else falls back to
+     *  an ACF image. Server-side fallback: no Display Conditions needed and no
+     *  dead play button when there is no video. Auto-hides when both are empty.
+     * =================================================================== */
+    class Island_Video_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_video';
+        }
+        public function get_title()
+        {
+            return 'Island Video (fallback to image)';
+        }
+        public function get_icon()
+        {
+            return 'eicon-youtube';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('video_field', ['label' => 'Video URL field (ACF)', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'video']);
+            $this->add_control('image_field', ['label' => 'Fallback image field (ACF)', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'cover']);
+            $this->add_control('ratio', ['label' => 'Aspect ratio', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '56.25',
+                'options' => ['56.25' => '16:9', '75' => '4:3', '42.85' => '21:9', '100' => '1:1']]);
+            $this->add_responsive_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 30]],
+                'default' => ['size' => 8, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ivid,{{WRAPPER}} .ivid-img' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
+            $vf = !empty($s['video_field']) ? $s['video_field'] : 'video';
+            $imf = !empty($s['image_field']) ? $s['image_field'] : 'cover';
+            $url = trim((string) get_field($vf, $pid));
+            $ratio = (float) ($s['ratio'] ?? '56.25') ?: 56.25;
+            echo '<style>
+              {{WRAPPER}} .ivid{position:relative;width:100%;padding-top:' . esc_attr($ratio) . '%;overflow:hidden;border-radius:8px;background:#000}
+              {{WRAPPER}} .ivid iframe,{{WRAPPER}} .ivid video{position:absolute;inset:0;width:100%;height:100%;border:0}
+              {{WRAPPER}} .ivid-img{display:block;width:100%;height:auto;border-radius:8px}
+            </style>';
+            if ($url !== '') {
+                $embed = wp_oembed_get($url);   // YouTube / Vimeo etc.
+                if ($embed) {
+                    echo '<div class="ivid">' . $embed . '</div>';
+                    return;
+                }
+                // A direct .mp4 URL: play it inline.
+                if (preg_match('/\.(mp4|webm|ogg)(\?|$)/i', $url)) {
+                    echo '<div class="ivid"><video controls preload="metadata" src="' . esc_url($url) . '"></video></div>';
+                    return;
+                }
+            }
+            // No usable video -> fall back to the image.
+            $src = island_ew_image_src(get_field($imf, $pid), 'large');
+            if ($src) {
+                echo '<img class="ivid-img" src="' . esc_url($src) . '" alt="" loading="lazy">';
+            }
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND GALLERY — responsive grid from an ACF gallery field (default
      *  `gallery`). Uses Elementor's lightbox. Auto-hides when empty. Solves
      *  the empty Elementor Gallery widget when bound via an ACF dynamic tag.
@@ -6201,6 +6272,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_CruiseInfo_Widget',
         'Island_Gallery_Widget',
         'Island_TripMeta_Widget',
+        'Island_Video_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
