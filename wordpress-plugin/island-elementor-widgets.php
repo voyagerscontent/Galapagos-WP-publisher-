@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.51
+ * Version:     0.4.52
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5717,8 +5717,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
             $vf = !empty($s['video_field']) ? $s['video_field'] : 'video';
             $imf = !empty($s['image_field']) ? $s['image_field'] : 'cover';
-            $url = trim((string) get_field($vf, $pid));
+            $raw = get_field($vf, $pid);
+            $url = trim(is_scalar($raw) ? (string) $raw : '');
             $ratio = (float) ($s['ratio'] ?? '56.25') ?: 56.25;
+
+            // Diagnostic (Elementor editor, or ?ivid_debug=1 for an editor):
+            // shows exactly which field/value was read so a "still shows the
+            // video" issue is easy to pin on the field name vs a page cache.
+            $editing = class_exists('\Elementor\Plugin') && \Elementor\Plugin::$instance && \Elementor\Plugin::$instance->editor && \Elementor\Plugin::$instance->editor->is_edit_mode();
+            if ($editing || (isset($_GET['ivid_debug']) && current_user_can('edit_posts'))) {
+                echo '<div style="background:#fff3cd;border:1px solid #e0c86a;padding:8px 12px;border-radius:8px;margin:0 0 10px;font-size:12.5px;color:#5a4a20">'
+                    . '<strong>Island Video diagnostic</strong> — post #' . (int) $pid
+                    . ' &middot; campo <code>' . esc_html($vf) . '</code> = ' . ($url !== '' ? '<code>' . esc_html($url) . '</code> &rarr; VIDEO' : '<b>vacío</b> &rarr; imagen (' . esc_html($imf) . ')')
+                    . '. Si dice VIDEO pero borraste la URL: el campo real no es <code>' . esc_html($vf) . '</code>, o hay <b>caché</b> (purgá y Regenerá CSS).'
+                    . '</div>';
+            }
             echo '<style>
               {{WRAPPER}} .ivid{position:relative;width:100%;padding-top:' . esc_attr($ratio) . '%;overflow:hidden;border-radius:8px;background:#000}
               {{WRAPPER}} .ivid iframe,{{WRAPPER}} .ivid video{position:absolute;inset:0;width:100%;height:100%;border:0}
