@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.55
+ * Version:     0.4.56
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -232,6 +232,31 @@ add_filter('theme_page_templates', function ($templates) {
     $templates['itineraries-page'] = 'Itineraries Page';
     return $templates;
 });
+
+// Collapse-when-empty helper: add the class "hide-if-empty" (or the same as a
+// Custom Attribute) to any Elementor SECTION/container, and it is hidden when it
+// has no visible content — no text, no media, no inline background image. Lets a
+// whole section (e.g. Itineraries + Availability) disappear, padding/background
+// included, when every widget inside rendered nothing.
+add_action('wp_footer', function () {
+    echo <<<'HIDEEMPTY'
+<script id="island-ew-hide-empty">
+(function(){
+  function empty(el){
+    if (el.querySelector('img,picture,iframe,video,svg,canvas,input,select,textarea,button,form,[style*="background-image"]')) { return false; }
+    return el.innerText.replace(/\s+/g,'') === '';
+  }
+  function run(){
+    document.querySelectorAll('.hide-if-empty,[hide-if-empty],[data-hide-if-empty]').forEach(function(el){
+      el.style.display = empty(el) ? 'none' : '';
+    });
+  }
+  if (document.readyState !== 'loading'){ setTimeout(run, 200); } else { document.addEventListener('DOMContentLoaded', function(){ setTimeout(run, 200); }); }
+  window.addEventListener('load', function(){ setTimeout(run, 450); });
+})();
+</script>
+HIDEEMPTY;
+}, 21);
 
 // JS sticky helper: add the class "itin-sticky" to an element (ideally an inner
 // section wrapping the sidebar widgets) to make it follow the scroll within its
