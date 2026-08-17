@@ -231,6 +231,51 @@
                 "selected": 0
             },
             {
+                "key": "field_exp_credentials",
+                "label": "Credenciales",
+                "name": "credentials",
+                "aria-label": "",
+                "type": "repeater",
+                "instructions": "Lista de credenciales (checklist).",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "layout": "block",
+                "pagination": 0,
+                "min": 0,
+                "max": 0,
+                "collapsed": "field_exp_cred_text",
+                "button_label": "Añadir credencial",
+                "rows_per_page": 30,
+                "sub_fields": [
+                    {
+                        "key": "field_exp_cred_text",
+                        "label": "Texto",
+                        "name": "text",
+                        "aria-label": "",
+                        "type": "text",
+                        "instructions": "",
+                        "required": 0,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "",
+                            "class": "",
+                            "id": ""
+                        },
+                        "parent_repeater": "field_exp_credentials",
+                        "default_value": "",
+                        "maxlength": "",
+                        "placeholder": "",
+                        "prepend": "",
+                        "append": ""
+                    }
+                ]
+            },
+            {
                 "key": "field_exp_expertise",
                 "label": "Áreas de expertise",
                 "name": "expertise",

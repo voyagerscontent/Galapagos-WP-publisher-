@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.59
+ * Version:     0.4.60
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5793,6 +5793,127 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND PROFILE CARD — one brown card with N titled sections, each fed by
+     *  its own ACF repeater and rendered as a checklist or pills (as in the
+     *  Credentials + Areas of Expertise card). Sections auto-hide when empty;
+     *  the whole card hides when every section is empty.
+     * =================================================================== */
+    class Island_ProfileCard_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_profile_card';
+        }
+        public function get_title()
+        {
+            return 'Island Profile Card (sections)';
+        }
+        public function get_icon()
+        {
+            return 'eicon-price-list';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $rep = new \Elementor\Repeater();
+            $rep->add_control('heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Section']);
+            $rep->add_control('acf_field', ['label' => 'ACF repeater field', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'expertise']);
+            $rep->add_control('sub_field', ['label' => 'Sub-field name', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'text']);
+            $rep->add_control('style', ['label' => 'Style', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'checklist',
+                'options' => ['checklist' => 'Checklist (✓)', 'pills' => 'Pills (boxes)', 'plain' => 'Plain list']]);
+            $this->add_control('sections', ['label' => 'Sections', 'type' => \Elementor\Controls_Manager::REPEATER,
+                'fields' => $rep->get_controls(), 'title_field' => '{{{ heading }}}',
+                'default' => [
+                    ['_id' => 'creds', 'heading' => 'Credentials', 'acf_field' => 'credentials', 'sub_field' => 'text', 'style' => 'checklist'],
+                    ['_id' => 'areas', 'heading' => 'Areas of Expertise', 'acf_field' => 'expertise', 'sub_field' => 'text', 'style' => 'pills'],
+                ]]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Card style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('card_bg', ['label' => 'Card background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a3d2b',
+                'selectors' => ['{{WRAPPER}} .ipc' => 'background:{{VALUE}}']]);
+            $this->add_responsive_control('radius', ['label' => 'Radius', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 40]],
+                'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ipc' => 'border-radius:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f4ece3',
+                'selectors' => ['{{WRAPPER}} .ipc' => 'color:{{VALUE}}']]);
+            $this->add_control('head_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .ipc-h' => 'color:{{VALUE}}']]);
+            $this->add_control('accent', ['label' => 'Check / divider color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#e9dcc8',
+                'selectors' => ['{{WRAPPER}} .ipc--checklist li::before' => 'color:{{VALUE}}', '{{WRAPPER}} .ipc-rule' => 'background:{{VALUE}}']]);
+            $this->add_control('pill_bg', ['label' => 'Pill background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(255,255,255,.07)',
+                'selectors' => ['{{WRAPPER}} .ipc--pills li' => 'background:{{VALUE}}']]);
+            $this->add_control('pill_bd', ['label' => 'Pill border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(255,255,255,.16)',
+                'selectors' => ['{{WRAPPER}} .ipc--pills li' => 'border-color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        private function ipc_items($field, $sub, $pid)
+        {
+            $out = [];
+            foreach ((array) get_field($field, $pid) as $r) {
+                $t = is_array($r) ? trim(wp_strip_all_tags((string) ($r[$sub] ?? ''))) : trim(wp_strip_all_tags((string) $r));
+                if ($t !== '') {
+                    $out[] = $t;
+                }
+            }
+            return $out;
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
+            $sections = $s['sections'] ?? [];
+            $blocks = '';
+            foreach ($sections as $sec) {
+                $field = trim((string) ($sec['acf_field'] ?? ''));
+                if ($field === '') {
+                    continue;
+                }
+                $items = $this->ipc_items($field, ($sec['sub_field'] ?? 'text') ?: 'text', $pid);
+                if (!$items) {
+                    continue;   // section empty -> skip it
+                }
+                $style = in_array($sec['style'] ?? 'checklist', ['checklist', 'pills', 'plain'], true) ? $sec['style'] : 'checklist';
+                $b = '';
+                $h = trim((string) ($sec['heading'] ?? ''));
+                if ($h !== '') {
+                    $b .= '<h3 class="ipc-h">' . esc_html($h) . '</h3><hr class="ipc-rule">';
+                }
+                $b .= '<ul class="ipc-list ipc--' . esc_attr($style) . '">';
+                foreach ($items as $it) {
+                    $b .= '<li>' . esc_html($it) . '</li>';
+                }
+                $b .= '</ul>';
+                $blocks .= '<div class="ipc-sec">' . $b . '</div>';
+            }
+            if ($blocks === '') {
+                return;   // every section empty -> hide the whole card
+            }
+            echo '<style>
+              {{WRAPPER}} .ipc{background:#5a3d2b;color:#f4ece3;border-radius:18px;padding:34px 38px}
+              {{WRAPPER}} .ipc-sec + .ipc-sec{margin-top:30px}
+              {{WRAPPER}} .ipc-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:24px;color:#fff;margin:0}
+              {{WRAPPER}} .ipc-rule{width:100%;height:2px;background:#e9dcc8;border:0;margin:14px 0 18px}
+              {{WRAPPER}} .ipc-list{list-style:none;margin:0;padding:0;font-size:15px}
+              {{WRAPPER}} .ipc--checklist{display:flex;flex-direction:column;gap:14px}
+              {{WRAPPER}} .ipc--checklist li{display:flex;gap:12px;line-height:1.5}
+              {{WRAPPER}} .ipc--checklist li::before{content:"\2713";font-weight:700;color:#e9dcc8;flex:0 0 auto}
+              {{WRAPPER}} .ipc--pills{display:flex;flex-direction:column;gap:12px}
+              {{WRAPPER}} .ipc--pills li{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:12px 16px;line-height:1.45}
+              {{WRAPPER}} .ipc--plain{display:flex;flex-direction:column;gap:8px;padding-left:18px;list-style:disc}
+            </style>';
+            echo '<div class="ipc">' . $blocks . '</div>';
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND EXPERT — full expert-profile page from the "Perfil de Experto"
      *  ACF group (about_image, role, company, about, languages, expertise,
      *  additional_info, destinations, social_networks). Renders the brown hero,
@@ -6768,6 +6889,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_CruiseItineraries_Widget',
         'Island_Expert_Widget',
         'Island_AcfList_Widget',
+        'Island_ProfileCard_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
