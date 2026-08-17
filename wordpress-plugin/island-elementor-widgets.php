@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.60
+ * Version:     0.4.61
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5899,9 +5899,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             echo '<style>
               {{WRAPPER}} .ipc{background:#5a3d2b;color:#f4ece3;border-radius:18px;padding:34px 38px}
               {{WRAPPER}} .ipc-sec + .ipc-sec{margin-top:30px}
-              {{WRAPPER}} .ipc-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:24px;color:#fff;margin:0}
-              {{WRAPPER}} .ipc-rule{width:100%;height:2px;background:#e9dcc8;border:0;margin:14px 0 18px}
-              {{WRAPPER}} .ipc-list{list-style:none;margin:0;padding:0;font-size:15px}
+              {{WRAPPER}} .ipc-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#fff;margin:0;padding-left:20px}
+              {{WRAPPER}} .ipc-rule{width:calc(100% - 20px);height:2px;background:#e9dcc8;border:0;margin:16px 0 24px 20px}
+              {{WRAPPER}} .ipc-list{list-style:none;margin:0;padding:0 0 0 20px;font-size:15px;color:inherit}
               {{WRAPPER}} .ipc--checklist{display:flex;flex-direction:column;gap:14px}
               {{WRAPPER}} .ipc--checklist li{display:flex;gap:12px;line-height:1.5}
               {{WRAPPER}} .ipc--checklist li::before{content:"\2713";font-weight:700;color:#e9dcc8;flex:0 0 auto}
