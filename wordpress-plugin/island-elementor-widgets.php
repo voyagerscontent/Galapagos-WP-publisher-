@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.56
+ * Version:     0.4.57
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -230,6 +230,7 @@ add_action('elementor/elements/categories_registered', function ($mgr) {
 add_filter('theme_page_templates', function ($templates) {
     $templates['informative-page'] = 'Informative Page';
     $templates['itineraries-page'] = 'Itineraries Page';
+    $templates['experts-page'] = 'Experts Page';
     return $templates;
 });
 
@@ -370,6 +371,7 @@ add_filter('acf/location/rule_types', function ($choices) {
 add_filter('acf/location/rule_values/gp_page_type', function ($choices) {
     $choices['informative'] = 'Informative';
     $choices['itineraries'] = 'Itineraries';
+    $choices['experts'] = 'Experts';
     return $choices;
 });
 add_filter('acf/location/rule_match/gp_page_type', function ($match, $rule, $screen) {
@@ -393,6 +395,7 @@ add_action('add_meta_boxes_page', function () {
         echo '<option value=""' . selected($val, '', false) . '>— None (normal page) —</option>';
         echo '<option value="informative"' . selected($val, 'informative', false) . '>Informative Page</option>';
         echo '<option value="itineraries"' . selected($val, 'itineraries', false) . '>Itineraries Page</option>';
+        echo '<option value="experts"' . selected($val, 'experts', false) . '>Experts Page</option>';
         echo '</select>';
         echo '<p style="margin:8px 0 0;color:#666;font-size:12px">Choose a page type to show its ACF fields and apply the matching Elementor template. Leave "None" for a normal page.</p>';
     }, 'page', 'side', 'high');
@@ -410,7 +413,7 @@ add_action('save_post_page', function ($post_id) {
     }
     $val = isset($_POST['gp_page_type']) ? sanitize_text_field(wp_unslash($_POST['gp_page_type'])) : '';
     // Whitelist of accepted page-type markers. Anything else clears it.
-    $allowed = ['informative', 'itineraries'];
+    $allowed = ['informative', 'itineraries', 'experts'];
     if (in_array($val, $allowed, true)) {
         update_post_meta($post_id, 'gp_page_type', $val);
     } else {

@@ -90,3 +90,70 @@ y una advertencia lista los términos de búsqueda sugeridos para que una person
 El title/description/focus keyword de SEO se escriben en la meta de RankMath/Yoast. El
 schema.org JSON-LD se entrega como el campo `seo_schema`; publícalo dentro de una
 etiqueta `<script type="application/ld+json">` en el header de tu Elementor/tema.
+
+## 7. Grupo de campos independiente: Perfil de Experto
+
+`wordpress-acf/profile.acf.json` es un grupo de campos ACF **importable** para
+**páginas de expertos**, independiente de la salida del compositor. Impórtalo en
+**Custom Fields → Tools → Import**.
+
+- **Ubicación:** `Galápagos Page Type == Experts` (marcador post-meta
+  `gp_page_type = experts`). Organizado con pestañas ACF (`type: "tab"`):
+  **About** (imagen de foto — `return_format: id` — + un wysiwyg de introducción),
+  **Idiomas** (wysiwyg), **Destino** (repeater `destinations`, subcampo `text`
+  wysiwyg), **Expertise** (repeater `expertise`, subcampo `text`), **Información
+  Adicional** (repeater `additional_info`: `title` + `text`), **Redes Sociales**
+  (repeater `social_networks`: `name` + `text`).
+- `show_in_rest` está **activo**; las etiquetas están en español; las claves
+  llevan el prefijo `field_exp_*` — verificado que **no colisionan** con
+  `page-fields.acf.json` ni `page-builder.acf.json`.
+- **El publisher NO rellena estos campos.** `config/acf.yaml` sólo mapea los
+  *componentes compuestos* del compositor (hero / body / faq / cta /
+  feature_sections …). Las páginas de expertos se cargan a mano en wp-admin, o
+  con tu propio script escribiendo el objeto `acf` de la REST.
+
+### Registrar la opción de page type "Experts"
+
+La regla del marcador de page type del sitio es **`gp_page_type`** (etiqueta
+"Galápagos Page Type"). El plugin `island-elementor-widgets` ya registra la
+opción **Experts** (el valor de la regla de ubicación **y** el meta box del
+editor). Si *no* usas ese plugin, agrega esto a `functions.php` o a un mu-plugin:
+
+```php
+// 1) Ofrecer "Experts" como valor de la regla de ubicación Galápagos Page Type.
+add_filter('acf/location/rule_values/gp_page_type', function ($choices) {
+    $choices['experts'] = 'Experts';
+    return $choices;
+});
+
+// 2) Evaluar la regla contra la meta gp_page_type del post.
+add_filter('acf/location/rule_match/gp_page_type', function ($match, $rule, $screen) {
+    $post_id = $screen['post_id'] ?? 0;
+    if (!$post_id) { return false; }
+    $val = (string) get_post_meta((int) $post_id, 'gp_page_type', true);
+    return ($rule['operator'] === '!=') ? ($val !== $rule['value']) : ($val === $rule['value']);
+}, 10, 3);
+
+// 3) (opcional) registrar el tipo de regla + un meta box para SETEAR el marcador.
+add_filter('acf/location/rule_types', function ($choices) {
+    $choices['Galápagos']['gp_page_type'] = 'Galápagos Page Type';
+    return $choices;
+});
+```
+
+> **Nombre del param:** el JSON del grupo usa `gp_page_type` — el slug real de la
+> regla del sitio — no `galapagos_page_type`. Se refieren a la misma regla
+> "Galápagos Page Type"; usa `gp_page_type` para que el grupo coincida con el
+> meta box del editor y con las opciones Informative / Itineraries ya existentes.
+
+### Alternativa: page type como término de taxonomía
+
+Si modelas el page type como un **término de taxonomía** en vez de un marcador
+post-meta, elimina la regla personalizada y usa la regla nativa `post_taxonomy`
+de ACF — sin necesidad de filtro PHP:
+
+```json
+"location": [[{ "param": "post_taxonomy", "operator": "==", "value": "page-type:experts" }]]
+```
+
+(donde `page-type` es la taxonomía y `experts` el slug del término).
