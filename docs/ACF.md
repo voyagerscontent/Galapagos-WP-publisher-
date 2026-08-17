@@ -88,3 +88,119 @@ and a warning lists the suggested search terms for a human to add the asset.
 SEO title/description/focus keyword are written to RankMath/Yoast meta. The
 schema.org JSON-LD is delivered as the `seo_schema` field — output it inside a
 `<script type="application/ld+json">` tag in your Elementor/theme header.
+
+## 7. Expert profile group (`profile.acf.json`)
+
+[`wordpress-acf/profile.acf.json`](../wordpress-acf/profile.acf.json) is an
+importable field group — **Perfil de Experto** (`group_expert_profile`) — for
+expert / guide profile pages. Import it the same way as any other group: WP admin
+→ **ACF → Tools → Import Field Groups**. Labels are in Spanish, `show_in_rest` is
+on, and every key is prefixed `field_exp_*` so it can't collide with
+`page-fields.acf.json` (`f_*`) or `page-builder.acf.json` (`f_*`).
+
+> **The publisher does not fill these fields.** `config/acf.yaml` only maps the
+> composed component model (hero, body, callout, faq, key_facts, cta…) onto the
+> flat page group. The expert profile is hand-edited in the WordPress admin; it
+> exists so the theme/Elementor has structured data to render. Publishing a doc
+> to an Experts page fills the *page* group, never this one.
+
+Fields, organised with ACF tabs (`type: "tab"`):
+
+| Tab | Field | Type |
+| --- | ----- | ---- |
+| About | `about_image` | image (`return_format: "id"`) |
+| About | `about_text` | wysiwyg |
+| Idiomas | `languages` | wysiwyg |
+| Destino | `destinations` | repeater → `text` (wysiwyg) |
+| Expertise | `expertise` | repeater → `text` (text) |
+| Información Adicional | `additional_info` | repeater → `title` (text), `text` (wysiwyg) |
+| Redes Sociales | `social_networks` | repeater → `name` (text), `text` (text) |
+
+Loop the repeaters in Elementor with a Loop Grid or a repeater-aware widget, the
+same as `faq` / `key_facts` in §3.
+
+### Location: Galápagos Page Type == Experts
+
+The group attaches through this site's own location rule, the same one
+`informative-page.json` and `itineraries-page.json` use:
+
+```json
+[ { "param": "gp_page_type", "operator": "==", "value": "experts" } ]
+```
+
+The rule is labelled **"Galápagos Page Type"** in the ACF UI but its *param slug*
+is `gp_page_type` — that is the key registered in
+[`wordpress-plugin/island-elementor-widgets.php`](../wordpress-plugin/island-elementor-widgets.php).
+A group locating on `galapagos_page_type` would never attach, because no rule is
+registered under that slug. If you prefer the longer slug, rename it in all four
+places at once: the plugin's `rule_types` key, both filter names
+(`acf/location/rule_values/<slug>`, `acf/location/rule_match/<slug>`), the
+`register_post_meta` name, and the `param` in every `*.acf.json`.
+
+### Registering the "Experts" option
+
+The dropdown behind that rule only offered *Informative* and *Itineraries*. The
+bundled plugin now also registers *Experts* (`rule_values`, the editor sidebar
+meta box, and the save whitelist). If you don't run that plugin, drop this into
+`functions.php` or an mu-plugin — it is self-contained and idempotent, so it's
+also safe alongside the plugin:
+
+```php
+<?php
+// Galápagos Page Type → "Experts": registers the marker meta, the ACF location
+// rule and its match callback. Safe to load next to island-elementor-widgets.php.
+
+add_action('init', function () {
+    register_post_meta('page', 'gp_page_type', [
+        'type'          => 'string',
+        'single'        => true,
+        'show_in_rest'  => true,
+        'default'       => '',
+        'auth_callback' => function () {
+            return current_user_can('edit_pages');
+        },
+    ]);
+});
+
+// Make the rule itself available (no-op if already registered).
+add_filter('acf/location/rule_types', function ($choices) {
+    $choices['Galápagos']['gp_page_type'] = 'Galápagos Page Type';
+    return $choices;
+});
+
+// Add "Experts" to the rule's value dropdown.
+add_filter('acf/location/rule_values/gp_page_type', function ($choices) {
+    $choices['experts'] = 'Experts';
+    return $choices;
+});
+
+// Match the rule against the gp_page_type post meta.
+add_filter('acf/location/rule_match/gp_page_type', function ($match, $rule, $screen) {
+    $post_id = $screen['post_id'] ?? 0;
+    if (!$post_id) {
+        return false;
+    }
+    $val = (string) get_post_meta((int) $post_id, 'gp_page_type', true);
+    return ($rule['operator'] === '!=') ? ($val !== $rule['value']) : ($val === $rule['value']);
+}, 10, 3);
+```
+
+Mark a page as an expert profile by setting the `gp_page_type` meta to `experts`
+— via the **Galápagos Page Type** box in the page sidebar, or over the REST API
+(`"meta": { "gp_page_type": "experts" }`).
+
+### Alternative: locate by taxonomy
+
+If your page type is a **taxonomy term** rather than a post-meta marker, skip the
+custom rule entirely and use ACF's built-in `post_taxonomy` rule — no PHP needed:
+
+```json
+[ { "param": "post_taxonomy", "operator": "==", "value": "page_type:experts" } ]
+```
+
+The value is `<taxonomy>:<term-slug>` (e.g. `page_type:experts`). Two caveats:
+the taxonomy must be registered for the post type the profiles live on, and ACF
+evaluates the rule against the terms *saved* on the post — a page created over
+REST needs the term assigned in the same request (`"page_type": [<term_id>]`,
+with the taxonomy `show_in_rest` enabled) or the group won't appear until the
+term is set and the editor reloaded.
