@@ -48,6 +48,48 @@
                 "mime_types": ""
             },
             {
+                "key": "field_exp_role",
+                "label": "Rol / cargo",
+                "name": "role",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Ej.: Co-Founder & Communications Consultant.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "allow_in_bindings": 1,
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
+                "key": "field_exp_company",
+                "label": "Empresa",
+                "name": "company",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Ej.: Voyagers Travel Company.",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "allow_in_bindings": 1,
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "",
+                "prepend": "",
+                "append": ""
+            },
+            {
                 "key": "field_exp_about",
                 "label": "Sobre — párrafo",
                 "name": "about",

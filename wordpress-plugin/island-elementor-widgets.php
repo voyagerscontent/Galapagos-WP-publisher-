@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.57
+ * Version:     0.4.58
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5702,6 +5702,215 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND EXPERT — full expert-profile page from the "Perfil de Experto"
+     *  ACF group (about_image, role, company, about, languages, expertise,
+     *  additional_info, destinations, social_networks). Renders the brown hero,
+     *  the About + "Professional Background" sidebar, and alternating bands.
+     *  Each section auto-hides when its field is empty.
+     * =================================================================== */
+    class Island_Expert_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_expert';
+        }
+        public function get_title()
+        {
+            return 'Island Expert Profile';
+        }
+        public function get_icon()
+        {
+            return 'eicon-person';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('about_label', ['label' => 'About heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'About',
+                'description' => 'Shown as "About {name}". Leave blank to hide the word.']);
+            $this->add_control('bg_label', ['label' => 'Sidebar card heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Professional Background']);
+            $this->add_control('brand', ['label' => 'Brand color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a3d2b',
+                'selectors' => ['{{WRAPPER}} .iex' => '--iex-brand:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        private function iex_band($title, $html, $alt)
+        {
+            if (trim(wp_strip_all_tags((string) $html)) === '' && trim((string) $title) === '') {
+                return '';
+            }
+            $c = $alt ? ' iex-band--alt' : '';
+            $out = '<section class="iex-band' . $c . '"><div class="iex-wrap">';
+            if (trim((string) $title) !== '') {
+                $out .= '<h2 class="iex-band-h">' . esc_html($title) . '</h2>';
+            }
+            $out .= '<div class="iex-band-x">' . wp_kses_post($html) . '</div></div></section>';
+            return $out;
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
+            if (!$pid) {
+                return;
+            }
+            $name = get_the_title($pid);
+            $img = island_ew_image_src(get_field('about_image', $pid), 'large');
+            $role = trim((string) get_field('role', $pid));
+            $company = trim((string) get_field('company', $pid));
+            $about = (string) get_field('about', $pid);
+            $languages = (string) get_field('languages', $pid);
+            $expertise = (array) get_field('expertise', $pid);
+            $addinfo = (array) get_field('additional_info', $pid);
+            $destinations = (array) get_field('destinations', $pid);
+            $social = (array) get_field('social_networks', $pid);
+            $about_label = trim((string) ($s['about_label'] ?? 'About'));
+            $bg_label = trim((string) ($s['bg_label'] ?? 'Professional Background'));
+
+            echo '<style>
+              {{WRAPPER}} .iex{--iex-brand:#5a3d2b;--iex-cream:#FBF8F4;--iex-ink:#3A2A1E;--iex-gold:#c9a86a;color:var(--iex-ink);font-size:15px}
+              {{WRAPPER}} .iex-wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+              {{WRAPPER}} .iex-serif{font-family:Merriweather,Georgia,serif;font-style:italic}
+              {{WRAPPER}} .iex-rule{width:54px;height:2px;background:var(--iex-gold);margin:14px 0;border:0}
+              {{WRAPPER}} .iex-hero{background:var(--iex-brand);color:#f6efe7;padding:48px 0}
+              {{WRAPPER}} .iex-hero .iex-wrap{display:grid;grid-template-columns:300px 1fr;gap:44px;align-items:center}
+              {{WRAPPER}} .iex-photo{width:300px;height:380px;object-fit:cover;border-radius:8px;display:block;background:#e3d6c8}
+              {{WRAPPER}} .iex-eyebrow{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:19px;color:#efe3d6;margin:0}
+              {{WRAPPER}} .iex-name{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:46px;line-height:1.05;margin:6px 0 0;color:#fff}
+              {{WRAPPER}} .iex-company{font-family:Merriweather,Georgia,serif;font-style:italic;font-size:22px;color:#efe3d6;margin:0}
+              {{WRAPPER}} .iex-about{background:#fff;padding:52px 0}
+              {{WRAPPER}} .iex-about .iex-wrap{display:grid;grid-template-columns:1fr 360px;gap:44px;align-items:start}
+              {{WRAPPER}} .iex-h2{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:28px;color:var(--iex-brand);margin:0 0 4px}
+              {{WRAPPER}} .iex-body{font-size:15px;line-height:1.75}{{WRAPPER}} .iex-body p{margin:0 0 14px}{{WRAPPER}} .iex-body :last-child{margin-bottom:0}
+              {{WRAPPER}} .iex-card{background:var(--iex-brand);color:#f4ece3;border-radius:16px;padding:26px 28px}
+              {{WRAPPER}} .iex-card-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:22px;color:#fff;margin:0}
+              {{WRAPPER}} .iex-list{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+              {{WRAPPER}} .iex-list li{display:flex;gap:11px;font-size:14px;line-height:1.55}
+              {{WRAPPER}} .iex-list li::before{content:"\2713";color:var(--iex-gold);font-weight:700;flex:0 0 auto}
+              {{WRAPPER}} .iex-band{padding:52px 0}
+              {{WRAPPER}} .iex-band--alt{background:var(--iex-brand);color:#f4ece3}
+              {{WRAPPER}} .iex-band-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:26px;text-align:center;margin:0 auto 6px;color:var(--iex-brand)}
+              {{WRAPPER}} .iex-band--alt .iex-band-h{color:#fff}
+              {{WRAPPER}} .iex-band-h::after{content:"";display:block;width:60px;height:2px;background:var(--iex-gold);margin:14px auto 0}
+              {{WRAPPER}} .iex-band-x{max-width:820px;margin:22px auto 0;text-align:center;font-size:15px;line-height:1.75}{{WRAPPER}} .iex-band-x p{margin:0 0 12px}{{WRAPPER}} .iex-band-x :last-child{margin-bottom:0}
+              {{WRAPPER}} .iex-social{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px}
+              {{WRAPPER}} .iex-social a{color:var(--iex-brand);text-decoration:none;font-weight:600;border:1px solid rgba(100,64,44,.25);border-radius:22px;padding:7px 16px;font-size:13.5px}
+              @media(max-width:900px){
+                {{WRAPPER}} .iex-hero .iex-wrap{grid-template-columns:1fr;gap:24px;text-align:center}
+                {{WRAPPER}} .iex-photo{margin:0 auto}
+                {{WRAPPER}} .iex-about .iex-wrap{grid-template-columns:1fr}
+                {{WRAPPER}} .iex-name{font-size:34px}
+              }
+            </style>';
+
+            echo '<div class="iex">';
+
+            // HERO
+            echo '<section class="iex-hero"><div class="iex-wrap">';
+            if ($img) {
+                echo '<img class="iex-photo" src="' . esc_url($img) . '" alt="' . esc_attr($name) . '">';
+            } else {
+                echo '<span class="iex-photo"></span>';
+            }
+            echo '<div class="iex-hero-tx">';
+            if ($role !== '') {
+                echo '<p class="iex-eyebrow">' . esc_html($role) . '</p>';
+            }
+            echo '<h1 class="iex-name">' . esc_html($name) . '</h1>';
+            echo '<hr class="iex-rule">';
+            if ($company !== '') {
+                echo '<p class="iex-company">' . esc_html($company) . '</p>';
+            }
+            echo '</div></div></section>';
+
+            // ABOUT + SIDEBAR
+            $has_expertise = false;
+            foreach ($expertise as $e) {
+                if (trim((string) ($e['text'] ?? '')) !== '') {
+                    $has_expertise = true;
+                    break;
+                }
+            }
+            if (trim(wp_strip_all_tags($about)) !== '' || $has_expertise) {
+                echo '<section class="iex-about"><div class="iex-wrap">';
+                echo '<div class="iex-about-main">';
+                if (trim(wp_strip_all_tags($about)) !== '') {
+                    $ah = $about_label !== '' ? ($about_label . ' ' . $name) : $name;
+                    echo '<h2 class="iex-h2">' . esc_html($ah) . '</h2><hr class="iex-rule">';
+                    echo '<div class="iex-body">' . wp_kses_post($about) . '</div>';
+                }
+                echo '</div>';
+                if ($has_expertise) {
+                    echo '<aside class="iex-card">';
+                    if ($bg_label !== '') {
+                        echo '<p class="iex-card-h">' . esc_html($bg_label) . '</p><hr class="iex-rule" style="background:var(--iex-gold)">';
+                    }
+                    echo '<ul class="iex-list">';
+                    foreach ($expertise as $e) {
+                        $t = trim((string) ($e['text'] ?? ''));
+                        if ($t !== '') {
+                            echo '<li><span>' . esc_html($t) . '</span></li>';
+                        }
+                    }
+                    echo '</ul></aside>';
+                }
+                echo '</div></section>';
+            }
+
+            // LANGUAGES band
+            echo $this->iex_band('Languages', $languages, true);
+
+            // ADDITIONAL INFO -> alternating bands
+            $i = 0;
+            foreach ($addinfo as $a) {
+                $b = $this->iex_band((string) ($a['title'] ?? ''), (string) ($a['text'] ?? ''), $i % 2 === 1);
+                if ($b !== '') {
+                    echo $b;
+                    $i++;
+                }
+            }
+
+            // DESTINATIONS (list of wysiwyg items)
+            $dest_html = '';
+            foreach ($destinations as $d) {
+                $t = (string) ($d['text'] ?? '');
+                if (trim(wp_strip_all_tags($t)) !== '') {
+                    $dest_html .= $t;
+                }
+            }
+            echo $this->iex_band('Destinations', $dest_html, $i % 2 === 1);
+
+            // SOCIAL NETWORKS
+            $links = '';
+            foreach ($social as $sn) {
+                $n = trim((string) ($sn['name'] ?? ''));
+                $u = trim((string) ($sn['text'] ?? ''));
+                if ($n === '' && $u === '') {
+                    continue;
+                }
+                $label = $n !== '' ? $n : $u;
+                if (preg_match('~^https?://~i', $u)) {
+                    $links .= '<a href="' . esc_url($u) . '" target="_blank" rel="noopener">' . esc_html($label) . '</a>';
+                } else {
+                    $links .= '<span class="iex-social-item">' . esc_html($label . ($u ? ': ' . $u : '')) . '</span>';
+                }
+            }
+            if ($links !== '') {
+                echo '<section class="iex-band"><div class="iex-wrap"><h2 class="iex-band-h">Connect</h2>'
+                    . '<div class="iex-social" style="justify-content:center">' . $links . '</div></div></section>';
+            }
+
+            echo '</div>';  // .iex
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND CRUISE ITINERARIES — lists the itinerary posts linked to THIS
      *  cruise (via the itinerary's `cruise` ACF post-object field). Renders a
      *  heading + card grid; renders NOTHING (heading included) when the cruise
@@ -6466,6 +6675,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_TripMeta_Widget',
         'Island_Video_Widget',
         'Island_CruiseItineraries_Widget',
+        'Island_Expert_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {

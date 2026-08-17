@@ -99,7 +99,7 @@ etiqueta `<script type="application/ld+json">` en el header de tu Elementor/tema
 
 - **Ubicación:** `Galápagos Page Type == Experts` (marcador post-meta
   `gp_page_type = experts`). Organizado con pestañas ACF (`type: "tab"`):
-  **About** (imagen de foto — `return_format: id` — + un wysiwyg de introducción),
+  **About** (imagen de foto — `return_format: id` —, `role`, `company`, + un wysiwyg de introducción),
   **Idiomas** (wysiwyg), **Destino** (repeater `destinations`, subcampo `text`
   wysiwyg), **Expertise** (repeater `expertise`, subcampo `text`), **Información
   Adicional** (repeater `additional_info`: `title` + `text`), **Redes Sociales**

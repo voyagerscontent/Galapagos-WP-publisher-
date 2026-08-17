@@ -97,7 +97,7 @@ Tools → Import**.
 
 - **Location:** `Galápagos Page Type == Experts` (post-meta marker
   `gp_page_type = experts`). Organised with ACF tabs (`type: "tab"`): **About**
-  (photo image — `return_format: id` — + an intro wysiwyg), **Idiomas** (wysiwyg),
+  (photo image — `return_format: id` —, `role`, `company`, + an intro wysiwyg), **Idiomas** (wysiwyg),
   **Destino** (`destinations` repeater, sub-field `text` wysiwyg), **Expertise**
   (`expertise` repeater, sub-field `text`), **Información Adicional**
   (`additional_info` repeater: `title` + `text`), **Redes Sociales**
