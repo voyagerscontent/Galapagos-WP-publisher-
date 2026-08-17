@@ -1,0 +1,367 @@
+[
+    {
+        "key": "group_informative",
+        "title": "Informative Page",
+        "description": "Generic content group for informative pages (guides, planning, how-to). Location is by Page Template, so it works for any parent or a standalone URL. Field NAMES are shared with the existing widgets; keys are unique (field_inf_*).",
+        "fields": [
+            {
+                "key": "field_inf_tab_intro",
+                "label": "Intro",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_inf_hero_title",
+                "label": "Hero Title",
+                "name": "hero_title",
+                "type": "text"
+            },
+            {
+                "key": "field_inf_hero_subtitle",
+                "label": "Hero Subtitle",
+                "name": "hero_subtitle",
+                "type": "textarea",
+                "rows": 2
+            },
+            {
+                "key": "field_inf_geo_answer",
+                "label": "Quick Answer (GEO / AI)",
+                "name": "geo_answer",
+                "type": "textarea",
+                "rows": 3,
+                "instructions": "~50-word featured-snippet answer from the doc's 🔍 Quick Answer block. Rendered as the light-teal box above the H1 (same as the island pages)."
+            },
+            {
+                "key": "field_inf_intro",
+                "label": "Intro / overview",
+                "name": "intro",
+                "type": "wysiwyg",
+                "tabs": "all",
+                "media_upload": 0
+            },
+            {
+                "key": "field_inf_hero_image",
+                "label": "Hero Image",
+                "name": "hero_image",
+                "type": "image",
+                "return_format": "id",
+                "preview_size": "medium"
+            },
+            {
+                "key": "field_inf_hero_image_alt",
+                "label": "Hero Image Alt",
+                "name": "hero_image_alt",
+                "type": "text"
+            },
+            {
+                "key": "field_inf_hero_image_mobile",
+                "label": "Hero image (mobile)",
+                "name": "hero_image_mobile",
+                "type": "image",
+                "return_format": "id",
+                "preview_size": "medium",
+                "instructions": "Optional cover photo for the mobile version. If empty, the main hero image is used."
+            },
+            {
+                "key": "field_inf_page_icon",
+                "label": "Page Icon",
+                "name": "page_icon",
+                "type": "image",
+                "return_format": "array",
+                "preview_size": "thumbnail",
+                "instructions": "Small per-page icon for a dynamic Image Box (optional, set by hand — same as the island pages)."
+            },
+            {
+                "key": "field_inf_author",
+                "label": "Author / Byline",
+                "name": "author",
+                "type": "text",
+                "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
+            },
+            {
+                "key": "field_inf_tab_content",
+                "label": "Content Sections",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_inf_feature_sections",
+                "label": "Feature Sections",
+                "name": "feature_sections",
+                "type": "repeater",
+                "instructions": "Editorial sections (biology, behaviour, threats, conservation…). Optional per-row infographic.",
+                "layout": "block",
+                "button_label": "Add section",
+                "sub_fields": [
+                    {
+                        "key": "field_inf_fs_title",
+                        "label": "Title",
+                        "name": "title",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_fs_subtitle",
+                        "label": "Subtitle",
+                        "name": "subtitle",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_fs_icon",
+                        "label": "Icon (emoji, optional)",
+                        "name": "icon",
+                        "type": "text",
+                        "instructions": "Emoji or short glyph for the icon layout, e.g. 🧭 📅 🐋. Optional."
+                    },
+                    {
+                        "key": "field_inf_fs_icon_image",
+                        "label": "Icon image (optional)",
+                        "name": "icon_image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "thumbnail",
+                        "library": "all",
+                        "instructions": "Upload a custom icon (PNG/SVG) for the icon layout. Takes priority over the emoji field above. Leave empty to use the emoji, or neither for the default mark."
+                    },
+                    {
+                        "key": "field_inf_fs_row_layout",
+                        "label": "Layout",
+                        "name": "row_layout",
+                        "type": "select",
+                        "default_value": "auto",
+                        "choices": {
+                            "auto": "Auto (by content)",
+                            "image": "Image beside text",
+                            "table": "Floating table card",
+                            "icon": "Icon block"
+                        },
+                        "instructions": "Auto picks by content (image → image beside text; table → floating card; otherwise icon block). Override only if needed."
+                    },
+                    {
+                        "key": "field_inf_fs_content",
+                        "label": "Content",
+                        "name": "content",
+                        "type": "wysiwyg",
+                        "tabs": "all",
+                        "media_upload": 0
+                    },
+                    {
+                        "key": "field_inf_fs_image",
+                        "label": "Image",
+                        "name": "image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    },
+                    {
+                        "key": "field_inf_fs_alt",
+                        "label": "Image Alt",
+                        "name": "image_alt",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_fs_btn_label",
+                        "label": "Button Label",
+                        "name": "button_label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_fs_btn_url",
+                        "label": "Button URL",
+                        "name": "button_url",
+                        "type": "url"
+                    },
+                    {
+                        "key": "field_inf_fs_infographic",
+                        "label": "Infographic",
+                        "name": "infographic",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    },
+                    {
+                        "key": "field_inf_fs_infographic_title",
+                        "label": "Infographic title",
+                        "name": "infographic_title",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_fs_infographic_caption",
+                        "label": "Infographic caption",
+                        "name": "infographic_caption",
+                        "type": "text"
+                    }
+                ]
+            },
+            {
+                "key": "field_inf_tab_faq",
+                "label": "FAQ",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_inf_faqs",
+                "label": "FAQs",
+                "name": "faqs",
+                "type": "repeater",
+                "layout": "block",
+                "button_label": "Add FAQ",
+                "sub_fields": [
+                    {
+                        "key": "field_inf_faq_q",
+                        "label": "Question",
+                        "name": "question",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_faq_a",
+                        "label": "Answer",
+                        "name": "answer",
+                        "type": "wysiwyg",
+                        "tabs": "all",
+                        "media_upload": 0
+                    }
+                ]
+            },
+            {
+                "key": "field_inf_tab_cta",
+                "label": "Call to Action",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_inf_cta_title",
+                "label": "Plan Your Visit — Heading",
+                "name": "cta_title",
+                "type": "text"
+            },
+            {
+                "key": "field_inf_cta_intro",
+                "label": "Plan Your Visit — Intro",
+                "name": "cta_intro",
+                "type": "wysiwyg",
+                "tabs": "all",
+                "media_upload": 0
+            },
+            {
+                "key": "field_inf_cta",
+                "label": "CTA Blocks",
+                "name": "cta",
+                "type": "repeater",
+                "layout": "block",
+                "button_label": "Add CTA",
+                "sub_fields": [
+                    {
+                        "key": "field_inf_cta_audience",
+                        "label": "Audience",
+                        "name": "audience",
+                        "type": "select",
+                        "choices": {
+                            "Direct travelers": "Direct travelers",
+                            "Travel trade": "Travel trade"
+                        },
+                        "allow_null": 1,
+                        "ui": 1
+                    },
+                    {
+                        "key": "field_inf_cta_card_title",
+                        "label": "Title",
+                        "name": "title",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_cta_text",
+                        "label": "Text",
+                        "name": "text",
+                        "type": "wysiwyg",
+                        "tabs": "all",
+                        "media_upload": 0
+                    },
+                    {
+                        "key": "field_inf_cta_image",
+                        "label": "Background image (optional)",
+                        "name": "image",
+                        "type": "image",
+                        "return_format": "id",
+                        "preview_size": "medium"
+                    },
+                    {
+                        "key": "field_inf_cta_button",
+                        "label": "Button Label",
+                        "name": "button_label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_cta_url",
+                        "label": "Button URL",
+                        "name": "button_url",
+                        "type": "url"
+                    }
+                ]
+            },
+            {
+                "key": "field_inf_tab_related",
+                "label": "Related",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_inf_related_links",
+                "label": "Related Links (internal)",
+                "name": "related_links",
+                "type": "repeater",
+                "instructions": "Internal 'Explore More' footer. Links sharing a Group heading render as one titled column.",
+                "layout": "table",
+                "button_label": "Add link",
+                "sub_fields": [
+                    {
+                        "key": "field_inf_rl_group",
+                        "label": "Group heading",
+                        "name": "group",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_rl_label",
+                        "label": "Label",
+                        "name": "label",
+                        "type": "text"
+                    },
+                    {
+                        "key": "field_inf_rl_url",
+                        "label": "URL",
+                        "name": "url",
+                        "type": "text"
+                    }
+                ]
+            },
+            {
+                "key": "field_inf_tab_seo",
+                "label": "SEO / Schema",
+                "name": "",
+                "type": "tab"
+            },
+            {
+                "key": "field_inf_seo_schema",
+                "label": "Schema JSON-LD",
+                "name": "seo_schema",
+                "type": "textarea",
+                "rows": 14,
+                "new_lines": "",
+                "instructions": "Page-specific schema.org (TaxonConcept + FAQPage + BreadcrumbList) from the doc. Printed by the 'Island Schema' widget."
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "gp_page_type",
+                    "operator": "==",
+                    "value": "informative"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "active": true,
+        "show_in_rest": 1
+    }
+]

@@ -1,0 +1,242 @@
+[
+  {
+    "key": "group_expert_profile",
+    "title": "Perfil de Experto",
+    "description": "Ficha de experto (Galápagos Page Type == Experts). Campos organizados en pestañas ACF. El publisher NO rellena este grupo: se edita a mano en el admin de WordPress. Claves con prefijo field_exp_* para no colisionar con page-fields.acf.json (f_*) ni page-builder.acf.json (field_pb_*).",
+    "location": [
+      [
+        {
+          "param": "gp_page_type",
+          "operator": "==",
+          "value": "experts"
+        }
+      ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1,
+    "fields": [
+      {
+        "key": "field_exp_tab_about",
+        "label": "About",
+        "name": "",
+        "type": "tab",
+        "placement": "top",
+        "endpoint": 0
+      },
+      {
+        "key": "field_exp_about_image",
+        "label": "Foto del experto",
+        "name": "about_image",
+        "type": "image",
+        "instructions": "Retrato del experto. Se guarda como ID de adjunto.",
+        "return_format": "id",
+        "preview_size": "medium",
+        "library": "all",
+        "mime_types": "jpg,jpeg,png,webp"
+      },
+      {
+        "key": "field_exp_about_text",
+        "label": "Sobre el experto",
+        "name": "about_text",
+        "type": "wysiwyg",
+        "instructions": "Párrafo de presentación.",
+        "tabs": "all",
+        "toolbar": "full",
+        "media_upload": 0,
+        "delay": 0
+      },
+
+      {
+        "key": "field_exp_tab_languages",
+        "label": "Idiomas",
+        "name": "",
+        "type": "tab",
+        "placement": "top",
+        "endpoint": 0
+      },
+      {
+        "key": "field_exp_languages",
+        "label": "Idiomas",
+        "name": "languages",
+        "type": "wysiwyg",
+        "instructions": "Idiomas que habla el experto (texto libre o lista).",
+        "tabs": "all",
+        "toolbar": "full",
+        "media_upload": 0,
+        "delay": 0
+      },
+
+      {
+        "key": "field_exp_tab_destinations",
+        "label": "Destino",
+        "name": "",
+        "type": "tab",
+        "placement": "top",
+        "endpoint": 0
+      },
+      {
+        "key": "field_exp_destinations",
+        "label": "Destinos",
+        "name": "destinations",
+        "type": "repeater",
+        "instructions": "Un destino por fila.",
+        "layout": "block",
+        "button_label": "Añadir destino",
+        "min": 0,
+        "max": 0,
+        "collapsed": "",
+        "pagination": 0,
+        "sub_fields": [
+          {
+            "key": "field_exp_destination_text",
+            "label": "Texto",
+            "name": "text",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "toolbar": "full",
+            "media_upload": 0,
+            "delay": 0,
+            "parent_repeater": "field_exp_destinations"
+          }
+        ]
+      },
+
+      {
+        "key": "field_exp_tab_expertise",
+        "label": "Expertise",
+        "name": "",
+        "type": "tab",
+        "placement": "top",
+        "endpoint": 0
+      },
+      {
+        "key": "field_exp_expertise",
+        "label": "Áreas de expertise",
+        "name": "expertise",
+        "type": "repeater",
+        "instructions": "Una especialidad por fila.",
+        "layout": "table",
+        "button_label": "Añadir expertise",
+        "min": 0,
+        "max": 0,
+        "collapsed": "",
+        "pagination": 0,
+        "sub_fields": [
+          {
+            "key": "field_exp_expertise_text",
+            "label": "Texto",
+            "name": "text",
+            "type": "text",
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": "",
+            "parent_repeater": "field_exp_expertise"
+          }
+        ]
+      },
+
+      {
+        "key": "field_exp_tab_additional_info",
+        "label": "Información Adicional",
+        "name": "",
+        "type": "tab",
+        "placement": "top",
+        "endpoint": 0
+      },
+      {
+        "key": "field_exp_additional_info",
+        "label": "Información adicional",
+        "name": "additional_info",
+        "type": "repeater",
+        "instructions": "Bloques libres de información extra (título + texto).",
+        "layout": "block",
+        "button_label": "Añadir información",
+        "min": 0,
+        "max": 0,
+        "collapsed": "",
+        "pagination": 0,
+        "sub_fields": [
+          {
+            "key": "field_exp_additional_info_title",
+            "label": "Título",
+            "name": "title",
+            "type": "text",
+            "default_value": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": "",
+            "maxlength": "",
+            "parent_repeater": "field_exp_additional_info"
+          },
+          {
+            "key": "field_exp_additional_info_text",
+            "label": "Texto",
+            "name": "text",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "toolbar": "full",
+            "media_upload": 0,
+            "delay": 0,
+            "parent_repeater": "field_exp_additional_info"
+          }
+        ]
+      },
+
+      {
+        "key": "field_exp_tab_social_networks",
+        "label": "Redes Sociales",
+        "name": "",
+        "type": "tab",
+        "placement": "top",
+        "endpoint": 0
+      },
+      {
+        "key": "field_exp_social_networks",
+        "label": "Redes sociales",
+        "name": "social_networks",
+        "type": "repeater",
+        "instructions": "Nombre de la red y el texto/enlace a mostrar.",
+        "layout": "table",
+        "button_label": "Añadir red social",
+        "min": 0,
+        "max": 0,
+        "collapsed": "",
+        "pagination": 0,
+        "sub_fields": [
+          {
+            "key": "field_exp_social_network_name",
+            "label": "Nombre",
+            "name": "name",
+            "type": "text",
+            "default_value": "",
+            "placeholder": "Instagram",
+            "prepend": "",
+            "append": "",
+            "maxlength": "",
+            "parent_repeater": "field_exp_social_networks"
+          },
+          {
+            "key": "field_exp_social_network_text",
+            "label": "Texto",
+            "name": "text",
+            "type": "text",
+            "default_value": "",
+            "placeholder": "@usuario o URL",
+            "prepend": "",
+            "append": "",
+            "maxlength": "",
+            "parent_repeater": "field_exp_social_networks"
+          }
+        ]
+      }
+    ]
+  }
+]

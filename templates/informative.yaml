@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────
+# Informative page (guides, planning, how-to — e.g. "Galápagos Diving",
+# "Best Time to Visit", "Permits Guide", "Family Travel").
+#
+# ACF-driven: content maps into the generic "Informative Page" ACF group
+# (config/acf/informative.yaml → group_informative, field_inf_*), which is a
+# SEPARATE group from island / wildlife. It attaches by PAGE TEMPLATE, not by
+# parent, so the same type works whether the page nests under /planning/ or
+# lives at a standalone URL like /diving/.
+#
+# The hero is intentionally NOT mapped — it is built by hand in Elementor per
+# page. Schema is taken verbatim from the document (seo_schema), never
+# generated; `schema_type` below is advisory only.
+#
+# Route to it explicitly with `--type informative` (automatic detection is a
+# later step). No parent_page: informative pages may sit anywhere.
+# ─────────────────────────────────────────────────────────────
+key: informative
+name: Informative Page
+description: >
+  Generic informative/guide page: quick answer, intro, editorial feature
+  sections (with tables), FAQs, a plan-your-trip CTA and related links. Content
+  maps into the "Informative Page" ACF group and renders via the Galápagos Site
+  Widgets (Feature Sections in Bands mode, FAQs, CTA, Related, Schema).
+post_type: page
+status: draft
+# No parent, and NO WP page-template: the page-type marker below attaches the
+# ACF group and targets the Elementor template, while the WP page-template slot
+# stays "Default" so Elementor's Theme Builder can render the body. Works for a
+# standalone URL too.
+page_meta:
+  gp_page_type: informative
+acf_profile: informative
+schema_type: Article
+categories: []
+tags: []
+
+layout:
+  - { slot: overview, kind: section, required: true, show_heading: false }
+  - { slot: body, kind: section }
+  - { slot: faq, kind: faq }
+
+# Informative docs open with a lead paragraph rather than an "Overview"
+# heading, so nothing is strictly required (avoids a spurious warning).
+required_sections: []
+
+schema_extra:
+  articleSection: "Travel Guide"

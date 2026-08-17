@@ -1,0 +1,117 @@
+# ─────────────────────────────────────────────────────────────
+# ACF profile: WILDLIFE_SINGLE  →  the "Wildlife Single (Species)" group
+# (group_wildlife_single). Selected by templates that declare
+# `acf_profile: wildlife_single` (the `species` page type).
+#
+# Reuses the shared `island` mapper path (mode: island): hero, intro, FAQs,
+# quick facts, feature sections, CTA, sources and grouped related links all map
+# exactly as they do for islands, just onto the wildlife group's field names
+# (which happen to match). Page-specific schema lands in `seo_schema` and is
+# printed by the "Island Schema" Elementor widget.
+#
+# Species-specific fields (scientific_name, conservation_status) and the three
+# new repeaters (where_to_see, seasonality, subspecies) are declared here so the
+# targets are documented; they are populated once the species extraction layer
+# lands (Phase 2). Until then they stay empty — the mapper only writes the
+# components the composer produces.
+# Field names on the right must match the ACF group; group needs Show in REST.
+# ─────────────────────────────────────────────────────────────
+
+mode: island
+image_as: id
+
+top_level:
+  schema_jsonld: seo_schema
+
+island:
+  hero:
+    title: hero_title
+    subtitle: hero_subtitle
+    image: hero_image
+    image_alt: hero_image_alt
+
+  author: author
+  geo_answer: geo_answer
+  intro: intro
+
+  # Species facts mined from the doc's "At a Glance" table.
+  scientific_name: scientific_name
+  common_name: common_name
+  conservation_status: conservation_status
+  population: population
+  endemic: endemic
+
+  feature_sections:
+    field: feature_sections
+    title: title
+    subtitle: subtitle
+    content: content
+    button_label: button_label
+    button_url: button_url
+
+  faqs:
+    field: faqs
+    question: question
+    answer: answer
+
+  quick_facts_title: quick_facts_title
+  quick_facts:
+    field: quick_facts
+    label: label
+    value: value
+
+  # "Plan Your Visit" heading + intro that sit above the CTA blocks.
+  cta_title: cta_title
+  cta_intro: cta_intro
+  cta:
+    field: cta
+    audience: audience
+    title: title
+    text: text
+    button_label: button_label
+    button_url: button_url
+
+  sources:
+    field: sources
+    label: label
+    url: url
+
+  related_links:
+    field: related_links
+    label: label
+    url: url
+    group: group
+
+  # ── Species-specific targets (Phase 2 extraction; inert until then) ──
+  # Where and how to see the species (site cards).
+  where_to_see_title: where_to_see_title
+  where_to_see_intro: where_to_see_intro
+  where_to_see:
+    field: where_to_see
+    site: site
+    island: island
+    access: access
+    season: season
+    description: description
+    image: image
+
+  # Viewing calendar / breeding cycle (period + label + notes).
+  seasonality_title: seasonality_title
+  seasonality_intro: seasonality_intro
+  seasonality:
+    field: seasonality
+    period: period
+    label: label
+    notes: notes
+
+  # Per-island variants (shell types, subspecies…).
+  subspecies_title: subspecies_title
+  subspecies_intro: subspecies_intro
+  subspecies:
+    field: subspecies
+    island: island
+    name: name
+    trait: trait
+    population: population
+    status: status
+    image: image

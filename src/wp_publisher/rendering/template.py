@@ -42,6 +42,24 @@ class PageTemplate(BaseModel):
     description: str = ""
     post_type: str = "post"
     status: str | None = None  # overrides default if set
+    # Slug of the WordPress parent page this type nests under (e.g. "islands",
+    # "wildlife"). The publisher resolves it to an ID and sets the post `parent`
+    # so section-scoped ACF field groups (located by page_parent) attach. None =
+    # top-level (no parent).
+    parent_page: str | None = None
+    # WordPress page template slug to assign (`_wp_page_template`). Sent as the
+    # REST `template` field so an ACF group located by "Page Template == X"
+    # attaches — which is how informative pages get their group regardless of
+    # parent (works for a standalone URL too). None = leave the default template.
+    page_template: str | None = None
+    # Extra post meta to write on publish (merged into the REST `meta`). Used for
+    # a page-type marker that attaches the ACF group and targets an Elementor
+    # template WITHOUT occupying the WP page-template slot (which would block
+    # Elementor's Theme Builder from rendering the body).
+    page_meta: dict[str, Any] = Field(default_factory=dict)
+    # Which ACF mapping profile to use (config/acf/<acf_profile>.yaml). None =
+    # the default config/acf.yaml. Lets each section target its own field group.
+    acf_profile: str | None = None
     schema_type: str = "Article"
     categories: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
