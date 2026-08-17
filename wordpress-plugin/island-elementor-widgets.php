@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.58
+ * Version:     0.4.59
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5702,6 +5702,97 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND ACF LIST — render any ACF repeater's items as a checklist, a row
+     *  of pills, or a plain list, with an optional heading + divider. Auto-hides
+     *  when the field is empty. Drop two (checklist + pills) to build a card like
+     *  Credentials + Areas of Expertise.
+     * =================================================================== */
+    class Island_AcfList_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_acf_list';
+        }
+        public function get_title()
+        {
+            return 'Island ACF List (checklist / pills)';
+        }
+        public function get_icon()
+        {
+            return 'eicon-bullet-list';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('field_name', ['label' => 'Repeater field (ACF)', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'expertise']);
+            $this->add_control('sub_field', ['label' => 'Sub-field name', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'text']);
+            $this->add_control('heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => '']);
+            $this->add_control('style', ['label' => 'Style', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'checklist',
+                'options' => ['checklist' => 'Checklist (✓)', 'pills' => 'Pills (boxes)', 'plain' => 'Plain list']]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f4ece3',
+                'selectors' => ['{{WRAPPER}} .ial' => 'color:{{VALUE}}']]);
+            $this->add_control('head_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
+                'selectors' => ['{{WRAPPER}} .ial-h' => 'color:{{VALUE}}']]);
+            $this->add_control('accent', ['label' => 'Check / divider color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#e9dcc8',
+                'selectors' => ['{{WRAPPER}} .ial--checklist li::before' => 'color:{{VALUE}}', '{{WRAPPER}} .ial-rule' => 'background:{{VALUE}}']]);
+            $this->add_control('pill_bg', ['label' => 'Pill background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(255,255,255,.07)',
+                'condition' => ['style' => 'pills'], 'selectors' => ['{{WRAPPER}} .ial--pills li' => 'background:{{VALUE}}']]);
+            $this->add_control('pill_bd', ['label' => 'Pill border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(255,255,255,.16)',
+                'condition' => ['style' => 'pills'], 'selectors' => ['{{WRAPPER}} .ial--pills li' => 'border-color:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            if (!function_exists('get_field')) {
+                return;
+            }
+            $s = $this->get_settings_for_display();
+            $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
+            $field = !empty($s['field_name']) ? $s['field_name'] : 'expertise';
+            $sub = !empty($s['sub_field']) ? $s['sub_field'] : 'text';
+            $rows = (array) get_field($field, $pid);
+            $items = [];
+            foreach ($rows as $r) {
+                $t = is_array($r) ? trim(wp_strip_all_tags((string) ($r[$sub] ?? ''))) : trim(wp_strip_all_tags((string) $r));
+                if ($t !== '') {
+                    $items[] = $t;
+                }
+            }
+            if (!$items) {
+                return;   // empty -> render nothing
+            }
+            $style = in_array($s['style'] ?? 'checklist', ['checklist', 'pills', 'plain'], true) ? $s['style'] : 'checklist';
+            echo '<style>
+              {{WRAPPER}} .ial-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:700;font-size:24px;color:#fff;margin:0}
+              {{WRAPPER}} .ial-rule{width:100%;max-width:100%;height:2px;background:#e9dcc8;border:0;margin:14px 0 18px}
+              {{WRAPPER}} .ial{list-style:none;margin:0;padding:0;color:#f4ece3;font-size:15px}
+              {{WRAPPER}} .ial--checklist{display:flex;flex-direction:column;gap:14px}
+              {{WRAPPER}} .ial--checklist li{display:flex;gap:12px;line-height:1.5}
+              {{WRAPPER}} .ial--checklist li::before{content:"\2713";font-weight:700;color:#e9dcc8;flex:0 0 auto}
+              {{WRAPPER}} .ial--pills{display:flex;flex-direction:column;gap:12px}
+              {{WRAPPER}} .ial--pills li{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:12px 16px;line-height:1.45}
+              {{WRAPPER}} .ial--plain{display:flex;flex-direction:column;gap:8px;padding-left:18px;list-style:disc}
+            </style>';
+            if (trim((string) ($s['heading'] ?? '')) !== '') {
+                echo '<h3 class="ial-h">' . esc_html($s['heading']) . '</h3><hr class="ial-rule">';
+            }
+            echo '<ul class="ial ial--' . esc_attr($style) . '">';
+            foreach ($items as $it) {
+                echo '<li>' . esc_html($it) . '</li>';
+            }
+            echo '</ul>';
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND EXPERT — full expert-profile page from the "Perfil de Experto"
      *  ACF group (about_image, role, company, about, languages, expertise,
      *  additional_info, destinations, social_networks). Renders the brown hero,
@@ -6676,6 +6767,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Video_Widget',
         'Island_CruiseItineraries_Widget',
         'Island_Expert_Widget',
+        'Island_AcfList_Widget',
     ] as $island_ew_new) {
         try {
             if (class_exists($island_ew_new)) {
