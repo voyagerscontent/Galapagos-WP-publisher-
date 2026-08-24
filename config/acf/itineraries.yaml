@@ -1,0 +1,70 @@
+# ─────────────────────────────────────────────────────────────
+# ACF profile: ITINERARIES  →  the "Itineraries" group
+# (group_itineraries_2026) attached by gp_page_type == itineraries.
+# Selected by templates that declare `acf_profile: itineraries`.
+#
+# Maps the document into the plugin-widget fields the Itineraries page renders:
+#   quick_facts      → "At a Glance"     (Island QuickFacts widget)
+#   feature_sections → "Sections"        (Feature Sections widget, zig-zag)
+#   cta              → "Plan Your Trip"  (Island CTA widget)
+#   faqs             → "FAQ"             (Island FAQs widget)
+#   related_links    → "Related Guides"  (Island Related widget)
+#
+# The itinerary-specific fields (duration, letter, destination, highlights,
+# gallery, map, the linked `cruise` post object, and the day_by_day meals) are
+# authored/bound in Elementor and are NOT written here — this profile only
+# fills the editorial text the engine can reliably extract from the document.
+#
+# Field names on the right must match the ACF group; group needs Show in REST.
+# ─────────────────────────────────────────────────────────────
+
+mode: island
+image_as: id
+
+top_level:
+  schema_jsonld: seo_schema
+
+island:
+  # Lead/overview paragraph that opens the doc, kept out of a title-less card.
+  intro: intro
+  author: author
+  geo_answer: geo_answer
+
+  # "At a Glance" facts grid (Duration, Destination, Physical rating …).
+  quick_facts_title: quick_facts_title
+  quick_facts_intro: quick_facts_intro
+  quick_facts:
+    field: quick_facts
+    label: label
+    value: value
+
+  # One zig-zag section per document section (Route overview, The Region …).
+  feature_sections:
+    field: feature_sections
+    title: title
+    subtitle: subtitle
+    content: content
+    button_label: button_label
+    button_url: button_url
+
+  faqs:
+    field: faqs
+    question: question
+    answer: answer
+
+  # "Plan Your Trip" heading + intro that sit above the CTA cards.
+  cta_title: cta_title
+  cta_intro: cta_intro
+  cta:
+    field: cta
+    audience: audience
+    title: title
+    text: text
+    button_label: button_label
+    button_url: button_url
+
+  related_links:
+    field: related_links
+    label: label
+    url: url
+    group: group

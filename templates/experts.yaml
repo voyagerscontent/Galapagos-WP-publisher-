@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────
+# Experts page (a Galápagos travel-expert profile — e.g. a destination
+# specialist's bio with role, company, credentials and areas of expertise).
+#
+# ACF-driven: content maps into the "Perfil de Experto" ACF group
+# (config/acf/experts.yaml → group_experts_profile_2026), which attaches by the
+# gp_page_type marker (== experts), auto-stamped by the pipeline from this
+# template's key. Rendered by the Island Expert / Island Profile Card widgets,
+# which read each field by name and auto-hide when it is empty.
+#
+# The profile is intentionally CURATED in WordPress: role, company, the
+# credentials / expertise / additional_info / social_networks repeaters,
+# languages and destinations are authored by hand (see docs/ACF.md §7). The
+# engine only fills the About paragraph (from the document's lead text) and the
+# verbatim schema, so publishing an experts doc creates the page and its
+# gp_page_type marker without crashing — the editor completes the rest.
+#
+# Route to it explicitly with `--type experts`.
+# ─────────────────────────────────────────────────────────────
+key: experts
+# Accept the singular `expert` as --type too, keeping `experts` canonical so the
+# gp_page_type marker (== experts) still matches the ACF group.
+aliases:
+  - expert
+name: Experts
+description: >
+  A travel-expert profile page: an About paragraph plus curated role, company,
+  credentials, areas of expertise, languages, destinations and social links.
+  Content maps into the "Perfil de Experto" ACF group; the profile fields are
+  authored in WordPress and rendered by the Island Expert / Profile Card
+  widgets. Schema is taken verbatim from the document, never generated.
+post_type: page
+status: draft
+# No parent and NO WP page-template: the gp_page_type marker (auto-stamped to
+# this key) attaches the ACF group and targets the Elementor template, while
+# the WP page-template slot stays "Default" so Elementor's Theme Builder
+# renders the body.
+page_meta:
+  gp_page_type: experts
+acf_profile: experts
+schema_type: Person
+categories: []
+tags: []
+
+layout:
+  - { slot: overview, kind: section, required: false, show_heading: false }
+
+# Expert docs open with a lead "about" paragraph rather than a heading, and the
+# structured profile fields are authored in WP, so nothing is required here.
+required_sections: []
