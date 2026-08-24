@@ -22,6 +22,11 @@
 # post_type is `itinerary` (the CPT slug).
 # ─────────────────────────────────────────────────────────────
 key: itineraries
+# The n8n Itineraries form / manual runs may pass the CPT slug `itinerary`
+# (singular) as --type; accept it while keeping `itineraries` canonical so the
+# gp_page_type marker (== itineraries) still matches the ACF group.
+aliases:
+  - itinerary
 name: Itineraries
 description: >
   A multi-day itinerary/land-tour page: intro, an "At a Glance" facts grid,

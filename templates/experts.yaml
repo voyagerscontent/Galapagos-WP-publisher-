@@ -18,6 +18,10 @@
 # Route to it explicitly with `--type experts`.
 # ─────────────────────────────────────────────────────────────
 key: experts
+# Accept the singular `expert` as --type too, keeping `experts` canonical so the
+# gp_page_type marker (== experts) still matches the ACF group.
+aliases:
+  - expert
 name: Experts
 description: >
   A travel-expert profile page: an About paragraph plus curated role, company,

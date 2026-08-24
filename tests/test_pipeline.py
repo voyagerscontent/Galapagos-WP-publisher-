@@ -63,6 +63,24 @@ def test_itineraries_and_experts_page_types_are_registered():
     assert "explicitly requested" in reason
 
 
+def test_itinerary_singular_alias_resolves_to_itineraries():
+    # The n8n form passes the CPT slug `itinerary` (singular) as --type; it must
+    # resolve to the `itineraries` profile — publishing to the itinerary CPT and
+    # stamping gp_page_type=itineraries (plural) so the ACF group still attaches.
+    reg = load_registry()
+    assert "itinerary" in reg
+    assert reg.get("itinerary").key == "itineraries"
+    # An alias never shadows a real template key.
+    assert reg.get("experts").key == "experts"
+    assert reg.get("expert").key == "experts"
+
+    doc = read_file(SAMPLE)
+    page, template, _r = build_page(doc, _ctx(), page_type="itinerary")
+    assert template.key == "itineraries"
+    assert page.post_type == "itinerary"
+    assert page.wp_meta.get("gp_page_type") == "itineraries"
+
+
 def test_cruise_cpt_via_explicit_page_type():
     # The dedicated cruise n8n workflow forces page_type=cruise; the resulting
     # page must publish to the cruise CPT (not flattened to page).
