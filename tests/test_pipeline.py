@@ -43,19 +43,22 @@ def test_build_page_basic_fields():
 
 def test_itineraries_and_experts_page_types_are_registered():
     # The n8n Itineraries / Experts forms dispatch `--type itineraries` /
-    # `--type experts`; both must resolve to a page-type profile (not KeyError)
-    # and publish as a PAGE carrying the gp_page_type marker so the matching ACF
-    # group attaches.
+    # `--type experts`; both must resolve to a page-type profile (not KeyError).
+    # itineraries publishes to the dedicated `itinerary` CPT; experts publishes
+    # as a page. Both carry the gp_page_type marker so the matching ACF group
+    # attaches.
     reg = load_registry()
+    assert reg.get("itineraries").post_type == "itinerary"
+    assert reg.get("experts").post_type == "page"
     for key in ("itineraries", "experts"):
-        tpl = reg.get(key)
-        assert tpl.post_type == "page"
-        assert tpl.acf_profile == key
+        assert reg.get(key).acf_profile == key
 
     doc = read_file(SAMPLE)
+    # Explicit page_type is honored (the dedicated CPT is NOT flattened to page).
     page, template, reason = build_page(doc, _ctx(), page_type="itineraries")
     assert template.key == "itineraries"
-    assert page.post_type == "page"
+    assert page.post_type == "itinerary"
+    # The marker equals the page-type KEY (itineraries), not the CPT slug.
     assert page.wp_meta.get("gp_page_type") == "itineraries"
     assert "explicitly requested" in reason
 

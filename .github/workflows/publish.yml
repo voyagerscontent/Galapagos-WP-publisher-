@@ -28,7 +28,7 @@ on:
           - publish-draft    # create/update a DRAFT in WordPress
           - publish-live     # publish LIVE on the site
       page_type:
-        description: "Force a page type (blank = auto-detect): blog_post | destination | tour | cruise | itineraries | experts | wildlife_single. cruise publishes to the cruise CPT; itineraries & experts publish as pages carrying the gp_page_type marker. ALL_WILDLIFE forces wildlife_single automatically."
+        description: "Force a page type (blank = auto-detect): blog_post | destination | tour | cruise | itineraries | experts | wildlife_single. cruise -> cruise CPT, itineraries -> itinerary CPT; experts publishes as a page. All carry the gp_page_type marker. ALL_WILDLIFE forces wildlife_single automatically."
         required: false
         type: string
       slug:

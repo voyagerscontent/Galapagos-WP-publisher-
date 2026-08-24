@@ -2,36 +2,39 @@
 # Itineraries page (a multi-day land/island tour route — e.g.
 # "14 Days Galápagos Land Tour", "5-Day Highlights Itinerary").
 #
-# ACF-driven: content maps into the "Itineraries" ACF group
-# (config/acf/itineraries.yaml → group_itineraries_2026), which attaches by
-# the gp_page_type marker (== itineraries), NOT by parent — so the same type
-# works whether the page nests under /itineraries/ or lives at a standalone
-# URL. The pipeline auto-stamps gp_page_type = this template's key.
+# Dedicated "itinerary" custom post type (its own menu: Itineraries → Add New
+# Itinerary). A published itinerary must land in that CPT — not the generic WP
+# `post`, and not flattened to `page` by the pages-only site default. The REST
+# base equals the post_type slug, so the engine writes to /wp/v2/itinerary.
 #
-# post_type is `page` (not a dedicated CPT): the Itineraries group renders via
-# the theme's Elementor template, keyed off the gp_page_type marker, with the
-# WP page-template slot left "Default" so Elementor's Theme Builder renders the
-# body. The itinerary-specific fields (duration, gallery, map, the linked
-# `cruise` post object, day_by_day meals) are authored in Elementor / WP; the
-# engine only fills the editorial text fields it can reliably extract.
+# ACF-driven: content maps into the "Itineraries" ACF group
+# (config/acf/itineraries.yaml → group_itineraries_2026), which attaches by the
+# gp_page_type marker (== itineraries) — the pipeline auto-stamps
+# gp_page_type = this template's key on every post, so the group attaches on the
+# CPT regardless of how it is located. The itinerary-specific fields (duration,
+# gallery, map, the linked `cruise` post object, day_by_day meals) are authored
+# in Elementor / WP; the engine only fills the editorial text it can reliably
+# extract from the document.
 #
 # Route to it explicitly with `--type itineraries` (the dedicated n8n
-# Itineraries form sends page_type=itineraries).
+# Itineraries form sends page_type=itineraries). NOTE the split: the page-type
+# KEY is `itineraries` (matches the ACF marker + n8n form value); the WordPress
+# post_type is `itinerary` (the CPT slug).
 # ─────────────────────────────────────────────────────────────
 key: itineraries
 name: Itineraries
 description: >
   A multi-day itinerary/land-tour page: intro, an "At a Glance" facts grid,
   editorial feature sections, day-by-day route, FAQs, a plan-your-trip CTA and
-  related links. Content maps into the "Itineraries" ACF group and renders via
-  the Galápagos Site Widgets. Uses TouristTrip schema (taken verbatim from the
-  document when present — never generated).
-post_type: page
+  related links. Published to the `itinerary` CPT; content maps into the
+  "Itineraries" ACF group and renders via the Galápagos Site Widgets. Uses
+  TouristTrip schema (taken verbatim from the document when present — never
+  generated).
+post_type: itinerary
 status: draft
-# No parent and NO WP page-template: the gp_page_type marker (auto-stamped to
-# this key by the pipeline) attaches the ACF group and targets the Elementor
-# template, while the WP page-template slot stays "Default" so Elementor's
-# Theme Builder renders the body. Works for a standalone URL too.
+# The pipeline auto-stamps gp_page_type = this template's key (itineraries) on
+# every post, which is what attaches the "Itineraries" ACF group (located by
+# gp_page_type == itineraries) and targets the Elementor template.
 page_meta:
   gp_page_type: itineraries
 acf_profile: itineraries
