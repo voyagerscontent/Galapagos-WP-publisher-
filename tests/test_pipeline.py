@@ -41,6 +41,25 @@ def test_build_page_basic_fields():
     assert page.status == "draft"
 
 
+def test_itineraries_and_experts_page_types_are_registered():
+    # The n8n Itineraries / Experts forms dispatch `--type itineraries` /
+    # `--type experts`; both must resolve to a page-type profile (not KeyError)
+    # and publish as a PAGE carrying the gp_page_type marker so the matching ACF
+    # group attaches.
+    reg = load_registry()
+    for key in ("itineraries", "experts"):
+        tpl = reg.get(key)
+        assert tpl.post_type == "page"
+        assert tpl.acf_profile == key
+
+    doc = read_file(SAMPLE)
+    page, template, reason = build_page(doc, _ctx(), page_type="itineraries")
+    assert template.key == "itineraries"
+    assert page.post_type == "page"
+    assert page.wp_meta.get("gp_page_type") == "itineraries"
+    assert "explicitly requested" in reason
+
+
 def test_cruise_cpt_via_explicit_page_type():
     # The dedicated cruise n8n workflow forces page_type=cruise; the resulting
     # page must publish to the cruise CPT (not flattened to page).

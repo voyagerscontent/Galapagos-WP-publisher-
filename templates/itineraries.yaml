@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────────────────────
+# Itineraries page (a multi-day land/island tour route — e.g.
+# "14 Days Galápagos Land Tour", "5-Day Highlights Itinerary").
+#
+# ACF-driven: content maps into the "Itineraries" ACF group
+# (config/acf/itineraries.yaml → group_itineraries_2026), which attaches by
+# the gp_page_type marker (== itineraries), NOT by parent — so the same type
+# works whether the page nests under /itineraries/ or lives at a standalone
+# URL. The pipeline auto-stamps gp_page_type = this template's key.
+#
+# post_type is `page` (not a dedicated CPT): the Itineraries group renders via
+# the theme's Elementor template, keyed off the gp_page_type marker, with the
+# WP page-template slot left "Default" so Elementor's Theme Builder renders the
+# body. The itinerary-specific fields (duration, gallery, map, the linked
+# `cruise` post object, day_by_day meals) are authored in Elementor / WP; the
+# engine only fills the editorial text fields it can reliably extract.
+#
+# Route to it explicitly with `--type itineraries` (the dedicated n8n
+# Itineraries form sends page_type=itineraries).
+# ─────────────────────────────────────────────────────────────
+key: itineraries
+name: Itineraries
+description: >
+  A multi-day itinerary/land-tour page: intro, an "At a Glance" facts grid,
+  editorial feature sections, day-by-day route, FAQs, a plan-your-trip CTA and
+  related links. Content maps into the "Itineraries" ACF group and renders via
+  the Galápagos Site Widgets. Uses TouristTrip schema (taken verbatim from the
+  document when present — never generated).
+post_type: page
+status: draft
+# No parent and NO WP page-template: the gp_page_type marker (auto-stamped to
+# this key by the pipeline) attaches the ACF group and targets the Elementor
+# template, while the WP page-template slot stays "Default" so Elementor's
+# Theme Builder renders the body. Works for a standalone URL too.
+page_meta:
+  gp_page_type: itineraries
+acf_profile: itineraries
+schema_type: TouristTrip
+categories: []
+tags: []
+focus_keyword_from: destination
+
+layout:
+  - { slot: overview, kind: section, required: true, show_heading: false }
+  - { slot: highlights, kind: section, heading: "Highlights", style: list }
+  - { slot: itinerary, kind: section, heading: "Itinerary" }
+  - { slot: body, kind: section }
+  - { slot: faq, kind: faq }
+
+# Itinerary docs open with a lead paragraph rather than an "Overview" heading,
+# so nothing is strictly required (avoids a spurious warning).
+required_sections: []
+
+schema_extra:
+  touristType:
+    - "Land Tour"
+    - "Wildlife"
+    - "Nature"
