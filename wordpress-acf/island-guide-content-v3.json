@@ -1,0 +1,769 @@
+[
+  {
+    "key": "group_island_pages",
+    "title": "Island Guide Content",
+    "show_in_rest": 1,
+    "active": true,
+    "description": "Content model for island pages (children of the 'Galapagos Islands' parent page). SEO meta (title, description, focus keyword, canonical) is handled by Rank Math / Yoast — NOT here.",
+    "fields": [
+      {
+        "key": "field_isl_tab_hero",
+        "label": "Hero",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_hero_title",
+        "label": "Hero Title",
+        "name": "hero_title",
+        "type": "text"
+      },
+      {
+        "key": "field_isl_hero_subtitle",
+        "label": "Hero Subtitle",
+        "name": "hero_subtitle",
+        "type": "textarea",
+        "rows": 2
+      },
+      {
+        "key": "field_isl_geo_answer",
+        "label": "GEO / AI Answer (on-page)",
+        "name": "geo_answer",
+        "type": "textarea",
+        "rows": 3,
+        "instructions": "Short ~50-word answer shown on the page, optimized for AI / featured snippets. This is VISIBLE on-page content, not a meta tag."
+      },
+      {
+        "key": "field_isl_island_intro",
+        "label": "Intro / Overview",
+        "name": "intro",
+        "type": "wysiwyg",
+        "tabs": "all",
+        "media_upload": 0,
+        "instructions": "Lead paragraph that opens the guide, shown before 'At a Glance'. Populated from the document's opening text."
+      },
+      {
+        "key": "field_isl_hero_image",
+        "label": "Hero Image",
+        "name": "hero_image",
+        "type": "image",
+        "return_format": "id",
+        "preview_size": "medium"
+      },
+      {
+        "key": "field_isl_hero_image_alt",
+        "label": "Hero Image Alt",
+        "name": "hero_image_alt",
+        "type": "text"
+      },
+      {
+        "key": "field_isl_hero_image_mobile",
+        "label": "Hero image (mobile)",
+        "name": "hero_image_mobile",
+        "type": "image",
+        "return_format": "id",
+        "preview_size": "medium",
+        "instructions": "Optional cover photo for the mobile version. If empty, the main hero image is used."
+      },
+      {
+        "key": "field_isl_page_icon",
+        "label": "Page Icon",
+        "name": "page_icon",
+        "type": "image",
+        "return_format": "array",
+        "preview_size": "thumbnail",
+        "instructions": "Per-page icon (SVG/PNG) for the Icon/Image Box in the template. Bind it in Elementor via an Image Box → Image → Dynamic Tags → ACF Image → Page Icon, so each island shows its own icon."
+      },
+      {
+        "key": "field_isl_author",
+        "label": "Author / Byline",
+        "name": "author",
+        "type": "text",
+        "instructions": "Display byline from the document, e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline — do NOT fall back to the WordPress post author (the uploader); the byline simply stays empty."
+      },
+      {
+        "key": "field_isl_tab_facts",
+        "label": "Quick Facts",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_quick_facts_title",
+        "label": "Quick Facts — Title",
+        "name": "quick_facts_title",
+        "type": "text",
+        "instructions": "Section heading, e.g. 'At a Glance' / 'The Island at a Glance'."
+      },
+      {
+        "key": "field_isl_quick_facts_intro",
+        "label": "Quick Facts — Intro",
+        "name": "quick_facts_intro",
+        "type": "wysiwyg",
+        "tabs": "all",
+        "media_upload": 0,
+        "instructions": "Optional lead text under the heading (if the doc has any)."
+      },
+      {
+        "key": "field_isl_quick_facts",
+        "label": "Quick Facts",
+        "name": "quick_facts",
+        "type": "repeater",
+        "instructions": "Display data only (Location, Area, Main town, Access…). Keep SEO meta out of here.",
+        "layout": "block",
+        "button_label": "Add fact",
+        "sub_fields": [
+          {
+            "key": "field_isl_qf_icon",
+            "label": "Icon (SVG/Image)",
+            "name": "icon",
+            "type": "image",
+            "return_format": "id",
+            "preview_size": "thumbnail",
+            "library": "all",
+            "mime_types": "svg,png",
+            "instructions": "Upload your own icon per page (SVG recommended — every Font Awesome icon can be downloaded as an SVG). Needs the free Safe SVG plugin for SVG uploads."
+          },
+          {
+            "key": "field_isl_qf_label",
+            "label": "Label",
+            "name": "label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_qf_value",
+            "label": "Value",
+            "name": "value",
+            "type": "textarea",
+            "rows": 2
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_highlights",
+        "label": "Feature Sections",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_feature_sections",
+        "label": "Feature Sections",
+        "name": "feature_sections",
+        "type": "repeater",
+        "instructions": "Editorial / thematic stories (geology, history, conservation, what makes this island special). NOT the place-by-place catalog — that is Visitor Sites.",
+        "layout": "block",
+        "button_label": "Add section",
+        "sub_fields": [
+          {
+            "key": "field_isl_fs_title",
+            "label": "Title",
+            "name": "title",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_fs_subtitle",
+            "label": "Subtitle",
+            "name": "subtitle",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_fs_content",
+            "label": "Content",
+            "name": "content",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          },
+          {
+            "key": "field_isl_fs_image",
+            "label": "Image",
+            "name": "image",
+            "type": "image",
+            "return_format": "id",
+            "preview_size": "medium"
+          },
+          {
+            "key": "field_isl_fs_alt",
+            "label": "Image Alt",
+            "name": "image_alt",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_fs_btn_label",
+            "label": "Button Label",
+            "name": "button_label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_fs_btn_url",
+            "label": "Button URL",
+            "name": "button_url",
+            "type": "url"
+          },
+          {
+            "key": "field_isl_fs_infographic",
+            "label": "Infographic",
+            "name": "infographic",
+            "type": "image",
+            "return_format": "id",
+            "preview_size": "medium",
+            "instructions": "Optional. When set, an infographic block renders AFTER this section's card (outside it, before the next section)."
+          },
+          {
+            "key": "field_isl_fs_infographic_title",
+            "label": "Infographic title",
+            "name": "infographic_title",
+            "type": "text",
+            "instructions": "Heading for the infographic, e.g. the doc's placeholder title 'El Chato Tortoise Migration Map'."
+          },
+          {
+            "key": "field_isl_fs_infographic_caption",
+            "label": "Infographic caption",
+            "name": "infographic_caption",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_sites",
+        "label": "Visitor Sites",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_visitor_sites_title",
+        "label": "Visitor Sites — Title",
+        "name": "visitor_sites_title",
+        "type": "text",
+        "instructions": "Section heading, e.g. 'Visitor Sites on Santa Cruz'."
+      },
+      {
+        "key": "field_isl_visitor_sites_intro",
+        "label": "Visitor Sites — Intro (Land-Based)",
+        "name": "visitor_sites_intro",
+        "type": "wysiwyg",
+        "tabs": "all",
+        "media_upload": 0,
+        "instructions": "Lead text for the Land-Based visitor sites (or the single Visitor Sites section)."
+      },
+      {
+        "key": "field_isl_vs_intro_cruise",
+        "label": "Visitor Sites — Intro (Cruise-Only)",
+        "name": "visitor_sites_intro_cruise",
+        "type": "wysiwyg",
+        "tabs": "all",
+        "media_upload": 0,
+        "instructions": "Lead text for the Cruise-Only visitor sites section, when the island has a separate one (e.g. Isabela)."
+      },
+      {
+        "key": "field_isl_visitor_sites",
+        "label": "Visitor Sites",
+        "name": "visitor_sites",
+        "type": "repeater",
+        "instructions": "Place-by-place catalog. 'Species Seen' is only a short pointer — the full species profile lives in the Wildlife tab.",
+        "layout": "block",
+        "button_label": "Add visitor site",
+        "sub_fields": [
+          {
+            "key": "field_isl_vs_name",
+            "label": "Site Name",
+            "name": "site_name",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_vs_access_type",
+            "label": "Access Type",
+            "name": "access_type",
+            "type": "select",
+            "choices": {
+              "Land-based": "Land-based",
+              "Cruise-only": "Cruise-only"
+            },
+            "default_value": "Land-based",
+            "allow_null": 1,
+            "ui": 1,
+            "return_format": "value"
+          },
+          {
+            "key": "field_isl_vs_desc",
+            "label": "Description",
+            "name": "description",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          },
+          {
+            "key": "field_isl_vs_activities",
+            "label": "Activities",
+            "name": "activities",
+            "type": "textarea",
+            "rows": 2
+          },
+          {
+            "key": "field_isl_vs_wildlife",
+            "label": "Species Seen (short list)",
+            "name": "species_seen",
+            "type": "textarea",
+            "rows": 2,
+            "instructions": "Short mention only, e.g. 'marine iguanas, sea lions, penguins'. Full profiles go in the Wildlife tab."
+          },
+          {
+            "key": "field_isl_vs_access",
+            "label": "Access Notes",
+            "name": "access",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_vs_image",
+            "label": "Image",
+            "name": "image",
+            "type": "image",
+            "return_format": "id",
+            "preview_size": "medium"
+          },
+          {
+            "key": "field_isl_vs_btn_label",
+            "label": "Button Label",
+            "name": "button_label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_vs_btn_url",
+            "label": "Button URL",
+            "name": "button_url",
+            "type": "url"
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_wildlife",
+        "label": "Wildlife",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_wildlife_title",
+        "label": "Wildlife — Title",
+        "name": "wildlife_title",
+        "type": "text",
+        "instructions": "Section heading, e.g. 'Wildlife at Punta Espinoza'."
+      },
+      {
+        "key": "field_isl_wildlife_intro",
+        "label": "Wildlife — Intro",
+        "name": "wildlife_intro",
+        "type": "wysiwyg",
+        "tabs": "all",
+        "media_upload": 0,
+        "instructions": "Intro/overview for the Wildlife section (the H2 lead text)."
+      },
+      {
+        "key": "field_isl_wildlife",
+        "label": "Wildlife Species",
+        "name": "wildlife",
+        "type": "repeater",
+        "instructions": "Species profiles (organized by species, not by place).",
+        "layout": "block",
+        "button_label": "Add species",
+        "sub_fields": [
+          {
+            "key": "field_isl_w_name",
+            "label": "Common Name",
+            "name": "common_name",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_w_sci",
+            "label": "Scientific Name",
+            "name": "scientific_name",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_w_desc",
+            "label": "Description",
+            "name": "description",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          },
+          {
+            "key": "field_isl_w_seen",
+            "label": "Where Seen",
+            "name": "where_seen",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_w_season",
+            "label": "Best Season",
+            "name": "best_season",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_w_img",
+            "label": "Image",
+            "name": "image",
+            "type": "image",
+            "return_format": "id",
+            "preview_size": "medium"
+          },
+          {
+            "key": "field_isl_w_btn_label",
+            "label": "Button Label",
+            "name": "button_label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_w_btn_url",
+            "label": "Button URL",
+            "name": "button_url",
+            "type": "url"
+          }
+        ]
+      },
+      {
+        "key": "field_isl_wildlife_calendar",
+        "label": "Wildlife Calendar (season → highlights)",
+        "name": "wildlife_calendar",
+        "type": "repeater",
+        "instructions": "Seasonal 'what to see when' calendar (e.g. Santiago). Each row is a period with its wildlife highlights.",
+        "layout": "block",
+        "button_label": "Add season",
+        "sub_fields": [
+          {
+            "key": "field_isl_wc_period",
+            "label": "Period",
+            "name": "period",
+            "type": "text",
+            "instructions": "e.g. 'January – April' or 'Year-Round'."
+          },
+          {
+            "key": "field_isl_wc_label",
+            "label": "Label",
+            "name": "label",
+            "type": "text",
+            "instructions": "Optional, e.g. 'Warm / Wet Season'."
+          },
+          {
+            "key": "field_isl_wc_hl",
+            "label": "Wildlife Highlights",
+            "name": "highlights",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_travel",
+        "label": "Travel Information",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_travel_information",
+        "label": "Travel Information",
+        "name": "travel_information",
+        "type": "group",
+        "sub_fields": [
+          {
+            "key": "field_isl_ti_gt_title",
+            "label": "Getting There — Heading",
+            "name": "getting_there_title",
+            "type": "text",
+            "instructions": "The document's H2 for this block (e.g. 'Getting to Isabela'). Kept so the editorial title is not lost."
+          },
+          {
+            "key": "field_isl_ti_access",
+            "label": "Getting There",
+            "name": "getting_there",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          },
+          {
+            "key": "field_isl_ti_gt_btn_label",
+            "label": "Getting There — Button Label",
+            "name": "getting_there_button_label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_ti_gt_btn_url",
+            "label": "Getting There — Button URL",
+            "name": "getting_there_button_url",
+            "type": "url"
+          },
+          {
+            "key": "field_isl_ti_sv_title",
+            "label": "Where to Stay / When to Visit — Heading",
+            "name": "stay_visit_title",
+            "type": "text",
+            "instructions": "The document's H2 for the stay + best-time block (e.g. 'Where to Stay and When to Visit')."
+          },
+          {
+            "key": "field_isl_ti_best",
+            "label": "Best Time to Visit",
+            "name": "best_time",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          },
+          {
+            "key": "field_isl_ti_best_btn_label",
+            "label": "Best Time — Button Label",
+            "name": "best_time_button_label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_ti_best_btn_url",
+            "label": "Best Time — Button URL",
+            "name": "best_time_button_url",
+            "type": "url"
+          },
+          {
+            "key": "field_isl_ti_accommodation",
+            "label": "Accommodation / Where to Stay",
+            "name": "accommodation",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          },
+          {
+            "key": "field_isl_ti_acc_btn_label",
+            "label": "Accommodation — Button Label",
+            "name": "accommodation_button_label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_ti_acc_btn_url",
+            "label": "Accommodation — Button URL",
+            "name": "accommodation_button_url",
+            "type": "url"
+          },
+          {
+            "key": "field_isl_ti_duration",
+            "label": "Recommended Duration",
+            "name": "recommended_duration",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_ti_diff",
+            "label": "Difficulty",
+            "name": "difficulty",
+            "type": "select",
+            "choices": {
+              "Easy": "Easy",
+              "Moderate": "Moderate",
+              "Challenging": "Challenging"
+            },
+            "allow_null": 1,
+            "ui": 1,
+            "return_format": "value"
+          },
+          {
+            "key": "field_isl_ti_notes",
+            "label": "Travel Notes",
+            "name": "travel_notes",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_faq",
+        "label": "FAQs",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_faqs",
+        "label": "FAQs",
+        "name": "faqs",
+        "type": "repeater",
+        "layout": "row",
+        "button_label": "Add question",
+        "sub_fields": [
+          {
+            "key": "field_isl_faq_q",
+            "label": "Question",
+            "name": "question",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_faq_a",
+            "label": "Answer",
+            "name": "answer",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_cta",
+        "label": "Plan Your Visit",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_cta_title",
+        "label": "Plan Your Visit — Heading",
+        "name": "cta_title",
+        "type": "text",
+        "instructions": "Section heading above the CTAs (e.g. 'Plan Your Visit'). Populated from the doc's 'Plan Your Visit' section."
+      },
+      {
+        "key": "field_isl_cta_intro",
+        "label": "Plan Your Visit — Intro",
+        "name": "cta_intro",
+        "type": "wysiwyg",
+        "tabs": "all",
+        "media_upload": 0,
+        "instructions": "Lead text under the heading, above the CTA blocks."
+      },
+      {
+        "key": "field_isl_cta",
+        "label": "CTA Blocks",
+        "name": "cta",
+        "type": "repeater",
+        "instructions": "Supports more than one CTA (e.g. direct travelers + travel trade / DMC).",
+        "layout": "block",
+        "button_label": "Add CTA",
+        "sub_fields": [
+          {
+            "key": "field_isl_cta_audience",
+            "label": "Audience",
+            "name": "audience",
+            "type": "select",
+            "choices": {
+              "Direct travelers": "Direct travelers",
+              "Travel trade": "Travel trade"
+            },
+            "default_value": "Direct travelers",
+            "allow_null": 1,
+            "ui": 1,
+            "return_format": "value"
+          },
+          {
+            "key": "field_isl_cta_card_title",
+            "label": "Title",
+            "name": "title",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_cta_text",
+            "label": "Text",
+            "name": "text",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "media_upload": 0
+          },
+          {
+            "key": "field_isl_cta_image",
+            "label": "Background image (optional)",
+            "name": "image",
+            "type": "image",
+            "return_format": "id",
+            "preview_size": "medium",
+            "library": "all",
+            "instructions": "Per-island background photo for this card. The text stays over the card colour and the photo fades in from the side. Leave blank for a solid-colour card."
+          },
+          {
+            "key": "field_isl_cta_button",
+            "label": "Button Label",
+            "name": "button_label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_cta_url",
+            "label": "Button URL",
+            "name": "button_url",
+            "type": "url"
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_sources",
+        "label": "Sources & Links",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_sources",
+        "label": "Sources / Citations",
+        "name": "sources",
+        "type": "repeater",
+        "instructions": "Authority references (GNPD, CDF, IUCN…). Feeds E-E-A-T and schema.",
+        "layout": "table",
+        "button_label": "Add source",
+        "sub_fields": [
+          {
+            "key": "field_isl_src_label",
+            "label": "Label",
+            "name": "label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_src_url",
+            "label": "URL",
+            "name": "url",
+            "type": "url"
+          }
+        ]
+      },
+      {
+        "key": "field_isl_related_links",
+        "label": "Related Links (internal)",
+        "name": "related_links",
+        "type": "repeater",
+        "instructions": "Internal linking block ('Explore More'). Optional — can also be handled in the Elementor template.",
+        "layout": "table",
+        "button_label": "Add link",
+        "sub_fields": [
+          {
+            "key": "field_isl_rl_group",
+            "label": "Group heading",
+            "name": "group",
+            "type": "text",
+            "instructions": "Column heading, e.g. 'Santa Cruz Essentials'. Links sharing the same heading render together as one column."
+          },
+          {
+            "key": "field_isl_rl_label",
+            "label": "Label",
+            "name": "label",
+            "type": "text"
+          },
+          {
+            "key": "field_isl_rl_url",
+            "label": "URL",
+            "name": "url",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "key": "field_isl_tab_schema",
+        "label": "Schema",
+        "name": "",
+        "type": "tab"
+      },
+      {
+        "key": "field_isl_seo_schema",
+        "label": "Schema JSON-LD",
+        "name": "seo_schema",
+        "type": "textarea",
+        "instructions": "Page-specific schema.org markup. Paste the JSON-LD for THIS page (with or without the <script type=\"application/ld+json\"> wrapper). The 'Island Schema' Elementor widget prints it into the page. Leave blank to skip.",
+        "rows": 14,
+        "new_lines": ""
+      }
+    ],
+    "location": [
+      [
+        {
+          "param": "page_parent",
+          "operator": "==",
+          "value": "10263"
+        }
+      ]
+    ]
+  }
+]

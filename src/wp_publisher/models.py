@@ -115,6 +115,9 @@ class RenderedPage(BaseModel):
 
     title: str
     slug: str
+    # Slug of the parent page this post should nest under (e.g. "islands"). The
+    # publisher resolves it to an ID and sets the post `parent`. Empty = none.
+    parent_slug: str = ""
     # ACF field payload (the post's `acf` object) — the primary output.
     acf: dict[str, Any] = Field(default_factory=dict)
     # Optional HTML for post_content (normally empty; the theme renders ACF).
@@ -134,5 +137,8 @@ class RenderedPage(BaseModel):
     json_ld: dict[str, Any] = Field(default_factory=dict)
     # Anything the publisher should pass straight through as REST fields.
     extra_fields: dict[str, Any] = Field(default_factory=dict)
+    # Extra post meta merged into the REST `meta` object (e.g. a page-type marker
+    # that attaches the ACF group and targets an Elementor template).
+    wp_meta: dict[str, Any] = Field(default_factory=dict)
     # Human-facing warnings (missing sections, unresolved media, etc.)
     warnings: list[str] = Field(default_factory=list)

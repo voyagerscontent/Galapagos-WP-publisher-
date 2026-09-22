@@ -15,8 +15,9 @@ separable, so you can preview the ACF payload before anything goes live.
 
 from __future__ import annotations
 
-import json
+import re
 from dataclasses import dataclass
+from typing import Any
 
 from .acf import build_acf
 from .acf.config import AcfConfig, get_acf_config
@@ -51,15 +52,64 @@ def build_page(
 ) -> tuple[RenderedPage, PageTemplate, str]:
     """Build a RenderedPage (ACF payload) from a Document. Returns (page, template, reason)."""
     settings = ctx.settings
-    acf_config = ctx.acf_config or get_acf_config()
 
     # 1) Choose the page-type profile (drives schema + default categories).
     if page_type:
         key, reason = page_type, "explicitly requested"
         ctx.registry.get(key)  # validate
     else:
-        key, reason = detect_page_type(doc, ctx.registry)
+        key, reason = detect_page_type(
+            doc,
+            ctx.registry,
+            ctx.settings.routing.get("url_sections"),
+            ctx.settings.routing.get("default_type"),
+        )
     template = ctx.registry.get(key)
+
+    # Pages-only site: re-route to the configured page default_type so an
+    # auto-picked profile does not publish to the wrong object type. Two cases,
+    # both only when NO page_type was explicitly requested (an explicit
+    # --page-type / workflow page_type is always honored, so it skips this):
+    #   1. A heuristic guess ("matched signals") that landed on a POST profile
+    #      (tour/blog_post) — the legacy pages-only guard.
+    #   2. A DEDICATED CPT profile (cruise) reached by ANY means (declared, URL
+    #      or heuristic). A cruise must be published to its CPT ONLY when the
+    #      caller explicitly asks for it (the Cruises workflow sends
+    #      page_type=cruise); the generic "publish a page" workflow must never
+    #      auto-produce one. Post-typed profiles that were declared/URL-routed
+    #      (wildlife tiers, freeform) are untouched.
+    _tpl_pt = _normalize_post_type(template.post_type)
+    _is_dedicated_cpt = _tpl_pt not in (None, "post", "page")
+    if (
+        not page_type
+        and _normalize_post_type(getattr(settings, "wp_default_post_type", "")) == "page"
+        and (
+            (reason.startswith("matched signals") and template.post_type in ("post", "posts"))
+            or _is_dedicated_cpt
+        )
+    ):
+        default_key = str(ctx.settings.routing.get("default_type") or "").strip().lower().replace(" ", "_")
+        if (
+            default_key
+            and default_key in ctx.registry
+            and ctx.registry.get(default_key).post_type in ("page", "pages")
+        ):
+            reason = (
+                f"{reason}; re-routed '{key}' -> '{default_key}' "
+                f"because this site publishes pages (no explicit page_type)"
+            )
+            key = default_key
+            template = ctx.registry.get(key)
+
+    # ACF mapping profile follows the page type (config/acf/<profile>.yaml),
+    # falling back to the default config/acf.yaml.
+    acf_config = ctx.acf_config or get_acf_config(template.acf_profile)
+    profile_warnings: list[str] = []
+    if acf_config.resolved_from_default and template.acf_profile:
+        profile_warnings.append(
+            f"ACF profile '{template.acf_profile}' not found "
+            f"(config/acf/{template.acf_profile}.yaml); used the default mapping."
+        )
 
     # 2) SEO.
     seo = optimize_seo(doc, template, settings)
@@ -84,23 +134,89 @@ def build_page(
     )
 
     # 5) Map components -> ACF payload.
+    # Schema is NEVER generated for these pages: publish only the schema.org
+    # block the document itself provides (doc.metadata['schema_jsonld']). When
+    # the doc has none, the schema field is left empty rather than invented.
     subtitle = str(doc.metadata.get("tagline") or doc.metadata.get("subtitle") or "")
+    doc_schema = str(doc.metadata.get("schema_jsonld") or "")
     acf_payload, acf_warnings = build_acf(
         components,
         acf_config,
         subtitle=subtitle,
-        schema_jsonld=json.dumps(json_ld, ensure_ascii=False, separators=(",", ":")),
+        schema_jsonld=doc_schema,
+        geo_answer=str(doc.metadata.get("geo_answer") or ""),
+        author=str(doc.metadata.get("author") or ""),
+        quick_facts=doc.metadata.get("quick_facts") or None,
+        visitor_sites=doc.metadata.get("visitor_sites") or None,
+        cta_blocks=doc.metadata.get("cta_blocks") or None,
+        sources=doc.metadata.get("sources") or None,
+        related_links=doc.metadata.get("related_links") or None,
+        related_link_groups=doc.metadata.get("related_link_groups") or None,
+        wildlife=doc.metadata.get("wildlife") or None,
+        wildlife_intro=str(doc.metadata.get("wildlife_intro") or ""),
+        wildlife_calendar=doc.metadata.get("wildlife_calendar") or None,
+        visitor_sites_intro=str(doc.metadata.get("visitor_sites_intro") or ""),
+        visitor_sites_intro_cruise=str(doc.metadata.get("visitor_sites_intro_cruise") or ""),
+        quick_facts_title=str(doc.metadata.get("quick_facts_title") or ""),
+        quick_facts_intro=str(doc.metadata.get("quick_facts_intro") or ""),
+        wildlife_title=str(doc.metadata.get("wildlife_title") or ""),
+        visitor_sites_title=str(doc.metadata.get("visitor_sites_title") or ""),
+        scientific_name=str(doc.metadata.get("scientific_name") or ""),
+        common_name=str(doc.metadata.get("common_name") or ""),
+        conservation_status=str(doc.metadata.get("conservation_status") or ""),
+        population=str(doc.metadata.get("population") or ""),
+        endemic=bool(doc.metadata.get("endemic") or False),
+        seasonality=doc.metadata.get("seasonality") or None,
+        seasonality_title=str(doc.metadata.get("seasonality_title") or ""),
+        seasonality_intro=str(doc.metadata.get("seasonality_intro") or ""),
+        subspecies=doc.metadata.get("subspecies") or None,
+        subspecies_title=str(doc.metadata.get("subspecies_title") or ""),
+        subspecies_intro=str(doc.metadata.get("subspecies_intro") or ""),
+        where_to_see=doc.metadata.get("where_to_see") or None,
+        where_to_see_title=str(doc.metadata.get("where_to_see_title") or ""),
+        where_to_see_intro=str(doc.metadata.get("where_to_see_intro") or ""),
     )
+    # Make domainless links absolute (e.g. /cruises/ -> https://site/cruises/).
+    # Links that already carry a domain are left untouched.
+    if settings.wp_base_url:
+        acf_payload = _absolutize_links(acf_payload, settings.wp_base_url.rstrip("/"))
 
     # 6) Status / taxonomies / post type.
     final_status = status or template.status or settings.wp_default_status
     categories = _csv(doc.metadata.get("categories")) or list(template.categories)
     tags = _csv(doc.metadata.get("tags")) or list(template.tags)
-    post_type = _normalize_post_type(doc.metadata.get("post_type")) or template.post_type
+    # Precedence: the doc's own post_type wins; then a DEDICATED custom post type
+    # declared by the profile (e.g. cruise) — a CPT owns its own ACF group, so the
+    # pages-only site default must not flatten it to a page; then the site-wide
+    # default (defaults.post_type / WP_DEFAULT_POST_TYPE) — "page" on a pages-only
+    # site so a doc the heuristic routes to a GENERIC post-typed profile
+    # (tour/blog_post) still lands as a PAGE; then the template's post_type.
+    _tpl_post_type = _normalize_post_type(template.post_type)
+    _dedicated_cpt = _tpl_post_type if _tpl_post_type not in (None, "post", "page") else None
+    post_type = (
+        _normalize_post_type(doc.metadata.get("post_type"))
+        or _dedicated_cpt
+        or _normalize_post_type(getattr(settings, "wp_default_post_type", ""))
+        or _tpl_post_type
+    )
+
+    # Assign the WordPress page template (REST `template` field) when the profile
+    # declares one, so a "Page Template == X" ACF group attaches on publish.
+    extra_fields: dict[str, Any] = {}
+    if template.page_template:
+        extra_fields["template"] = template.page_template
 
     page = RenderedPage(
         title=doc.title,
         slug=seo.slug,
+        parent_slug=template.parent_page or "",
+        extra_fields=extra_fields,
+        # Always stamp gp_page_type = the current page type so a republish
+        # OVERWRITES a stale marker. Otherwise a page once published as
+        # "informative" keeps gp_page_type=informative forever, and the
+        # Informative ACF group (located by gp_page_type==informative) stays
+        # attached even after the page becomes a wildlife/island page.
+        wp_meta={"gp_page_type": template.key, **template.page_meta},
         acf=acf_payload,
         content_html="",  # ACF-driven; the theme renders the fields
         excerpt=strip_html(seo.meta_description),
@@ -118,11 +234,35 @@ def build_page(
             *seo.warnings,
             *_template_warnings(template, doc),
             *doc.metadata.get("_ingest_warnings", []),
+            *profile_warnings,
             *compose_warnings,
             *acf_warnings,
         ],
     )
     return page, template, reason
+
+
+_HREF_REL = re.compile(r'href="(/[^"]*)"')
+_BARE_PATH = re.compile(r"^/[\w\-./#?=&%~]*$")
+
+
+def _absolutize_links(value, base: str):
+    """Prefix domainless links with the site base URL, recursively.
+
+    - `href="/x"` in HTML -> `href="{base}/x"`.
+    - a whole value that is a root-relative path (`/x`) -> `{base}/x` (url fields).
+    Absolute links (with a scheme/domain) are left unchanged.
+    """
+    if isinstance(value, str):
+        v = _HREF_REL.sub(lambda m: f'href="{base}{m.group(1)}"', value)
+        if _BARE_PATH.match(v):
+            v = base + v
+        return v
+    if isinstance(value, dict):
+        return {k: _absolutize_links(x, base) for k, x in value.items()}
+    if isinstance(value, list):
+        return [_absolutize_links(x, base) for x in value]
+    return value
 
 
 def _template_warnings(template: PageTemplate, doc: Document) -> list[str]:

@@ -38,10 +38,33 @@ class SlotSpec(BaseModel):
 
 class PageTemplate(BaseModel):
     key: str
+    # Alternate page-type names that resolve to this template (e.g. the CPT slug
+    # `itinerary` for the `itineraries` profile). Lets an upstream form pass
+    # either spelling as --type while the canonical `key` still drives the
+    # gp_page_type marker. Aliases must not collide with another template's key.
+    aliases: list[str] = Field(default_factory=list)
     name: str
     description: str = ""
     post_type: str = "post"
     status: str | None = None  # overrides default if set
+    # Slug of the WordPress parent page this type nests under (e.g. "islands",
+    # "wildlife"). The publisher resolves it to an ID and sets the post `parent`
+    # so section-scoped ACF field groups (located by page_parent) attach. None =
+    # top-level (no parent).
+    parent_page: str | None = None
+    # WordPress page template slug to assign (`_wp_page_template`). Sent as the
+    # REST `template` field so an ACF group located by "Page Template == X"
+    # attaches — which is how informative pages get their group regardless of
+    # parent (works for a standalone URL too). None = leave the default template.
+    page_template: str | None = None
+    # Extra post meta to write on publish (merged into the REST `meta`). Used for
+    # a page-type marker that attaches the ACF group and targets an Elementor
+    # template WITHOUT occupying the WP page-template slot (which would block
+    # Elementor's Theme Builder from rendering the body).
+    page_meta: dict[str, Any] = Field(default_factory=dict)
+    # Which ACF mapping profile to use (config/acf/<acf_profile>.yaml). None =
+    # the default config/acf.yaml. Lets each section target its own field group.
+    acf_profile: str | None = None
     schema_type: str = "Article"
     categories: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
@@ -72,20 +95,34 @@ class TemplateRegistry:
 
     def __init__(self, templates: dict[str, PageTemplate]):
         self._templates = templates
+        # Map each declared alias -> canonical template. A real key always wins,
+        # so an alias can never shadow a template that owns that name outright.
+        self._aliases: dict[str, PageTemplate] = {}
+        for tpl in templates.values():
+            for alias in tpl.aliases:
+                norm = self._normalize(alias)
+                if norm and norm not in templates:
+                    self._aliases[norm] = tpl
+
+    @staticmethod
+    def _normalize(key: str) -> str:
+        return (key or "").strip().lower().replace(" ", "_")
 
     def __contains__(self, key: str) -> bool:
-        return key in self._templates
+        norm = self._normalize(key)
+        return norm in self._templates or norm in self._aliases
 
     def keys(self) -> list[str]:
         return sorted(self._templates.keys())
 
     def get(self, key: str) -> PageTemplate:
-        key = (key or "").strip().lower().replace(" ", "_")
-        if key not in self._templates:
+        norm = self._normalize(key)
+        tpl = self._templates.get(norm) or self._aliases.get(norm)
+        if tpl is None:
             raise KeyError(
-                f"Unknown page type '{key}'. Available: {', '.join(self.keys())}"
+                f"Unknown page type '{norm}'. Available: {', '.join(self.keys())}"
             )
-        return self._templates[key]
+        return tpl
 
     def all(self) -> list[PageTemplate]:
         return [self._templates[k] for k in self.keys()]

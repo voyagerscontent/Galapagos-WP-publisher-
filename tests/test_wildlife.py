@@ -122,3 +122,64 @@ def test_generic_wildlife_routes_by_search_volume():
     high.metadata["search_volume"] = "5400"
     key, _ = detect_page_type(high, registry)
     assert key == "wildlife_tier1"
+
+
+CONTENT = Path(__file__).resolve().parents[1] / "content"
+
+
+def test_freeform_wildlife_title_extracts_species():
+    """A section titled "The Wildlife" (not starting with "Wildlife") must
+    still populate the wildlife repeater from its H3 species sub-headings."""
+    doc = read_file(CONTENT / "genovesa-island.docx")
+    wildlife = doc.metadata.get("wildlife") or []
+    assert len(wildlife) >= 3
+    assert doc.metadata.get("wildlife_title") == "The Wildlife"
+    assert any("boob" in (r.get("common_name") or "").lower() for r in wildlife)
+
+
+def test_wildlife_picks_section_with_most_species():
+    """When several headings mention "wildlife", keep the one that actually
+    yields species rows rather than the first passing mention."""
+    doc = read_file(CONTENT / "fernandina-island.docx")
+    wildlife = doc.metadata.get("wildlife") or []
+    assert len(wildlife) >= 4
+    assert "Punta Espinoza" in (doc.metadata.get("wildlife_title") or "")
+
+
+def test_wildlife_calendar_extracted():
+    """A seasonal 'what to see when' table (Santiago) fills wildlife_calendar."""
+    doc = read_file(CONTENT / "santiago-island.docx")
+    cal = doc.metadata.get("wildlife_calendar") or []
+    assert len(cal) >= 3
+    periods = [r["period"] for r in cal]
+    assert any("January" in p for p in periods)
+    assert any(r.get("label") for r in cal)          # e.g. "Warm / Wet Season"
+    assert all(r.get("highlights") for r in cal)
+
+
+def test_wildlife_calendar_maps_to_acf():
+    doc = read_file(CONTENT / "santiago-island.docx")
+    doc.metadata["type"] = "destination"
+    page, _t, _ = build_page(doc, _ctx())
+    rows = page.acf.get("wildlife_calendar")
+    assert isinstance(rows, list) and len(rows) >= 3
+    assert rows[0].get("period")
+    assert "<p>" in rows[0].get("highlights", "")     # WYSIWYG HTML
+
+
+def test_inline_verify_markers_stripped():
+    """Editorial [VERIFY ...] notes must never reach published fields."""
+    import re
+    for name in ("baltra-island.docx", "fernandina-island.docx", "floreana-island.docx"):
+        doc = read_file(CONTENT / name)
+
+        def has_verify(v):
+            if isinstance(v, str):
+                return bool(re.search(r"\[VERIFY", v, re.I))
+            if isinstance(v, list):
+                return any(has_verify(x) for x in v)
+            if isinstance(v, dict):
+                return any(has_verify(x) for x in v.values())
+            return False
+
+        assert not any(has_verify(v) for v in doc.metadata.values()), name

@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────
+# ACF profile: EXPERTS  →  the "Perfil de Experto" group
+# (group_experts_profile_2026) attached by gp_page_type == experts.
+# Selected by templates that declare `acf_profile: experts`.
+#
+# The expert profile is CURATED in WordPress: role, company, the credentials /
+# expertise / additional_info / social_networks repeaters, languages and
+# destinations are authored by hand and rendered by the Island Expert / Island
+# Profile Card widgets (each auto-hides when empty). The engine therefore fills
+# only what a document reliably provides:
+#   intro  → about       (the lead "about" paragraph, a WYSIWYG field)
+#   schema → seo_schema   (verbatim JSON-LD from the document, never generated)
+#
+# This keeps `--type experts` publishing successfully — the page and its
+# gp_page_type marker are created — while leaving the structured profile fields
+# for the editor. Field names on the right must match the ACF group; the group
+# needs Show in REST (group_experts_profile_2026 already sets show_in_rest: 1).
+# ─────────────────────────────────────────────────────────────
+
+mode: island
+image_as: id
+
+top_level:
+  schema_jsonld: seo_schema
+
+island:
+  # The document's lead paragraph becomes the "Sobre — párrafo" (about) field.
+  intro: about

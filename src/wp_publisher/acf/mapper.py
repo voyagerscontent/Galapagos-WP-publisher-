@@ -16,9 +16,11 @@ Produces the dict sent as the post's ``acf`` field over core REST:
 from __future__ import annotations
 
 import html
+import re
 from typing import Any
 
 from ..content.model import Component
+from ..content.richtext import inline_md, md_to_html
 from .config import AcfConfig
 
 # Component data keys that hold an image reference / list of references.
@@ -32,9 +34,63 @@ def build_acf(
     *,
     subtitle: str = "",
     schema_jsonld: str = "",
+    geo_answer: str = "",
+    author: str = "",
+    quick_facts: list | None = None,
+    visitor_sites: list | None = None,
+    cta_blocks: list | None = None,
+    sources: list | None = None,
+    related_links: list | None = None,
+    related_link_groups: list | None = None,
+    wildlife: list | None = None,
+    wildlife_intro: str = "",
+    wildlife_calendar: list | None = None,
+    visitor_sites_intro: str = "",
+    visitor_sites_intro_cruise: str = "",
+    quick_facts_title: str = "",
+    quick_facts_intro: str = "",
+    wildlife_title: str = "",
+    visitor_sites_title: str = "",
+    scientific_name: str = "",
+    common_name: str = "",
+    conservation_status: str = "",
+    population: str = "",
+    endemic: bool = False,
+    seasonality: list | None = None,
+    seasonality_title: str = "",
+    seasonality_intro: str = "",
+    subspecies: list | None = None,
+    subspecies_title: str = "",
+    subspecies_intro: str = "",
+    where_to_see: list | None = None,
+    where_to_see_title: str = "",
+    where_to_see_intro: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     if config.mode == "flat":
         return build_acf_flat(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
+    if config.mode == "island":
+        return build_acf_island(
+            components, config, subtitle=subtitle, schema_jsonld=schema_jsonld,
+            geo_answer=geo_answer, author=author,
+            quick_facts=quick_facts, visitor_sites=visitor_sites,
+            cta_blocks=cta_blocks, sources=sources, related_links=related_links,
+            related_link_groups=related_link_groups,
+            wildlife=wildlife, wildlife_intro=wildlife_intro,
+            wildlife_calendar=wildlife_calendar,
+            visitor_sites_intro=visitor_sites_intro,
+            visitor_sites_intro_cruise=visitor_sites_intro_cruise,
+            quick_facts_title=quick_facts_title, quick_facts_intro=quick_facts_intro,
+            wildlife_title=wildlife_title, visitor_sites_title=visitor_sites_title,
+            scientific_name=scientific_name, common_name=common_name,
+            conservation_status=conservation_status, population=population,
+            endemic=endemic,
+            seasonality=seasonality, seasonality_title=seasonality_title,
+            seasonality_intro=seasonality_intro,
+            subspecies=subspecies, subspecies_title=subspecies_title,
+            subspecies_intro=subspecies_intro,
+            where_to_see=where_to_see, where_to_see_title=where_to_see_title,
+            where_to_see_intro=where_to_see_intro,
+        )
     return build_acf_flexible(components, config, subtitle=subtitle, schema_jsonld=schema_jsonld)
 
 
@@ -191,6 +247,573 @@ def build_acf_flat(
     if schema_jsonld and config.top_level.get("schema_jsonld"):
         out[config.top_level["schema_jsonld"]] = schema_jsonld
     return out, warnings
+
+
+def build_acf_island(
+    components: list[Component],
+    config: AcfConfig,
+    *,
+    subtitle: str = "",
+    schema_jsonld: str = "",
+    geo_answer: str = "",
+    author: str = "",
+    quick_facts: list | None = None,
+    visitor_sites: list | None = None,
+    cta_blocks: list | None = None,
+    sources: list | None = None,
+    related_links: list | None = None,
+    related_link_groups: list | None = None,
+    wildlife: list | None = None,
+    wildlife_intro: str = "",
+    wildlife_calendar: list | None = None,
+    visitor_sites_intro: str = "",
+    visitor_sites_intro_cruise: str = "",
+    quick_facts_title: str = "",
+    quick_facts_intro: str = "",
+    wildlife_title: str = "",
+    visitor_sites_title: str = "",
+    scientific_name: str = "",
+    common_name: str = "",
+    conservation_status: str = "",
+    population: str = "",
+    endemic: bool = False,
+    seasonality: list | None = None,
+    seasonality_title: str = "",
+    seasonality_intro: str = "",
+    subspecies: list | None = None,
+    subspecies_title: str = "",
+    subspecies_intro: str = "",
+    where_to_see: list | None = None,
+    where_to_see_title: str = "",
+    where_to_see_intro: str = "",
+) -> tuple[dict[str, Any], list[str]]:
+    """Map components to the structured 'Island Guide Content' ACF group.
+
+    Hero, FAQs, and prose fold into ``feature_sections``. ``quick_facts``,
+    ``visitor_sites``, ``cta_blocks``, ``sources`` and ``related_links`` come
+    pre-extracted from the doc; travel sections route to ``travel_information``;
+    ``wildlife`` extraction is a later layer.
+    """
+    warnings: list[str] = []
+    m = config.island
+    out: dict[str, Any] = {}
+    features: list[dict] = []
+    travel: dict[str, str] = {}
+    used: set[str] = set()
+    # Sections already pulled into a dedicated repeater (e.g. the wildlife section
+    # 'The Wildlife') must not also appear as a Feature Section. Match by the exact
+    # extracted title so unrelated sections that merely mention 'wildlife' stay.
+    _extracted_titles = {
+        t.strip().lower()
+        for t in (wildlife_title, visitor_sites_title)
+        if t and t.strip()
+    }
+
+    # Table-derived repeaters (extracted upstream from the doc's tables).
+    if quick_facts and m.get("quick_facts"):
+        qf = m["quick_facts"]
+        out[qf["field"]] = [
+            {qf["label"]: r.get("label", ""), qf["value"]: r.get("value", "")}
+            for r in quick_facts
+        ]
+        used.add("quick_facts")
+    if visitor_sites and m.get("visitor_sites"):
+        out[m["visitor_sites"]["field"]] = [
+            _visitor_row(m["visitor_sites"], r) for r in visitor_sites
+        ]
+    if wildlife and m.get("wildlife"):
+        out[m["wildlife"]["field"]] = [_wildlife_row(m["wildlife"], r) for r in wildlife]
+    if wildlife_calendar and m.get("wildlife_calendar"):
+        wc = m["wildlife_calendar"]
+        rows_out = []
+        for r in wildlife_calendar:
+            row: dict[str, Any] = {}
+            if wc.get("period"):
+                row[wc["period"]] = r.get("period", "")
+            if wc.get("label") and r.get("label"):
+                row[wc["label"]] = r["label"]
+            if wc.get("highlights"):
+                row[wc["highlights"]] = md_to_html(r.get("highlights", ""))
+            rows_out.append(row)
+        out[wc["field"]] = rows_out
+    if wildlife_title and m.get("wildlife_title"):
+        out[m["wildlife_title"]] = wildlife_title
+    if wildlife_intro and m.get("wildlife_intro"):
+        out[m["wildlife_intro"]] = md_to_html(wildlife_intro)
+    if visitor_sites_title and m.get("visitor_sites_title"):
+        out[m["visitor_sites_title"]] = visitor_sites_title
+    if visitor_sites_intro and m.get("visitor_sites_intro"):
+        out[m["visitor_sites_intro"]] = md_to_html(visitor_sites_intro)
+    if visitor_sites_intro_cruise and m.get("visitor_sites_intro_cruise"):
+        out[m["visitor_sites_intro_cruise"]] = md_to_html(visitor_sites_intro_cruise)
+    if quick_facts_title and m.get("quick_facts_title"):
+        out[m["quick_facts_title"]] = quick_facts_title
+    if quick_facts_intro and m.get("quick_facts_intro"):
+        out[m["quick_facts_intro"]] = md_to_html(quick_facts_intro)
+    # Dual CTA from the doc's CTA table (overrides a single component CTA).
+    if cta_blocks and m.get("cta"):
+        cf = m["cta"]
+        out[cf["field"]] = [_cta_block_row(cf, b) for b in cta_blocks]
+        used.add("cta")
+    if sources and m.get("sources"):
+        sf = m["sources"]
+        out[sf["field"]] = [
+            {sf["label"]: r.get("label", ""), sf["url"]: r.get("url", "")} for r in sources
+        ]
+
+    for comp in components:
+        t = comp.type
+        if t == "hero" and "hero" not in used and m.get("hero"):
+            used.add("hero")
+            hf, d = m["hero"], comp.data
+            img = d.get("image") if isinstance(d.get("image"), dict) else {}
+            _set(out, hf.get("title"), d.get("heading"))
+            _set(out, hf.get("subtitle"), d.get("subheading"))
+            _set(out, hf.get("image"), _image_value(img, config), allow_falsey=True)
+            _set(out, hf.get("image_alt"), img.get("alt"))
+        elif t == "accordion" and "faqs" not in used and m.get("faqs"):
+            used.add("faqs")
+            ff = m["faqs"]
+            # `answer` is a WYSIWYG field -> keep HTML (links survive).
+            out[ff["field"]] = [
+                {ff["question"]: it.get("question", ""), ff["answer"]: it.get("answer", "")}
+                for it in comp.data.get("items", [])
+            ]
+        elif t == "stats" and "quick_facts" not in used and m.get("quick_facts"):
+            used.add("quick_facts")
+            qf = m["quick_facts"]
+            out[qf["field"]] = [
+                {qf["label"]: it.get("label", ""), qf["value"]: it.get("value", "")}
+                for it in comp.data.get("items", [])
+            ]
+        elif t == "cta" and "cta" not in used and m.get("cta"):
+            used.add("cta")
+            out[m["cta"]["field"]] = [_cta_row(m["cta"], comp.data)]
+        elif t == "rich_text" and m.get("feature_sections"):
+            d = comp.data
+            heading = d.get("heading", "")
+            # Content MOVED to a dedicated field is not also a feature section.
+            routed = (
+                _route_travel(heading, d.get("content", ""))
+                if m.get("travel_information")
+                else None
+            )
+            if routed:
+                for k, v in routed.items():
+                    if k.endswith("_title"):
+                        travel.setdefault(k, v)  # H2 heading -> keep it, never lose titles
+                    elif v:
+                        travel[k] = (travel[k] + "\n" + v) if travel.get(k) else v
+                continue
+            # "Plan Your Visit" always leads into the CTA — fold it into the CTA
+            # section's heading + intro instead of keeping a separate feature.
+            if m.get("cta_intro") and _is_plan_visit(heading):
+                if m.get("cta_title"):
+                    out.setdefault(m["cta_title"], heading)
+                out.setdefault(m["cta_intro"], d.get("content", ""))
+                continue
+            if _should_skip_feature(
+                heading,
+                has_wildlife=bool(wildlife or wildlife_calendar),
+                has_visitor=bool(visitor_sites),
+                has_quick_facts=bool(quick_facts),
+            ) or heading.strip().lower() in _extracted_titles:
+                continue  # dedicated repeaters (wildlife/visitor sites) / footer fields
+            # The species subspecies prose duplicates the subspecies repeater;
+            # once that repeater is populated, don't also render it as a feature.
+            if subspecies and "subspecies" in heading.lower():
+                continue
+            # The lead paragraph (no heading, before any titled section) is the
+            # island intro/overview -> its own field, not a title-less card. Skip
+            # bare table labels ("DATA SNAPSHOT", "AT A GLANCE") that sit above the
+            # quick-facts table — they are not an intro.
+            if m.get("intro") and not heading.strip() and m["intro"] not in out and not features:
+                lead = d.get("content", "")
+                # Send "" (not nothing) for a bare label so a republish clears any
+                # stale intro ('DATA SNAPSHOT') already on the page.
+                out[m["intro"]] = "" if _is_table_label(_plain_text(lead)) else lead
+                continue
+            body, btn_label, btn_url = _split_feature_button(d.get("content", ""))
+            features.append(_feature_row(m["feature_sections"], title=heading,
+                                         content=body, button_label=btn_label,
+                                         button_url=btn_url))
+        elif m.get("feature_sections"):
+            chunk = _component_body_html(comp)
+            if chunk:
+                features.append(_feature_row(m["feature_sections"], content=chunk))
+
+    if m.get("feature_sections") and features:
+        out[m["feature_sections"]["field"]] = features
+    if m.get("travel_information") and travel:
+        ti = m["travel_information"]
+        out[ti["field"]] = {ti[k]: v for k, v in travel.items() if ti.get(k)}
+    if m.get("related_links"):
+        rl = m["related_links"]
+        rows: list[dict] = []
+        if related_link_groups:
+            # Grouped "Explore More": each link carries its group heading so the
+            # widget can render one titled column per group.
+            for grp in related_link_groups:
+                for link in grp.get("links", []):
+                    row = {rl["label"]: link.get("label", ""), rl["url"]: link.get("url", "")}
+                    if rl.get("group"):
+                        row[rl["group"]] = grp.get("title", "")
+                    rows.append(row)
+        elif related_links:
+            rows = [{rl["label"]: r.get("label", ""), rl["url"]: r.get("url", "")} for r in related_links]
+        if rows:
+            out[rl["field"]] = rows
+    # ── Wildlife species fields (only present in the wildlife_single profile) ──
+    if scientific_name and m.get("scientific_name"):
+        out[m["scientific_name"]] = scientific_name
+    if common_name and m.get("common_name"):
+        out[m["common_name"]] = common_name
+    if conservation_status and m.get("conservation_status"):
+        out[m["conservation_status"]] = conservation_status
+    if population and m.get("population"):
+        out[m["population"]] = population
+    if endemic and m.get("endemic"):
+        out[m["endemic"]] = True  # ACF true_false -> REST boolean
+    if where_to_see and m.get("where_to_see"):
+        ws = m["where_to_see"]
+        rows_ws: list[dict] = []
+        for r in where_to_see:
+            row = {}
+            for k in ("site", "island", "access", "season", "description"):
+                if ws.get(k):
+                    row[ws[k]] = md_to_html(r.get(k, "")) if k == "description" else r.get(k, "")
+            # Image is omitted unless we have an attachment ID: an ACF image field
+            # over REST must be an integer or null, never "" or a boolean.
+            if ws.get("image") and r.get("image"):
+                row[ws["image"]] = r["image"]
+            rows_ws.append(row)
+        out[ws["field"]] = rows_ws
+    if where_to_see_title and m.get("where_to_see_title"):
+        out[m["where_to_see_title"]] = where_to_see_title
+    if where_to_see_intro and m.get("where_to_see_intro"):
+        out[m["where_to_see_intro"]] = md_to_html(where_to_see_intro)
+    if seasonality and m.get("seasonality"):
+        sf = m["seasonality"]
+        out[sf["field"]] = [
+            {sf[k]: r.get(k, "") for k in ("period", "label", "notes") if sf.get(k)}
+            for r in seasonality
+        ]
+    if seasonality_title and m.get("seasonality_title"):
+        out[m["seasonality_title"]] = seasonality_title
+    if seasonality_intro and m.get("seasonality_intro"):
+        out[m["seasonality_intro"]] = md_to_html(seasonality_intro)
+    if subspecies and m.get("subspecies"):
+        bf = m["subspecies"]
+        rows_sub: list[dict] = []
+        for r in subspecies:
+            row = {bf[k]: r.get(k, "")
+                   for k in ("island", "name", "trait", "population", "status") if bf.get(k)}
+            if bf.get("image") and r.get("image"):  # omit empty image (see above)
+                row[bf["image"]] = r["image"]
+            rows_sub.append(row)
+        out[bf["field"]] = rows_sub
+    if subspecies_title and m.get("subspecies_title"):
+        out[m["subspecies_title"]] = subspecies_title
+    if subspecies_intro and m.get("subspecies_intro"):
+        out[m["subspecies_intro"]] = md_to_html(subspecies_intro)
+
+    # GEO/AI answer: prefer the doc's extracted GEO block, else a tagline/subtitle.
+    if m.get("geo_answer") and (geo_answer or subtitle):
+        out[m["geo_answer"]] = geo_answer or subtitle
+    if m.get("author") and author:
+        out[m["author"]] = author
+    if schema_jsonld and config.top_level.get("schema_jsonld"):
+        out[config.top_level["schema_jsonld"]] = schema_jsonld
+    return out, warnings
+
+
+# Section headings handled by dedicated fields, not folded into feature_sections.
+_FEATURE_SKIP_HEADINGS = {"sources", "sources & citations", "sources and citations", "citations"}
+_SKIP_CONTAINS = ("explore more", "seo footer", "version footer")
+_TRAVEL_RULES = [
+    ("getting_there", re.compile(r"getting (to|there)|how to get|how to reach", re.I)),
+    ("best_time", re.compile(r"best time|when to (visit|go)|best season", re.I)),
+    ("accommodation", re.compile(r"where to stay|accommodation|hotels|lodging", re.I)),
+]
+
+
+def _travel_field(heading: str) -> str | None:
+    for field, rx in _TRAVEL_RULES:
+        if rx.search(heading):
+            return field
+    return None
+
+
+# Which "section title" field holds a travel H2 heading (so it is never lost).
+_TRAVEL_TITLE_FIELD = {
+    "getting_there": "getting_there_title",
+    "best_time": "stay_visit_title",
+    "accommodation": "stay_visit_title",
+}
+_H3_SPLIT_RE = re.compile(r"(<h3[^>]*>.*?</h3>)", re.I | re.S)
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _split_by_h3(content: str) -> list[tuple[str | None, str]]:
+    """[(h3_text|None, html_chunk), …]; the chunk keeps its own <h3>."""
+    parts = _H3_SPLIT_RE.split(content or "")
+    segments: list[tuple[str | None, str]] = []
+    if parts and parts[0].strip():
+        segments.append((None, parts[0]))
+    i = 1
+    while i < len(parts):
+        h3_html = parts[i]
+        chunk = h3_html + (parts[i + 1] if i + 1 < len(parts) else "")
+        segments.append((_TAG_RE.sub("", h3_html).strip(), chunk))
+        i += 2
+    return segments
+
+
+def _route_travel(heading: str, content: str) -> dict | None:
+    """Route a travel H2 into Travel-Information sub-fields.
+
+    A container H2 ('Where to Stay and When to Visit') is split by its H3 children
+    so Accommodation and Best Time land in their own fields instead of one
+    swallowing the other. The H2 heading is kept in a *_title field. Returns None
+    when the section isn't travel-related (so it falls through to feature sections).
+    """
+    field = _travel_field(heading)
+    if not field:
+        return None
+    out: dict[str, str] = {}
+    segments = _split_by_h3(content)
+    mapped = [(s, _travel_field(s[0])) for s in segments if s[0]]
+    if any(f for _, f in mapped):
+        # Container: each child H3 that maps goes to its field; the rest (lead
+        # text, non-mapping H3s) join the H2's own field.
+        for (h3, chunk), f in mapped:
+            if f:
+                out[f] = (out.get(f, "") + chunk) if out.get(f) else chunk
+        leftover = "".join(
+            chunk for (h3, chunk) in segments if not (h3 and _travel_field(h3))
+        )
+        if leftover.strip():
+            out[field] = (out.get(field, "") + leftover) if out.get(field) else leftover
+    else:
+        out[field] = content
+    title_field = _TRAVEL_TITLE_FIELD.get(field)
+    if title_field and heading:
+        out[title_field] = heading
+    # A trailing standalone link in each block (e.g. "→ /planning/best-time/")
+    # becomes that block's button, not an inline <a> at the foot of the prose.
+    for f in ("getting_there", "best_time", "accommodation"):
+        if out.get(f):
+            body, label, url = _split_trailing_link(out[f])
+            if url:
+                out[f] = body
+                out[f + "_button_label"] = label
+                out[f + "_button_url"] = url
+    return out
+
+
+# A trailing paragraph that is ONLY a link (arrow optional) — the internal-link
+# notation after _clean_markers/md_to_html renders as <p><a href>label</a></p>.
+_TRAILING_LINK_RE = re.compile(
+    r'<p>\s*(?:→|&rarr;|&#8594;)?\s*<a\s[^>]*href="([^"]+)"[^>]*>(.*?)</a>\s*</p>\s*$',
+    re.I | re.S,
+)
+
+
+def _split_trailing_link(html: str) -> tuple[str, str, str]:
+    """Pull a trailing pure-link paragraph off HTML -> (html_without, label, url)."""
+    if not html:
+        return html, "", ""
+    m = _TRAILING_LINK_RE.search(html)
+    if not m:
+        return html, "", ""
+    return html[: m.start()].rstrip(), _plain_text(m.group(2)), m.group(1).strip()
+
+
+def _is_plan_visit(heading: str) -> bool:
+    # "Plan Your Visit", but also house variants like "Plan Your Arrival" — all
+    # lead into the CTA, so their lead paragraph feeds cta_intro.
+    return heading.strip().lower().startswith("plan your")
+
+
+_TABLE_LABELS = {"data snapshot", "at a glance", "quick facts", "fast facts", "key facts", "key data"}
+
+
+def _is_table_label(text: str) -> bool:
+    """A short heading that labels the quick-facts table rather than real prose,
+    e.g. 'DATA SNAPSHOT' — should never become the island intro."""
+    t = text.strip()
+    if t.lower() in _TABLE_LABELS:
+        return True
+    words = t.split()
+    return bool(words) and len(words) <= 4 and t == t.upper() and not t.endswith((".", "?", "!"))
+
+
+def _should_skip_feature(
+    heading: str,
+    *,
+    has_wildlife: bool = True,
+    has_visitor: bool = True,
+    has_quick_facts: bool = True,
+) -> bool:
+    h = heading.strip().lower()
+    # Wildlife / visitor-sites / quick-facts headings are skipped ONLY when their
+    # dedicated repeater is actually populated; otherwise keep the section as a
+    # feature so its content (e.g. a wildlife-by-season table) is never lost.
+    if h.startswith("wildlife") and has_wildlife:
+        return True
+    if h.startswith("visitor sites") and has_visitor:
+        return True
+    if ("at a glance" in h or "quick facts" in h) and has_quick_facts:
+        return True
+    return h in _FEATURE_SKIP_HEADINGS or any(s in h for s in _SKIP_CONTAINS)
+
+
+def _cta_block_row(cf: dict, b: dict) -> dict:
+    row: dict[str, Any] = {}
+    if cf.get("audience"):
+        row[cf["audience"]] = b.get("audience", "Direct travelers")
+    # Omit an empty title/text so a manually-entered one survives a republish
+    # (the preservation step only restores sub-fields the payload doesn't set).
+    if cf.get("title") and b.get("title"):
+        row[cf["title"]] = b["title"]
+    if cf.get("text") and b.get("text"):
+        row[cf["text"]] = inline_md(b["text"])  # WYSIWYG -> keep links
+    if cf.get("button_label") and b.get("button_label"):
+        row[cf["button_label"]] = b["button_label"]
+    if cf.get("button_url") and b.get("button_url"):
+        row[cf["button_url"]] = b["button_url"]
+    return row
+
+
+# description is WYSIWYG (links survive); the short list fields stay plain text.
+_VISITOR_RICH = {"description"}
+_VISITOR_PLAIN = {"activities", "species_seen"}
+
+
+def _wildlife_row(w: dict, r: dict) -> dict:
+    row: dict[str, Any] = {}
+    if w.get("common_name"):
+        row[w["common_name"]] = r.get("common_name", "")
+    if w.get("scientific_name") and r.get("scientific_name"):
+        row[w["scientific_name"]] = r["scientific_name"]
+    if w.get("description"):
+        row[w["description"]] = md_to_html(r.get("description", ""))  # WYSIWYG
+    if w.get("where_seen") and r.get("where_seen"):
+        row[w["where_seen"]] = r["where_seen"]
+    if w.get("best_season") and r.get("best_season"):
+        row[w["best_season"]] = r["best_season"]
+    if w.get("button_label") and r.get("button_label"):
+        row[w["button_label"]] = r["button_label"]
+    if w.get("button_url") and r.get("button_url"):
+        row[w["button_url"]] = r["button_url"]
+    return row
+
+
+def _visitor_row(vs: dict, r: dict) -> dict:
+    row: dict[str, Any] = {}
+    for key in ("site_name", "access_type", "description", "activities", "species_seen", "access"):
+        if vs.get(key):
+            value = r.get(key, "")
+            if key in _VISITOR_RICH:
+                row[vs[key]] = md_to_html(value)  # WYSIWYG: paragraphs + links
+            elif key in _VISITOR_PLAIN:
+                row[vs[key]] = _plain_text(value)
+            else:
+                row[vs[key]] = value
+    if vs.get("button_label") and r.get("button_label"):
+        row[vs["button_label"]] = r["button_label"]
+    if vs.get("button_url") and r.get("button_url"):
+        row[vs["button_url"]] = r["button_url"]
+    # Image is omitted until we extract one: an ACF image field over REST must be
+    # an attachment ID or null, never a boolean.
+    return row
+
+
+_MD_LINK = re.compile(r"\[([^\]]+)\]\([^)\s]+\)")
+
+
+def _plain_text(html_str: str) -> str:
+    """HTML/Markdown -> clean single-line text for textarea fields (no tags/links)."""
+    text = _MD_LINK.sub(r"\1", html_str or "")  # [label](url) -> label
+    text = re.sub(r"(?i)</(p|li|h[1-6]|div)>", " ", text)
+    text = re.sub(r"(?i)<br\s*/?>", " ", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    return " ".join(html.unescape(text).split()).strip()
+
+
+def _feature_row(
+    fs: dict,
+    *,
+    title: str = "",
+    content: str = "",
+    subtitle: str = "",
+    button_label: str = "",
+    button_url: str = "",
+) -> dict:
+    row: dict[str, Any] = {}
+    if fs.get("title"):
+        row[fs["title"]] = title
+    if fs.get("subtitle"):
+        row[fs["subtitle"]] = subtitle
+    if fs.get("content"):
+        row[fs["content"]] = content
+    if fs.get("button_label") and button_label:
+        row[fs["button_label"]] = button_label
+    if fs.get("button_url") and button_url:
+        row[fs["button_url"]] = button_url
+    return row
+
+
+# A trailing "→ Label /url" paragraph at the end of a feature section is its
+# call-to-action button (button_label / button_url), not body copy. No current
+# island doc emits one, but the Española-style "→ Explore X" card uses it.
+_FEATURE_BTN_RE = re.compile(r"<p>\s*(?:→|&rarr;|&#8594;)\s*(.*?)</p>\s*$", re.I | re.S)
+_HTML_LINK_RE = re.compile(r'<a\s[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.I | re.S)
+
+
+def _split_feature_button(content: str) -> tuple[str, str, str]:
+    """Pull a trailing '→ Label /url' CTA paragraph out of feature HTML.
+
+    Returns ``(content_without_button, button_label, button_url)``. When the
+    content has no such trailing paragraph (or no usable target) it comes back
+    unchanged with empty label/url so the text stays in the body.
+    """
+    if not content:
+        return content, "", ""
+    m = _FEATURE_BTN_RE.search(content)
+    if not m:
+        return content, "", ""
+    inner = m.group(1).strip()
+    link = _HTML_LINK_RE.search(inner)
+    if link:
+        url, label = link.group(1).strip(), _plain_text(link.group(2))
+    else:
+        text = _plain_text(inner)
+        head, _, tail = text.rpartition(" ")
+        if head and re.match(r"^(/|https?:|mailto:)", tail):
+            label, url = head.strip(), tail.strip()
+        else:
+            label, url = text, ""
+    if not url:
+        return content, "", ""  # no link target -> leave it in the body
+    return content[: m.start()].rstrip(), label, url
+
+
+def _cta_row(cf: dict, d: dict) -> dict:
+    ctas = d.get("ctas") or []
+    first = ctas[0] if ctas else {}
+    row: dict[str, Any] = {}
+    if cf.get("audience"):
+        row[cf["audience"]] = "Direct travelers"
+    if cf.get("title"):
+        row[cf["title"]] = d.get("heading", "")
+    if cf.get("text"):
+        row[cf["text"]] = d.get("content", "")
+    if cf.get("button_label"):
+        row[cf["button_label"]] = first.get("label", "")
+    if cf.get("button_url"):
+        row[cf["button_url"]] = first.get("url", "")
+    return row
 
 
 def _set(out: dict, key, value, *, allow_falsey: bool = False) -> None:

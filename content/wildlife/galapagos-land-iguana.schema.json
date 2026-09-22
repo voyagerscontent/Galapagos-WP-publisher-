@@ -1,0 +1,83 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type":"ListItem","position":1,"name":"Home","item":"https://www.galapagosislands.travel/"},
+        {"@type":"ListItem","position":2,"name":"Wildlife","item":"https://www.galapagosislands.travel/wildlife/"},
+        {"@type":"ListItem","position":3,"name":"Galápagos Land Iguana","item":"https://www.galapagosislands.travel/wildlife/galapagos-land-iguana"}
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "What Is the Galápagos Land Iguana?",
+      "image": "https://www.galapagosislands.travel/img/land-iguana-hero.jpg",
+      "author": {"@type":"Person","name":"Juan Magallanes","jobTitle":"Galápagos Travel Advisor"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Galapagos Islands.Travel",
+        "logo": {"@type":"ImageObject","url":"https://www.galapagosislands.travel/img/logo.png"}
+      },
+      "datePublished": "2026-06-25",
+      "dateModified": "2026-06-25",
+      "mainEntityOfPage": "https://www.galapagosislands.travel/wildlife/galapagos-land-iguana",
+      "speakable": {"@type":"SpeakableSpecification","cssSelector":[".answer-box",".faq"]}
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the Galápagos land iguana?",
+          "acceptedAnswer": {"@type":"Answer","text":"A large, yellowish, endemic lizard that lives on land and eats mainly plants, especially Opuntia cactus. It is one of four iguana species in the archipelago and lives on several islands — some populations natural, some reintroduced."}
+        },
+        {
+          "@type": "Question",
+          "name": "What's the difference between a land iguana and a marine iguana?",
+          "acceptedAnswer": {"@type":"Answer","text":"The difference is where they feed. The marine iguana is the only lizard that feeds in the sea, grazing on underwater algae. The land iguana stays ashore and eats cactus and other plants. Both are endemic, but they fill completely different niches."}
+        },
+        {
+          "@type": "Question",
+          "name": "Which islands have Galápagos land iguanas?",
+          "acceptedAnswer": {"@type":"Answer","text":"They live on Isabela, Fernandina, Santa Cruz, Baltra, South Plaza and North Seymour. The populations are a mix: some native, Baltra and Santiago reintroduced, and North Seymour's brought from Baltra in the 1930s."}
+        },
+        {
+          "@type": "Question",
+          "name": "Can you see the pink land iguana in the Galápagos?",
+          "acceptedAnswer": {"@type":"Answer","text":"Not on a normal trip. The pink land iguana — a separate species of about 350 animals, Critically Endangered — lives only on Wolf Volcano, Isabela. That range is permit-restricted and closed to general visitors, so it is not a sighting you can plan for."}
+        },
+        {
+          "@type": "Question",
+          "name": "What do Galápagos land iguanas eat?",
+          "acceptedAnswer": {"@type":"Answer","text":"They are herbivores whose diet leans heavily on the Opuntia (prickly-pear) cactus — pads, flowers and fruit. On arid islands with little standing water, the moisture and nutrition in cactus make it central to survival. Santa Fe pairs a distinct land iguana with giant Opuntia."}
+        },
+        {
+          "@type": "Question",
+          "name": "Are North Seymour's land iguanas native?",
+          "acceptedAnswer": {"@type":"Answer","text":"No. They were introduced — brought over from Baltra in the 1930s — so they are not a native population. The island is also known for the largest magnificent-frigatebird colony and prime seabird breeding."}
+        },
+        {
+          "@type": "Question",
+          "name": "Where can I see a land iguana in the Galápagos?",
+          "acceptedAnswer": {"@type":"Answer","text":"Walking encounters are realistic at Cerro Dragón (Santa Cruz), Plazas Sur (South Plaza), Seymour Norte (North Seymour), Punta Espinoza (Fernandina) and Santa Fe-Fondeadero (Santa Fe). Which you reach depends on your itinerary. A certified guide is required and no sighting is guaranteed."}
+        },
+        {
+          "@type": "Question",
+          "name": "Why did land iguanas go extinct on Baltra?",
+          "acceptedAnswer": {"@type":"Answer","text":"Baltra's land iguanas disappeared around 1954, in line with the pressures that have hit ground-dwelling reptiles across the islands, including introduced species. The population was later re-established from stock elsewhere — one of several successful iguana reintroductions in the archipelago."}
+        },
+        {
+          "@type": "Question",
+          "name": "How close can you get to a land iguana?",
+          "acceptedAnswer": {"@type":"Answer","text":"National Park rules require you to stay at least 2 metres from all wildlife, with no touching, feeding or flash photography, and to keep to marked trails under a GNPS-certified naturalist guide. The iguanas are often unbothered, but the distance rule always applies."}
+        },
+        {
+          "@type": "Question",
+          "name": "Is the Galápagos land iguana endangered?",
+          "acceptedAnswer": {"@type":"Answer","text":"The separate pink land iguana is Critically Endangered, with only about 350 individuals on Wolf Volcano. Land iguanas overall have faced local extinctions and invasive-species pressure, but reintroductions on Baltra, Santiago (2019) and elsewhere have re-established populations."}
+        }
+      ]
+    }
+  ]
+}

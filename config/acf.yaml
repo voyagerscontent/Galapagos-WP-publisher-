@@ -1,9 +1,17 @@
 # ─────────────────────────────────────────────────────────────
-# ACF mapping — PER-SITE.  Mode: FLAT (named fields for Elementor Dynamic Tags).
+# ACF mapping — PER-SITE.  This is the DEFAULT profile.
 #
-# The publisher writes flat, named ACF fields (not a flexible-content blob), so
-# each one binds directly in Elementor via Dynamic Tags → ACF Field. Repeating
-# data (FAQ, key facts) uses ACF repeaters (loop them in Elementor).
+# ACF mappings are per-profile so each site section can target its own field
+# group. A page template picks a profile with `acf_profile: <name>`, which loads
+# config/acf/<name>.yaml. Templates with no acf_profile use THIS file.
+#   - default (this file): the generic flat group "Page Content (Flat)"
+#   - config/acf/island.yaml: maps island docs -> the "Island Guide Content" group
+#   - (add more per section: wildlife, cruises, …)
+#
+# Mode: FLAT (named fields for Elementor Dynamic Tags). The publisher writes
+# flat, named ACF fields (not a flexible-content blob), so each one binds
+# directly in Elementor via Dynamic Tags → ACF Field. Repeating data (FAQ, key
+# facts) uses ACF repeaters (loop them in Elementor).
 #
 # The right-hand values are YOUR ACF field names — change them to match your
 # group, or import wordpress-acf/page-fields.acf.json which matches these.

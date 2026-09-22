@@ -1,0 +1,40 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type":"ListItem","position":1,"name":"Home","item":"https://www.galapagosislands.travel/"},
+        {"@type":"ListItem","position":2,"name":"Galápagos Cruises","item":"https://www.galapagosislands.travel/galapagos-cruises/"},
+        {"@type":"ListItem","position":3,"name":"Budget Cruises","item":"https://www.galapagosislands.travel/galapagos-cruises/budget/"}
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "Budget Galápagos Cruises: Ships, Itineraries & Real Prices",
+      "description": "What makes a Galápagos cruise budget, real per-day price bands, what a budget cabin includes, sample itineraries and the honest trade-offs.",
+      "image": "https://www.galapagosislands.travel/img/budget-galapagos-cruise.jpg",
+      "datePublished": "2026-07-16",
+      "dateModified": "2026-07-16",
+      "author": {"@type":"Person","name":"Juan Magallanes","jobTitle":"Galápagos Travel Advisor"},
+      "reviewedBy": {"@type":"Person","name":"Juan Magallanes","jobTitle":"Galápagos Travel Advisor"},
+      "publisher": {"@type":"Organization","name":"Galapagos Islands.Travel","logo":{"@type":"ImageObject","url":"https://www.galapagosislands.travel/img/logo.png"}},
+      "mainEntityOfPage": "https://www.galapagosislands.travel/galapagos-cruises/budget/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type":"Question","name":"How much does a budget Galápagos cruise cost?","acceptedAnswer":{"@type":"Answer","text":"Budget (3-star) vessels run roughly $445–$928 per person per day, median about $640, from our own fleet analysis of 41 price points. On top, budget separately for the $200 park fee, about $20 transit card and about $400–$500 mainland flights — extra on every tier."}},
+        {"@type":"Question","name":"Do budget Galápagos cruises visit worse islands or see less wildlife?","acceptedAnswer":{"@type":"Answer","text":"No. Nearly all vessels reach nearly all islands, and every tier lands at the same National Park visitor sites under a GNPS-certified guide. A cheaper cruise trims the onboard experience — cabin, cuisine, amenities — not the map or the wildlife. Island reach depends on trip length, not price."}},
+        {"@type":"Question","name":"What's the cheapest number of days for a Galápagos cruise?","acceptedAnswer":{"@type":"Answer","text":"The shortest cruise is 4 days, which is usually the lowest total outlay. A 4-day program covers central and eastern sites but can't reach Fernandina or west Isabela — those need 5 days or longer. Fewer days lowers the total, not necessarily the per-day rate."}},
+        {"@type":"Question","name":"What's included in a budget Galápagos cruise fare?","acceptedAnswer":{"@type":"Answer","text":"Typically your cabin, all meals aboard, guided daily excursions with a GNPS-certified naturalist, snorkel gear on most boats, and inter-island transfers within the itinerary. Trimmed or extra: larger cabins, premium cuisine, wetsuit hire, kayaks, and Wi-Fi."}},
+        {"@type":"Question","name":"What extra costs come on top of a budget cruise price?","acceptedAnswer":{"@type":"Answer","text":"Three fixed costs apply at every tier: the $200 National Park entrance fee (most foreign adults), the about $20 INGALA transit control card, and about $400–$500 round-trip mainland flights from Quito or Guayaquil (about 3 hrs). Arrive a day early to protect your departure."}},
+        {"@type":"Question","name":"Can a 4-day cruise reach Fernandina and west Isabela?","acceptedAnswer":{"@type":"Answer","text":"No. Fernandina (Punta Espinoza) and the western side of Isabela (Caleta Tagus, Bahia Urbina, Bahia Elizabeth) are the only sites off-limits to a 4-day-or-shorter program. To reach them, choose a 5-day-or-longer cruise — at any tier, budget included."}},
+        {"@type":"Question","name":"Are budget Galápagos cruise ships safe and well-guided?","acceptedAnswer":{"@type":"Answer","text":"Yes. Galápagos travel is tightly regulated. Every vessel, budget or luxury, runs a GNPS-certified naturalist guide, fixed landing schedules and biosecurity rules. Ships are older on budget tiers but licensed and seaworthy. We'll tell you which carry a doctor on board."}},
+        {"@type":"Question","name":"Is a budget cruise good for solo travellers?","acceptedAnswer":{"@type":"Answer","text":"Often, yes. Budget boats are sociable and simpler quarters suit independent travellers. Watch the solo supplement — it's real but not universal; some operators waive or reduce it on select departures. Tell us your dates and we'll find the ones that don't penalise you."}},
+        {"@type":"Question","name":"What do you give up on a budget cruise vs a luxury one?","acceptedAnswer":{"@type":"Answer","text":"Cabin size, cuisine, amenities like Wi-Fi and water toys, and the lowest crew-to-guest ratios. You keep the islands, the visitor sites and the wildlife — those are set by itinerary length and National Park rules, not your fare. Price buys the vessel's experience, not a better archipelago."}},
+        {"@type":"Question","name":"Does a higher star rating mean a better itinerary?","acceptedAnswer":{"@type":"Answer","text":"No. Star category tracks the onboard experience, not the route, and it doesn't even track price cleanly — the 4-star maximum (about $1,170/day) overlaps the 5-star median (about $1,189/day). Itinerary quality depends on which sites a route reaches and its length, at any tier."}}
+      ]
+    }
+  ]
+}

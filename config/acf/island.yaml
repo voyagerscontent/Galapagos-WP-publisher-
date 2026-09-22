@@ -1,0 +1,127 @@
+# ─────────────────────────────────────────────────────────────
+# ACF profile: ISLAND  →  the "Island Guide Content" group (group_island_pages).
+# Selected by templates that declare `acf_profile: island` (e.g. destination).
+#
+# Layer 1 mapping: hero, FAQs, quick facts, a CTA row, and all prose folded into
+# `feature_sections`. Structured `visitor_sites` / `wildlife` extraction comes in
+# a later layer. NO SEO field here — Rank Math / Yoast handles meta.
+# Field names on the right must match the ACF group; group needs Show in REST.
+# ─────────────────────────────────────────────────────────────
+
+mode: island
+image_as: id
+
+# Page-specific schema.org JSON-LD lands in `seo_schema`; the "Island Schema"
+# Elementor widget prints it into each page. (Rank Math still owns meta title/desc.)
+top_level:
+  schema_jsonld: seo_schema
+
+island:
+  hero:
+    title: hero_title
+    subtitle: hero_subtitle
+    image: hero_image
+    image_alt: hero_image_alt
+
+  # Byline ("By <Name> …"), when the doc has one.
+  author: author
+
+  # ~50-word AI/featured-snippet answer. Populated from the doc's GEO block in a
+  # later layer; for now fills from a tagline/subtitle when present.
+  geo_answer: geo_answer
+
+  # Lead/overview paragraph that opens the doc (before the first section, e.g.
+  # before "At a Glance"). Its own field so it isn't a title-less feature card.
+  intro: intro
+
+  # Editorial/thematic sections (Layer 1 also receives generic prose here).
+  feature_sections:
+    field: feature_sections
+    title: title
+    subtitle: subtitle
+    content: content
+    button_label: button_label
+    button_url: button_url
+
+  faqs:
+    field: faqs
+    question: question
+    answer: answer
+
+  quick_facts_title: quick_facts_title
+  quick_facts_intro: quick_facts_intro
+  quick_facts:
+    field: quick_facts
+    label: label
+    value: value
+
+  visitor_sites_title: visitor_sites_title
+  visitor_sites_intro: visitor_sites_intro
+  visitor_sites_intro_cruise: visitor_sites_intro_cruise
+  visitor_sites:
+    field: visitor_sites
+    site_name: site_name
+    access_type: access_type
+    description: description
+    activities: activities
+    species_seen: species_seen
+    access: access
+    image: image
+    button_label: button_label
+    button_url: button_url
+
+  # "Plan Your Visit" heading + intro that sit above the CTA blocks.
+  cta_title: cta_title
+  cta_intro: cta_intro
+  cta:
+    field: cta
+    audience: audience
+    title: title
+    text: text
+    button_label: button_label
+    button_url: button_url
+
+  wildlife_title: wildlife_title
+  wildlife_intro: wildlife_intro
+  wildlife:
+    field: wildlife
+    common_name: common_name
+    scientific_name: scientific_name
+    description: description
+    where_seen: where_seen
+    best_season: best_season
+    button_label: button_label
+    button_url: button_url
+
+  # Seasonal "what to see when" calendar (e.g. Santiago). period + optional
+  # label (Warm/Wet…) + highlights prose.
+  wildlife_calendar:
+    field: wildlife_calendar
+    period: period
+    label: label
+    highlights: highlights
+
+  travel_information:
+    field: travel_information
+    getting_there_title: getting_there_title
+    getting_there: getting_there
+    getting_there_button_label: getting_there_button_label
+    getting_there_button_url: getting_there_button_url
+    stay_visit_title: stay_visit_title
+    best_time: best_time
+    best_time_button_label: best_time_button_label
+    best_time_button_url: best_time_button_url
+    accommodation: accommodation
+    accommodation_button_label: accommodation_button_label
+    accommodation_button_url: accommodation_button_url
+
+  sources:
+    field: sources
+    label: label
+    url: url
+
+  related_links:
+    field: related_links
+    label: label
+    url: url
+    group: group
