@@ -284,6 +284,17 @@ from"**:
 Una fila sin grupo se pinta como columna sin título; nunca se inventa un
 encabezado, así que los nombres de grupo siempre se eligen a mano.
 
+**Cuidado con `{{WRAPPER}}`.** Elementor resuelve ese token sólo dentro de los
+`selectors` de un control. En el marcado que un widget *imprime* es texto y ya,
+así que un bloque `<style>` emitido con `{{WRAPPER}} .foo{…}` es CSS inválido y
+el navegador lo descarta — la página parece estilizada sólo porque los valores
+por defecto de los controles generan CSS real por detrás, y pierde el estilo en
+cuanto se quitan esos controles. Por eso este widget imprime su hoja de estilos
+una vez por petición, apoyada en sus propias clases `.irl-*` y sin token. La
+mayoría de los demás widgets de este archivo siguen emitiendo bloques con
+`{{WRAPPER}}` que nunca aplican; su aspecto sale de los valores por defecto de
+los controles.
+
 ## 12. Los 3 formatos de documento por dentro (contrato técnico)
 
 Cómo lee el motor cada formato. El lector correcto se elige por la extensión y por

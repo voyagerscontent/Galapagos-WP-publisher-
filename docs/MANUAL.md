@@ -281,6 +281,16 @@ from"**:
 A row with no group renders as an untitled column; no heading is ever invented,
 so group names are always chosen by hand.
 
+**Careful with `{{WRAPPER}}`.** Elementor resolves that token only inside a
+control's `selectors`. In markup a widget *prints* it is just text, so a
+`<style>` block echoed with `{{WRAPPER}} .foo{…}` is invalid CSS and the
+browser drops it — the page then looks styled only because the controls'
+defaults generate real CSS behind the scenes, and it loses its styling the
+moment those controls are removed. This widget therefore prints its stylesheet
+once per request, scoped to its own `.irl-*` classes and with no token. Most of
+the other widgets in this file still echo `{{WRAPPER}}` blocks that never
+apply; they get their look from control defaults instead.
+
 ## 12. The 3 document formats under the hood (technical contract)
 
 How the engine reads each format. The correct reader is chosen by the extension and

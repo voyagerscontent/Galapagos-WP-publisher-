@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.62
+ * Version:     0.4.63
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4013,6 +4013,62 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . '})();</script>';
         }
 
+        /**
+         * The widget's stylesheet, printed once per request.
+         *
+         * Deliberately NOT scoped per instance: this block has to look the same
+         * on every page, whether the page was laid out in Elementor or written
+         * by the publisher. (It also must not use Elementor's {{WRAPPER}} token
+         * — that is only resolved inside a control's `selectors`, never in
+         * printed output, where it is just invalid CSS.)
+         */
+        private function styles()
+        {
+            static $done = false;
+            if ($done) {
+                return '';
+            }
+            $done = true;
+            return '<style id="irl-css">
+              .irl-wrap{width:100%}
+              .irl-inner{margin:0 auto}
+              .irl-head{text-align:center}
+              .irl-orn{display:flex;align-items:center;justify-content:center;gap:26px;color:#f3ead9;margin-bottom:14px}
+              .irl-line{height:1px;flex:1;max-width:190px;background:rgba(243,234,217,.55)}
+              .irl-orn-i{display:inline-flex;line-height:1;font-size:30px}
+              .irl-orn-i svg{width:30px;height:30px;fill:currentColor}
+              .irl-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:30px;font-weight:400;color:#f7efe1}
+              .irl-intro{margin:0 auto 40px;max-width:760px;font-size:16px;line-height:1.6;color:#d9cebc}
+              .irl-cols{display:grid;grid-template-columns:repeat(var(--irl-cols,3),1fr);gap:34px 48px;align-items:start}
+              .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
+              .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
+              .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+              .irl-item{position:relative;padding-left:22px;font-size:15px;line-height:1.5}
+              .irl-item::before{content:"\203A";position:absolute;left:2px;top:-1px;color:#c9a97e;font-size:16px}
+              .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
+              .irl-item a:hover{color:#fff;text-decoration:underline}
+              .irl-ct-head{display:flex;align-items:center;gap:14px;position:relative;padding-bottom:14px;margin-bottom:18px}
+              .irl-ct-head::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
+              .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:32px;color:#f3ead9}
+              .irl-contact .irl-ct-i svg{width:32px;height:32px;fill:currentColor}
+              .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
+              .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
+              .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid rgba(201,169,126,.9);border-radius:4px;font-weight:600;font-size:15px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
+              .irl-ct-btn:hover{background:#c9a97e;border-color:#c9a97e;color:#3a2a1e}
+              .irl-ct-btn .irl-ct-arw{transition:transform .2s ease}
+              .irl-ct-btn:hover .irl-ct-arw{transform:translateX(3px)}
+              .irl-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
+              .irl-modal[hidden]{display:none}
+              .irl-modal-ov{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+              .irl-modal-box{position:relative;width:100%;max-width:540px;max-height:88vh;overflow:auto;background:#fff;color:#3a2a1e;border-radius:8px;padding:34px 30px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+              .irl-modal-h{margin:0 0 16px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#3a2a1e}
+              .irl-modal-x{position:absolute;top:8px;right:14px;width:auto;padding:4px;border:0;background:none;font-size:28px;line-height:1;color:#8a7a6a;cursor:pointer}
+              .irl-modal-x:hover{color:#3a2a1e}
+              @media(max-width:900px){.irl-cols{grid-template-columns:1fr 1fr}}
+              @media(max-width:600px){.irl-cols{grid-template-columns:1fr!important}.irl-line{max-width:90px}}
+            </style>';
+        }
+
         protected function render()
         {
             $s = $this->get_settings_for_display();
@@ -4032,44 +4088,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // Columns follow the content: one per link group, plus the contact card.
             $cols = max(1, min(4, $this->group_count($related) + ($has_contact ? 1 : 0)));
 
-            echo '<style>
-              {{WRAPPER}} .irl-wrap{width:100%}
-              {{WRAPPER}} .irl-inner{margin:0 auto}
-              {{WRAPPER}} .irl-head{text-align:center}
-              {{WRAPPER}} .irl-orn{display:flex;align-items:center;justify-content:center;gap:26px;color:#f3ead9;margin-bottom:14px}
-              {{WRAPPER}} .irl-line{height:1px;flex:1;max-width:190px;background:rgba(243,234,217,.55)}
-              {{WRAPPER}} .irl-orn-i{display:inline-flex;line-height:1;font-size:30px}
-              {{WRAPPER}} .irl-orn-i svg{width:30px;height:30px;fill:currentColor}
-              {{WRAPPER}} .irl-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:30px;font-weight:400;color:#f7efe1}
-              {{WRAPPER}} .irl-intro{margin:0 auto 40px;max-width:760px;font-size:16px;line-height:1.6;color:#d9cebc}
-              {{WRAPPER}} .irl-cols{display:grid;grid-template-columns:repeat(var(--irl-cols,3),1fr);gap:34px 48px;align-items:start}
-              {{WRAPPER}} .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
-              {{WRAPPER}} .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
-              {{WRAPPER}} .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-              {{WRAPPER}} .irl-item{position:relative;padding-left:22px;font-size:15px;line-height:1.5}
-              {{WRAPPER}} .irl-item::before{content:"\203A";position:absolute;left:2px;top:-1px;color:#c9a97e;font-size:16px}
-              {{WRAPPER}} .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
-              {{WRAPPER}} .irl-item a:hover{color:#fff;text-decoration:underline}
-              {{WRAPPER}} .irl-ct-head{display:flex;align-items:center;gap:14px;position:relative;padding-bottom:14px;margin-bottom:18px}
-              {{WRAPPER}} .irl-ct-head::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
-              {{WRAPPER}} .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:32px;color:#f3ead9}
-              {{WRAPPER}} .irl-contact .irl-ct-i svg{width:32px;height:32px;fill:currentColor}
-              {{WRAPPER}} .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
-              {{WRAPPER}} .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
-              {{WRAPPER}} .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid rgba(201,169,126,.9);border-radius:4px;font-weight:600;font-size:15px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
-              {{WRAPPER}} .irl-ct-btn:hover{background:#c9a97e;border-color:#c9a97e;color:#3a2a1e}
-              {{WRAPPER}} .irl-ct-btn .irl-ct-arw{transition:transform .2s ease}
-              {{WRAPPER}} .irl-ct-btn:hover .irl-ct-arw{transform:translateX(3px)}
-              {{WRAPPER}} .irl-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
-              {{WRAPPER}} .irl-modal[hidden]{display:none}
-              {{WRAPPER}} .irl-modal-ov{position:absolute;inset:0;background:rgba(0,0,0,.55)}
-              {{WRAPPER}} .irl-modal-box{position:relative;width:100%;max-width:540px;max-height:88vh;overflow:auto;background:#fff;color:#3a2a1e;border-radius:8px;padding:34px 30px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
-              {{WRAPPER}} .irl-modal-h{margin:0 0 16px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#3a2a1e}
-              {{WRAPPER}} .irl-modal-x{position:absolute;top:8px;right:14px;width:auto;padding:4px;border:0;background:none;font-size:28px;line-height:1;color:#8a7a6a;cursor:pointer}
-              {{WRAPPER}} .irl-modal-x:hover{color:#3a2a1e}
-              @media(max-width:900px){{{WRAPPER}} .irl-cols{grid-template-columns:1fr 1fr}}
-              @media(max-width:600px){{{WRAPPER}} .irl-cols{grid-template-columns:1fr!important}{{WRAPPER}} .irl-line{max-width:90px}}
-            </style>';
+            echo $this->styles();
 
             echo '<div class="irl-wrap"><div class="irl-inner">';
 
