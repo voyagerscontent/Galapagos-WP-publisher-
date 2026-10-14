@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.66
+ * Version:     0.4.67
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4081,20 +4081,20 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:30px;font-weight:400;color:#f7efe1}
               .irl-wrap .irl-intro{margin:0 auto 40px;max-width:760px;font-size:16px;line-height:1.6;color:#d9cebc}
               .irl-wrap .irl-cols{display:grid;grid-template-columns:repeat(var(--irl-cols,3),1fr);gap:34px 48px;align-items:start}
-              .irl-wrap .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
+              .irl-wrap .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#f7efe1}
               .irl-wrap .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
-              .irl-wrap .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-              .irl-wrap .irl-item{position:relative;padding-left:22px;font-size:15px;line-height:1.5}
-              .irl-wrap .irl-item::before{content:"\203A";position:absolute;left:2px;top:0;line-height:22px;color:#f3ead9;font-size:20px}
+              .irl-wrap .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+              .irl-wrap .irl-item{position:relative;padding-left:24px;font-size:17px;line-height:1.5}
+              .irl-wrap .irl-item::before{content:"\203A";position:absolute;left:2px;top:0;line-height:26px;color:#f3ead9;font-size:22px}
               .irl-wrap .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
               .irl-wrap .irl-item a:hover{color:#fff;text-decoration:underline}
               .irl-wrap .irl-ct-head{display:flex;align-items:center;gap:14px;position:relative;padding-bottom:14px;margin-bottom:18px}
               .irl-wrap .irl-ct-head::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
-              .irl-wrap .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:32px;color:#f3ead9}
-              .irl-wrap .irl-contact .irl-ct-i svg{width:32px;height:32px;fill:currentColor}
+              .irl-wrap .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:40px;color:#f3ead9}
+              .irl-wrap .irl-contact .irl-ct-i svg{width:40px;height:40px;fill:currentColor}
               .irl-wrap .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
               .irl-wrap .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
-              .irl-wrap .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid rgba(201,169,126,.9);border-radius:4px;font-weight:600;font-size:15px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
+              .irl-wrap .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid #f3ead9;border-radius:8px;font-weight:600;font-size:16px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
               .irl-wrap .irl-ct-btn:hover{background:#c9a97e;border-color:#c9a97e;color:#3a2a1e}
               .irl-wrap .irl-ct-btn .irl-ct-arw{display:inline-flex;align-items:center;line-height:1;transition:transform .2s ease}
               .irl-wrap .irl-ct-btn .irl-ct-arw svg{width:1em;height:1em;fill:currentColor}
