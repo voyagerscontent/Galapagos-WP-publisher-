@@ -261,6 +261,26 @@ Quick Facts, Visitor Sites, Wildlife, CTA, Related Links, and the Schema widget
 that prints the `seo_schema` field per page. The dimensional controls have a
 responsive version.
 
+### Related Links ("Explore More")
+
+This one is deliberately **not** styleable per page: typography, colours, the
+accent rule under every group heading, the chevrons and the column count are
+fixed in the widget's CSS so that every instance looks identical across the
+site. Only the outer container (background, padding, max width) stays
+adjustable. Columns follow the content — one per link group, plus the contact
+card when it is shown.
+
+Its links come from one of two places, chosen with **"Where the links come
+from"**:
+
+- **Automatic** (default) — reads the page's `related_links` ACF field, and
+  falls back to the widget's own **Manual links** list when the page has none.
+  That is what hand-built parent pages (which carry no ACF group) need.
+- **ACF field only** / **Manual list only** — force one source.
+
+A row with no group renders as an untitled column; no heading is ever invented,
+so group names are always chosen by hand.
+
 ## 12. The 3 document formats under the hood (technical contract)
 
 How the engine reads each format. The correct reader is chosen by the extension and

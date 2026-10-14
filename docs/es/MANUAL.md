@@ -263,6 +263,27 @@ Quick Facts, Visitor Sites, Wildlife, CTA, Related Links, y el widget de Schema
 que imprime el campo `seo_schema` por página. Los controles dimensionales tienen
 versión responsive.
 
+### Related Links ("Explore More")
+
+Este widget **a propósito no** se puede estilizar por página: la tipografía, los
+colores, la línea bajo cada título de grupo, los chevrones y el número de
+columnas están fijos en el CSS del widget para que todas las instancias se vean
+igual en todo el sitio. Sólo queda ajustable el contenedor exterior (fondo,
+padding, ancho máximo). Las columnas siguen al contenido — una por grupo de
+enlaces, más la tarjeta de contacto cuando se muestra.
+
+Sus enlaces salen de uno de dos sitios, que se elige en **"Where the links come
+from"**:
+
+- **Automatic** (por defecto) — lee el campo ACF `related_links` de la página y
+  cae a la lista **Manual links** del propio widget cuando la página no tiene
+  ninguno. Es lo que necesitan las páginas padre hechas a mano (que no llevan
+  grupo ACF).
+- **ACF field only** / **Manual list only** — fuerzan un origen concreto.
+
+Una fila sin grupo se pinta como columna sin título; nunca se inventa un
+encabezado, así que los nombres de grupo siempre se eligen a mano.
+
 ## 12. Los 3 formatos de documento por dentro (contrato técnico)
 
 Cómo lee el motor cada formato. El lector correcto se elige por la extensión y por
