@@ -3717,12 +3717,35 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         {
             /* ─── CONTENT ─── */
             $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
-            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
+            $this->add_control('source_mode', ['label' => 'Where the links come from', 'type' => \Elementor\Controls_Manager::SELECT,
+                'default' => 'auto',
+                'options' => [
+                    'auto' => 'Automatic (ACF field, else the manual list)',
+                    'acf' => 'ACF field only',
+                    'manual' => 'Manual list only',
+                ],
+                'description' => 'Automatic looks for the page\'s "related_links" ACF field. Pages published by the '
+                    . 'engine have it; hand-built parent pages usually do not, and fall back to the manual list below.']);
+            $this->add_control('source_id', ['label' => 'Read the ACF field from page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER,
+                'condition' => ['source_mode!' => 'manual']]);
+
+            $rep = new \Elementor\Repeater();
+            $rep->add_control('group', ['label' => 'Group (column heading)', 'type' => \Elementor\Controls_Manager::TEXT,
+                'label_block' => true, 'placeholder' => 'Wildlife Guides',
+                'description' => 'Rows sharing a group land in the same column, in this order. Leave blank for an untitled column — no heading is invented.']);
+            $rep->add_control('label', ['label' => 'Link text', 'type' => \Elementor\Controls_Manager::TEXT, 'label_block' => true]);
+            $rep->add_control('url', ['label' => 'URL', 'type' => \Elementor\Controls_Manager::URL,
+                'options' => false, 'placeholder' => 'https://galapagosislands.travel/…']);
+            $this->add_control('manual_links', ['label' => 'Manual links', 'type' => \Elementor\Controls_Manager::REPEATER,
+                'fields' => $rep->get_controls(), 'default' => [],
+                'title_field' => '{{{ group ? group + " — " : "" }}}{{{ label }}}',
+                'condition' => ['source_mode!' => 'acf']]);
+
             $this->add_control('hide_on_ids', ['label' => 'Hide on these page IDs', 'type' => \Elementor\Controls_Manager::TEXT,
-                'description' => 'Comma-separated. Leave blank to always show.']);
-            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '3', 'mobile_default' => '1',
-                'options' => ['1' => '1', '2' => '2', '3' => '3', '4' => '4'],
-                'selectors' => ['{{WRAPPER}} .irl-cols' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
+                'separator' => 'before', 'description' => 'Comma-separated. Leave blank to always show.']);
+            $this->add_control('nofollow', ['label' => 'rel="nofollow"', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+                'description' => 'Internal SEO links should usually NOT be nofollow.']);
+            $this->add_control('new_tab', ['label' => 'Open in new tab', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '']);
             $this->end_controls_section();
 
             /* ─── HEADER ─── */
@@ -3767,8 +3790,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'Used only when neither a shortcode nor a Popup ID is set.', 'condition' => ['show_contact' => 'yes']]);
             $this->end_controls_section();
 
-            /* ─── STYLE: layout ─── */
-            $this->start_controls_section('sl', ['label' => 'Layout & spacing', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            /* ─── STYLE: container only ───
+             * The design itself (typography, colours, the accent rule under every
+             * group heading, chevrons, column count) is fixed in render()'s CSS on
+             * purpose: every instance of this widget has to look identical across
+             * the site, so it is deliberately NOT exposed per page. Only the outer
+             * box stays adjustable. Values saved by older instances for the removed
+             * controls simply stop being emitted. */
+            $this->start_controls_section('sl', ['label' => 'Container', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('bg_color', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .irl-wrap' => 'background:{{VALUE}}']]);
             $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px', 'em', '%'],
@@ -3777,95 +3806,60 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('max_w', ['label' => 'Content max width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 600, 'max' => 1400]], 'default' => ['size' => 1120, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-inner' => 'max-width:{{SIZE}}{{UNIT}}']]);
-            $this->add_responsive_control('col_gap', ['label' => 'Column gap', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 0, 'max' => 120]], 'default' => ['size' => 48, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-cols' => 'column-gap:{{SIZE}}{{UNIT}}']]);
-            $this->add_responsive_control('row_gap', ['label' => 'Link row gap', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 0, 'max' => 30]], 'default' => ['size' => 10, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-group ul' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->end_controls_section();
+        }
 
-            /* ─── STYLE: ornament & header ─── */
-            $this->start_controls_section('sh', ['label' => 'Ornament & header', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('orn_color', ['label' => 'Ornament color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f3ead9',
-                'selectors' => ['{{WRAPPER}} .irl-orn' => 'color:{{VALUE}}']]);
-            $this->add_responsive_control('orn_size', ['label' => 'Ornament icon size', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 16, 'max' => 64]], 'default' => ['size' => 30, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-orn-i' => 'font-size:{{SIZE}}{{UNIT}}', '{{WRAPPER}} .irl-orn-i svg' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('orn_line', ['label' => 'Ornament line color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(243,234,217,.55)',
-                'selectors' => ['{{WRAPPER}} .irl-line' => 'background:{{VALUE}}']]);
-            $this->add_responsive_control('orn_line_thick', ['label' => 'Ornament line thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 1, 'max' => 8]], 'default' => ['size' => 1, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-line' => 'height:{{SIZE}}{{UNIT}}']]);
-            $this->add_responsive_control('orn_line_len', ['label' => 'Ornament line length', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 40, 'max' => 400]], 'default' => ['size' => 190, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-line' => 'max-width:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1', 'separator' => 'before',
-                'selectors' => ['{{WRAPPER}} .irl-h' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'h_typo', 'selector' => '{{WRAPPER}} .irl-h']);
-            $this->add_control('intro_color', ['label' => 'Intro color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#d9cebc', 'separator' => 'before',
-                'selectors' => ['{{WRAPPER}} .irl-intro' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'intro_typo', 'selector' => '{{WRAPPER}} .irl-intro']);
-            $this->end_controls_section();
+        /** Keep only rows that carry a label or a URL. */
+        private function clean($rows)
+        {
+            $out = [];
+            foreach ((array) $rows as $r) {
+                $row = [
+                    'group' => trim((string) ($r['group'] ?? '')),
+                    'label' => trim((string) ($r['label'] ?? '')),
+                    // ACF stores a plain string; the Elementor URL control an array.
+                    'url' => is_array($r['url'] ?? null) ? trim((string) ($r['url']['url'] ?? '')) : trim((string) ($r['url'] ?? '')),
+                ];
+                if ($row['label'] !== '' || $row['url'] !== '') {
+                    $out[] = $row;
+                }
+            }
+            return $out;
+        }
 
-            /* ─── STYLE: groups & links ─── */
-            $this->start_controls_section('sg', ['label' => 'Groups & links', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('gh_color', ['label' => 'Group heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1',
-                'selectors' => ['{{WRAPPER}} .irl-gh' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'gh_typo', 'selector' => '{{WRAPPER}} .irl-gh']);
-            $this->add_control('accent_color', ['label' => 'Heading underline accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.7)',
-                'selectors' => ['{{WRAPPER}} .irl-gh::after' => 'background:{{VALUE}}']]);
-            $this->add_responsive_control('accent_w', ['label' => 'Accent width', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 0, 'max' => 120]], 'default' => ['size' => 64, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-gh::after' => 'width:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('link_color', ['label' => 'Link color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ece2d1', 'separator' => 'before',
-                'selectors' => ['{{WRAPPER}} .irl-item a' => 'color:{{VALUE}}']]);
-            $this->add_control('link_hover', ['label' => 'Link hover color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#ffffff',
-                'selectors' => ['{{WRAPPER}} .irl-item a:hover' => 'color:{{VALUE}}']]);
-            $this->add_control('marker_color', ['label' => 'Chevron color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#c9a97e',
-                'selectors' => ['{{WRAPPER}} .irl-item::before' => 'color:{{VALUE}}']]);
-            $this->add_control('show_marker', ['label' => 'Show chevron', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
-                'selectors' => ['{{WRAPPER}} .irl-item::before' => 'content:"\203A"'], 'return_value' => 'yes']);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'link_typo', 'selector' => '{{WRAPPER}} .irl-item']);
-            $this->add_control('link_underline', ['label' => 'Underline links', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'hover',
-                'options' => ['none' => 'Never', 'hover' => 'On hover', 'always' => 'Always']]);
-            $this->add_control('nofollow', ['label' => 'rel="nofollow"', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'separator' => 'before',
-                'description' => 'Internal SEO links should usually NOT be nofollow.']);
-            $this->add_control('new_tab', ['label' => 'Open in new tab', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '']);
-            $this->end_controls_section();
+        /**
+         * Resolve the links for this instance. "auto" asks the page for its ACF
+         * `related_links` and falls back to the widget's own manual list when the
+         * page has none — which is what hand-built parent pages need.
+         */
+        private function rows($s, $pid)
+        {
+            $mode = $s['source_mode'] ?? 'auto';
+            $acf = [];
+            if ($mode !== 'manual' && function_exists('get_field')) {
+                $acf = $this->clean(get_field('related_links', $pid) ?: []);
+            }
+            if ($mode === 'acf') {
+                return $acf;
+            }
+            $manual = $this->clean($s['manual_links'] ?? []);
+            return ($mode === 'manual') ? $manual : ($acf ?: $manual);
+        }
 
-            /* ─── STYLE: contact card ─── */
-            $this->start_controls_section('sc', ['label' => 'Contact card style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
-                'condition' => ['show_contact' => 'yes']]);
-            $this->add_control('ct_icon_color', ['label' => 'Icon color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f3ead9',
-                'selectors' => ['{{WRAPPER}} .irl-ct-i' => 'color:{{VALUE}}']]);
-            $this->add_control('ct_title_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1',
-                'selectors' => ['{{WRAPPER}} .irl-ct-h' => 'color:{{VALUE}}']]);
-            $this->add_control('ct_text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#d9cebc',
-                'selectors' => ['{{WRAPPER}} .irl-ct-t' => 'color:{{VALUE}}']]);
-            $this->add_control('ct_accent_color', ['label' => 'Heading underline accent', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.7)',
-                'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'background:{{VALUE}}']]);
-            $this->add_responsive_control('ct_accent_w', ['label' => 'Accent width', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 0, 'max' => 160]], 'default' => ['size' => 64, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'width:{{SIZE}}{{UNIT}}']]);
-            $this->add_responsive_control('ct_accent_h', ['label' => 'Accent thickness', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 1, 'max' => 8]], 'default' => ['size' => 2, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-ct-head::after' => 'height:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('ct_btn_color', ['label' => 'Button text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#f7efe1',
-                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'color:{{VALUE}}']]);
-            $this->add_control('ct_btn_border', ['label' => 'Button border color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => 'rgba(201,169,126,.9)',
-                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-color:{{VALUE}}']]);
-            $this->add_responsive_control('ct_btn_bw', ['label' => 'Button border width', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 0, 'max' => 4]], 'default' => ['size' => 1.5, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-width:{{SIZE}}{{UNIT}}']]);
-            $this->add_responsive_control('ct_btn_radius', ['label' => 'Button radius', 'type' => \Elementor\Controls_Manager::SLIDER,
-                'range' => ['px' => ['min' => 0, 'max' => 40]], 'default' => ['size' => 4, 'unit' => 'px'],
-                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'border-radius:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('ct_btn_hover', ['label' => 'Button hover text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a2a1e',
-                'selectors' => ['{{WRAPPER}} .irl-ct-btn:hover' => 'color:{{VALUE}}']]);
-            $this->add_control('ct_btn_hover_bg', ['label' => 'Button hover background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#c9a97e',
-                'selectors' => ['{{WRAPPER}} .irl-ct-btn:hover' => 'background:{{VALUE}};border-color:{{VALUE}}']]);
-            $this->end_controls_section();
+        /** How many link columns the rows produce (grouped rows → one per group). */
+        private function group_count($rows)
+        {
+            if (!$rows) {
+                return 0;
+            }
+            if (!$this->has_groups($rows)) {
+                return 1;
+            }
+            $seen = [];
+            foreach ($rows as $r) {
+                $seen[(string) ($r['group'] ?? '')] = true;
+            }
+            return count($seen);
         }
 
         private function has_groups($rows)
@@ -4020,9 +4014,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
         protected function render()
         {
-            if (!function_exists('get_field')) {
-                return;
-            }
             $s = $this->get_settings_for_display();
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : (int) get_the_ID();
 
@@ -4031,18 +4022,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
 
-            $related = get_field('related_links', $pid) ?: [];
-            $related = array_values(array_filter((array) $related, function ($r) {
-                return trim((string) ($r['label'] ?? '')) !== '' || trim((string) ($r['url'] ?? '')) !== '';
-            }));
+            $related = $this->rows($s, $pid);
             $has_contact = (($s['show_contact'] ?? '') === 'yes');
             if (!$related && !$has_contact) {
                 return;
             }
 
-            $ul = $s['link_underline'] ?? 'hover';
-            $ul_base = ($ul === 'always') ? 'underline' : 'none';
-            $ul_hover = ($ul === 'none') ? 'none' : 'underline';
+            // Columns follow the content: one per link group, plus the contact card.
+            $cols = max(1, min(4, $this->group_count($related) + ($has_contact ? 1 : 0)));
 
             echo '<style>
               {{WRAPPER}} .irl-wrap{width:100%}
@@ -4054,16 +4041,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .irl-orn-i svg{width:30px;height:30px;fill:currentColor}
               {{WRAPPER}} .irl-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:30px;font-weight:400;color:#f7efe1}
               {{WRAPPER}} .irl-intro{margin:0 auto 40px;max-width:760px;font-size:16px;line-height:1.6;color:#d9cebc}
-              {{WRAPPER}} .irl-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:34px 48px;align-items:start}
+              {{WRAPPER}} .irl-cols{display:grid;grid-template-columns:repeat(var(--irl-cols,3),1fr);gap:34px 48px;align-items:start}
               {{WRAPPER}} .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
-              {{WRAPPER}} .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:rgba(201,169,126,.7)}
+              {{WRAPPER}} .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
               {{WRAPPER}} .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
               {{WRAPPER}} .irl-item{position:relative;padding-left:22px;font-size:15px;line-height:1.5}
               {{WRAPPER}} .irl-item::before{content:"\203A";position:absolute;left:2px;top:-1px;color:#c9a97e;font-size:16px}
-              {{WRAPPER}} .irl-item a{color:#ece2d1;text-decoration:' . $ul_base . ';transition:color .18s ease}
-              {{WRAPPER}} .irl-item a:hover{color:#fff;text-decoration:' . $ul_hover . '}
+              {{WRAPPER}} .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
+              {{WRAPPER}} .irl-item a:hover{color:#fff;text-decoration:underline}
               {{WRAPPER}} .irl-ct-head{display:flex;align-items:center;gap:14px;position:relative;padding-bottom:14px;margin-bottom:18px}
-              {{WRAPPER}} .irl-ct-head::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:rgba(201,169,126,.7)}
+              {{WRAPPER}} .irl-ct-head::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
               {{WRAPPER}} .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:32px;color:#f3ead9}
               {{WRAPPER}} .irl-contact .irl-ct-i svg{width:32px;height:32px;fill:currentColor}
               {{WRAPPER}} .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
@@ -4106,7 +4093,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div>';
             }
 
-            echo '<div class="irl-cols">';
+            echo '<div class="irl-cols" style="--irl-cols:' . (int) $cols . '">';
             if ($related) {
                 $this->columns($related, $s);
             }
