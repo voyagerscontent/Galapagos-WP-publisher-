@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 
 from ..models import BlockType, ContentBlock, Document, Section
-from ..utils import to_slug
+from ..utils import section_slug, to_slug
 
 _KV = re.compile(r"^([A-Za-z][\w /\-]{1,34}):\s*(.+)$")
 _PLACEHOLDER = re.compile(r"^\[\s*(PHOTO|INFOGRAPHIC)\s+PLACEHOLDER\s*[—\-:]\s*(.+?)\s*\]$", re.I)
@@ -213,7 +213,11 @@ def _parse_header(texts: list[str], meta: dict) -> tuple[int, str]:
 
 def _store_header_kv(key: str, value: str, meta: dict) -> None:
     if key == "slug":
-        meta["slug"] = to_slug(value.strip("/").split("/")[-1])
+        segs = [s for s in value.strip("/").split("/") if s]
+        if segs:
+            meta["slug"] = to_slug(segs[-1])
+            if len(segs) > 1:
+                meta["url_section"] = segs[0]
     elif key == "page type":
         meta["page_type"] = value
     elif key == "author":
@@ -268,6 +272,439 @@ def _is_heading(line: str) -> bool:
     if len(line) > 72:
         return False
     return len(line.split()) <= 9
+
+
+# --------------------------------------------------------------------------- #
+# Stage-8 "CMS-READY ANNOTATED" docs. A newer house format than the one above:
+# a `<domain> | CMS Stage 8 | <name> | vN` banner, `[AIO BLOCK …]` markers, data
+# tables, and a large trailing block of pipeline/audit logs that must be dropped.
+# Parsed into the same Document shape the HTML reader produces (geo_answer,
+# feature sections with HTML tables, faqs, cta_blocks, sources).
+# --------------------------------------------------------------------------- #
+_STAGE8_BANNER = re.compile(r"\bCMS\s+Stage\s+\d+\b", re.I)
+_BRACKET_MARK = re.compile(r"^\[.*\]$")  # a whole-line [AIO BLOCK …] / [PHOTO …]
+_INLINE_BRACKET = re.compile(r"\[[^\]]*\]")  # inline [source: …] / [VERIFY …] tags
+_SOURCE_URL = re.compile(r"^(.*?)\s+[—–-]\s+(https?://\S+)\s*$")
+_META_TITLE = re.compile(r"^Meta Title\s*\(", re.I)  # "Meta Title (53 characters):"
+_META_DESC = re.compile(r"^Meta Description\s*\(", re.I)
+# Known Stage-8 header KV labels. Only these are consumed as header metadata; any
+# other "X: Y" line (e.g. the H1 "Bartolomé Island: Pinnacle Rock…") is content.
+_STAGE8_HEADER_KEYS = {
+    "slug", "page type", "primary cta", "secondary cta", "trade cta",
+    "objections", "objections pre-empted", "schema", "aio blocks", "publisher",
+    "persona", "funnel", "canonical url", "canonical", "author", "website",
+}
+# Everything from here on is internal pipeline/audit scaffold — never published.
+_STAGE8_JUNK = re.compile(
+    r"^(VERIFY Summary|Open \[VERIFY\]|WF\d|WF5|WF6|WF7|Pipeline complete|"
+    r"Logged by WF|Files Produced|Audit date|Part [A-G]\b|AUDITOR|"
+    r"Meta Title & Meta Description)",
+    re.I,
+)
+
+
+# The AIO marker (used to ROUTE a doc to the Stage-8 adapter) — kept strict so it
+# doesn't fire on table-based species docs that merely have a "GEO ANSWER" line:
+#   "[AIO BLOCK 1 — speakable]"      (Bartolomé — answer on the next line)
+#   "AIO SUMMARY BLOCK (≤50 …): …"   (Darwin — answer after the colon)
+#   "AIO/GEO SUMMARY: …"             (Shark — answer after the colon)
+_AIO_MARK = re.compile(r"\bAIO\b[\s/A-Za-z]{0,12}\b(?:BLOCK|SUMMARY)\b", re.I)
+_AIO_SUMMARY = re.compile(r"^AIO\b[\s/A-Za-z]{0,12}(?:BLOCK|SUMMARY)\b[^:]*:\s*(.+)$", re.I)
+# The broader "answer box" family — used ONLY to pull the geo answer out of the raw
+# header text (never for routing), so it also matches "GEO ANSWER BLOCK".
+_ANSWER_MARK = re.compile(r"^\W*(?:AIO|GEO)\b[\s/A-Za-z]{0,15}\b(?:BLOCK|SUMMARY|ANSWER)\b", re.I)
+_ANSWER_INLINE = re.compile(
+    r"^\W*(?:AIO|GEO)\b[\s/A-Za-z]{0,15}(?:BLOCK|SUMMARY|ANSWER)\b[^:]*:\s*(.+)$", re.I
+)
+# Internal scaffold lines in the header block — never the page title/content.
+_SCAFFOLD_RE = re.compile(
+    r"^(?:■|▪|□|▶|●)|^INTERNAL\b|^JSON-?LD\b|^ENTITY RULES\b|^PUBLISH URL\b|"
+    r"PUBLISHER HEADER BLOCK|NOT PUBLISHED|^SITE\b|^TIER\b|^ROBOTS\b",
+    re.I,
+)
+
+
+def _is_scaffold_line(line: str) -> bool:
+    return bool(_SCAFFOLD_RE.search(line.strip()))
+
+
+def looks_like_stage8(texts: list[str]) -> bool:
+    banner = _STAGE8_BANNER.search(texts[0]) if texts else None
+    has_aio = any(_AIO_MARK.search(t) for t in texts[:60])
+    return bool(banner) and has_aio
+
+
+def looks_like_stage8_fulltext(full_text: str) -> bool:
+    """Detect a Stage-8 doc from the RAW text (text boxes included). Some docs put
+    the whole header block in a text box that python-docx's ``.paragraphs`` skips,
+    so ``looks_like_stage8`` (which sees only paragraphs) would miss them."""
+    ft = full_text or ""
+    return bool(_STAGE8_BANNER.search(ft)) and bool(_AIO_MARK.search(ft))
+
+
+def scan_stage8_fulltext(full_text: str, meta: dict) -> None:
+    """Pull header metadata (slug/url_section/page type/author/geo) from the raw
+    doc text, so a header authored in a text box (or a doc that skipped the Stage-8
+    adapter) still routes the page and gets its geo answer. setdefault semantics —
+    anything already parsed from the in-stream header wins."""
+    lines = [ln.strip() for ln in (full_text or "").splitlines()]
+    for i, line in enumerate(lines):
+        if not line:
+            continue
+        m = _KV.match(line)
+        if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
+            _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
+        if meta.get("geo_answer"):
+            continue
+        inline = _ANSWER_INLINE.match(line)
+        if inline:
+            meta["geo_answer"] = f"<p>{_esc(_strip_tags(inline.group(1).strip()))}</p>"
+        elif _ANSWER_MARK.match(line):
+            # marker line with the answer on the following non-empty line(s)
+            for nxt in lines[i + 1:i + 4]:
+                if nxt and not _ANSWER_MARK.match(nxt) and not _KV.match(nxt):
+                    meta["geo_answer"] = f"<p>{_esc(_strip_tags(nxt))}</p>"
+                    break
+
+
+def _esc(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _table_html(rows: list[list[str]]) -> str:
+    rows = [[c.strip() for c in r] for r in rows if any(c.strip() for c in r)]
+    if not rows:
+        return ""
+    head, *body = rows
+    out = ["<table><thead><tr>"]
+    out += [f"<th>{_esc(c)}</th>" for c in head]
+    out.append("</tr></thead><tbody>")
+    for r in body:
+        out.append("<tr>" + "".join(f"<td>{_esc(c)}</td>" for c in r) + "</tr>")
+    out.append("</tbody></table>")
+    return "".join(out)
+
+
+def _stage8_scan_meta(texts: list[str], meta: dict) -> None:
+    """Pull the curated Meta Title / Meta Description out of the trailing block."""
+    for i, t in enumerate(texts):
+        line = t.strip()
+        if _META_TITLE.match(line) and i + 1 < len(texts):
+            val = texts[i + 1].strip()
+            if val:
+                meta.setdefault("seo_title", val)
+        elif _META_DESC.match(line) and i + 1 < len(texts):
+            val = texts[i + 1].strip()
+            if val:
+                meta.setdefault("meta_description", val)
+
+
+def build_cms_stage8_document(items: list, texts: list[str], source_name: str) -> Document:
+    """``items`` is an ordered list of ('p', text) / ('table', rows) blocks."""
+    doc = Document(source_name=source_name, source_kind="docx")
+    meta = doc.metadata
+    warnings: list[str] = []
+
+    idx, title = _stage8_header(items, meta)
+    doc.title = title or source_name
+    _stage8_scan_meta(texts, meta)
+
+    sections: list[Section] = []
+    faq_pairs: list[tuple[str, str]] = []
+    cta_blocks: list[dict] = []
+    sources: list[dict] = []
+    cur_title, cur_slug, buf = "", "_lead", []
+    mode = "body"  # body | faq | sources | cta
+    expect_geo = False
+
+    def flush() -> None:
+        html = "".join(buf).strip()
+        if html or cur_title:
+            blocks = [ContentBlock(type=BlockType.HTML, html=html)] if html else []
+            sections.append(Section(title=cur_title, level=2, slug=cur_slug, blocks=blocks))
+        buf.clear()
+
+    # Bold section titles carry a font size (H2 bigger than H3). The largest size
+    # among body headings is the top level; smaller bold headings are subsections
+    # that nest INSIDE the current section instead of starting a new one. When no
+    # size data is present (e.g. hand-built test items) every heading stays level 2.
+    _head_sizes = [
+        s for k, v, b, s in (_kind_val_bold(it) for it in items[idx:])
+        if k == "p" and b and s and (_is_heading(_strip_marks(str(v))) or _is_bold_heading(_strip_marks(str(v))))
+    ]
+    h2_size = max(_head_sizes) if _head_sizes else None
+
+    for item in items[idx:]:
+        kind, val, bold, size = _kind_val_bold(item)
+        if kind == "table":
+            if mode == "cta":
+                cta_blocks.extend(_stage8_cta_from_table(val, meta))
+            elif val and len(val) == 1 and len(val[0]) == 1:
+                buf.append(f"<p>{_esc(val[0][0].strip())}</p>")  # 1x1 -> prose
+            else:
+                buf.append(_table_html(val))
+            continue
+
+        line = str(val).strip()
+        if not line:
+            continue
+        if _STAGE8_JUNK.match(line):
+            break  # trailing pipeline/audit scaffold — stop here
+
+        # Inline AIO summary: "AIO SUMMARY BLOCK (…): <answer>" -> geo_answer.
+        m_sum = _AIO_SUMMARY.match(line)
+        if m_sum:
+            meta.setdefault("geo_answer", f"<p>{_esc(_strip_tags(m_sum.group(1).strip()))}</p>")
+            continue
+
+        # The speakable answer box: the paragraph right after the AIO-1 marker.
+        if expect_geo and not _BRACKET_MARK.match(line):
+            meta.setdefault("geo_answer", f"<p>{_esc(_strip_tags(line))}</p>")
+            expect_geo = False
+            continue
+        if re.match(r"^\[\s*AIO BLOCK 1\b", line, re.I) and "speakable" in line.lower():
+            expect_geo = True
+            continue
+        if _BRACKET_MARK.match(line):
+            continue  # drop [AIO BLOCK …] / [PHOTO/INFOGRAPHIC PLACEHOLDER …]
+
+        # Byline -> author.
+        by = re.match(r"^([A-ZÁ-Ú][\w'’.-]+(?: [A-ZÁ-Ú][\w'’.-]+)+),\s", line)
+        if by and not meta.get("author") and (
+            "contributor" in line.lower() or "naturalist" in line.lower() or "expert" in line.lower()
+        ):
+            meta["author"] = by.group(1).strip()
+            continue
+
+        # Once in the sources block (the last real section), every line is a
+        # citation — don't let a URL line be mistaken for a new heading.
+        if mode == "sources":
+            src = _stage8_source(line)
+            if src:
+                sources.append(src)
+            continue
+
+        stripped = _strip_marks(line)
+        in_faq = mode == "faq"
+        heading = _is_heading(stripped) or (bold and _is_bold_heading(stripped, in_faq=in_faq))
+        if heading:
+            h = _strip_marks(line)
+            low = h.lower()
+            if low.startswith("faq") or "frequently asked" in low:
+                flush()
+                mode = "faq"
+                continue
+            if low.startswith("sources") or low.startswith("citations"):
+                flush()
+                mode = "sources"
+                continue
+            if low.startswith("plan your") or "talk to" in low:
+                flush()
+                mode = "cta"
+                cur_title, cur_slug = h, section_slug(h)
+                continue
+            # Subsection (smaller bold heading): nest it INSIDE the current section
+            # as an <h3> instead of starting a new feature section — so e.g. "What
+            # Darwin Actually Did" stays under "The Misconception: …".
+            is_sub = bold and size and h2_size and size < h2_size
+            if is_sub and (cur_title or "".join(buf).strip()) and mode == "body":
+                buf.append(f"<h3>{_esc(h)}</h3>")
+                continue
+            # A normal (top-level) section heading (skip a duplicate of the current).
+            new_slug = section_slug(h)
+            if not (new_slug == cur_slug and not "".join(buf).strip()):
+                flush()
+                cur_title, cur_slug = h, new_slug
+            mode = "body"
+            continue
+
+        # FAQ question / answer pairs.
+        if mode == "faq":
+            if line.endswith("?"):
+                faq_pairs.append((_strip_tags(line), ""))
+            elif faq_pairs:
+                q, a = faq_pairs[-1]
+                faq_pairs[-1] = (q, (a + " " + _strip_tags(line)).strip())
+            continue
+        # Body / cta prose.
+        prose = _strip_tags(line)
+        for m in _INLINE_BRACKET.finditer(line):
+            if "verify" in m.group(0).lower():
+                warnings.append("VERIFY: " + m.group(0).strip("[] "))
+        if prose:
+            buf.append(f"<p>{_esc(prose)}</p>")
+
+    flush()
+    doc.sections = [s for s in sections if s.blocks or s.slug == "faq"]
+    if faq_pairs:
+        faq = Section(title="FAQ", slug="faq", level=2)
+        for q, a in faq_pairs:
+            faq.blocks.append(ContentBlock(type=BlockType.HEADING, text=q, level=3))
+            faq.blocks.append(ContentBlock(type=BlockType.PARAGRAPH, text=a))
+        doc.sections.append(faq)
+
+    if cta_blocks:
+        meta["cta_blocks"] = cta_blocks
+    if sources:
+        meta["sources"] = sources
+    meta.setdefault("type", _map_page_type(meta.get("page_type", "")))
+    meta.setdefault("status", "draft")
+    if warnings:
+        meta["_ingest_warnings"] = warnings
+    return doc
+
+
+def _kind_val_bold(item) -> tuple[str, object, bool, float | None]:
+    """Unpack an ordered block tolerantly:
+    ('p', text[, bold[, size_pt]]) / ('table', rows). Older 2-tuples (tests) and
+    3-tuples still work — missing bold is False, missing size is None."""
+    kind = item[0]
+    val = item[1] if len(item) > 1 else ""
+    bold = bool(item[2]) if len(item) > 2 else False
+    size = item[3] if len(item) > 3 else None
+    return kind, val, bold, size
+
+
+def _apply_header_kv(key: str, value: str, meta: dict) -> None:
+    """Store a known header KV. Routing keys (slug/url) win over content."""
+    if key == "slug":
+        segs = [s for s in value.strip("/").split("/") if s]
+        if segs:
+            meta.setdefault("slug", to_slug(segs[-1]))
+            if len(segs) > 1:
+                meta.setdefault("url_section", segs[0])  # /wildlife/darwin-finches/ -> wildlife
+    elif key in ("canonical url", "canonical"):
+        tail = value.split("://", 1)[-1]
+        segs = [s for s in tail.split("/")[1:] if s]  # drop the domain
+        if segs:
+            meta.setdefault("slug", to_slug(segs[-1]))
+            if len(segs) > 1:
+                meta.setdefault("url_section", segs[0])
+    elif key == "page type":
+        meta.setdefault("page_type", value.split("|")[0].strip())
+    elif key == "primary cta":
+        meta.setdefault("primary_cta", value.split("|")[0].strip())
+    elif key == "author":
+        meta.setdefault("author", value.split(",")[0].strip())
+
+
+def _stage8_header(items: list, meta: dict) -> tuple[int, str]:
+    """Consume the header block and return ``(body_start, title)``.
+
+    The body starts at the first AIO marker; everything before it is header —
+    banner, KV lines (some docs wrap them in a large "PUBLISHER HEADER BLOCK" with
+    JSON-LD, internal links and entity rules) and the H1 title. The title is the
+    last bold, non-scaffold line before the AIO marker; when bold data is absent
+    (e.g. hand-built test items) it falls back to the last non-banner / non-KV /
+    non-scaffold line.
+    """
+    aio_idx = None
+    for i, item in enumerate(items):
+        kind, val, _, _ = _kind_val_bold(item)
+        if kind == "p" and _AIO_MARK.search(str(val)):
+            aio_idx = i
+            break
+
+    if aio_idx is not None:
+        # Header is in-stream (banner / KV / H1) and ends at the AIO marker.
+        bold_title = ""
+        plain_title = ""
+        for i in range(aio_idx):
+            kind, val, bold, _ = _kind_val_bold(items[i])
+            if kind == "table":
+                continue
+            line = str(val).strip()
+            if not line or _STAGE8_BANNER.search(line):
+                continue
+            m = _KV.match(line)
+            if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
+                _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
+                continue
+            if _is_scaffold_line(line):
+                continue
+            plain_title = line          # last non-scaffold content line (fallback)
+            if bold:
+                bold_title = line       # last bold non-scaffold line (preferred H1)
+        return aio_idx, (bold_title or plain_title)
+
+    # No AIO marker in the paragraph stream: the Stage-8 header was authored in a
+    # text box that python-docx's .paragraphs skips (its slug/AIO/etc. are scanned
+    # from the raw text via scan_stage8_fulltext). Here the first real content line
+    # is the H1; the body starts right after it.
+    for i, item in enumerate(items):
+        kind, val, _, _ = _kind_val_bold(item)
+        if kind == "table":
+            continue
+        line = str(val).strip()
+        if not line or _STAGE8_BANNER.search(line) or _is_scaffold_line(line):
+            continue
+        m = _KV.match(line)
+        if m and m.group(1).strip().lower() in _STAGE8_HEADER_KEYS:
+            _apply_header_kv(m.group(1).strip().lower(), m.group(2).strip(), meta)
+            continue
+        return i + 1, line
+    return 0, ""
+
+
+def _is_bold_heading(line: str, *, in_faq: bool = False) -> bool:
+    """A bold paragraph that reads as a section title (used when the text-length
+    heuristic in ``_is_heading`` is too strict — e.g. a long title with a colon).
+
+    Inside a FAQ block a bold '…?' line is a question, not a heading, so it is
+    rejected there; in the body a '…?' heading (e.g. 'How Did This Happen?') is
+    allowed.
+    """
+    line = line.strip()
+    if not line or line[0] not in _UPPER:
+        return False
+    if line.endswith((".", ",", ";")):   # a sentence, not a heading
+        return False
+    if in_faq and line.endswith("?"):     # a FAQ question, not a section heading
+        return False
+    if line.startswith("[") or line.lower().startswith("www."):
+        return False
+    if len(line) > 100:
+        return False
+    return len(line.split()) <= 16
+
+
+def _stage8_cta_from_table(rows: list[list[str]], meta: dict) -> list[dict]:
+    rows = [[c.strip() for c in r] for r in rows if any(c.strip() for c in r)]
+    if not rows:
+        return []
+    header = [c.lower() for c in rows[0]]
+    values = rows[1] if len(rows) > 1 else rows[0]
+    out = []
+    for i, cell in enumerate(values):
+        col = header[i] if i < len(header) else ""
+        aud = "Travel trade" if ("trade" in col or "dmc" in col) else "Direct travelers"
+        text = _strip_tags(cell)
+        if text:
+            row = {"audience": aud, "text": text}
+            if aud == "Direct travelers" and meta.get("primary_cta"):
+                row["button_label"] = meta["primary_cta"]
+            out.append(row)
+    return out
+
+
+def _stage8_source(line: str) -> dict | None:
+    line = _strip_tags(line).strip(" .")
+    if not line or ".md" in line.lower() or ".csv" in line.lower() or "internal" in line.lower():
+        return None  # internal source-of-truth files are not public citations
+    m = _SOURCE_URL.match(line)
+    if m:
+        return {"label": m.group(1).strip(" —–-"), "url": m.group(2).strip()}
+    return {"label": line, "url": ""}
+
+
+def _strip_marks(line: str) -> str:
+    """Remove a trailing bracket marker from a heading, e.g. 'KEY TAKEAWAYS [AIO BLOCK 4]'."""
+    return re.sub(r"\s*\[[^\]]*\]\s*$", "", line).strip()
+
+
+def _strip_tags(line: str) -> str:
+    """Strip inline [source: …] / [VERIFY …] / [Citation] tags from prose."""
+    return re.sub(r"\s{2,}", " ", _INLINE_BRACKET.sub("", line)).strip()
 
 
 def _map_page_type(page_type: str) -> str:

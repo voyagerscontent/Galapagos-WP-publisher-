@@ -32,8 +32,13 @@ seo:
   title_max: 60
   meta_description_max: 156
   meta_description_min: 70
-  # Yoast / RankMath meta keys are written if the plugin is detected.
-  seo_plugin: "auto"   # auto | yoast | rankmath | none
+  # Which SEO plugin's meta keys to write (title / description / focus keyword).
+  # Pinned to rankmath: the site standardized on Rank Math, so the engine always
+  # targets rank_math_* — even during a Yoast->Rank Math migration window when both
+  # plugins are briefly active (auto-detect would pick Yoast first). The page's
+  # JSON-LD schema is unaffected: it is always delivered via the `seo_schema` ACF
+  # field / "Island Schema" widget, so Rank Math's own schema must stay OFF.
+  seo_plugin: "rankmath"   # auto | yoast | rankmath | none
 
 media:
   # Default behavior when a template needs an image and none is supplied.
@@ -48,3 +53,31 @@ defaults:
   status: "draft"          # draft | pending | publish
   comment_status: "closed"
   ping_status: "closed"
+  # This site publishes PAGES. Force every upload to a WordPress page unless the
+  # doc explicitly declares its own `post_type` — so a doc the heuristic routes
+  # to a post-typed profile (tour/cruise/blog_post) still lands as a page, not a
+  # post. Set to "" to fall back to each template's own post_type.
+  post_type: "page"
+
+routing:
+  # Auto page-type by the canonical URL's first path segment. Leave the CLI
+  # --page-type (and the doc's "Type:" line) blank to use this, so a doc is
+  # placed by WHERE it lives, not by a hand-picked flag. Each type carries its
+  # own parent + ACF group (see templates/*.yaml). Add a segment here when a new
+  # section gets its own template.
+  #   /planning/…  -> informative     (no parent, Informative Page group)
+  #   /wildlife/…  -> wildlife_single (parent Wildlife, Wildlife Single group)
+  #   /islands/…   -> destination     (parent Islands, Island Guide group)
+  #   /cruises/…   -> informative     (temporary: no cruise template/group yet)
+  url_sections:
+    planning: informative
+    wildlife: wildlife_single
+    islands: destination
+    cruises: informative
+    galapagos-cruises: informative
+  # Fallback page-type when a doc declares no type, matches no URL section, and
+  # scores no strong heuristic signal. This site publishes PAGES, so undetected
+  # docs default to `informative` (post_type: page) instead of the engine's
+  # built-in `blog_post` (post_type: post) — otherwise a plain guide uploaded
+  # via the n8n form would land as a WordPress post, not a page.
+  default_type: informative

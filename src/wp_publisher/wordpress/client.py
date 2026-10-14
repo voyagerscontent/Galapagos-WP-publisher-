@@ -132,6 +132,14 @@ class WordPressClient:
         )
         return results[0] if results else None
 
+    def get_post(self, post_type: str, post_id: int, context: str = "edit") -> dict[str, Any]:
+        """Fetch a single post with full field data. ``context=edit`` is what
+        makes ACF return every sub-field (repeater images/icons), which the
+        list endpoint used by ``find_post_by_slug`` can omit — needed so a
+        republish can carry over editor-uploaded media instead of wiping it."""
+        endpoint = self._post_endpoint(post_type)
+        return self._request("GET", f"{endpoint}/{post_id}", params={"context": context})
+
     @staticmethod
     def _post_endpoint(post_type: str) -> str:
         if post_type in ("post", "posts"):

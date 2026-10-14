@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────
+# ACF profile: INFORMATIVE  →  the generic "Informative Page" group
+# (group_informative). Selected by templates that declare
+# `acf_profile: informative` (the `informative` page type).
+#
+# SEPARATE from island / wildlife: it targets group_informative's field NAMES
+# (which are shared with the widgets) but writes only to pages that carry the
+# "Informative Page" page template, so island/wildlife pages are never touched.
+#
+# The hero block is deliberately omitted — informative heroes are built by hand
+# in Elementor, not populated from the doc. Page-specific schema lands in
+# `seo_schema` and is printed by the "Island Schema" widget.
+# Field names on the right must match the ACF group; group needs Show in REST.
+# ─────────────────────────────────────────────────────────────
+
+mode: island
+image_as: id
+
+top_level:
+  schema_jsonld: seo_schema
+
+island:
+  # Hero is built manually in Elementor, so the IMAGE, subtitle and page_icon
+  # are left for the editor. Only the two text fields the doc reliably provides
+  # are extracted: hero_title (the document title) and hero_image_alt (written
+  # ONLY when the doc actually carries alt text — empty values are never set).
+  hero:
+    title: hero_title
+    image_alt: hero_image_alt
+
+  author: author
+  geo_answer: geo_answer
+  intro: intro
+
+  feature_sections:
+    field: feature_sections
+    title: title
+    subtitle: subtitle
+    content: content
+    button_label: button_label
+    button_url: button_url
+
+  faqs:
+    field: faqs
+    question: question
+    answer: answer
+
+  # "Plan Your Trip" heading + intro that sit above the CTA blocks.
+  cta_title: cta_title
+  cta_intro: cta_intro
+  cta:
+    field: cta
+    audience: audience
+    title: title
+    text: text
+    button_label: button_label
+    button_url: button_url
+
+  related_links:
+    field: related_links
+    label: label
+    url: url
+    group: group

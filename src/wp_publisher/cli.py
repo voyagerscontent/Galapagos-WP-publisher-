@@ -26,6 +26,7 @@ from .ingest import read_file
 from .models import Document
 from .pipeline import BuildContext, build_page
 from .rendering.template import load_registry
+from .utils import to_slug as _slugify
 from .wordpress.client import WordPressClient
 from .wordpress.publisher import publish_page
 
@@ -93,6 +94,50 @@ def _build(
     return page, template, reason, client, settings
 
 
+def _apply_slug(page, slug: Optional[str], test: bool) -> None:
+    """Override and/or test-suffix the page slug in place.
+
+    `--slug` replaces the doc-derived slug; `--test` appends `-test` so a build
+    lands on an isolated page that never collides with the real one.
+    """
+    if slug:
+        page.slug = _slugify(slug)
+    if test and not page.slug.endswith("-test"):
+        page.slug = f"{page.slug}-test"
+
+
+def _fix_schema_url(page, settings) -> None:
+    """Point the schema's page URL at the REAL published URL.
+
+    The JSON-LD is built before the slug is finalized, so its page ``url`` /
+    ``mainEntityOfPage`` used the title-derived slug and omitted the parent path
+    (e.g. ``…/santa-cruz-island-the-complete…/`` instead of ``…/islands/santa-
+    cruz/``). Rebuild it from ``wp_base_url`` + the page's parent path + the final
+    slug, then re-serialize the schema ACF field so it matches the live page.
+    """
+    base = (settings.wp_base_url or "").rstrip("/")
+    graph = page.json_ld.get("@graph") if isinstance(page.json_ld, dict) else None
+    if not base or not graph or not isinstance(page.acf, dict):
+        return
+    old_str = json.dumps(page.json_ld, ensure_ascii=False, separators=(",", ":"))
+    parent = (page.parent_slug or "").strip("/")
+    path = f"{parent}/{page.slug}" if parent else page.slug
+    url = f"{base}/{path}/"
+    main = graph[0]
+    if main.get("url") == url:
+        return  # already correct
+    main["url"] = url
+    mep = main.get("mainEntityOfPage")
+    if isinstance(mep, dict) and "@id" in mep:
+        mep["@id"] = url
+    elif "mainEntityOfPage" in main:
+        main["mainEntityOfPage"] = url
+    new_str = json.dumps(page.json_ld, ensure_ascii=False, separators=(",", ":"))
+    for key, value in page.acf.items():
+        if value == old_str:
+            page.acf[key] = new_str
+
+
 def _acf_summary(page) -> str:
     from .acf.config import get_acf_config
 
@@ -143,12 +188,19 @@ def preview(
     media: Optional[str] = typer.Option(
         None, "--media", "-m", help="Media strategy: library | placeholder."
     ),
+    slug: Optional[str] = typer.Option(
+        None, "--slug", help="Override the page slug (e.g. for an isolated test page)."
+    ),
+    test: bool = typer.Option(
+        False, "--test", help="Append '-test' to the slug so it never collides with a real page."
+    ),
     out: Optional[Path] = typer.Option(None, "--out", "-o", help="Write artifacts here."),
 ) -> None:
     """Build a page and show/save it WITHOUT publishing."""
-    doc = read_file(file)
+    doc = read_file(file, page_type=type)
     use_wp = media == "library"
     page, template, reason, _client, _settings = _build(doc, type, None, media, use_wp)
+    _apply_slug(page, slug, test)
     _summary(doc, page, template, reason)
 
     out_dir = out or (Path("output") / page.slug)
@@ -175,17 +227,42 @@ def publish(
     media: Optional[str] = typer.Option(
         None, "--media", "-m", help="Media strategy: library | placeholder."
     ),
+    slug: Optional[str] = typer.Option(
+        None, "--slug", help="Override the page slug (e.g. for an isolated test page)."
+    ),
+    test: bool = typer.Option(
+        False, "--test", help="Append '-test' to the slug so it never collides with a real page."
+    ),
     update: bool = typer.Option(
         False, "--update", help="Allow overwriting an existing post with the same slug."
+    ),
+    only_fields: Optional[str] = typer.Option(
+        None,
+        "--only-fields",
+        help="Surgical update: write ONLY these ACF fields (comma-separated, e.g. "
+        "'related_links'); leave every other field on the page untouched. Only "
+        "patches an existing post — never creates one.",
     ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
 ) -> None:
     """Build and publish a document to WordPress."""
     from .wordpress.client import WordPressError
 
-    doc = read_file(file)
+    only_acf_fields = (
+        [f.strip() for f in only_fields.split(",") if f.strip()] if only_fields else None
+    )
+
+    doc = read_file(file, page_type=type)
     page, template, reason, client, settings = _build(doc, type, status, media, True)
+    _apply_slug(page, slug, test)
+    _fix_schema_url(page, settings)
     _summary(doc, page, template, reason)
+    if only_acf_fields is not None:
+        console.print(
+            f"[cyan]Surgical update:[/cyan] only ACF field(s) "
+            f"[bold]{', '.join(only_acf_fields)}[/bold] will be written; "
+            "everything else on the page is left untouched."
+        )
 
     if page.status == "publish" and not yes:
         typer.confirm(
@@ -198,7 +275,8 @@ def publish(
 
     try:
         result = publish_page(
-            client, page, settings, seo_plugin=plugin, update_existing=update
+            client, page, settings, seo_plugin=plugin, update_existing=update,
+            only_acf_fields=only_acf_fields,
         )
     except WordPressError as exc:
         console.print(f"[red]Refused:[/red] {exc}")

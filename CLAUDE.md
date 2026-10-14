@@ -59,6 +59,11 @@ field group: `wordpress-acf/page-builder.acf.json`. See `docs/ACF.md`.
   `_KEYWORD_RULES`); H3+ headings nest inside their parent section.
 - Do not hardcode a site URL, org name, or account in `src/`. Read it from
   `config/*.yaml` or the environment.
+- **Docs are bilingual and must stay in parity.** English lives in `docs/`, its
+  Spanish translation in `docs/es/` (same filename). The usage manual is
+  `docs/MANUAL.md` (EN) / `docs/es/MANUAL.md` (ES). When you add or change any
+  documentation, update **both** the English and Spanish version in the same
+  change — never one without the other.
 
 ## Working here
 

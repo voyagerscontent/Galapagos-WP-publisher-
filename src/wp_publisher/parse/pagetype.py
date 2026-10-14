@@ -79,6 +79,18 @@ _ALIASES = {
     "wildlife_tier_2": "wildlife_tier2",
     "wildlife2": "wildlife_tier2",
     "tier2_wildlife": "wildlife_tier2",
+    # ACF-driven single-species page (new "Wildlife Single" group), distinct
+    # from the legacy tier renderers above. Route to it explicitly.
+    "wildlife_single": "wildlife_single",
+    "wildlife_species": "wildlife_single",
+    "species_page": "wildlife_single",
+    "wildlife_page": "wildlife_single",
+    # Generic informative/guide page (Informative Page ACF group), attached by
+    # page template. Route to it explicitly with `--type informative`.
+    "informative": "informative",
+    "informative_page": "informative",
+    "planning": "informative",
+    "info": "informative",
     "freeform": "freeform",
     "free_form": "freeform",
     "builder": "freeform",
@@ -99,8 +111,30 @@ def _search_volume(value) -> int | None:
     return int(digits) if digits else None
 
 
-def detect_page_type(doc: Document, registry: TemplateRegistry) -> tuple[str, str]:
-    """Return (template_key, reason)."""
+def detect_page_type(
+    doc: Document,
+    registry: TemplateRegistry,
+    url_sections: dict | None = None,
+    default_type: str | None = None,
+) -> tuple[str, str]:
+    """Return (template_key, reason).
+
+    ``default_type`` is the site-configured fallback (site.yaml
+    ``routing.default_type``) used when nothing else matches. It exists so a
+    pages-based site can default undetected docs to a page-type profile
+    (e.g. ``informative``) instead of the built-in ``blog_post`` (a WP post).
+    """
+    # 0) Canonical URL section (authoritative placement): a doc under /wildlife/
+    #    is a wildlife page, /islands/ a destination, etc. Configured per site in
+    #    site.yaml routing.url_sections, so each URL section carries its own
+    #    template + parent + ACF group without hand-picking a type.
+    section = str(doc.metadata.get("url_section") or "").strip().lower()
+    if section and url_sections:
+        mapped = url_sections.get(section)
+        key = _ALIASES.get(str(mapped).strip().lower(), str(mapped).strip().lower()) if mapped else ""
+        if key and key in registry:
+            return key, f"URL section '/{section}/' -> {key}"
+
     # 1) Explicit declaration.
     declared = (
         doc.metadata.get("type")
@@ -140,6 +174,14 @@ def detect_page_type(doc: Document, registry: TemplateRegistry) -> tuple[str, st
         if scores[best] > 0:
             return best, f"matched signals (score {scores[best]:.1f})"
 
-    # 3) Safe default.
+    # 3) Safe default. Prefer the site-configured default_type (mapped through
+    #    the same aliases), so a pages-based site lands undetected docs on a
+    #    page-type profile instead of the built-in blog_post (a WP post).
+    if default_type:
+        norm = str(default_type).strip().lower().replace(" ", "_")
+        key = _ALIASES.get(norm, norm)
+        if key in registry:
+            return key, f"defaulted to configured default_type '{default_type}'"
+
     fallback = "blog_post" if "blog_post" in registry else registry.keys()[0]
     return fallback, "defaulted (no strong signal)"

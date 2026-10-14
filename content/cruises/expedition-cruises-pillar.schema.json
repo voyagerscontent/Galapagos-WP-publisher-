@@ -1,0 +1,80 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.galapagosislands.travel/"},
+        {"@type": "ListItem", "position": 2, "name": "Galápagos Cruises", "item": "https://www.galapagosislands.travel/galapagos-cruises/"},
+        {"@type": "ListItem", "position": 3, "name": "Expedition Cruises", "item": "https://www.galapagosislands.travel/galapagos-cruises/expedition-cruises/"}
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "Expedition Galápagos Cruises: Ships, Itineraries & Prices",
+      "image": "https://www.galapagosislands.travel/img/expedition-cruise-hero.jpg",
+      "datePublished": "2026-07-20",
+      "dateModified": "2026-07-20",
+      "author": {"@type": "Person", "name": "Juan Magallanes", "jobTitle": "Galápagos Travel Advisor"},
+      "reviewedBy": {"@type": "Person", "name": "Juan Magallanes", "jobTitle": "Galápagos Travel Advisor"},
+      "publisher": {"@type": "Organization", "name": "Galapagos Islands.Travel", "logo": {"@type": "ImageObject", "url": "https://www.galapagosislands.travel/img/logo.png"}},
+      "mainEntityOfPage": "https://www.galapagosislands.travel/galapagos-cruises/expedition-cruises/",
+      "speakable": {"@type": "SpeakableSpecification", "cssSelector": [".answer-box", ".faq"]}
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How much does an expedition Galápagos cruise cost per day?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Across our fleet, roughly $445–$2,193 per person per day, median about $907 — our own analysis of 256 price points from 58 vessels. The $200 park fee, about $20 transit card and about $400–$500 mainland flights are extra on every cruise."}
+        },
+        {
+          "@type": "Question",
+          "name": "What is an expedition cruise in the Galápagos?",
+          "acceptedAnswer": {"@type": "Answer", "text": "A small ship that sails between islands overnight while you sleep aboard, then lands you by panga (zodiac) with a National Park-certified naturalist guide to walk and snorkel. Most of the fleet works this way — it is the standard format for reaching sites day-trips can't."}
+        },
+        {
+          "@type": "Question",
+          "name": "How many days do you need for a Galápagos cruise?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Itineraries run 4–15 days. Six to eight days is the common choice, covering eastern and western regions without rushing. Four days works for central and eastern sites; you need 5 days or more to reach Fernandina and west Isabela."}
+        },
+        {
+          "@type": "Question",
+          "name": "Do more expensive cruises visit better islands?",
+          "acceptedAnswer": {"@type": "Answer", "text": "No. Nearly all vessels are expedition-style and reach nearly all the same National Park sites. A higher fare buys the onboard experience — space, service, cuisine — not a better route. A pricier boat is a better boat, not a better map."}
+        },
+        {
+          "@type": "Question",
+          "name": "Which islands can a 4-day cruise reach — and which can't?",
+          "acceptedAnswer": {"@type": "Answer", "text": "A 4-day cruise covers central and eastern sites — Bartolomé and North Seymour, for example. It can't reach Fernandina (Punta Espinoza) or west Isabela (Caleta Tagus, Bahia Urbina, Punta Vicente Roca); those need a 5-day-or-longer program."}
+        },
+        {
+          "@type": "Question",
+          "name": "Is an expedition cruise or a land-based trip better for first-timers?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Depends on your priorities. A cruise reaches more sites and suits travellers who want breadth. Land-based (about $150–$700/day) avoids sleeping at sea and can cost less, but day-trips reach only about a third of sites."}
+        },
+        {
+          "@type": "Question",
+          "name": "What's included in an expedition cruise fare, and what's extra?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Fares typically cover the cabin, meals, guided landings and the naturalist guide. Always extra: the $200 park fee, about $20 INGALA transit card, and about $400–$500 mainland flights. Inclusions vary by vessel — we'll confirm exactly what a given fare does and doesn't cover."}
+        },
+        {
+          "@type": "Question",
+          "name": "Are Galápagos expedition cruises suitable for families and older travellers?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Many are, but it varies. Most days involve wet or dry panga landings and walking on uneven volcanic ground. Minimum ages, family cabins and activity levels differ by vessel; tell us the ages and mobility needs in your party and we'll match the right ship."}
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a solo supplement on expedition cruises?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Often, yes — but not everywhere. Some operators waive or reduce the solo supplement on select departures. Give us your dates and we'll identify the ships that don't penalise solo travellers, so you're not paying twice for one cabin."}
+        },
+        {
+          "@type": "Question",
+          "name": "When is the best time to take an expedition cruise?",
+          "acceptedAnswer": {"@type": "Answer", "text": "There's no single best month — it depends what you want. Warm and wet, about Dec–May, brings calmer, clearer water and the best snorkelling; cool and dry, about Jun–Nov, brings nutrient-rich seas and the best diving, including whale sharks at the far-north dive sites. We never promise a specific sighting."}
+        }
+      ]
+    }
+  ]
+}

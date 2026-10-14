@@ -8,7 +8,7 @@ from wp_publisher.ingest.cms import looks_like_cms
 from wp_publisher.pipeline import BuildContext, build_page
 from wp_publisher.rendering.template import load_registry
 
-DOC = Path(__file__).resolve().parents[1] / "content" / "santa-fe-island.docx"
+DOC = Path(__file__).resolve().parents[1] / "content" / "docdepruebainicial.docx"
 
 
 def _ctx():
@@ -34,18 +34,20 @@ def test_header_block_becomes_metadata():
     assert doc.metadata.get("author") == "Juan Magallanes"
 
 
-def test_composes_into_flat_acf_fields():
+def test_composes_into_island_acf_fields():
     doc = read_file(DOC)
     page, template, _ = build_page(doc, _ctx())
     assert template.key == "destination"
+    assert template.acf_profile == "island"
     assert page.post_type == "page"
     assert page.slug == "santa-fe"
     acf = page.acf
-    assert "Santa Fe Island" in acf["hero_heading"]
-    assert acf["hero_subheading"]                 # quick answer
-    assert acf["callout_text"]                    # CALLOUT STAT
-    assert acf["body"]                            # island sections
-    assert len(acf["faq"]) == 5
+    assert "Santa Fe Island" in acf["hero_title"]
+    assert acf["hero_subtitle"]                   # quick answer
+    assert len(acf["faqs"]) == 5                  # FAQ -> faqs repeater
+    assert acf["feature_sections"]                # prose folded into feature sections
+    # Layer-1 island mapping uses the island group's field names, not flat ones.
+    assert "hero_heading" not in acf and "body" not in acf
 
 
 def test_verify_flags_surface_and_hold_draft():

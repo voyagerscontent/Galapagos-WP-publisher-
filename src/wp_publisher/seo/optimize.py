@@ -55,12 +55,16 @@ def optimize_seo(
     # --- SEO title --------------------------------------------------------
     title_max = int(seo_cfg.get("title_max", 60))
     suffix = seo_cfg.get("title_suffix", "")
-    seo_title = title
+    # A curated meta title (e.g. from an HTML <title>) wins verbatim: it is the
+    # SEO title the author already optimized, deliberately distinct from the
+    # visible H1. Otherwise build one from the page title (+ optional suffix).
+    curated_title = str(doc.metadata.get("seo_title") or "").strip()
+    seo_title = curated_title or title
     if focus and focus.lower() not in seo_title.lower():
         warnings.append(
             f"Focus keyword '{focus}' is not present in the title; consider adding it."
         )
-    if suffix and (len(title) + len(suffix)) <= title_max:
+    if not curated_title and suffix and (len(title) + len(suffix)) <= title_max:
         seo_title = f"{title}{suffix}"
     if len(seo_title) > title_max:
         seo_title = truncate_at_word(seo_title, title_max)
