@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.67
+ * Version:     0.4.68
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3794,7 +3794,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'description' => 'A URL, or pick Popup with the wrench. Used only when neither a shortcode nor a Popup ID is set.',
                 'condition' => ['show_contact' => 'yes']]);
             $this->add_control('contact_btn_icon', ['label' => 'Icon', 'type' => \Elementor\Controls_Manager::ICONS,
-                'description' => 'Leave empty for the house arrow (→). Pick one to replace it.',
+                'default' => ['value' => 'fas fa-arrow-right', 'library' => 'fa-solid'],
+                'description' => 'Clear it to fall back to a plain text arrow (→).',
                 'condition' => ['show_contact' => 'yes']]);
             $this->add_control('contact_btn_icon_pos', ['label' => 'Icon Position', 'type' => \Elementor\Controls_Manager::CHOOSE,
                 'default' => 'after',
@@ -4095,7 +4096,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
               .irl-wrap .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
               .irl-wrap .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid #f3ead9;border-radius:8px;font-weight:600;font-size:16px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
-              .irl-wrap .irl-ct-btn:hover{background:#c9a97e;border-color:#c9a97e;color:#3a2a1e}
+              .irl-wrap .irl-ct-btn:hover{background:#f3ead9;border-color:#f3ead9;color:#3a2a1e}
               .irl-wrap .irl-ct-btn .irl-ct-arw{display:inline-flex;align-items:center;line-height:1;transition:transform .2s ease}
               .irl-wrap .irl-ct-btn .irl-ct-arw svg{width:1em;height:1em;fill:currentColor}
               .irl-wrap .irl-ct-btn:hover .irl-ct-arw{transform:translateX(3px)}
