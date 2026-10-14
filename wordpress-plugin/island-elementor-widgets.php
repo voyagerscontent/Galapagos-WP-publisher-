@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.63
+ * Version:     0.4.64
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3787,8 +3787,29 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('popup_id', ['label' => 'Elementor Popup ID (modal)', 'type' => \Elementor\Controls_Manager::NUMBER,
                 'description' => 'Alternative to the shortcode: open this Elementor popup. Used only when no shortcode is set.',
                 'condition' => ['show_contact' => 'yes']]);
-            $this->add_control('contact_btn_url', ['label' => 'Button URL (fallback)', 'type' => \Elementor\Controls_Manager::URL, 'default' => ['url' => '/contact/'],
-                'description' => 'Used only when neither a shortcode nor a Popup ID is set.', 'condition' => ['show_contact' => 'yes']]);
+            // `dynamic` turns on the wrench, so the link can be an Elementor
+            // action (Popup → open) instead of a hand-typed popup ID.
+            $this->add_control('contact_btn_url', ['label' => 'Link', 'type' => \Elementor\Controls_Manager::URL, 'default' => ['url' => '/contact/'],
+                'dynamic' => ['active' => true],
+                'description' => 'A URL, or pick Popup with the wrench. Used only when neither a shortcode nor a Popup ID is set.',
+                'condition' => ['show_contact' => 'yes']]);
+            $this->add_control('contact_btn_icon', ['label' => 'Icon', 'type' => \Elementor\Controls_Manager::ICONS,
+                'default' => ['value' => 'fas fa-arrow-right', 'library' => 'fa-solid'],
+                'condition' => ['show_contact' => 'yes']]);
+            $this->add_control('contact_btn_icon_pos', ['label' => 'Icon Position', 'type' => \Elementor\Controls_Manager::CHOOSE,
+                'default' => 'after',
+                'options' => [
+                    'before' => ['title' => 'Before', 'icon' => 'eicon-h-align-left'],
+                    'after' => ['title' => 'After', 'icon' => 'eicon-h-align-right'],
+                ],
+                'condition' => ['show_contact' => 'yes', 'contact_btn_icon[value]!' => '']]);
+            $this->add_responsive_control('contact_btn_icon_gap', ['label' => 'Icon Spacing', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 0, 'max' => 40]], 'default' => ['size' => 10, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .irl-ct-btn' => 'gap:{{SIZE}}{{UNIT}}'],
+                'condition' => ['show_contact' => 'yes', 'contact_btn_icon[value]!' => '']]);
+            $this->add_control('contact_btn_id', ['label' => 'Button ID', 'type' => \Elementor\Controls_Manager::TEXT,
+                'description' => 'Must be unique on the page. Letters, numbers and underscores, no spaces.',
+                'condition' => ['show_contact' => 'yes']]);
             $this->end_controls_section();
 
             /* ─── STYLE: container only ───
@@ -3925,6 +3946,19 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
         }
 
+        /** Button label plus its icon, in the configured order. */
+        private function btn_inner($s, $label)
+        {
+            $icon = '';
+            if (!empty($s['contact_btn_icon']['value'])) {
+                ob_start();
+                \Elementor\Icons_Manager::render_icon($s['contact_btn_icon'], ['aria-hidden' => 'true']);
+                $icon = '<span class="irl-ct-arw">' . ob_get_clean() . '</span>';
+            }
+            $text = '<span class="irl-ct-lbl">' . esc_html($label) . '</span>';
+            return (($s['contact_btn_icon_pos'] ?? 'after') === 'before') ? $icon . $text : $text . $icon;
+        }
+
         private function contact_card($s)
         {
             if (($s['show_contact'] ?? '') !== 'yes') {
@@ -3957,12 +3991,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // Button. Priority: form shortcode (built-in modal) > Elementor popup > URL.
             $label = trim((string) ($s['contact_btn_label'] ?? ''));
             if ($label !== '') {
+                $inner = $this->btn_inner($s, $label);
+                $bid = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($s['contact_btn_id'] ?? ''));
+                $bid = $bid !== '' ? ' id="' . esc_attr($bid) . '"' : '';
                 $shortcode = trim((string) ($s['contact_form_shortcode'] ?? ''));
                 $popup = trim((string) ($s['popup_id'] ?? ''));
                 if ($shortcode !== '') {
                     $mid = 'irl-modal-' . $this->get_id();
-                    echo '<button type="button" class="irl-ct-btn irl-open" data-irl-open="' . esc_attr($mid) . '">'
-                        . esc_html($label) . ' <span class="irl-ct-arw">&rarr;</span></button>';
+                    echo '<button type="button"' . $bid . ' class="irl-ct-btn irl-open" data-irl-open="' . esc_attr($mid) . '">'
+                        . $inner . '</button>';
                     $mtitle = trim((string) ($s['contact_modal_title'] ?? ''));
                     echo '<div class="irl-modal" id="' . esc_attr($mid) . '" hidden>'
                         . '<div class="irl-modal-ov" data-irl-close="' . esc_attr($mid) . '"></div>'
@@ -3979,16 +4016,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     // base64 of {"id":"<popup>","toggle":false}.
                     $settings = base64_encode(wp_json_encode(['id' => $popup, 'toggle' => false]));
                     $href = '#elementor-action:action=popup:open&settings=' . $settings;
-                    echo '<a class="irl-ct-btn" href="' . esc_attr($href) . '">'
-                        . esc_html($label) . ' <span class="irl-ct-arw">&rarr;</span></a>';
+                    echo '<a' . $bid . ' class="irl-ct-btn" href="' . esc_attr($href) . '">' . $inner . '</a>';
                 } else {
                     $link = $s['contact_btn_url'] ?? [];
                     $href = trim((string) ($link['url'] ?? ''));
                     if ($href !== '') {
                         $target = !empty($link['is_external']) ? ' target="_blank"' : '';
                         $nofollow = !empty($link['nofollow']) ? ' rel="nofollow noopener"' : '';
-                        echo '<a class="irl-ct-btn" href="' . esc_url($href) . '"' . $target . $nofollow . '>'
-                            . esc_html($label) . ' <span class="irl-ct-arw">&rarr;</span></a>';
+                        // A dynamic "Popup" link is an Elementor action, not a URL:
+                        // esc_url() would strip it, so escape it as an attribute.
+                        $safe = (strpos($href, '#elementor-action') === 0) ? esc_attr($href) : esc_url($href);
+                        echo '<a' . $bid . ' class="irl-ct-btn" href="' . $safe . '"' . $target . $nofollow . '>' . $inner . '</a>';
                     }
                 }
             }
@@ -4055,7 +4093,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
               .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid rgba(201,169,126,.9);border-radius:4px;font-weight:600;font-size:15px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
               .irl-ct-btn:hover{background:#c9a97e;border-color:#c9a97e;color:#3a2a1e}
-              .irl-ct-btn .irl-ct-arw{transition:transform .2s ease}
+              .irl-ct-btn .irl-ct-arw{display:inline-flex;align-items:center;line-height:1;transition:transform .2s ease}
+              .irl-ct-btn .irl-ct-arw svg{width:1em;height:1em;fill:currentColor}
               .irl-ct-btn:hover .irl-ct-arw{transform:translateX(3px)}
               .irl-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
               .irl-modal[hidden]{display:none}
