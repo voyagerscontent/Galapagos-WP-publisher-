@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.65
+ * Version:     0.4.66
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4085,7 +4085,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
               .irl-wrap .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
               .irl-wrap .irl-item{position:relative;padding-left:22px;font-size:15px;line-height:1.5}
-              .irl-wrap .irl-item::before{content:"\203A";position:absolute;left:2px;top:-1px;color:#c9a97e;font-size:16px}
+              .irl-wrap .irl-item::before{content:"\203A";position:absolute;left:2px;top:0;line-height:22px;color:#f3ead9;font-size:20px}
               .irl-wrap .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
               .irl-wrap .irl-item a:hover{color:#fff;text-decoration:underline}
               .irl-wrap .irl-ct-head{display:flex;align-items:center;gap:14px;position:relative;padding-bottom:14px;margin-bottom:18px}
