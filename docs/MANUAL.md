@@ -346,6 +346,16 @@ height — the same as the section's body text — and in feature rows it follow
 first row is shown as the brown header automatically (colours follow the “Header
 background / text” controls).
 
+### Back-to-top button
+
+Long pages get a round grey **back-to-top** button (white chevron, bottom-right).
+It appears only when the page is longer than about 3 screens and the visitor has
+scrolled down a little; one click scrolls smoothly to the top (instant if the
+visitor prefers reduced motion). It is not shown in the Elementor editor/preview or
+when printing. Developers: turn it off with
+`add_filter('island_back_to_top', '__return_false');` or change the length
+threshold (in screens, default 3) with the `island_back_to_top_screens` filter.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

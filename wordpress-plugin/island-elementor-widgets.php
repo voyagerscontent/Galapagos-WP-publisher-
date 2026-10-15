@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.81
+ * Version:     0.4.82
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -281,6 +281,45 @@ add_filter('theme_page_templates', function ($templates) {
     $templates['experts-page'] = 'Experts Page';
     return $templates;
 });
+
+// Back-to-top button: a round grey button with a white chevron, bottom-right,
+// shown only on LONG pages (document taller than ~3 screens) once the visitor has
+// scrolled down a bit. Front-end only (not in the Elementor editor / preview).
+// Turn it off with: add_filter('island_back_to_top', '__return_false');
+// Tweak the length threshold (in screens) with the 'island_back_to_top_screens' filter.
+add_action('wp_footer', function () {
+    if (is_admin() || is_feed() || !apply_filters('island_back_to_top', true)) {
+        return;
+    }
+    if (class_exists('\Elementor\Plugin')) {
+        $el = \Elementor\Plugin::$instance;
+        if (($el->editor && $el->editor->is_edit_mode()) || ($el->preview && $el->preview->is_preview_mode())) {
+            return;
+        }
+    }
+    $screens = (float) apply_filters('island_back_to_top_screens', 3);
+    echo '<style id="island-btt-css">'
+        . '.island-btt{position:fixed;right:24px;bottom:24px;z-index:9990;width:56px;height:56px;padding:0;margin:0;border:0!important;border-radius:50%!important;'
+        . 'background:rgba(110,110,110,.92)!important;color:#fff!important;cursor:pointer;display:flex;align-items:center;justify-content:center;'
+        . 'box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s ease,transform .25s ease,visibility .25s,background .2s}'
+        . '.island-btt.is-on{opacity:1;visibility:visible;transform:none}'
+        . '.island-btt:hover{background:rgba(70,70,70,.96)!important}'
+        . '.island-btt:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px rgba(100,64,44,.9)}'
+        . '.island-btt svg{width:22px;height:22px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}'
+        . '@media(max-width:600px){.island-btt{right:16px;bottom:16px;width:48px;height:48px}}'
+        . '@media print{.island-btt{display:none}}'
+        . '</style>'
+        . '<button type="button" class="island-btt" id="island-btt" aria-label="Back to top" title="Back to top">'
+        . '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg></button>'
+        . '<script id="island-btt-js">(function(){var b=document.getElementById("island-btt");if(!b)return;var N=' . json_encode($screens) . ',tick=0;'
+        . 'function update(){tick=0;var vh=window.innerHeight||800,doc=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight);'
+        . 'var long=doc>vh*N,y=window.pageYOffset||document.documentElement.scrollTop||0;b.classList.toggle("is-on",long&&y>vh*0.8);}'
+        . 'function req(){if(!tick){tick=1;requestAnimationFrame(update);}}'
+        . 'window.addEventListener("scroll",req,{passive:true});window.addEventListener("resize",req);window.addEventListener("load",function(){update();setTimeout(update,800);});'
+        . 'b.addEventListener("click",function(){var r=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;window.scrollTo({top:0,behavior:r?"auto":"smooth"});'
+        . '});'
+        . 'update();})();</script>';
+}, 99);
 
 // Collapse-when-empty helper: add the class "hide-if-empty" (or the same as a
 // Custom Attribute) to any Elementor SECTION/container, and it is hidden when it

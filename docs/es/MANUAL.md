@@ -353,6 +353,16 @@ tipografía “Body”. Si una tabla de una columna no tiene fila de encabezado
 (`<thead>`), su primera fila se muestra automáticamente como encabezado café (los
 colores siguen los controles “Header background / text”).
 
+### Botón de volver arriba
+
+Las páginas largas muestran un botón redondo gris de **volver arriba** (flecha
+blanca, abajo a la derecha). Solo aparece cuando la página mide más de unas 3
+pantallas y el visitante ya bajó un poco; un clic sube suavemente al inicio
+(instantáneo si el visitante prefiere menos movimiento). No se muestra en el
+editor/vista previa de Elementor ni al imprimir. Para desarrolladores: se apaga con
+`add_filter('island_back_to_top', '__return_false');` o se cambia el largo mínimo
+(en pantallas, por defecto 3) con el filtro `island_back_to_top_screens`.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By
