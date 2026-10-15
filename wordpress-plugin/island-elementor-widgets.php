@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.76
+ * Version:     0.4.77
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6310,7 +6310,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('st', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
             $this->add_control('color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => ['{{WRAPPER}} .ibl-wrap, {{WRAPPER}} .ibl-wrap a' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'typo', 'selector' => '{{WRAPPER}} .ibl-wrap']);
-            $this->add_responsive_control('align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::TEXT_ALIGN, 'selectors' => ['{{WRAPPER}} .ibl-wrap' => 'text-align:{{VALUE}}']]);
+            $this->add_responsive_control('align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => ['left' => ['title' => 'Left', 'icon' => 'eicon-text-align-left'], 'center' => ['title' => 'Center', 'icon' => 'eicon-text-align-center'], 'right' => ['title' => 'Right', 'icon' => 'eicon-text-align-right']], 'selectors' => ['{{WRAPPER}} .ibl-wrap' => 'text-align:{{VALUE}}']]);
             $this->end_controls_section();
         }
         protected function render()
