@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.82
+ * Version:     0.4.83
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3885,7 +3885,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('bg_color', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .irl-wrap' => 'background:{{VALUE}}']]);
             $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px', 'em', '%'],
-                'default' => ['top' => '48', 'right' => '24', 'bottom' => '48', 'left' => '24', 'unit' => 'px'],
+                'default' => ['top' => '30', 'right' => '24', 'bottom' => '30', 'left' => '24', 'unit' => 'px'],
+                'mobile_default' => ['top' => '24', 'right' => '16', 'bottom' => '24', 'left' => '16', 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-wrap' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
             $this->add_responsive_control('max_w', ['label' => 'Content max width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 600, 'max' => 1400]], 'default' => ['size' => 1120, 'unit' => 'px'],
