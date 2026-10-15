@@ -349,7 +349,9 @@ apágalo para volver al comportamiento anterior (ancho mínimo, scroll lateral).
 ve con el título en negrita y el texto normal; la celda del encabezado usa el
 mismo patrón con el color del encabezado. Su texto es de 15px con interlineado 1.7
 (igual que el texto del cuerpo de la sección) y, en las filas de secciones, sigue la
-tipografía “Body”.
+tipografía “Body”. Si una tabla de una columna no tiene fila de encabezado
+(`<thead>`), su primera fila se muestra automáticamente como encabezado café (los
+colores siguen los controles “Header background / text”).
 
 ### Enlace del autor (el nombre enlaza a su ficha)
 
