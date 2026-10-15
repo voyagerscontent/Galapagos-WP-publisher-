@@ -315,8 +315,8 @@ is maintained by hand: a page appears as soon as it is published with the byline
   post types to look in, the order and a maximum.
 
 The cards show up in a **carousel**: three at a time on desktop, two on tablet,
-one on mobile. If there are more pages than fit, arrows appear (and you can swipe
-on a phone). The card **title** is the page's ACF `hero_title` (page title if empty). The card
+one on mobile. If there are more pages than fit, arrows appear outside the cards,
+centred on the widget (and you can swipe on a phone). The card **title** is the page's ACF `hero_title` (page title if empty). The card
 **text** is the Quick Answer (`geo_answer`) with tags removed, cut to 3 lines with
 “…”; only if it is empty does it fall back to: Excerpt → `hero_subtitle` → `intro`
 → Yoast description → Rank Math description.
@@ -330,7 +330,8 @@ back to the start of that section if you had scrolled past it. Short text gets n
 bar. There is no hover-to-expand any more — it caused the page to jump when a
 section collapsed under the mouse. The switch is labelled “Clamp long text (Read
 more button)” and the “open height” setting is no longer used (text always opens
-in full).
+in full). Links inside that text take the section's text colour (cream on a brown
+band) with an underline, so they never disappear on a dark background.
 
 ### Byline link (the author's name links to their profile)
 

@@ -320,8 +320,8 @@ nada que mantener a mano: una página aparece en cuanto se publica con el byline
   en qué tipos de contenido buscar, el orden y un máximo.
 
 Las tarjetas salen en un **carrusel**: tres a la vez en escritorio, dos en tablet,
-una en móvil. Si hay más páginas de las que caben, aparecen flechas (y se desliza
-con el dedo en el celular). El **título** de la tarjeta es el `hero_title` ACF de la página (si está vacío,
+una en móvil. Si hay más páginas de las que caben, aparecen flechas fuera de las
+tarjetas, centradas en el widget (y se desliza con el dedo en el celular). El **título** de la tarjeta es el `hero_title` ACF de la página (si está vacío,
 el título de la página). El **texto** es la Respuesta Rápida (`geo_answer`) sin
 etiquetas, cortada a 3 líneas con “…”; solo si está vacía usa: Extracto →
 `hero_subtitle` → `intro` → descripción de Yoast → descripción de Rank Math.
@@ -335,7 +335,9 @@ completo (pasa a **Read less ↑**); al cerrarlo, la página vuelve al inicio de
 sección si ya te habías desplazado más abajo. El texto corto no lleva barra. Ya no
 hay hover para expandir: hacía saltar la página cuando una sección se cerraba bajo
 el mouse. El interruptor se llama “Clamp long text (Read more button)” y el ajuste
-de “altura al abrir” ya no se usa (el texto siempre se abre completo).
+de “altura al abrir” ya no se usa (el texto siempre se abre completo). Los enlaces dentro de ese texto toman el color del texto
+de la sección (crema en una banda café) con subrayado, así nunca desaparecen sobre
+fondo oscuro.
 
 ### Enlace del autor (el nombre enlaza a su ficha)
 

@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.77
+ * Version:     0.4.78
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -157,6 +157,17 @@ if (!function_exists('island_ew_itinerary_map')) {
 if (!function_exists('island_ew_clip_script')) {
     function island_ew_clip_script()
     {
+        static $links = false;
+        if (!$links) {
+            $links = true;
+            // Links in these sections take the section's TEXT colour (cream on a brown
+            // band, dark on a light one) — the theme's brown link colour vanished on
+            // brown backgrounds. Underline + weight keep them recognisable as links.
+            echo '<style id="isl-body-links">'
+                . '.ifs .ifs-body a,.ifs .ifs-after a,.ifb .ifb-body a,.wts .wts-desc a,.wgf .wgf-body a,.iw2 .iw2-desc a{color:inherit;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}'
+                . '.ifs .ifs-body a:hover,.ifs .ifs-after a:hover,.ifb .ifb-body a:hover,.wts .wts-desc a:hover,.wgf .wgf-body a:hover,.iw2 .iw2-desc a:hover{color:inherit;opacity:.8;text-decoration-thickness:2px}'
+                . '</style>';
+        }
         echo <<<'JS'
 <script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;
 var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"],[".wts.hx .wts-item",".wts-desc"],[".wgf.hx .wgf-feat",".wgf-body"]];
@@ -6154,14 +6165,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .iep-wrap .iep-inner{margin:0 auto}
               .iep-wrap .iep-h{margin:0 0 28px;text-align:center;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:30px;line-height:1.25;color:#64402c}
               .iep-wrap .iep-car{position:relative}
+              .iep-wrap .iep-car.iep-scroll{padding-left:64px;padding-right:64px}
               .iep-wrap .iep-track{display:flex;gap:28px;align-items:stretch;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:4px 2px 14px;margin:0 -2px}
               .iep-wrap .iep-track::-webkit-scrollbar{display:none}
               .iep-wrap .iep-track>.iep-card{flex:0 0 calc((100% - 56px)/3);scroll-snap-align:start;min-width:0}
-              .iep-wrap .iep-nav{display:none;position:absolute;top:30%;width:44px;height:44px;margin:0;padding:0;border:1px solid #d9c3ab;border-radius:50%;background:#fff;color:#64402c;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 6px 16px rgba(60,40,25,.18);z-index:2;align-items:center;justify-content:center}
+              .iep-wrap .iep-nav{display:none;position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;margin:0;padding:0;border:1px solid #d9c3ab;border-radius:50%;background:#fff;color:#64402c;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 6px 16px rgba(60,40,25,.18);z-index:2;align-items:center;justify-content:center}
               .iep-wrap .iep-nav:hover{background:#64402c;color:#fff;border-color:#64402c}
               .iep-wrap .iep-nav[disabled]{opacity:.35;cursor:default}
-              .iep-wrap .iep-prev{left:-18px}
-              .iep-wrap .iep-next{right:-18px}
+              .iep-wrap .iep-prev{left:0}
+              .iep-wrap .iep-next{right:0}
               .iep-wrap .iep-car.iep-scroll .iep-nav{display:flex}
               .iep-wrap .iep-card{display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid #d9c3ab;border-radius:8px;color:inherit;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}
               .iep-wrap .iep-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(60,40,25,.16)}
@@ -6171,7 +6183,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .iep-wrap .iep-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:20px;line-height:1.3;color:#64402c}
               .iep-wrap .iep-desc{margin:0;font-size:15px;line-height:1.55;color:#4a3a2c;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
               @media(max-width:900px){.iep-wrap .iep-track>.iep-card{flex-basis:calc((100% - 28px)/2)}}
-              @media(max-width:600px){.iep-wrap .iep-track>.iep-card{flex-basis:88%}.iep-wrap .iep-prev{left:-6px}.iep-wrap .iep-next{right:-6px}}
+              @media(max-width:600px){.iep-wrap .iep-car.iep-scroll{padding-left:44px;padding-right:44px}.iep-wrap .iep-track>.iep-card{flex-basis:100%}.iep-wrap .iep-nav{width:36px;height:36px;font-size:22px}}
             </style><script>(function(){
               function init(c){var t=c.querySelector(".iep-track"),p=c.querySelector(".iep-prev"),n=c.querySelector(".iep-next");if(!t||c.__iep){return}c.__iep=1;
               function up(){var m=t.scrollWidth-t.clientWidth;c.classList.toggle("iep-scroll",m>4);p.disabled=t.scrollLeft<=4;n.disabled=t.scrollLeft>=m-4}
@@ -6212,12 +6224,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
 
             echo $this->styles();
-            echo '<div class="iep-wrap"><div class="iep-inner">';
+            echo '<div class="iep-wrap"><div class="iep-inner iep-car">';
             $heading = trim((string) ($s['heading'] ?? ''));
             if (($s['show_heading'] ?? 'yes') === 'yes' && $heading !== '') {
                 echo '<h2 class="iep-h">' . esc_html(str_replace('{name}', $display, $heading)) . '</h2>';
             }
-            echo '<div class="iep-car"><button type="button" class="iep-nav iep-prev" aria-label="Previous">&lsaquo;</button><div class="iep-track">';
+            echo '<button type="button" class="iep-nav iep-prev" aria-label="Previous">&lsaquo;</button><div class="iep-track">';
             foreach ($ids as $id) {
                 $img = $this->thumb($id);
                 $text = $this->blurb($id);
@@ -6227,7 +6239,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     . ($text !== '' ? '<p class="iep-desc">' . esc_html($text) . '</p>' : '')
                     . '</div></a>';
             }
-            echo '</div><button type="button" class="iep-nav iep-next" aria-label="Next">&rsaquo;</button></div></div></div>';
+            echo '</div><button type="button" class="iep-nav iep-next" aria-label="Next">&rsaquo;</button></div></div>';
         }
     }
 
