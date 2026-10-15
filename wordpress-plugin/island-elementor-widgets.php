@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.75
+ * Version:     0.4.76
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -735,7 +735,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc{max-height:none}
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .rev.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .rev.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .rev.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
               {{WRAPPER}} .rev.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               {{WRAPPER}} .iw2-ov .ic-more,{{WRAPPER}} .iw2-ofc .ic-more{color:#f0d9c4}
@@ -2270,7 +2270,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body{max-height:none}
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .ifs-row.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
               {{WRAPPER}} .ifs-row.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* No-photo row = full-width text/table section: never truncate — no
@@ -2685,7 +2685,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body{max-height:none}
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .ifb-band.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:var(--t-title)}
               {{WRAPPER}} .ifb-band.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* Plain band = no icon AND no photo (else-branch .ifb-tx is a direct
@@ -4816,7 +4816,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none!important}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wts-item.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wts-item.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .wts-item.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
               {{WRAPPER}} .wts-item.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). The
@@ -5241,7 +5241,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none!important}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
               {{WRAPPER}} .wgf-feat.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
               {{WRAPPER}} .wgf-feat.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
