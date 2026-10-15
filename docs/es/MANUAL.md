@@ -295,6 +295,10 @@ mayoría de los demás widgets de este archivo siguen emitiendo bloques con
 `{{WRAPPER}}` que nunca aplican; su aspecto sale de los valores por defecto de
 los controles.
 
+Cuando solo hay UNA columna (por ejemplo solo el bloque de contacto “Need help?”,
+porque la página no tiene enlaces relacionados), ese bloque se centra en la página y
+su texto y botón también quedan centrados.
+
 ### Expert Pages (las páginas que escribió un experto)
 
 Pon **Island Expert Pages** en la ficha de un experto y lista, como tarjetas, todas

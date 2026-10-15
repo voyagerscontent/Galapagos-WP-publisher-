@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.84
+ * Version:     0.4.85
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4134,6 +4134,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             $done = true;
             return '<style id="irl-css">
+              .elementor-widget-island_related_links,.elementor-widget-island_related_links>.elementor-widget-container{width:100%}
               .irl-wrap.irl-wrap{width:100%}
               .irl-wrap .irl-inner{margin:0 auto}
               .irl-wrap .irl-head{text-align:center}
@@ -4147,6 +4148,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#f7efe1}
               .irl-wrap .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
               .irl-wrap .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+              .irl-wrap .irl-cols.irl-one{grid-template-columns:minmax(0,560px);justify-content:center}
+              .irl-wrap .irl-one .irl-contact{text-align:center}
+              .irl-wrap .irl-one .irl-ct-head{justify-content:center}
+              .irl-wrap .irl-one .irl-ct-head::after{left:50%;transform:translateX(-50%)}
               .irl-wrap .irl-item{position:relative;padding-left:24px;font-size:17px;line-height:1.5}
               .irl-wrap .irl-item::before{content:"\203A";position:absolute;left:2px;top:0;line-height:26px;color:#f3ead9;font-size:22px}
               .irl-wrap .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
@@ -4219,7 +4224,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div>';
             }
 
-            echo '<div class="irl-cols" style="--irl-cols:' . (int) $cols . '">';
+            echo '<div class="irl-cols' . ((int) $cols === 1 ? ' irl-one' : '') . '" style="--irl-cols:' . (int) $cols . '">';
             if ($related) {
                 $this->columns($related, $s);
             }

@@ -291,6 +291,10 @@ once per request, scoped to its own `.irl-*` classes and with no token. Most of
 the other widgets in this file still echo `{{WRAPPER}}` blocks that never
 apply; they get their look from control defaults instead.
 
+When there is only ONE column (for example just the “Need help?” contact block, because
+the page has no related links), that block is centred on the page and its text and
+button are centred too.
+
 ### Expert Pages (the pages an expert has written)
 
 Drop **Island Expert Pages** on an expert's profile page and it lists, as cards,
