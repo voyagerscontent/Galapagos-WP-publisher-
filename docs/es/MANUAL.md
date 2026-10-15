@@ -339,6 +339,16 @@ de “altura al abrir” ya no se usa (el texto siempre se abre completo). Los e
 de la sección (crema en una banda café) con subrayado, así nunca desaparecen sobre
 fondo oscuro.
 
+### Tablas dentro de las secciones (se ajustan, sin scroll lateral)
+
+Las tablas en filas/bandas de secciones ahora **ajustan el texto y siempre caben
+en la sección**: sin barra de scroll horizontal. El grupo Table tiene el
+interruptor **“Wrap table text (no horizontal scroll)”** (activado por defecto);
+apágalo para volver al comportamiento anterior (ancho mínimo, scroll lateral). Una
+**tabla de una sola columna** (cada celda = línea de título y luego un párrafo) se
+ve con el título en negrita y el texto normal; la celda del encabezado usa el
+mismo patrón con el color del encabezado.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By

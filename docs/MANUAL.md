@@ -333,6 +333,15 @@ more button)” and the “open height” setting is no longer used (text always
 in full). Links inside that text take the section's text colour (cream on a brown
 band) with an underline, so they never disappear on a dark background.
 
+### Tables inside feature sections (wrap, no sideways scroll)
+
+Tables in feature rows/bands now **wrap their text and always fit the section** —
+no horizontal scrollbar. The Table group has a switch **“Wrap table text (no
+horizontal scroll)”** (on by default); switch it off to bring back the old
+behaviour (minimum width, scrolls sideways). A **one-column table** (each cell =
+a title line, then a paragraph) reads as a bold title plus normal text; the header
+cell uses the same pattern in the header colour.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.78
+ * Version:     0.4.79
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -164,6 +164,15 @@ if (!function_exists('island_ew_clip_script')) {
             // band, dark on a light one) — the theme's brown link colour vanished on
             // brown backgrounds. Underline + weight keep them recognisable as links.
             echo '<style id="isl-body-links">'
+                // Tables: wrap instead of scrolling sideways (switch "Wrap table text"), and
+                // one-column "stacked" tables read as title line + normal paragraph.
+                . '.tbl-wrap .ifs-tbl{overflow:hidden!important}'
+                . '.tbl-wrap .ifs-tbl table{min-width:0!important;width:100%!important}'
+                . '.tbl-wrap .ifs-tbl th,.tbl-wrap .ifs-tbl td{white-space:normal!important;overflow-wrap:break-word;word-break:normal}'
+                . '.ifs-tbl td:only-child{font-weight:400!important;color:#3A2A1E;line-height:1.65}'
+                . '.ifs-tbl td:only-child::first-line{font-weight:700;color:#64402C}'
+                . '.ifs-tbl thead th:only-child{text-transform:none!important;letter-spacing:0!important;font-weight:400!important;font-size:13px!important;line-height:1.65}'
+                . '.ifs-tbl thead th:only-child::first-line{font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px}'
                 . '.ifs .ifs-body a,.ifs .ifs-after a,.ifb .ifb-body a,.wts .wts-desc a,.wgf .wgf-body a,.iw2 .iw2-desc a{color:inherit;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}'
                 . '.ifs .ifs-body a:hover,.ifs .ifs-after a:hover,.ifb .ifb-body a:hover,.wts .wts-desc a:hover,.wgf .wgf-body a:hover,.iw2 .iw2-desc a:hover{color:inherit;opacity:.8;text-decoration-thickness:2px}'
                 . '</style>';
@@ -2037,6 +2046,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             /* Table (styling for feature sections that contain a table) */
             $this->add_control('tbl_h', ['label' => 'Table', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('tbl_wrap', ['label' => 'Wrap table text (no horizontal scroll)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On: long cell text wraps and the table always fits the section. Off: the table keeps a minimum width and scrolls sideways.']);
             $this->add_control('tbl_head_bg', ['label' => 'Header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'background:{{VALUE}}']]);
             $this->add_control('tbl_head_tx', ['label' => 'Header text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F6EFE7',
@@ -2360,7 +2371,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $bmin = max(160, (int) ($s['bind_min'] ?? 300));
                 echo '<div class="ifs-scrollwrap" data-ifs-bind="1" data-ifs-min="' . $bmin . '"><div class="ifs-scroll">';
             }
-            echo '<div class="ifs' . $hx . '">';
+            $tw = ($s['tbl_wrap'] ?? 'yes') === 'yes' ? ' tbl-wrap' : '';
+            echo '<div class="ifs' . $hx . $tw . '">';
             $i = 0;
             foreach ($rows as $r) {
                 // Validation: skip a row whose ACF fields are all empty. An empty
@@ -2781,7 +2793,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // via an optional ACF bg_color, but nothing requires it.
             $pal = (isset($s['bd_palette']) && is_array($s['bd_palette'])) ? array_values($s['bd_palette']) : [];
             $hx = ($s['bd_hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
-            echo '<div class="ifb' . $hx . '">';
+            $tw = ($s['tbl_wrap'] ?? 'yes') === 'yes' ? ' tbl-wrap' : '';
+            echo '<div class="ifb' . $hx . $tw . '">';
             $ifb_info_any = false;  // set true when a lightbox infographic banner is printed
             $i = 0;
             foreach ($rows as $r) {
