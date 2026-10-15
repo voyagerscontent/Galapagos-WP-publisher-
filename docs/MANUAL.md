@@ -314,6 +314,12 @@ is maintained by hand: a page appears as soon as it is published with the byline
   max width) is adjustable. Controls cover the heading (`{name}` is replaced), which
   post types to look in, the order and a maximum.
 
+The cards show up in a **carousel**: three at a time on desktop, two on tablet,
+one on mobile. If there are more pages than fit, arrows appear (and you can swipe
+on a phone). The card text is the first filled of: Excerpt → `hero_subtitle` →
+`intro` → `geo_answer` → Yoast description → Rank Math description (the SEO ones
+last, since they are written for Google).
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.70
+ * Version:     0.4.71
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6117,11 +6117,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $has_acf = function_exists('get_field');
             $cands = [
                 get_post_field('post_excerpt', $id),
-                get_post_meta($id, '_yoast_wpseo_metadesc', true),
-                get_post_meta($id, 'rank_math_description', true),
-                $has_acf ? get_field('geo_answer', $id) : '',
                 $has_acf ? get_field('hero_subtitle', $id) : '',
                 $has_acf ? get_field('intro', $id) : '',
+                $has_acf ? get_field('geo_answer', $id) : '',
+                // SEO descriptions are written for Google, so they come last.
+                get_post_meta($id, '_yoast_wpseo_metadesc', true),
+                get_post_meta($id, 'rank_math_description', true),
             ];
             foreach ($cands as $c) {
                 if (!is_scalar($c)) {
@@ -6168,7 +6169,16 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .iep-wrap.iep-wrap{width:100%}
               .iep-wrap .iep-inner{margin:0 auto}
               .iep-wrap .iep-h{margin:0 0 28px;text-align:center;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:30px;line-height:1.25;color:#64402c}
-              .iep-wrap .iep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;align-items:stretch}
+              .iep-wrap .iep-car{position:relative}
+              .iep-wrap .iep-track{display:flex;gap:28px;align-items:stretch;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:4px 2px 14px;margin:0 -2px}
+              .iep-wrap .iep-track::-webkit-scrollbar{display:none}
+              .iep-wrap .iep-track>.iep-card{flex:0 0 calc((100% - 56px)/3);scroll-snap-align:start;min-width:0}
+              .iep-wrap .iep-nav{display:none;position:absolute;top:30%;width:44px;height:44px;margin:0;padding:0;border:1px solid #d9c3ab;border-radius:50%;background:#fff;color:#64402c;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 6px 16px rgba(60,40,25,.18);z-index:2;align-items:center;justify-content:center}
+              .iep-wrap .iep-nav:hover{background:#64402c;color:#fff;border-color:#64402c}
+              .iep-wrap .iep-nav[disabled]{opacity:.35;cursor:default}
+              .iep-wrap .iep-prev{left:-18px}
+              .iep-wrap .iep-next{right:-18px}
+              .iep-wrap .iep-car.iep-scroll .iep-nav{display:flex}
               .iep-wrap .iep-card{display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid #d9c3ab;border-radius:8px;color:inherit;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}
               .iep-wrap .iep-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(60,40,25,.16)}
               .iep-wrap .iep-media{aspect-ratio:16/10;overflow:hidden;background:#e8ddd0}
@@ -6176,9 +6186,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .iep-wrap .iep-body{display:flex;flex-direction:column;gap:8px;padding:18px 20px 22px}
               .iep-wrap .iep-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:20px;line-height:1.3;color:#64402c}
               .iep-wrap .iep-desc{margin:0;font-size:15px;line-height:1.55;color:#4a3a2c;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
-              @media(max-width:900px){.iep-wrap .iep-grid{grid-template-columns:1fr 1fr}}
-              @media(max-width:600px){.iep-wrap .iep-grid{grid-template-columns:1fr}}
-            </style>';
+              @media(max-width:900px){.iep-wrap .iep-track>.iep-card{flex-basis:calc((100% - 28px)/2)}}
+              @media(max-width:600px){.iep-wrap .iep-track>.iep-card{flex-basis:88%}.iep-wrap .iep-prev{left:-6px}.iep-wrap .iep-next{right:-6px}}
+            </style><script>(function(){
+              function init(c){var t=c.querySelector(".iep-track"),p=c.querySelector(".iep-prev"),n=c.querySelector(".iep-next");if(!t||c.__iep){return}c.__iep=1;
+              function up(){var m=t.scrollWidth-t.clientWidth;c.classList.toggle("iep-scroll",m>4);p.disabled=t.scrollLeft<=4;n.disabled=t.scrollLeft>=m-4}
+              function go(d){var w=t.querySelector(".iep-card");t.scrollBy({left:d*((w?w.offsetWidth:300)+28),behavior:"smooth"})}
+              p.addEventListener("click",function(){go(-1)});n.addEventListener("click",function(){go(1)});
+              t.addEventListener("scroll",up,{passive:true});window.addEventListener("resize",up);up();setTimeout(up,400)}
+              function all(){document.querySelectorAll(".iep-car").forEach(init)}
+              if(document.readyState!=="loading"){all()}else{document.addEventListener("DOMContentLoaded",all)}
+              window.addEventListener("elementor/frontend/init",function(){if(window.elementorFrontend){elementorFrontend.hooks.addAction("frontend/element_ready/island_expert_pages.default",all)}});
+            })();</script>';
         }
 
         protected function render()
@@ -6214,7 +6233,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (($s['show_heading'] ?? 'yes') === 'yes' && $heading !== '') {
                 echo '<h2 class="iep-h">' . esc_html(str_replace('{name}', $display, $heading)) . '</h2>';
             }
-            echo '<div class="iep-grid">';
+            echo '<div class="iep-car"><button type="button" class="iep-nav iep-prev" aria-label="Previous">&lsaquo;</button><div class="iep-track">';
             foreach ($ids as $id) {
                 $img = $this->thumb($id);
                 $text = $this->blurb($id);
@@ -6224,7 +6243,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     . ($text !== '' ? '<p class="iep-desc">' . esc_html($text) . '</p>' : '')
                     . '</div></a>';
             }
-            echo '</div></div></div>';
+            echo '</div><button type="button" class="iep-nav iep-next" aria-label="Next">&rsaquo;</button></div></div></div>';
         }
     }
 
