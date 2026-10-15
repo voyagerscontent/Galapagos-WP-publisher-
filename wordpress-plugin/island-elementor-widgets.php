@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.73
+ * Version:     0.4.74
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -149,56 +149,6 @@ if (!function_exists('island_ew_itinerary_map')) {
 }
 
 /**
- * Shared DESKTOP hover-to-expand (min-width:1367px) for the feature bands, rows,
- * "where to see" items and wildlife features. One delegated listener per page —
- * it does not depend on where the script prints or on document.currentScript, so
- * it keeps working when an optimiser defers/moves scripts. Compared with the old
- * per-widget handlers it:
- *  - opens to the text's REAL height (no 900/1200px cap that cut long copy off),
- *  - waits a moment (hover-intent) so sweeping the mouse across the page doesn't
- *    open every section it crosses, and closes after a short delay,
- *  - when a section collapses under a pointer that has already moved below it,
- *    scrolls by the same amount so the content under the pointer stays put.
- */
-if (!function_exists('island_ew_hover_script')) {
-    function island_ew_hover_script()
-    {
-        static $done = false;
-        if ($done) {
-            return;
-        }
-        $done = true;
-        echo <<<'JS'
-<script>(function(){if(window.__islandHover)return;window.__islandHover=1;
-var mq=window.matchMedia("(min-width:1367px)");
-/* [item, text, trigger-or-empty] */
-var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",""],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",""],[".wts.hx .wts-item",".wts-desc",""],[".wgf.hx .wgf-feat",".wgf-body",".wgf-tx"]];
-var lock=0,py=0;
-document.addEventListener("mousemove",function(e){py=e.clientY;},{passive:true});
-function find(t){if(!t||!t.closest)return null;for(var i=0;i<G.length;i++){var c=t.closest(G[i][0]);if(c)return [c,G[i]];}return null;}
-function scroller(el){for(var n=el.parentElement;n&&n!==document.body;n=n.parentElement){var o=getComputedStyle(n).overflowY;if((o==="auto"||o==="scroll")&&n.scrollHeight>n.clientHeight)return n;}return null;}
-function open(c,b){if(c.classList.contains("is-open"))return;c.classList.add("is-open");b.style.maxHeight=b.scrollHeight+"px";
-clearTimeout(c.__fx);c.__fx=setTimeout(function(){if(c.classList.contains("is-open"))b.style.maxHeight="none";},520);}
-function close(c,b){if(!c.classList.contains("is-open"))return;clearTimeout(c.__fx);
-var below=py>c.getBoundingClientRect().bottom-8;
-b.style.maxHeight=b.offsetHeight+"px";void b.offsetHeight;c.classList.remove("is-open");b.style.maxHeight="";
-lock=Date.now()+520;
-if(below){var sc=scroller(c),prev=c.offsetHeight,end=Date.now()+540;
-(function f(){var h=c.offsetHeight,d=h-prev;prev=h;if(d){if(sc)sc.scrollTop+=d;else window.scrollBy(0,d);}if(Date.now()<end)requestAnimationFrame(f);})();}}
-document.addEventListener("mouseover",function(e){if(!mq.matches)return;var m=find(e.target);if(!m)return;var c=m[0],g=m[1];
-clearTimeout(c.__ct);if(c.classList.contains("is-open")||c.__ot)return;if(g[2]&&!e.target.closest(g[2]))return;
-var b=c.querySelector(g[1]);if(!b)return;
-c.__ot=setTimeout(function(){c.__ot=0;if(c.matches(":hover"))open(c,b);},Math.max(110,lock-Date.now()));});
-document.addEventListener("mouseout",function(e){if(!mq.matches)return;var m=find(e.target);if(!m)return;var c=m[0];
-if(e.relatedTarget&&c.contains(e.relatedTarget))return;clearTimeout(c.__ot);c.__ot=0;
-var b=c.querySelector(m[1][1]);if(!b)return;clearTimeout(c.__ct);
-c.__ct=setTimeout(function(){if(!c.matches(":hover"))close(c,b);},180);});
-})();</script>
-JS;
-    }
-}
-
-/**
  * Shared MOBILE clamp + tappable arrow used by the feature-section bands, rows and
  * the wildlife cards. Prints once per page (JS-guarded). On phones/tablets it clamps
  * ONLY the text that actually overflows, injects an arrow, and toggles a PERSISTENT
@@ -211,10 +161,10 @@ if (!function_exists('island_ew_clip_script')) {
             . 'var mq=window.matchMedia("(max-width:1366px)");'
             . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",0],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",0],[".iw2 .rev",".iw2-desc.clip",0],[".wts.hx .wts-item",".wts-desc",0],[".wgf.hx .wgf-feat",".wgf-body",0]];'
             . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b,g[2]);});});}'
-            . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-expanded","false");a.textContent="Read More";'
-            . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");a.textContent=o?"Read Less":"Read More";'
-            . 'if(!o){var y=it.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop||0)-80;window.scrollTo({top:y<0?0:y,behavior:"smooth"});}});it.__more=a;return a;}'
-            . 'function refresh(){each(function(it,b,always){var a=it.__more;var on=always||mq.matches;'
+            . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-expanded","false");a.innerHTML="<span>Read more</span><span class=\"ic-ar\">&darr;</span>";'
+            . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");a.innerHTML=o?"<span>Read less</span><span class=\"ic-ar\">&uarr;</span>":"<span>Read more</span><span class=\"ic-ar\">&darr;</span>";'
+            . 'if(!o){var r=it.getBoundingClientRect().top;if(r<110){var y=r+(window.pageYOffset||document.documentElement.scrollTop||0)-110;window.scrollTo({top:y<0?0:y,behavior:"smooth"});}}});it.__more=a;return a;}'
+            . 'function refresh(){each(function(it,b,always){var a=it.__more;var on=true;'
             . 'if(!on){it.classList.remove("clip-m");if(a)a.style.display="none";return;}'
             . 'it.classList.add("clip-m");'
             . 'var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+2;'
@@ -759,8 +709,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc{max-height:none}
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .rev.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .rev.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .rev.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .rev.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .rev.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               {{WRAPPER}} .iw2-ov .ic-more,{{WRAPPER}} .iw2-ofc .ic-more{color:#f0d9c4}
               {{WRAPPER}} .rev{cursor:pointer}
               {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:9px 0 0;font-size:13px;color:#5a4636}{{WRAPPER}} .iw2-meta li{margin:0 0 2px}
@@ -787,14 +738,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .iw2-ofc .iw2-desc{color:#f3e9df;--fade:#64402c}
               {{WRAPPER}} .iw2-ofc .iw2-meta{color:#e6d5c4}
               {{WRAPPER}} .iw2-ofc .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
-              /* Desktop (min-width:1367px): restore the paragraph clamp + hover/tap
-                 expand — a mouse is available there to reveal the full text. */
-              @media(min-width:1367px){
-                {{WRAPPER}} .iw2-desc.clip{max-height:calc(var(--tl) * 1.62em);overflow:hidden;transition:max-height .45s ease}
-                {{WRAPPER}} .iw2-desc.clip::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .rev.is-open .iw2-desc.clip,{{WRAPPER}} .rev:hover .iw2-desc.clip{max-height:2000px}
-                {{WRAPPER}} .rev.is-open .iw2-desc.clip::after,{{WRAPPER}} .rev:hover .iw2-desc.clip::after{opacity:0}
-              }
               @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:96px 1fr;gap:14px}{{WRAPPER}} .iw2-ed .iw2-num{display:none}}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). */
               @media(max-width:767px){
@@ -1969,7 +1912,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
             $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['layout' => 'rows']]);
             $this->add_control('show_img', ['label' => 'Show image', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
-            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            $this->add_control('hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'condition' => ['layout' => 'rows'],
                 'description' => 'Show a few lines by default; the full text opens on hover (tap on mobile) and closes on leave. A brown bottom border hints there is more.']);
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
@@ -2237,7 +2180,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
              * text on hover (tap on mobile). The fade blends into that band's own
              * background colour. Tables/after-table text are never clamped. */
             $this->add_control('bd_hx_h', ['label' => 'Hover clamp', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
-            $this->add_control('bd_hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            $this->add_control('bd_hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'Show a few lines by default; the full text opens on hover (tap on mobile) and closes on leave. A soft fade hints there is more.']);
             $this->add_control('bd_clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
                 'condition' => ['bd_hover_expand' => 'yes'],
@@ -2301,8 +2244,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body{max-height:none}
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .ifs-row.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* No-photo row = full-width text/table section: never truncate — no
                  clamp, no fade, no Read More (title centering handled below). */
               {{WRAPPER}} .ifs-row.noimg .ifs-body{max-height:none!important;overflow:visible!important}
@@ -2361,10 +2305,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr;grid-template-areas:"head" "body"}
                 /* No-photo row keeps its centered title/eyebrow on desktop too. */
                 {{WRAPPER}} .ifs-row.noimg .ifs-eyebrow,{{WRAPPER}} .ifs-row.noimg .ifs-title{text-align:center}
-                {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
-                {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
-                {{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body::after{opacity:0}
               }
               {{WRAPPER}} .ifs-scrollwrap{position:relative}
               {{WRAPPER}} .ifs-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
@@ -2503,9 +2443,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // swallow. Touch: tap toggles it (and :focus-within via tabindex).
             // MUST print right after the .ifs container: it binds via
             // currentScript.previousElementSibling, so nothing may sit between.
-            if ($hx) {
-                island_ew_hover_script();  // shared desktop hover-to-expand
-            }
             island_ew_clip_script();  // shared mobile clamp + tappable arrow
             // Lightbox assets come AFTER the hover script so they don't break the
             // previousElementSibling lookup above.
@@ -2722,8 +2659,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body{max-height:none}
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:var(--t-title);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .ifb-band.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:var(--t-title)}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* Plain band = no icon AND no photo (else-branch .ifb-tx is a direct
                  child of .ifb-inner and carries no inline icon). These are full-width
                  text/table bands, so they must NEVER truncate: no clamp, no fade, no
@@ -2799,10 +2737,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                    (image bands and icon rows still left-align via their own rules). */
                 {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:center}
                 {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:none;margin:0 0 14px}
-                {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
-                {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body{max-height:var(--open,1200px)}
-                {{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
               }
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
@@ -2989,9 +2923,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // a tap toggles it (and :focus-within via tabindex). Binds via
             // currentScript.previousElementSibling, so it MUST print right after
             // the .ifb container with nothing in between.
-            if ($hx) {
-                island_ew_hover_script();  // shared desktop hover-to-expand
-            }
             island_ew_clip_script();  // shared mobile clamp + tappable arrow
         }
     }
@@ -4788,7 +4719,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('columns', ['label' => 'Card columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'tablet_default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2'], 'condition' => ['layout' => 'cards'],
                 'selectors' => ['{{WRAPPER}} .wts-cards' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
-            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+            $this->add_control('hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
                 'description' => 'Show a few lines per site; the full description opens on hover (tap on mobile) and hides again on leave. A soft fade hints there is more.']);
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 4, 'min' => 2, 'max' => 20,
                 'condition' => ['hover_expand' => 'yes']]);
@@ -4850,11 +4781,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts-r{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:16px 20px;background:#FCF9F5;border-top:1px solid rgba(90,61,43,.14)}
               {{WRAPPER}} .wts-r:first-child{border-top:0}
               {{WRAPPER}} .wts-r .wts-isl{padding-top:3px}
-              {{WRAPPER}} .wts.hx .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden;transition:max-height .4s ease}
-              {{WRAPPER}} .wts.hx .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc{max-height:var(--wts-open,700px)}
-              {{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc::after{opacity:0}
-              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wts.hx .wts-desc,{{WRAPPER}} .wts.hx .wts-desc::after{transition:none}}
               @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
               /* MOBILE clamp + tappable arrow (added by JS as .clip-m per item when it
                  overflows). Tapping the arrow toggles .is-open, which persists while
@@ -4864,8 +4790,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none!important}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wts-item.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .wts-item.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .wts-item.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wts-item.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .wts-item.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). The
                  peek of the next card is the swipe affordance. */
               @media(max-width:767px){
@@ -4913,9 +4840,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // Desktop: hover to expand each site's description (JS-driven so it
             // never depends on CSS :hover, which the Elementor overlay can
             // swallow). Mobile keeps the tappable "Read More" link only.
-            if ($hx) {
-                island_ew_hover_script();  // shared desktop hover-to-expand
-            }
             island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
         }
     }
@@ -5093,7 +5017,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('feat_heading', ['label' => 'Features heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Feature Sections',
                 'description' => 'Blank = use the page’s feature_sections_title if present.']);
             $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
-            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            $this->add_control('hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'Show a few lines per feature; the full text opens on hover (tap on mobile) and closes on leave. A soft fade hints there is more.']);
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
                 'condition' => ['hover_expand' => 'yes']]);
@@ -5283,11 +5207,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  (otherwise the first data row was wrongly bolded/shaded like a 2nd header). */
               {{WRAPPER}} .wgf-tbl table:not(:has(thead)) tr:first-child td{background:rgba(90,61,43,.06);font-weight:700}
               {{WRAPPER}} .wgf-tbl caption{caption-side:top;text-align:left;font-size:12px;color:#6a5646;padding:6px 2px}
-              {{WRAPPER}} .wgf.hx .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;transition:max-height .45s ease}
-              {{WRAPPER}} .wgf.hx .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body{max-height:var(--wgf-open,900px)}
-              {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body::after{opacity:0}
-              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wgf.hx .wgf-body,{{WRAPPER}} .wgf.hx .wgf-body::after{transition:none}}
               /* MOBILE clamp + tappable arrow (added by JS as .clip-m per feature when
                  it overflows). Tapping the arrow toggles .is-open, persistent while
                  scrolling. Desktop keeps its hover clamp above. */
@@ -5296,8 +5215,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none!important}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .wgf-feat.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0;border:0;border-top:1px solid rgba(100,64,44,.2);border-top-color:color-mix(in srgb,currentColor 22%,transparent);background:transparent;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
               /* MOBILE: image always on TOP of each card (title/text below). The
                  desktop 2-col ordering is restored under .is-wide (glance mode). */
@@ -5416,9 +5336,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // doesn't reflow it away and it stays clickable. Collapses on leaving
             // the whole card. Binds via previousElementSibling — must print right
             // after the .wgf. Mobile keeps the tappable "Read More" link only.
-            if ($hx) {
-                island_ew_hover_script();  // shared desktop hover-to-expand
-            }
             island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
 
             // Infographic lightbox — printed AFTER the hover script so it never

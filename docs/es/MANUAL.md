@@ -326,16 +326,16 @@ el título de la página). El **texto** es la Respuesta Rápida (`geo_answer`) s
 etiquetas, cortada a 3 líneas con “…”; solo si está vacía usa: Extracto →
 `hero_subtitle` → `intro` → descripción de Yoast → descripción de Rank Math.
 
-### Secciones que se abren con hover (escritorio)
+### Texto largo: barra “Read more” (todos los tamaños de pantalla)
 
-En pantallas anchas (1367px o más) las bandas/filas de secciones, los ítems de
-"dónde ver" y las fichas de vida silvestre recortan el texto largo y se abren con
-hover. Comportamiento: se abre tras una pequeña pausa (para que al pasar el mouse
-por la página no se abra todo), se abre a la altura **completa** del texto (sin
-tope fijo) y, si se cierra con el mouse ya más abajo, la página se desplaza lo
-mismo para que lo que está bajo el mouse no se mueva. Un solo script maneja todas,
-así que funciona aunque un optimizador mueva o retrase scripts en línea. En
-celular y tablet queda el botón “Read More / Read Less”.
+Las bandas/filas de secciones, los ítems de "dónde ver" y las fichas de vida
+silvestre recortan el texto largo y muestran una barra **Read more ↓** (línea
+fina, texto a la izquierda y flecha a la derecha). Al hacer clic se abre el texto
+completo (pasa a **Read less ↑**); al cerrarlo, la página vuelve al inicio de esa
+sección si ya te habías desplazado más abajo. El texto corto no lleva barra. Ya no
+hay hover para expandir: hacía saltar la página cuando una sección se cerraba bajo
+el mouse. El interruptor se llama “Clamp long text (Read more button)” y el ajuste
+de “altura al abrir” ya no se usa (el texto siempre se abre completo).
 
 ### Enlace del autor (el nombre enlaza a su ficha)
 
