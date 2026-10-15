@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.79
+ * Version:     0.4.80
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -169,9 +169,9 @@ if (!function_exists('island_ew_clip_script')) {
                 . '.tbl-wrap .ifs-tbl{overflow:hidden!important}'
                 . '.tbl-wrap .ifs-tbl table{min-width:0!important;width:100%!important}'
                 . '.tbl-wrap .ifs-tbl th,.tbl-wrap .ifs-tbl td{white-space:normal!important;overflow-wrap:break-word;word-break:normal}'
-                . '.ifs-tbl td:only-child{font-weight:400!important;color:#3A2A1E;line-height:1.65}'
+                . '.ifs-tbl td:only-child{font-weight:400!important;color:#3A2A1E;font-size:15px;line-height:1.7}'
                 . '.ifs-tbl td:only-child::first-line{font-weight:700;color:#64402C}'
-                . '.ifs-tbl thead th:only-child{text-transform:none!important;letter-spacing:0!important;font-weight:400!important;font-size:13px!important;line-height:1.65}'
+                . '.ifs-tbl thead th:only-child{text-transform:none!important;letter-spacing:0!important;font-weight:400!important;font-size:15px!important;line-height:1.7}'
                 . '.ifs-tbl thead th:only-child::first-line{font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px}'
                 . '.ifs .ifs-body a,.ifs .ifs-after a,.ifb .ifb-body a,.wts .wts-desc a,.wgf .wgf-body a,.iw2 .iw2-desc a{color:inherit;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}'
                 . '.ifs .ifs-body a:hover,.ifs .ifs-after a:hover,.ifb .ifb-body a:hover,.wts .wts-desc a:hover,.wgf .wgf-body a:hover,.iw2 .iw2-desc a:hover{color:inherit;opacity:.8;text-decoration-thickness:2px}'
@@ -2024,7 +2024,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .ifs-title']);
             $this->add_control('body_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#333333',
                 'selectors' => ['{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'body_typo', 'selector' => '{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p']);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'body_typo', 'selector' => '{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p,{{WRAPPER}} .ifs-tbl td:only-child']);
             $this->add_control('btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .ifs-btn' => 'color:{{VALUE}}']]);
             $this->add_control('btn_bd', ['label' => 'Button border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',

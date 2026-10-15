@@ -347,7 +347,9 @@ interruptor **“Wrap table text (no horizontal scroll)”** (activado por defec
 apágalo para volver al comportamiento anterior (ancho mínimo, scroll lateral). Una
 **tabla de una sola columna** (cada celda = línea de título y luego un párrafo) se
 ve con el título en negrita y el texto normal; la celda del encabezado usa el
-mismo patrón con el color del encabezado.
+mismo patrón con el color del encabezado. Su texto es de 15px con interlineado 1.7
+(igual que el texto del cuerpo de la sección) y, en las filas de secciones, sigue la
+tipografía “Body”.
 
 ### Enlace del autor (el nombre enlaza a su ficha)
 
