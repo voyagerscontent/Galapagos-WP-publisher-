@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.74
+ * Version:     0.4.75
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -157,23 +157,49 @@ if (!function_exists('island_ew_itinerary_map')) {
 if (!function_exists('island_ew_clip_script')) {
     function island_ew_clip_script()
     {
-        echo '<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;'
-            . 'var mq=window.matchMedia("(max-width:1366px)");'
-            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",0],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",0],[".iw2 .rev",".iw2-desc.clip",0],[".wts.hx .wts-item",".wts-desc",0],[".wgf.hx .wgf-feat",".wgf-body",0]];'
-            . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b,g[2]);});});}'
-            . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-expanded","false");a.innerHTML="<span>Read more</span><span class=\"ic-ar\">&darr;</span>";'
-            . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");a.innerHTML=o?"<span>Read less</span><span class=\"ic-ar\">&uarr;</span>":"<span>Read more</span><span class=\"ic-ar\">&darr;</span>";'
-            . 'if(!o){var r=it.getBoundingClientRect().top;if(r<110){var y=r+(window.pageYOffset||document.documentElement.scrollTop||0)-110;window.scrollTo({top:y<0?0:y,behavior:"smooth"});}}});it.__more=a;return a;}'
-            . 'function refresh(){each(function(it,b,always){var a=it.__more;var on=true;'
-            . 'if(!on){it.classList.remove("clip-m");if(a)a.style.display="none";return;}'
-            . 'it.classList.add("clip-m");'
-            . 'var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+2;'
-            . 'if(over){ensure(it,b).style.display="";}else{it.classList.remove("clip-m");if(a)a.style.display="none";}});}'
-            . 'function run(){refresh();setTimeout(refresh,400);setTimeout(refresh,1200);}'
-            . 'if(document.readyState!=="loading")run();else document.addEventListener("DOMContentLoaded",run);'
-            . 'window.addEventListener("load",run);'
-            . 'var t;window.addEventListener("resize",function(){clearTimeout(t);t=setTimeout(refresh,200);});'
-            . '})();</script>';
+        echo <<<'JS'
+<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;
+var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"],[".wts.hx .wts-item",".wts-desc"],[".wgf.hx .wgf-feat",".wgf-body"]];
+var VARS=["--fade","--ifb-bg","--wts-fade","--wgf-card"];
+var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;
+var MS=420;
+(function(){var st=document.createElement("style");var B=":is(.ifs-body,.ifb-body,.iw2-desc,.wts-desc,.wgf-body)";
+st.textContent=".clip-m "+B+"::after{transition:opacity .35s ease}.is-closing.is-open "+B+"::after{opacity:1!important}";document.head.appendChild(st);})();
+function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b);});});}
+function bgOf(el){for(var n=el;n&&n.nodeType===1;n=n.parentElement){var c=getComputedStyle(n).backgroundColor;if(c&&c!=="transparent"&&!/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)/.test(c))return c;}return "";}
+function label(a,open){a.setAttribute("aria-expanded",open?"true":"false");a.innerHTML=open?'<span>Read less</span><span class="ic-ar">&uarr;</span>':'<span>Read more</span><span class="ic-ar">&darr;</span>';}
+function paint(it,b,a){var c=getComputedStyle(b).color;a.style.color=c;var bg=bgOf(b);if(bg){VARS.forEach(function(v){b.style.setProperty(v,bg);});}}
+function settle(b,fn){var done=false;function end(){if(done)return;done=true;b.style.transition="";fn();}b.addEventListener("transitionend",function h(e){if(e.target!==b||e.propertyName!=="max-height")return;b.removeEventListener("transitionend",h);end();});setTimeout(end,MS+80);}
+function toggle(it,b,a){
+ if(it.__busy)return;
+ var open=it.classList.contains("is-open");
+ if(!open){
+  var from=b.offsetHeight;it.__clamp=from;
+  if(reduce){it.classList.add("is-open");label(a,true);return;}
+  it.__busy=1;b.style.maxHeight=from+"px";it.classList.add("is-open");void b.offsetHeight;
+  b.style.transition="max-height "+MS+"ms ease";b.style.maxHeight=b.scrollHeight+"px";label(a,true);
+  settle(b,function(){b.style.maxHeight="";it.__busy=0;});
+ }else{
+  var top=it.getBoundingClientRect().top;
+  if(top<110){var y=top+(window.pageYOffset||document.documentElement.scrollTop||0)-110;window.scrollTo({top:y<0?0:y,behavior:reduce?"auto":"smooth"});}
+  if(reduce){it.classList.remove("is-open");label(a,false);return;}
+  it.__busy=1;it.classList.add("is-closing");b.style.maxHeight=b.offsetHeight+"px";void b.offsetHeight;
+  b.style.transition="max-height "+MS+"ms ease";b.style.maxHeight=(it.__clamp||0)+"px";label(a,false);
+  settle(b,function(){it.classList.remove("is-open","is-closing");b.style.maxHeight="";it.__busy=0;});
+ }
+}
+function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";label(a,false);
+ b.parentNode.insertBefore(a,b.nextSibling);
+ a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();toggle(it,b,a);});it.__more=a;return a;}
+function refresh(){each(function(it,b){if(it.__busy)return;var a=it.__more;it.classList.add("clip-m");
+ var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+2;
+ if(over){a=ensure(it,b);a.style.display="";paint(it,b,a);}else{it.classList.remove("clip-m");if(a)a.style.display="none";}});}
+function run(){refresh();setTimeout(refresh,400);setTimeout(refresh,1200);}
+if(document.readyState!=="loading")run();else document.addEventListener("DOMContentLoaded",run);
+window.addEventListener("load",run);
+var t;window.addEventListener("resize",function(){clearTimeout(t);t=setTimeout(refresh,200);});
+})();</script>
+JS;
     }
 }
 
@@ -705,7 +731,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  when its description overflows). Tapping the arrow toggles .is-open,
                  which persists while scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .rev.clip-m .iw2-desc{position:relative;max-height:calc(var(--tl,3) * 1.62em);overflow:hidden}
-              {{WRAPPER}} .rev.clip-m .iw2-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none}
+              {{WRAPPER}} .rev.clip-m .iw2-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none}
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc{max-height:none}
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
@@ -2240,7 +2266,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  body overflows). Tapping the arrow toggles .is-open, which persists
                  while scrolling. Desktop keeps its hover clamp (min-width block). */
               {{WRAPPER}} .ifs-row.clip-m .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden}
-              {{WRAPPER}} .ifs-row.clip-m .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none}
+              {{WRAPPER}} .ifs-row.clip-m .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none}
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body{max-height:none}
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
@@ -2655,7 +2681,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  arrow. Tapping the arrow toggles .is-open, which PERSISTS while
                  scrolling until tapped again. Desktop keeps its hover clamp (below). */
               {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden}
-              {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none}
+              {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none}
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body{max-height:none}
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
@@ -4786,7 +4812,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  overflows). Tapping the arrow toggles .is-open, which persists while
                  scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .wts-item.clip-m .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden}
-              {{WRAPPER}} .wts-item.clip-m .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none}
+              {{WRAPPER}} .wts-item.clip-m .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none!important}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
@@ -5211,7 +5237,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  it overflows). Tapping the arrow toggles .is-open, persistent while
                  scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .wgf-feat.clip-m .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden}
-              {{WRAPPER}} .wgf-feat.clip-m .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none}
+              {{WRAPPER}} .wgf-feat.clip-m .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none!important}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
