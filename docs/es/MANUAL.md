@@ -319,6 +319,17 @@ nada que mantener a mano: una página aparece en cuanto se publica con el byline
   máximo) es ajustable. Los controles cubren el encabezado (`{name}` se sustituye),
   en qué tipos de contenido buscar, el orden y un máximo.
 
+### Enlace del autor (el nombre enlaza a su ficha)
+
+Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By
+Juan Magallanes, Naturalist Expert Contributor”. Lee el campo ACF `author` de la
+página (o el cuadro **Text** si lo llenas) y convierte solo el **nombre** en un
+enlace a la ficha de ese experto: la página publicada cuyo *Galápagos Page Type*
+es **Experts** y cuyo título es el mismo nombre (sin importar mayúsculas ni
+acentos). El cargo / nota de revisión después de la coma queda como texto. Si no
+hay ficha con ese nombre, o ya estás en esa ficha → texto simple, sin enlace.
+Fuera de Elementor está el shortcode `[island_byline]`.
+
 ## 12. Los 3 formatos de documento por dentro (contrato técnico)
 
 Cómo lee el motor cada formato. El lector correcto se elige por la extensión y por

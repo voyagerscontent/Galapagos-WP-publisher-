@@ -314,6 +314,17 @@ is maintained by hand: a page appears as soon as it is published with the byline
   max width) is adjustable. Controls cover the heading (`{name}` is replaced), which
   post types to look in, the order and a maximum.
 
+### Byline link (the author's name links to their profile)
+
+Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan
+Magallanes, Naturalist Expert Contributor” line goes. It reads the page's ACF
+`author` field (or the **Text** box if filled) and turns only the **name** into a
+link to that expert's profile page — the published page whose *Galápagos Page
+Type* is **Experts** and whose title is the same name (case and accents ignored).
+The role / review note after the comma stays plain text. No matching profile, or
+you are already on that profile → plain text, no link. Outside Elementor the same
+thing is available as the shortcode `[island_byline]`.
+
 ## 12. The 3 document formats under the hood (technical contract)
 
 How the engine reads each format. The correct reader is chosen by the extension and

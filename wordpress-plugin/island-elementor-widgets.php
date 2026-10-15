@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.69
+ * Version:     0.4.70
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6229,6 +6229,104 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     }
 
     /* ===================================================================
+     *  ISLAND BYLINE — "By Juan Magallanes, Role | review note" where the
+     *  NAME is a link to that expert's profile page (a published page whose
+     *  Galápagos Page Type is "experts" and whose title is the same name,
+     *  case/accent-insensitive). No profile found → plain text, as before.
+     *  Reads the page's ACF `author` field unless "Text" is filled in.
+     * =================================================================== */
+    if (!function_exists('island_byline_html')) {
+        function island_byline_html($byline, $prefix = 'By')
+        {
+            $byline = trim(wp_strip_all_tags((string) $byline));
+            $byline = trim(preg_replace('/^\s*by\s+/iu', '', $byline));
+            if ($byline === '') {
+                return '';
+            }
+            $parts = preg_split('/(\s*[,|–—]\s*|\s+-\s+)/u', $byline, 2, PREG_SPLIT_DELIM_CAPTURE);
+            $name = trim((string) $parts[0]);
+            $rest = isset($parts[1]) ? $parts[1] . (string) ($parts[2] ?? '') : '';
+            $norm = function ($s) {
+                $s = remove_accents(trim(preg_replace('/\s+/u', ' ', (string) $s)));
+                return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
+            };
+            $url = '';
+            $q = new \WP_Query([
+                'post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 50, 'fields' => 'ids',
+                'no_found_rows' => true, 'orderby' => 'title', 'order' => 'ASC',
+                'meta_query' => [['key' => 'gp_page_type', 'value' => 'experts']],
+            ]);
+            foreach ($q->posts as $pid) {
+                if ($norm(get_the_title($pid)) === $norm($name) || $norm(preg_split('/\s*[,|–—]\s*|\s+-\s+/u', get_the_title($pid))[0]) === $norm($name)) {
+                    $url = (int) get_queried_object_id() === (int) $pid ? '' : get_permalink($pid);
+                    break;
+                }
+            }
+            $label = esc_html($name);
+            if ($url !== '') {
+                $label = '<a class="ibl-link" href="' . esc_url($url) . '">' . $label . '</a>';
+            }
+            $prefix = trim((string) $prefix);
+            return '<p class="ibl-wrap">' . ($prefix !== '' ? esc_html($prefix) . ' ' : '') . $label . esc_html($rest) . '</p>';
+        }
+    }
+    add_shortcode('island_byline', function ($atts) {
+        $a = shortcode_atts(['text' => '', 'prefix' => 'By'], $atts);
+        $text = $a['text'] !== '' ? $a['text'] : (function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true));
+        return island_byline_html($text, $a['prefix']);
+    });
+
+    class Island_Byline_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_byline';
+        }
+        public function get_title()
+        {
+            return 'Island Byline';
+        }
+        public function get_icon()
+        {
+            return 'eicon-person';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        public function get_keywords()
+        {
+            return ['byline', 'author', 'expert', 'by'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Byline']);
+            $this->add_control('prefix', ['label' => 'Prefix', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'By']);
+            $this->add_control('text', ['label' => 'Text (leave empty to use the ACF “author” field)', 'type' => \Elementor\Controls_Manager::TEXT, 'dynamic' => ['active' => true]]);
+            $this->end_controls_section();
+            $this->start_controls_section('st', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => ['{{WRAPPER}} .ibl-wrap, {{WRAPPER}} .ibl-wrap a' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'typo', 'selector' => '{{WRAPPER}} .ibl-wrap']);
+            $this->add_responsive_control('align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::TEXT_ALIGN, 'selectors' => ['{{WRAPPER}} .ibl-wrap' => 'text-align:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            $s = $this->get_settings_for_display();
+            $text = trim((string) ($s['text'] ?? ''));
+            if ($text === '') {
+                $text = function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true);
+            }
+            $html = island_byline_html($text, (string) ($s['prefix'] ?? 'By'));
+            if ($html === '') {
+                return;
+            }
+            echo '<style id="ibl-css">.ibl-wrap{margin:0}.ibl-wrap .ibl-link{color:inherit;text-decoration:underline;text-underline-offset:3px}.ibl-wrap .ibl-link:hover{text-decoration-thickness:2px}</style>';
+            echo $html;
+        }
+    }
+
+    /* ===================================================================
      *  ISLAND EXPERT — full expert-profile page from the "Perfil de Experto"
      *  ACF group (about_image, role, company, about, languages, expertise,
      *  additional_info, destinations, social_networks). Renders the brown hero,
@@ -7204,6 +7302,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_CruiseItineraries_Widget',
         'Island_Expert_Widget',
         'Island_ExpertPages_Widget',
+        'Island_Byline_Widget',
         'Island_AcfList_Widget',
         'Island_ProfileCard_Widget',
     ] as $island_ew_new) {
