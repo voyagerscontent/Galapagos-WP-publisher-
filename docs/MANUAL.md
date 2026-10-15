@@ -340,7 +340,7 @@ no horizontal scrollbar. The Table group has a switch **“Wrap table text (no
 horizontal scroll)”** (on by default); switch it off to bring back the old
 behaviour (minimum width, scrolls sideways). A **one-column table** (each cell =
 a title line, then a paragraph) reads as a bold title plus normal text; the header
-cell uses the same pattern in the header colour. Its text is 15px with 1.7 line
+cell uses the same pattern in the header colour (title line bold, same size as the text). Its text is 15px with 1.7 line
 height — the same as the section's body text — and in feature rows it follows the
 “Body” typography setting. If a one-column table has no header row (`<thead>`), its
 first row is shown as the brown header automatically (colours follow the “Header
