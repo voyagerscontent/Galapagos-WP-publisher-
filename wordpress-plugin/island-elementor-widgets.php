@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.85
+ * Version:     0.4.86
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -4143,7 +4143,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-orn-i{display:inline-flex;line-height:1;font-size:30px}
               .irl-wrap .irl-orn-i svg{width:30px;height:30px;fill:currentColor}
               .irl-wrap .irl-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:30px;font-weight:400;color:#f7efe1}
-              .irl-wrap .irl-intro{margin:0 auto 40px;max-width:760px;font-size:16px;line-height:1.6;color:#d9cebc}
+              .irl-wrap .irl-intro{margin:0 auto 40px;max-width:760px;font-size:17px;line-height:1.6;color:#d9cebc}
               .irl-wrap .irl-cols{display:grid;grid-template-columns:repeat(var(--irl-cols,3),1fr);gap:34px 48px;align-items:start}
               .irl-wrap .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#f7efe1}
               .irl-wrap .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
@@ -4161,7 +4161,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:40px;color:#f3ead9}
               .irl-wrap .irl-contact .irl-ct-i svg{width:40px;height:40px;fill:currentColor}
               .irl-wrap .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
-              .irl-wrap .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
+              .irl-wrap .irl-ct-t{margin:0 0 20px;font-size:17px;line-height:1.6;color:#d9cebc}
               .irl-wrap .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid #f3ead9;border-radius:8px;font-weight:600;font-size:16px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
               .irl-wrap .irl-ct-btn:hover{background:#f3ead9;border-color:#f3ead9;color:#3a2a1e}
               .irl-wrap .irl-ct-btn .irl-ct-arw{display:inline-flex;align-items:center;line-height:1;transition:transform .2s ease}
