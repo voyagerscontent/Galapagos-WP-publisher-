@@ -326,6 +326,17 @@ el título de la página). El **texto** es la Respuesta Rápida (`geo_answer`) s
 etiquetas, cortada a 3 líneas con “…”; solo si está vacía usa: Extracto →
 `hero_subtitle` → `intro` → descripción de Yoast → descripción de Rank Math.
 
+### Secciones que se abren con hover (escritorio)
+
+En pantallas anchas (1367px o más) las bandas/filas de secciones, los ítems de
+"dónde ver" y las fichas de vida silvestre recortan el texto largo y se abren con
+hover. Comportamiento: se abre tras una pequeña pausa (para que al pasar el mouse
+por la página no se abra todo), se abre a la altura **completa** del texto (sin
+tope fijo) y, si se cierra con el mouse ya más abajo, la página se desplaza lo
+mismo para que lo que está bajo el mouse no se mueva. Un solo script maneja todas,
+así que funciona aunque un optimizador mueva o retrase scripts en línea. En
+celular y tablet queda el botón “Read More / Read Less”.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By

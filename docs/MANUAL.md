@@ -321,6 +321,17 @@ on a phone). The card **title** is the page's ACF `hero_title` (page title if em
 “…”; only if it is empty does it fall back to: Excerpt → `hero_subtitle` → `intro`
 → Yoast description → Rank Math description.
 
+### Hover-to-expand sections (desktop)
+
+On wide screens (1367px and up) the feature bands/rows, "where to see" items and
+wildlife features clip long text and open on hover. Behaviour: it opens after a
+short pause (so sweeping the mouse across the page does not open everything), it
+opens to the text's **full** height (no fixed cap), and when it closes under a
+pointer that has already moved below it, the page scrolls by the same amount so
+the content under the mouse stays where it was. One script handles all of them,
+so it works even if an optimiser moves or defers inline scripts. Phones and
+tablets keep the “Read More / Read Less” button.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

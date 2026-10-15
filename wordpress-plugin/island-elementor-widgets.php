@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.72
+ * Version:     0.4.73
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -145,6 +145,56 @@ if (!function_exists('island_ew_itinerary_map')) {
             . 'L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap"}).addTo(m);'
             . 'var g=[];pts.forEach(function(p){var mk=L.marker([p.lat,p.lng]).addTo(m);if(p.label){mk.bindPopup(p.label);}g.push([p.lat,p.lng]);});'
             . 'if(g.length===1){m.setView(g[0],9);}else{m.fitBounds(g,{padding:[30,30]});}}go();})();</script>';
+    }
+}
+
+/**
+ * Shared DESKTOP hover-to-expand (min-width:1367px) for the feature bands, rows,
+ * "where to see" items and wildlife features. One delegated listener per page —
+ * it does not depend on where the script prints or on document.currentScript, so
+ * it keeps working when an optimiser defers/moves scripts. Compared with the old
+ * per-widget handlers it:
+ *  - opens to the text's REAL height (no 900/1200px cap that cut long copy off),
+ *  - waits a moment (hover-intent) so sweeping the mouse across the page doesn't
+ *    open every section it crosses, and closes after a short delay,
+ *  - when a section collapses under a pointer that has already moved below it,
+ *    scrolls by the same amount so the content under the pointer stays put.
+ */
+if (!function_exists('island_ew_hover_script')) {
+    function island_ew_hover_script()
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+        echo <<<'JS'
+<script>(function(){if(window.__islandHover)return;window.__islandHover=1;
+var mq=window.matchMedia("(min-width:1367px)");
+/* [item, text, trigger-or-empty] */
+var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",""],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",""],[".wts.hx .wts-item",".wts-desc",""],[".wgf.hx .wgf-feat",".wgf-body",".wgf-tx"]];
+var lock=0,py=0;
+document.addEventListener("mousemove",function(e){py=e.clientY;},{passive:true});
+function find(t){if(!t||!t.closest)return null;for(var i=0;i<G.length;i++){var c=t.closest(G[i][0]);if(c)return [c,G[i]];}return null;}
+function scroller(el){for(var n=el.parentElement;n&&n!==document.body;n=n.parentElement){var o=getComputedStyle(n).overflowY;if((o==="auto"||o==="scroll")&&n.scrollHeight>n.clientHeight)return n;}return null;}
+function open(c,b){if(c.classList.contains("is-open"))return;c.classList.add("is-open");b.style.maxHeight=b.scrollHeight+"px";
+clearTimeout(c.__fx);c.__fx=setTimeout(function(){if(c.classList.contains("is-open"))b.style.maxHeight="none";},520);}
+function close(c,b){if(!c.classList.contains("is-open"))return;clearTimeout(c.__fx);
+var below=py>c.getBoundingClientRect().bottom-8;
+b.style.maxHeight=b.offsetHeight+"px";void b.offsetHeight;c.classList.remove("is-open");b.style.maxHeight="";
+lock=Date.now()+520;
+if(below){var sc=scroller(c),prev=c.offsetHeight,end=Date.now()+540;
+(function f(){var h=c.offsetHeight,d=h-prev;prev=h;if(d){if(sc)sc.scrollTop+=d;else window.scrollBy(0,d);}if(Date.now()<end)requestAnimationFrame(f);})();}}
+document.addEventListener("mouseover",function(e){if(!mq.matches)return;var m=find(e.target);if(!m)return;var c=m[0],g=m[1];
+clearTimeout(c.__ct);if(c.classList.contains("is-open")||c.__ot)return;if(g[2]&&!e.target.closest(g[2]))return;
+var b=c.querySelector(g[1]);if(!b)return;
+c.__ot=setTimeout(function(){c.__ot=0;if(c.matches(":hover"))open(c,b);},Math.max(110,lock-Date.now()));});
+document.addEventListener("mouseout",function(e){if(!mq.matches)return;var m=find(e.target);if(!m)return;var c=m[0];
+if(e.relatedTarget&&c.contains(e.relatedTarget))return;clearTimeout(c.__ot);c.__ot=0;
+var b=c.querySelector(m[1][1]);if(!b)return;clearTimeout(c.__ct);
+c.__ct=setTimeout(function(){if(!c.matches(":hover"))close(c,b);},180);});
+})();</script>
+JS;
     }
 }
 
@@ -2454,12 +2504,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // MUST print right after the .ifs container: it binds via
             // currentScript.previousElementSibling, so nothing may sit between.
             if ($hx) {
-                // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
-                // script (touchstart removed — it toggled while scrolling).
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".ifs-row").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
+                island_ew_hover_script();  // shared desktop hover-to-expand
             }
             island_ew_clip_script();  // shared mobile clamp + tappable arrow
             // Lightbox assets come AFTER the hover script so they don't break the
@@ -2945,13 +2990,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // currentScript.previousElementSibling, so it MUST print right after
             // the .ifb container with nothing in between.
             if ($hx) {
-                // Desktop hover only. The mobile tap-to-expand is handled by the
-                // shared clip/arrow script below (touchstart used to fire on scroll,
-                // which collapsed the text while scrolling — that is now removed).
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".ifb-band").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
+                island_ew_hover_script();  // shared desktop hover-to-expand
             }
             island_ew_clip_script();  // shared mobile clamp + tappable arrow
         }
@@ -4875,10 +4914,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // never depends on CSS :hover, which the Elementor overlay can
             // swallow). Mobile keeps the tappable "Read More" link only.
             if ($hx) {
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".wts-item").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
+                island_ew_hover_script();  // shared desktop hover-to-expand
             }
             island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
         }
@@ -5381,11 +5417,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // the whole card. Binds via previousElementSibling — must print right
             // after the .wgf. Mobile keeps the tappable "Read More" link only.
             if ($hx) {
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
-                    . 'var tx=c.querySelector(".wgf-tx");'
-                    . 'if(tx)tx.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
+                island_ew_hover_script();  // shared desktop hover-to-expand
             }
             island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
 
