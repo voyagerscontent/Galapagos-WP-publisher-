@@ -316,9 +316,10 @@ is maintained by hand: a page appears as soon as it is published with the byline
 
 The cards show up in a **carousel**: three at a time on desktop, two on tablet,
 one on mobile. If there are more pages than fit, arrows appear (and you can swipe
-on a phone). The card text is the first filled of: Excerpt → `hero_subtitle` →
-`intro` → `geo_answer` → Yoast description → Rank Math description (the SEO ones
-last, since they are written for Google).
+on a phone). The card **title** is the page's ACF `hero_title` (page title if empty). The card
+**text** is the Quick Answer (`geo_answer`) with tags removed, cut to 3 lines with
+“…”; only if it is empty does it fall back to: Excerpt → `hero_subtitle` → `intro`
+→ Yoast description → Rank Math description.
 
 ### Byline link (the author's name links to their profile)
 

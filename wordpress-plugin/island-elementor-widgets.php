@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.71
+ * Version:     0.4.72
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6116,10 +6116,11 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         {
             $has_acf = function_exists('get_field');
             $cands = [
+                // Quick Answer (GEO) is the card text; the rest only fill in when it is empty.
+                $has_acf ? get_field('geo_answer', $id) : '',
                 get_post_field('post_excerpt', $id),
                 $has_acf ? get_field('hero_subtitle', $id) : '',
                 $has_acf ? get_field('intro', $id) : '',
-                $has_acf ? get_field('geo_answer', $id) : '',
                 // SEO descriptions are written for Google, so they come last.
                 get_post_meta($id, '_yoast_wpseo_metadesc', true),
                 get_post_meta($id, 'rank_math_description', true),
@@ -6128,13 +6129,21 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 if (!is_scalar($c)) {
                     continue;
                 }
-                $t = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags((string) $c)));
+                $t = trim(preg_replace('/\s+/u', ' ', html_entity_decode(wp_strip_all_tags((string) $c), ENT_QUOTES, 'UTF-8')));
                 // Unresolved SEO template variables (%%title%% …) are not a summary.
                 if ($t !== '' && strpos($t, '%%') === false) {
-                    return wp_trim_words($t, 40, '…');
+                    return wp_trim_words($t, 60, '…');
                 }
             }
             return '';
+        }
+
+        /** The card title: the page's ACF hero_title, else its WordPress title. */
+        private function card_title($id)
+        {
+            $t = function_exists('get_field') ? get_field('hero_title', $id) : '';
+            $t = is_scalar($t) ? trim(html_entity_decode(wp_strip_all_tags((string) $t), ENT_QUOTES, 'UTF-8')) : '';
+            return $t !== '' ? $t : get_the_title($id);
         }
 
         private function thumb($id)
@@ -6239,7 +6248,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $text = $this->blurb($id);
                 echo '<a class="iep-card" href="' . esc_url(get_permalink($id)) . '">'
                     . '<div class="iep-media">' . $img . '</div>'
-                    . '<div class="iep-body"><h3 class="iep-title">' . esc_html(get_the_title($id)) . '</h3>'
+                    . '<div class="iep-body"><h3 class="iep-title">' . esc_html($this->card_title($id)) . '</h3>'
                     . ($text !== '' ? '<p class="iep-desc">' . esc_html($text) . '</p>' : '')
                     . '</div></a>';
             }

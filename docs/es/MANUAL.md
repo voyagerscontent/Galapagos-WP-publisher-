@@ -321,10 +321,10 @@ nada que mantener a mano: una página aparece en cuanto se publica con el byline
 
 Las tarjetas salen en un **carrusel**: tres a la vez en escritorio, dos en tablet,
 una en móvil. Si hay más páginas de las que caben, aparecen flechas (y se desliza
-con el dedo en el celular). El texto de la tarjeta es el primero que tenga
-contenido: Extracto → `hero_subtitle` → `intro` → `geo_answer` → descripción de
-Yoast → descripción de Rank Math (las de SEO al final, porque están escritas para
-Google).
+con el dedo en el celular). El **título** de la tarjeta es el `hero_title` ACF de la página (si está vacío,
+el título de la página). El **texto** es la Respuesta Rápida (`geo_answer`) sin
+etiquetas, cortada a 3 líneas con “…”; solo si está vacía usa: Extracto →
+`hero_subtitle` → `intro` → descripción de Yoast → descripción de Rank Math.
 
 ### Enlace del autor (el nombre enlaza a su ficha)
 
