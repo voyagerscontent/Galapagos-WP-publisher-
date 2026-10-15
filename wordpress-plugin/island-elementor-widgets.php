@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.68
+ * Version:     0.4.69
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -5963,6 +5963,271 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
     }
 
+    /**
+     * Island Expert Pages — the pages an expert has written, as cards.
+     *
+     * Drop it on an expert's profile page. It finds every published page whose
+     * ACF `author` byline names that person and prints image, title and up to
+     * three lines of description. The name comes from the profile page's own
+     * title (override it in the widget if the title carries more than the name),
+     * and only the part of the byline before the first comma is compared — so
+     * "Juan Magallanes, Naturalist Expert Contributor" counts for "Juan
+     * Magallanes". Nothing is maintained by hand: a page shows up as soon as it
+     * is published with that byline.
+     *
+     * Like Related Links, the design is fixed on purpose so it reads the same on
+     * every profile; only the outer container is adjustable.
+     */
+    class Island_ExpertPages_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_expert_pages';
+        }
+        public function get_title()
+        {
+            return 'Island Expert Pages';
+        }
+        public function get_icon()
+        {
+            return 'eicon-posts-grid';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        public function get_keywords()
+        {
+            return ['expert', 'author', 'byline', 'pages', 'articles', 'cards', 'list'];
+        }
+
+        protected function register_controls()
+        {
+            $types = [];
+            foreach (get_post_types(['public' => true], 'objects') as $slug => $obj) {
+                if ($slug !== 'attachment') {
+                    $types[$slug] = $obj->labels->name ?? $slug;
+                }
+            }
+
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('name_override', ['label' => 'Expert name (blank = this page\'s title)', 'type' => \Elementor\Controls_Manager::TEXT,
+                'label_block' => true, 'placeholder' => 'Juan Magallanes',
+                'description' => 'Compared with the part of each page\'s ACF "author" byline before the first comma.']);
+            $this->add_control('show_heading', ['label' => 'Show heading', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'More from {name}',
+                'label_block' => true, 'description' => '{name} is replaced by the expert\'s name.',
+                'condition' => ['show_heading' => 'yes']]);
+            $this->add_control('post_types', ['label' => 'Look in', 'type' => \Elementor\Controls_Manager::SELECT2, 'multiple' => true,
+                'options' => $types, 'default' => ['page'], 'separator' => 'before']);
+            $this->add_control('order', ['label' => 'Order', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'date_desc',
+                'options' => ['date_desc' => 'Newest first', 'title_asc' => 'Title A–Z']]);
+            $this->add_control('limit', ['label' => 'Max pages (0 = all)', 'type' => \Elementor\Controls_Manager::NUMBER,
+                'min' => 0, 'max' => 100, 'default' => 12]);
+            $this->end_controls_section();
+
+            /* Container only: the card design itself is fixed in styles(). */
+            $this->start_controls_section('sl', ['label' => 'Container', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('bg_color', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iep-wrap' => 'background:{{VALUE}}']]);
+            $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px', 'em', '%'],
+                'default' => ['top' => '48', 'right' => '24', 'bottom' => '48', 'left' => '24', 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iep-wrap' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->add_responsive_control('max_w', ['label' => 'Content max width', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 600, 'max' => 1400]], 'default' => ['size' => 1120, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iep-inner' => 'max-width:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+
+        /** The name part of a byline — "By Juan Magallanes, Role — site" → "Juan Magallanes". */
+        private function display_name($s)
+        {
+            $s = wp_strip_all_tags((string) $s);
+            $s = preg_replace('/^\s*by\s+/iu', '', $s);
+            $parts = preg_split('/\s*[,|–—]\s*|\s+-\s+/u', $s, 2);
+            return trim(preg_replace('/\s+/u', ' ', (string) ($parts[0] ?? '')));
+        }
+
+        /** Case- and accent-insensitive form of a name, for comparing. */
+        private function norm($s)
+        {
+            $s = remove_accents($this->display_name($s));
+            return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
+        }
+
+        private function names_match($byline, $name)
+        {
+            $a = $this->norm($byline);
+            return $a !== '' && $a === $this->norm($name);
+        }
+
+        /**
+         * A word to pre-filter the database with. The longest plain-ASCII word, so
+         * the LIKE still matches on a database whose collation is accent-sensitive;
+         * the exact comparison happens afterwards in PHP.
+         */
+        private function needle($name)
+        {
+            $name = $this->display_name($name);
+            $best = '';
+            foreach (preg_split('/\s+/u', $name) as $w) {
+                $w = trim($w, " .,;:-");
+                if (preg_match('/^[A-Za-z]+$/', $w) && strlen($w) > strlen($best)) {
+                    $best = $w;
+                }
+            }
+            return $best !== '' ? $best : $name;
+        }
+
+        /** IDs of the published pages whose byline names $name. */
+        private function find($name, $types, $limit, $order, $exclude)
+        {
+            $needle = $this->needle($name);
+            if ($needle === '') {
+                return [];
+            }
+            $q = new \WP_Query([
+                'post_type' => $types,
+                'post_status' => 'publish',
+                'posts_per_page' => -1,
+                'fields' => 'ids',
+                'no_found_rows' => true,
+                'post__not_in' => $exclude,
+                'orderby' => ($order === 'title_asc') ? 'title' : 'date',
+                'order' => ($order === 'title_asc') ? 'ASC' : 'DESC',
+                'meta_query' => [['key' => 'author', 'value' => $needle, 'compare' => 'LIKE']],
+            ]);
+            $ids = array_map('intval', (array) $q->posts);
+            if (!$ids) {
+                return [];
+            }
+            update_meta_cache('post', $ids);
+            $out = [];
+            foreach ($ids as $id) {
+                if ($this->names_match(get_post_meta($id, 'author', true), $name)) {
+                    $out[] = $id;
+                }
+            }
+            return $limit > 0 ? array_slice($out, 0, $limit) : $out;
+        }
+
+        /** Card description: the first usable summary the page already has. */
+        private function blurb($id)
+        {
+            $has_acf = function_exists('get_field');
+            $cands = [
+                get_post_field('post_excerpt', $id),
+                get_post_meta($id, '_yoast_wpseo_metadesc', true),
+                get_post_meta($id, 'rank_math_description', true),
+                $has_acf ? get_field('geo_answer', $id) : '',
+                $has_acf ? get_field('hero_subtitle', $id) : '',
+                $has_acf ? get_field('intro', $id) : '',
+            ];
+            foreach ($cands as $c) {
+                if (!is_scalar($c)) {
+                    continue;
+                }
+                $t = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags((string) $c)));
+                // Unresolved SEO template variables (%%title%% …) are not a summary.
+                if ($t !== '' && strpos($t, '%%') === false) {
+                    return wp_trim_words($t, 40, '…');
+                }
+            }
+            return '';
+        }
+
+        private function thumb($id)
+        {
+            $attr = ['class' => 'iep-img', 'loading' => 'lazy', 'alt' => ''];
+            if (has_post_thumbnail($id)) {
+                return get_the_post_thumbnail($id, 'medium_large', $attr);
+            }
+            if (function_exists('get_field')) {
+                $img = get_field('hero_image', $id);
+                $att = is_array($img) ? (int) ($img['ID'] ?? $img['id'] ?? 0) : (int) $img;
+                if ($att) {
+                    return wp_get_attachment_image($att, 'medium_large', false, $attr);
+                }
+            }
+            return '';
+        }
+
+        /**
+         * The stylesheet, printed once per request. Real CSS — Elementor's
+         * {{WRAPPER}} token is only resolved inside a control's `selectors` — and
+         * anchored on .iep-wrap so the theme's own link and heading rules lose.
+         */
+        private function styles()
+        {
+            static $done = false;
+            if ($done) {
+                return '';
+            }
+            $done = true;
+            return '<style id="iep-css">
+              .iep-wrap.iep-wrap{width:100%}
+              .iep-wrap .iep-inner{margin:0 auto}
+              .iep-wrap .iep-h{margin:0 0 28px;text-align:center;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:30px;line-height:1.25;color:#64402c}
+              .iep-wrap .iep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;align-items:stretch}
+              .iep-wrap .iep-card{display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid #d9c3ab;border-radius:8px;color:inherit;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}
+              .iep-wrap .iep-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(60,40,25,.16)}
+              .iep-wrap .iep-media{aspect-ratio:16/10;overflow:hidden;background:#e8ddd0}
+              .iep-wrap .iep-img{display:block;width:100%;height:100%;object-fit:cover}
+              .iep-wrap .iep-body{display:flex;flex-direction:column;gap:8px;padding:18px 20px 22px}
+              .iep-wrap .iep-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:20px;line-height:1.3;color:#64402c}
+              .iep-wrap .iep-desc{margin:0;font-size:15px;line-height:1.55;color:#4a3a2c;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
+              @media(max-width:900px){.iep-wrap .iep-grid{grid-template-columns:1fr 1fr}}
+              @media(max-width:600px){.iep-wrap .iep-grid{grid-template-columns:1fr}}
+            </style>';
+        }
+
+        protected function render()
+        {
+            $s = $this->get_settings_for_display();
+            $name = trim((string) ($s['name_override'] ?? ''));
+            if ($name === '') {
+                $name = get_the_title();
+            }
+            $display = $this->display_name($name);
+            $types = array_values(array_filter((array) ($s['post_types'] ?? []))) ?: ['page'];
+            $ids = $display === '' ? [] : $this->find(
+                $name,
+                $types,
+                (int) ($s['limit'] ?? 12),
+                (string) ($s['order'] ?? 'date_desc'),
+                array_filter([(int) get_the_ID()])
+            );
+
+            if (!$ids) {
+                // Visitors see nothing; the editor is told why the box is empty.
+                if (class_exists('\Elementor\Plugin') && \Elementor\Plugin::$instance->editor->is_edit_mode()) {
+                    echo '<div style="padding:14px 16px;border:1px dashed #b9a78f;border-radius:6px;color:#7a6650;font-size:13px">'
+                        . 'Island Expert Pages: no published page has an ACF “author” byline starting with <strong>'
+                        . esc_html($display !== '' ? $display : '—') . '</strong> yet. They appear here automatically once one does.</div>';
+                }
+                return;
+            }
+
+            echo $this->styles();
+            echo '<div class="iep-wrap"><div class="iep-inner">';
+            $heading = trim((string) ($s['heading'] ?? ''));
+            if (($s['show_heading'] ?? 'yes') === 'yes' && $heading !== '') {
+                echo '<h2 class="iep-h">' . esc_html(str_replace('{name}', $display, $heading)) . '</h2>';
+            }
+            echo '<div class="iep-grid">';
+            foreach ($ids as $id) {
+                $img = $this->thumb($id);
+                $text = $this->blurb($id);
+                echo '<a class="iep-card" href="' . esc_url(get_permalink($id)) . '">'
+                    . '<div class="iep-media">' . $img . '</div>'
+                    . '<div class="iep-body"><h3 class="iep-title">' . esc_html(get_the_title($id)) . '</h3>'
+                    . ($text !== '' ? '<p class="iep-desc">' . esc_html($text) . '</p>' : '')
+                    . '</div></a>';
+            }
+            echo '</div></div></div>';
+        }
+    }
+
     /* ===================================================================
      *  ISLAND EXPERT — full expert-profile page from the "Perfil de Experto"
      *  ACF group (about_image, role, company, about, languages, expertise,
@@ -6938,6 +7203,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Video_Widget',
         'Island_CruiseItineraries_Widget',
         'Island_Expert_Widget',
+        'Island_ExpertPages_Widget',
         'Island_AcfList_Widget',
         'Island_ProfileCard_Widget',
     ] as $island_ew_new) {

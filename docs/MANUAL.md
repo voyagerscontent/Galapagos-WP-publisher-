@@ -291,6 +291,29 @@ once per request, scoped to its own `.irl-*` classes and with no token. Most of
 the other widgets in this file still echo `{{WRAPPER}}` blocks that never
 apply; they get their look from control defaults instead.
 
+### Expert Pages (the pages an expert has written)
+
+Drop **Island Expert Pages** on an expert's profile page and it lists, as cards,
+every published page that names that person in its ACF `author` byline. Nothing
+is maintained by hand: a page appears as soon as it is published with the byline.
+
+- **Who it looks for.** The name comes from the profile page's own title (override
+  it in the widget if the title carries more than the name). Only the part of the
+  byline before the first comma is compared, ignoring case, accents and a leading
+  "By", so `Juan Magallanes, Naturalist Expert Contributor` counts for *Juan
+  Magallanes*, while *María Magallanes* or *Juan Magallanes Jr* do not.
+- **What a card shows.** The page's featured image (else its `hero_image`), its
+  title and up to **three lines** of description. The description is the first of:
+  the page excerpt, the Yoast / Rank Math meta description, `geo_answer`,
+  `hero_subtitle`, `intro`.
+- **Limits.** It reads the `author` field, which only the Informative, Island and
+  Wildlife groups carry. A page type without that field (cruises, itineraries)
+  will not appear until the field is added to its group. The profile page never
+  lists itself.
+- **Design.** Fixed, like Related Links: only the container (background, padding,
+  max width) is adjustable. Controls cover the heading (`{name}` is replaced), which
+  post types to look in, the order and a maximum.
+
 ## 12. The 3 document formats under the hood (technical contract)
 
 How the engine reads each format. The correct reader is chosen by the extension and

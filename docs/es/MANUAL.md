@@ -295,6 +295,30 @@ mayoría de los demás widgets de este archivo siguen emitiendo bloques con
 `{{WRAPPER}}` que nunca aplican; su aspecto sale de los valores por defecto de
 los controles.
 
+### Expert Pages (las páginas que escribió un experto)
+
+Pon **Island Expert Pages** en la ficha de un experto y lista, como tarjetas, todas
+las páginas publicadas que nombran a esa persona en su byline ACF `author`. No hay
+nada que mantener a mano: una página aparece en cuanto se publica con el byline.
+
+- **A quién busca.** El nombre sale del propio título de la ficha (se puede
+  sobrescribir en el widget si el título lleva algo más que el nombre). Sólo se
+  compara la parte del byline anterior a la primera coma, sin distinguir
+  mayúsculas, acentos ni un "By" inicial; así `Juan Magallanes, Naturalist Expert
+  Contributor` cuenta para *Juan Magallanes*, pero *María Magallanes* o *Juan
+  Magallanes Jr* no.
+- **Qué muestra cada tarjeta.** La imagen destacada de la página (si no, su
+  `hero_image`), el título y hasta **tres líneas** de descripción. La descripción es
+  la primera disponible de: el extracto, la meta descripción de Yoast / Rank Math,
+  `geo_answer`, `hero_subtitle`, `intro`.
+- **Límites.** Lee el campo `author`, que sólo llevan los grupos Informative, Island
+  y Wildlife. Un tipo de página sin ese campo (cruceros, itinerarios) no aparecerá
+  hasta que se agregue el campo a su grupo. La propia ficha nunca se lista a sí
+  misma.
+- **Diseño.** Fijo, como Related Links: sólo el contenedor (fondo, padding, ancho
+  máximo) es ajustable. Los controles cubren el encabezado (`{name}` se sustituye),
+  en qué tipos de contenido buscar, el orden y un máximo.
+
 ## 12. Los 3 formatos de documento por dentro (contrato técnico)
 
 Cómo lee el motor cada formato. El lector correcto se elige por la extensión y por
