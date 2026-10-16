@@ -428,6 +428,23 @@ páginas. Se llena solo con los datos de cada página:
 Controles de estilo: colores y tipografía del nombre y la nota, tamaño y aro de la foto, separación,
 alineación, fondo y relleno. El widget también tiene reemplazos manuales opcionales (byline, nota, enlace, foto).
 
+#### Seguir con el Author Box de Elementor: las etiquetas dinámicas “Island Author”
+
+Si prefieres el **Author Box** de Elementor (Source: Custom), no cambia nada en las páginas que ya lo usan con
+valores escritos a mano. Para una **plantilla**, llena sus campos con estas etiquetas dinámicas (clic en el
+icono de discos del campo → grupo **Island Author**):
+
+| Campo del Author Box | Etiqueta | Valor |
+|---|---|---|
+| Name | **Author name (By Name, Role)** | “By ” + el ACF `author` de la página (prefijo editable) |
+| Profile Picture | **Author photo (expert profile)** | la about image / imagen destacada de la ficha del experto |
+| Link | **Author link (Author URL / expert profile)** | ACF `author_url`, o si no la ficha del experto |
+| Biography | **Review note** | ACF `review_note`, o si no el texto por defecto que escribes en la etiqueta |
+
+Requiere Elementor Pro (etiquetas dinámicas). Una página con el campo `author` vacío muestra la caja vacía,
+así que usa las etiquetas solo en una plantilla de páginas que tengan ese campo. **Island Author Box** (arriba)
+sigue disponible como alternativa.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By

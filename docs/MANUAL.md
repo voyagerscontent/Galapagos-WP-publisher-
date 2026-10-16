@@ -420,6 +420,22 @@ Put it in the template once; it fills itself from each page:
 Style controls: name/note colours and typography, photo size and ring colour, gap, alignment, background and
 padding. The widget also has optional manual overrides (byline, note, link, photo).
 
+#### Keep Elementor's own Author Box: the “Island Author” dynamic tags
+
+If you prefer Elementor's **Author Box** (Source: Custom), nothing changes for the pages that already use it
+with typed-in values. For a **template**, fill its fields with these dynamic tags instead (click the database
+icon of the field → group **Island Author**):
+
+| Author Box field | Tag | Value |
+|---|---|---|
+| Name | **Author name (By Name, Role)** | “By ” + the page's ACF `author` (prefix editable) |
+| Profile Picture | **Author photo (expert profile)** | the matching expert profile's about image / featured image |
+| Link | **Author link (Author URL / expert profile)** | ACF `author_url`, else the expert profile page |
+| Biography | **Review note** | ACF `review_note`, else the default text you type in the tag |
+
+Needs Elementor Pro (dynamic tags). A page whose `author` field is empty shows an empty box, so use the tags only
+in a template for pages that have that field. **Island Author Box** (above) remains available as an alternative.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan
