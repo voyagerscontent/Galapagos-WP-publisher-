@@ -377,7 +377,11 @@ es **Experts** y cuyo título es el mismo nombre (sin importar mayúsculas ni
 acentos). El cargo / nota de revisión después de la coma queda como texto. Pon el enlace en el campo
 ACF **Author URL** (`author_url`, junto a Author / Byline); si está lleno manda ese; si no,
 el nombre enlaza a la ficha del experto como se describe arriba. El widget también tiene una
-caja “Link” para ponerlo a mano. Si no
+caja “Link” para ponerlo a mano.
+
+¿Ya tienes el byline en otro widget (un Heading, Text Editor…)? No hace falta reemplazarlo:
+abre ese widget → Advanced → CSS Classes → agrega `island-byline`. El nombre del autor
+dentro de su texto se vuelve el enlace (Author URL, o la ficha del experto que coincida). Si no
 hay ficha con ese nombre, o ya estás en esa ficha → texto simple, sin enlace.
 Fuera de Elementor está el shortcode `[island_byline]`.
 

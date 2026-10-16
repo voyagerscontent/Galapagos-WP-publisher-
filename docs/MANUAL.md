@@ -370,7 +370,11 @@ Type* is **Experts** and whose title is the same name (case and accents ignored)
 The role / review note after the comma stays plain text. Put the link in the ACF field
 **Author URL** (`author_url`, next to Author / Byline); if it is filled it wins, otherwise
 the name links to the matching expert profile as described above. The widget also has a
-“Link” box to set it by hand. No matching profile, or
+“Link” box to set it by hand.
+
+**Already have the byline in another widget** (a Heading, Text Editor…)? You don't have to
+replace it: open that widget → Advanced → CSS Classes → add `island-byline`. The author's
+name inside its text becomes the link (Author URL, or the matching expert profile). No matching profile, or
 you are already on that profile → plain text, no link. Outside Elementor the same
 thing is available as the shortcode `[island_byline]`.
 

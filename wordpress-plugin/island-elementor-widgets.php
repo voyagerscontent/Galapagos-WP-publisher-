@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.87
+ * Version:     0.4.88
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6310,6 +6310,43 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
      *  case/accent-insensitive). No profile found → plain text, as before.
      *  Reads the page's ACF `author` field unless "Text" is filled in.
      * =================================================================== */
+    if (!function_exists('island_byline_url')) {
+        /** The link for an author NAME: an explicit URL wins, else the matching expert profile page, else ''. */
+        function island_byline_url($name, $explicit = '')
+        {
+            $url = esc_url((string) $explicit, ['http', 'https']);
+            if ($url !== '') {
+                return $url;
+            }
+            $norm = function ($s) {
+                $s = remove_accents(trim(preg_replace('/\s+/u', ' ', (string) $s)));
+                return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
+            };
+            $q = new \WP_Query([
+                'post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 50, 'fields' => 'ids',
+                'no_found_rows' => true, 'orderby' => 'title', 'order' => 'ASC',
+                'meta_query' => [['key' => 'gp_page_type', 'value' => 'experts']],
+            ]);
+            foreach ($q->posts as $pid) {
+                if ($norm(get_the_title($pid)) === $norm($name) || $norm(preg_split('/\s*[,|–—]\s*|\s+-\s+/u', get_the_title($pid))[0]) === $norm($name)) {
+                    return (int) get_queried_object_id() === (int) $pid ? '' : get_permalink($pid);
+                }
+            }
+            return '';
+        }
+    }
+    if (!function_exists('island_byline_link')) {
+        /** <a> around $name (already-escaped text is passed in as $label). */
+        function island_byline_link($label, $url)
+        {
+            if ($url === '') {
+                return $label;
+            }
+            $host = (string) wp_parse_url($url, PHP_URL_HOST);
+            $ext = $host !== '' && $host !== (string) wp_parse_url(home_url(), PHP_URL_HOST);
+            return '<a class="ibl-link" href="' . esc_url($url) . '"' . ($ext ? ' rel="noopener"' : '') . '>' . $label . '</a>';
+        }
+    }
     if (!function_exists('island_byline_html')) {
         function island_byline_html($byline, $prefix = 'By', $url = '')
         {
@@ -6321,33 +6358,42 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $parts = preg_split('/(\s*[,|–—]\s*|\s+-\s+)/u', $byline, 2, PREG_SPLIT_DELIM_CAPTURE);
             $name = trim((string) $parts[0]);
             $rest = isset($parts[1]) ? $parts[1] . (string) ($parts[2] ?? '') : '';
-            $norm = function ($s) {
-                $s = remove_accents(trim(preg_replace('/\s+/u', ' ', (string) $s)));
-                return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
-            };
-            // An explicit link (ACF "Author URL") wins; otherwise look for the expert's profile page.
-            $url = esc_url((string) $url, ['http', 'https']);
-            $q = $url !== '' ? null : new \WP_Query([
-                'post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 50, 'fields' => 'ids',
-                'no_found_rows' => true, 'orderby' => 'title', 'order' => 'ASC',
-                'meta_query' => [['key' => 'gp_page_type', 'value' => 'experts']],
-            ]);
-            foreach ($q ? $q->posts : [] as $pid) {
-                if ($norm(get_the_title($pid)) === $norm($name) || $norm(preg_split('/\s*[,|–—]\s*|\s+-\s+/u', get_the_title($pid))[0]) === $norm($name)) {
-                    $url = (int) get_queried_object_id() === (int) $pid ? '' : get_permalink($pid);
-                    break;
-                }
-            }
-            $label = esc_html($name);
-            if ($url !== '') {
-                $host = (string) wp_parse_url($url, PHP_URL_HOST);
-                $ext = $host !== '' && $host !== (string) wp_parse_url(home_url(), PHP_URL_HOST);
-                $label = '<a class="ibl-link" href="' . esc_url($url) . '"' . ($ext ? ' rel="noopener"' : '') . '>' . $label . '</a>';
-            }
+            $label = island_byline_link(esc_html($name), island_byline_url($name, $url));
             $prefix = trim((string) $prefix);
             return '<p class="ibl-wrap">' . ($prefix !== '' ? esc_html($prefix) . ' ' : '') . $label . esc_html($rest) . '</p>';
         }
     }
+    // Any existing Elementor widget (a Heading, Text Editor…) that prints the byline can be
+    // made to link the author's NAME without replacing it: give the widget the CSS class
+    // "island-byline" (Advanced → CSS Classes). The name inside its text becomes a link to
+    // ACF "Author URL" (or the matching expert profile).
+    add_filter('elementor/widget/render_content', function ($content, $widget) {
+        if (!is_string($content) || $content === '' || !is_object($widget) || !method_exists($widget, 'get_settings')) {
+            return $content;
+        }
+        if (!preg_match('/(^|\s)island-byline(\s|$)/', (string) $widget->get_settings('_css_classes'))) {
+            return $content;
+        }
+        $by = function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true);
+        $by = trim(preg_replace('/^\s*by\s+/iu', '', wp_strip_all_tags((string) (is_string($by) ? $by : ''))));
+        if ($by === '') {
+            return $content;
+        }
+        $parts = preg_split('/\s*[,|–—]\s*|\s+-\s+/u', $by, 2);
+        $name = trim((string) $parts[0]);
+        $url = function_exists('get_field') ? get_field('author_url') : get_post_meta(get_the_ID(), 'author_url', true);
+        $href = $name === '' ? '' : island_byline_url($name, is_string($url) ? $url : '');
+        if ($href === '') {
+            return $content;
+        }
+        foreach ([esc_html($name), $name] as $needle) {
+            $at = strpos($content, $needle);
+            if ($at !== false) {
+                return substr($content, 0, $at) . island_byline_link($needle, $href) . substr($content, $at + strlen($needle));
+            }
+        }
+        return $content;
+    }, 20, 2);
     add_shortcode('island_byline', function ($atts) {
         $a = shortcode_atts(['text' => '', 'prefix' => 'By'], $atts);
         $text = $a['text'] !== '' ? $a['text'] : (function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true));
