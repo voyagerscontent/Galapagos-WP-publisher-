@@ -410,7 +410,7 @@ Put it in the template once; it fills itself from each page:
 
 - **Name and role** — the page's ACF **Author / Byline** (`author`). The part before the comma is the name.
 - **Photo and link** — the matching **expert profile page** (the page typed “Experts” whose title is that
-  name): its **about image**, else its featured image; the link goes to that profile. The ACF **Author URL**
+  name; if none is marked “Experts”, any published page titled exactly with the name is used): its **about image**, else its featured image; the link goes to that profile. The ACF **Author URL**
   (`author_url`), if filled, wins as the link.
 - **Review note** — the ACF **Review Note** (`review_note`, a new text field you add by hand next to Author /
   Byline). If the page has none, the widget's **Default review note** is used.

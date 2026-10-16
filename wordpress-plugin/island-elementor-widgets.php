@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.113
+ * Version:     0.4.114
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -614,6 +614,23 @@ if (!function_exists('island_expert_profile_id')) {
         foreach ($q->posts as $pid) {
             if ($norm(get_the_title($pid)) === $norm($name) || $norm(preg_split('/\s*[,|–—]\s*|\s+-\s+/u', get_the_title($pid))[0]) === $norm($name)) {
                 return (int) $pid;
+            }
+        }
+        // Profiles made by hand often lack the "Experts" page-type marker: fall back to a published
+        // page whose TITLE is the author's name; prefer one that has a photo.
+        global $wpdb;
+        if (isset($wpdb) && is_object($wpdb)) {
+            $ids = (array) $wpdb->get_col($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_title = %s ORDER BY ID ASC LIMIT 5",
+                trim((string) $name)
+            ));
+            foreach ($ids as $pid) {
+                if (function_exists('island_expert_photo') && island_expert_photo((int) $pid)) {
+                    return (int) $pid;
+                }
+            }
+            if ($ids) {
+                return (int) $ids[0];
             }
         }
         return 0;

@@ -418,7 +418,7 @@ páginas. Se llena solo con los datos de cada página:
 
 - **Nombre y cargo** — el campo ACF **Author / Byline** (`author`) de la página. Lo anterior a la coma es el nombre.
 - **Foto y enlace** — la **ficha del experto** que coincide (la página de tipo “Experts” cuyo título es ese
-  nombre): su **about image**, o si no su imagen destacada; el enlace va a esa ficha. Si el ACF **Author URL**
+  nombre; si ninguna está marcada “Experts”, se usa cualquier página publicada con exactamente ese título): su **about image**, o si no su imagen destacada; el enlace va a esa ficha. Si el ACF **Author URL**
   (`author_url`) está lleno, ese manda como enlace.
 - **Nota de revisión** — el campo ACF **Review Note** (`review_note`, un campo de texto nuevo que agregas a
   mano junto a Author / Byline). Si la página no tiene, se usa la **Default review note** del widget.
