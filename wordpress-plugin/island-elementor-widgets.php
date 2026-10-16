@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.94
+ * Version:     0.4.95
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6454,6 +6454,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         /** Wrap "[By ]Name" — Name starts at byte $at in $content — in the byline link. */
         function island_byline_wrap($content, $at, $name, $href)
         {
+            // Already inside a link (e.g. an Author Box whose "Link" is set)? Leave it alone —
+            // an <a> inside an <a> is invalid HTML.
+            $head = substr($content, 0, $at);
+            if (preg_match_all('/<a[\s>]/i', $head) > preg_match_all('/<\/a>/i', $head)) {
+                return $content;
+            }
             $esc = esc_html($name);
             $len = substr($content, $at, strlen($esc)) === $esc ? strlen($esc) : strlen($name);
             $start = $at;
