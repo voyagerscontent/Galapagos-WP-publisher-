@@ -344,7 +344,7 @@ silvestre recortan el texto largo y muestran una barra **Read more ↓** (línea
 fina, texto a la izquierda y flecha a la derecha). Al hacer clic se abre el texto
 completo (pasa a **Read less ↑**); al cerrarlo, la página vuelve al inicio de esa
 sección si ya te habías desplazado más abajo. El texto corto no lleva barra — ni el que apenas supera el recorte (la barra aparece
-solo si se ocultarían MÁS de 4 líneas). Ya no
+solo si se ocultarían MÁS de 6 líneas). Ya no
 hay hover para expandir: hacía saltar la página cuando una sección se cerraba bajo
 el mouse. El interruptor se llama “Clamp long text (Read more button)” y el ajuste
 de “altura al abrir” ya no se usa (el texto siempre se abre completo). Los enlaces dentro de ese texto toman el color del texto

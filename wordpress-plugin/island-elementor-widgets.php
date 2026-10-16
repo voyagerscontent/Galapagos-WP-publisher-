@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.96
+ * Version:     0.4.97
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -215,8 +215,8 @@ function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement
  a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();toggle(it,b,a);});it.__more=a;return a;}
 function refresh(){each(function(it,b){if(it.__busy)return;var a=it.__more;it.classList.add("clip-m");
  var cs=getComputedStyle(b),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.6;
- /* only clip when MORE than 4 lines would be hidden — a section a little longer than the clamp shows in full, with no Read more bar */
- var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+lh*4;
+ /* only clip when MORE than 6 lines would be hidden — a card/section a little longer than the clamp shows in full, with no Read more bar */
+ var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+lh*6;
  if(over){a=ensure(it,b);a.style.display="";paint(it,b,a);}else{it.classList.remove("clip-m");if(a)a.style.display="none";}});}
 function run(){refresh();setTimeout(refresh,400);setTimeout(refresh,1200);}
 if(document.readyState!=="loading")run();else document.addEventListener("DOMContentLoaded",run);

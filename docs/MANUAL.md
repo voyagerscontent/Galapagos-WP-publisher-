@@ -339,7 +339,7 @@ show a **Read more ↓** bar (thin line, label on the left, arrow on the right).
 Click it to open the full text (it becomes **Read less ↑**); closing it scrolls
 back to the start of that section if you had scrolled past it. Short text gets no
 bar — and neither does text that is only slightly longer than the clamp (the bar
-appears only when MORE than 4 lines would be hidden). There is no hover-to-expand any more — it caused the page to jump when a
+appears only when MORE than 6 lines would be hidden). There is no hover-to-expand any more — it caused the page to jump when a
 section collapsed under the mouse. The switch is labelled “Clamp long text (Read
 more button)” and the “open height” setting is no longer used (text always opens
 in full). Links inside that text take the section's text colour (cream on a brown
