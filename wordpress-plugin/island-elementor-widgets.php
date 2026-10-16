@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.102
+ * Version:     0.4.103
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -603,33 +603,33 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
 // sideways scroll). Same look as the tables inside the Feature Sections widget.
 add_action('wp_head', function () {
     echo '<style id="island-table-css">'
-        . '.island-table table,table.island-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(100,64,44,.14);border-radius:12px;overflow:hidden;margin:16px 0;font-size:15px;line-height:1.65;table-layout:auto}'
-        . '.island-table th,.island-table td,table.island-table th,table.island-table td{padding:13px 16px;text-align:left;vertical-align:top;white-space:normal;overflow-wrap:break-word;border:0;border-top:1px solid rgba(100,64,44,.14)}'
-        . '.island-table thead th,.island-table tr:first-child>th,table.island-table thead th,table.island-table tr:first-child>th{background:#64402C;color:#F6EFE7;font-weight:700;border-top:0}'
-        . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4}'
-        . '.island-table td:first-child,table.island-table td:first-child{font-weight:700;color:#64402C}'
-        . '.island-table td,table.island-table td{color:#3A2A1E}'
-        . '.island-table td:only-child,table.island-table td:only-child{font-weight:400;font-size:15px;line-height:1.7}'
-        . '.island-table td:only-child::first-line,table.island-table td:only-child::first-line{font-weight:700;color:#64402C}'
-        . '.island-table thead th:only-child,table.island-table thead th:only-child{font-weight:400;font-size:15px;line-height:1.7}'
-        . '.island-table thead th:only-child::first-line,table.island-table thead th:only-child::first-line{font-weight:700}'
-        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child{background:#64402C;color:#F6EFE7}'
-        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit;font-weight:700}'
-        . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)}'
+        . '.island-table table,table.island-table{width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(100,64,44,.14)!important;border-radius:12px!important;overflow:hidden!important;margin:16px 0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important}'
+        . '.island-table th,.island-table td,table.island-table th,table.island-table td{padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important}'
+        . '.island-table thead th,.island-table tr:first-child>th,table.island-table thead th,table.island-table tr:first-child>th{background:#64402C!important;color:#F6EFE7!important;font-weight:700!important;border-top:0!important}'
+        . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4!important}'
+        . '.island-table td:first-child,table.island-table td:first-child{font-weight:700!important;color:#64402C!important}'
+        . '.island-table td,table.island-table td{color:#3A2A1E!important}'
+        . '.island-table td:only-child,table.island-table td:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
+        . '.island-table td:only-child::first-line,table.island-table td:only-child::first-line{font-weight:700!important;color:#64402C!important}'
+        . '.island-table thead th:only-child,table.island-table thead th:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
+        . '.island-table thead th:only-child::first-line,table.island-table thead th:only-child::first-line{font-weight:700!important}'
+        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child{background:#64402C!important;color:#F6EFE7!important}'
+        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit!important;font-weight:700!important}'
+        . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)!important}'
         // table-in-brown: a CREAM table to sit on a BROWN (dark) section — cream body, tan header
         // with brown text, dark text, soft stripes. Use it instead of island-table on a brown background.
-        . '.table-in-brown table,table.table-in-brown{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(243,234,217,.55);border-radius:12px;overflow:hidden;margin:16px 0;font-size:15px;line-height:1.65;table-layout:auto;background:#F8F3EC}'
-        . '.table-in-brown th,.table-in-brown td,table.table-in-brown th,table.table-in-brown td{padding:13px 16px;text-align:left;vertical-align:top;white-space:normal;overflow-wrap:break-word;border:0;border-top:1px solid rgba(100,64,44,.14);color:#3A2A1E;background:#F8F3EC}'
-        . '.table-in-brown thead th,.table-in-brown tr:first-child>th,table.table-in-brown thead th,table.table-in-brown tr:first-child>th{background:#E6D5BE;color:#64402C;font-weight:700;border-top:0}'
-        . '.table-in-brown tbody tr:nth-child(even)>td,table.table-in-brown tbody tr:nth-child(even)>td{background:#F1E8DC}'
-        . '.table-in-brown td:first-child,table.table-in-brown td:first-child{font-weight:700;color:#64402C}'
-        . '.table-in-brown td:only-child,table.table-in-brown td:only-child{font-weight:400;font-size:15px;line-height:1.7}'
-        . '.table-in-brown td:only-child::first-line,table.table-in-brown td:only-child::first-line{font-weight:700;color:#64402C}'
-        . '.table-in-brown thead th:only-child,table.table-in-brown thead th:only-child{font-weight:400;font-size:15px;line-height:1.7}'
-        . '.table-in-brown thead th:only-child::first-line,table.table-in-brown thead th:only-child::first-line{font-weight:700}'
-        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child{background:#E6D5BE;color:#64402C}'
-        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit;font-weight:700}'
-        . '.table-in-brown tbody tr:hover>td,table.table-in-brown tbody tr:hover>td{background:#EADFCF}'
+        . '.table-in-brown table,table.table-in-brown{width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(243,234,217,.55)!important;border-radius:12px!important;overflow:hidden!important;margin:16px 0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important;background:#F8F3EC!important}'
+        . '.table-in-brown th,.table-in-brown td,table.table-in-brown th,table.table-in-brown td{padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important;color:#3A2A1E!important;background:#F8F3EC!important}'
+        . '.table-in-brown thead th,.table-in-brown tr:first-child>th,table.table-in-brown thead th,table.table-in-brown tr:first-child>th{background:#E6D5BE!important;color:#64402C!important;font-weight:700!important;border-top:0!important}'
+        . '.table-in-brown tbody tr:nth-child(even)>td,table.table-in-brown tbody tr:nth-child(even)>td{background:#F1E8DC!important}'
+        . '.table-in-brown td:first-child,table.table-in-brown td:first-child{font-weight:700!important;color:#64402C!important}'
+        . '.table-in-brown td:only-child,table.table-in-brown td:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
+        . '.table-in-brown td:only-child::first-line,table.table-in-brown td:only-child::first-line{font-weight:700!important;color:#64402C!important}'
+        . '.table-in-brown thead th:only-child,table.table-in-brown thead th:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
+        . '.table-in-brown thead th:only-child::first-line,table.table-in-brown thead th:only-child::first-line{font-weight:700!important}'
+        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child{background:#E6D5BE!important;color:#64402C!important}'
+        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit!important;font-weight:700!important}'
+        . '.table-in-brown tbody tr:hover>td,table.table-in-brown tbody tr:hover>td{background:#EADFCF!important}'
         . '</style>';
 }, 20);
 
