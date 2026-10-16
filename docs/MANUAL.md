@@ -364,7 +364,7 @@ threshold (in screens, default 3) with the `island_back_to_top_screens` filter.
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan
 Magallanes, Naturalist Expert Contributor” line goes. It reads the page's ACF
-`author` field (or the **Text** box if filled) and turns only the **name** into a
+`author` field (or the **Text** box if filled) and turns the **“By Name”** part (everything before the comma) into a
 link to that expert's profile page — the published page whose *Galápagos Page
 Type* is **Experts** and whose title is the same name (case and accents ignored).
 The role / review note after the comma stays plain text. Put the link in the ACF field
@@ -373,8 +373,11 @@ the name links to the matching expert profile as described above. The widget als
 “Link” box to set it by hand.
 
 **Already have the byline in another widget** (a Heading, Text Editor…)? You don't have to
-replace it: open that widget → Advanced → CSS Classes → add `island-byline`. The author's
-name inside its text becomes the link (Author URL, or the matching expert profile). No matching profile, or
+replace it, and there is nothing to set up: any widget on the page that prints the byline
+(for example a Heading showing the ACF `author` field after “By ”) automatically gets “By
+Juan Magallanes” turned into the link (Author URL, or the matching expert profile); the
+role after the comma stays plain text. If a widget shows only the name, give it the CSS
+class `island-byline` (Advanced → CSS Classes). No matching profile, or
 you are already on that profile → plain text, no link. Outside Elementor the same
 thing is available as the shortcode `[island_byline]`.
 

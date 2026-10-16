@@ -371,7 +371,7 @@ editor/vista previa de Elementor ni al imprimir. Para desarrolladores: se apaga 
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By
 Juan Magallanes, Naturalist Expert Contributor”. Lee el campo ACF `author` de la
-página (o el cuadro **Text** si lo llenas) y convierte solo el **nombre** en un
+página (o el cuadro **Text** si lo llenas) y convierte la parte **“By Nombre”** (todo lo anterior a la coma) en un
 enlace a la ficha de ese experto: la página publicada cuyo *Galápagos Page Type*
 es **Experts** y cuyo título es el mismo nombre (sin importar mayúsculas ni
 acentos). El cargo / nota de revisión después de la coma queda como texto. Pon el enlace en el campo
@@ -380,8 +380,11 @@ el nombre enlaza a la ficha del experto como se describe arriba. El widget tambi
 caja “Link” para ponerlo a mano.
 
 ¿Ya tienes el byline en otro widget (un Heading, Text Editor…)? No hace falta reemplazarlo:
-abre ese widget → Advanced → CSS Classes → agrega `island-byline`. El nombre del autor
-dentro de su texto se vuelve el enlace (Author URL, o la ficha del experto que coincida). Si no
+y no hay nada que configurar: cualquier widget de la página que imprima el byline (por
+ejemplo un Heading con el campo ACF `author` después de “By ”) convierte automáticamente
+“By Juan Magallanes” en el enlace (Author URL, o la ficha del experto que coincida); el cargo
+después de la coma queda como texto. Si un widget muestra solo el nombre, ponle la clase CSS
+`island-byline` (Advanced → CSS Classes). Si no
 hay ficha con ese nombre, o ya estás en esa ficha → texto simple, sin enlace.
 Fuera de Elementor está el shortcode `[island_byline]`.
 
