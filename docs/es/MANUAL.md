@@ -315,6 +315,11 @@ nada que mantener a mano: una página aparece en cuanto se publica con el byline
   `hero_image`), el título y hasta **tres líneas** de descripción. La descripción es
   la primera disponible de: el extracto, la meta descripción de Yoast / Rank Math,
   `geo_answer`, `hero_subtitle`, `intro`.
+- **Páginas solo de Elementor.** Una página sin campos ACF también se encuentra si tiene un
+  **Author Box** de Elementor (Source: Custom) con el **Name** escrito a mano (p. ej. “By Juan
+  Magallanes, Galapagos Travel Advisor”): se compara la parte antes de la coma, igual que con el
+  byline ACF. Un Author Box cuyo Name es una etiqueta dinámica se ignora. Los resultados se
+  guardan unas horas y se refrescan cuando se guarda cualquier página.
 - **Límites.** Lee el campo `author`, que sólo llevan los grupos Informative, Island
   y Wildlife. Un tipo de página sin ese campo (cruceros, itinerarios) no aparecerá
   hasta que se agregue el campo a su grupo. La propia ficha nunca se lista a sí

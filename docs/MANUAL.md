@@ -310,6 +310,11 @@ is maintained by hand: a page appears as soon as it is published with the byline
   title and up to **three lines** of description. The description is the first of:
   the page excerpt, the Yoast / Rank Math meta description, `geo_answer`,
   `hero_subtitle`, `intro`.
+- **Elementor-only pages.** A page with no ACF fields is also found when it has an Elementor
+  **Author Box** (Source: Custom) whose **Name** is typed by hand (e.g. “By Juan Magallanes,
+  Galapagos Travel Advisor”) — the part before the comma is compared, same as the ACF byline.
+  An Author Box whose Name is a dynamic tag is ignored. Matches are cached for a few hours and
+  refresh whenever any page is saved.
 - **Limits.** It reads the `author` field, which only the Informative, Island and
   Wildlife groups carry. A page type without that field (cruises, itineraries)
   will not appear until the field is added to its group. The profile page never

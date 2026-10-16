@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.95
+ * Version:     0.4.96
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -595,6 +595,14 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
     } catch (\Throwable $e) {
         error_log('[island-widgets] page-type conditions skipped: ' . $e->getMessage());
     }
+});
+
+// The "Island Expert Pages" matches are cached for a few hours; any page save refreshes them.
+add_action('save_post', function () {
+    update_option('island_ep_ver', (string) microtime(true), false);
+});
+add_action('elementor/document/after_save', function () {
+    update_option('island_ep_ver', (string) microtime(true), false);
 });
 
 add_action('elementor/widgets/register', function ($widgets_manager) {
@@ -6130,36 +6138,96 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             return $best !== '' ? $best : $name;
         }
 
-        /** IDs of the published pages whose byline names $name. */
+        /** Author names typed into Elementor "Author Box" widgets (Source: Custom) on a page. */
+        private function elementor_author_names($id)
+        {
+            $raw = get_post_meta($id, '_elementor_data', true);
+            $data = is_string($raw) ? json_decode($raw, true) : (is_array($raw) ? $raw : null);
+            $names = [];
+            $walk = function ($nodes) use (&$walk, &$names) {
+                foreach ((array) $nodes as $n) {
+                    if (!is_array($n)) {
+                        continue;
+                    }
+                    if (($n['widgetType'] ?? '') === 'author-box') {
+                        $nm = $n['settings']['author_name'] ?? '';
+                        if (is_string($nm) && trim($nm) !== '') {
+                            $names[] = $nm;
+                        }
+                    }
+                    if (!empty($n['elements'])) {
+                        $walk($n['elements']);
+                    }
+                }
+            };
+            if (is_array($data)) {
+                $walk($data);
+            }
+            return $names;
+        }
+
+        /** IDs (unordered) of the published pages whose byline names $name — ACF/post-meta `author`, or an Elementor Author Box. */
+        private function match_ids($name, $needle, $types)
+        {
+            $key = 'island_ep_' . md5($name . '|' . implode(',', (array) $types) . '|' . (string) get_option('island_ep_ver', '0'));
+            $hit = get_transient($key);
+            if (is_array($hit)) {
+                return $hit;
+            }
+            $found = [];
+            $q = new \WP_Query([
+                'post_type' => $types, 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true,
+                'meta_query' => [['key' => 'author', 'value' => $needle, 'compare' => 'LIKE']],
+            ]);
+            $ids = array_map('intval', (array) $q->posts);
+            if ($ids) {
+                update_meta_cache('post', $ids);
+            }
+            foreach ($ids as $id) {
+                if ($this->names_match(get_post_meta($id, 'author', true), $name)) {
+                    $found[$id] = $id;
+                }
+            }
+            // Pages built only with Elementor keep the byline in an Author Box widget (not a field).
+            $q2 = new \WP_Query([
+                'post_type' => $types, 'post_status' => 'publish', 'posts_per_page' => 300, 'fields' => 'ids', 'no_found_rows' => true,
+                'meta_query' => [['key' => '_elementor_data', 'value' => $needle, 'compare' => 'LIKE']],
+            ]);
+            foreach ((array) $q2->posts as $id) {
+                $id = (int) $id;
+                if (isset($found[$id])) {
+                    continue;
+                }
+                foreach ($this->elementor_author_names($id) as $nm) {
+                    if ($this->names_match($nm, $name)) {
+                        $found[$id] = $id;
+                        break;
+                    }
+                }
+            }
+            $found = array_values($found);
+            set_transient($key, $found, 6 * HOUR_IN_SECONDS);
+            return $found;
+        }
+
+        /** IDs of the published pages whose byline names $name, ordered and limited. */
         private function find($name, $types, $limit, $order, $exclude)
         {
             $needle = $this->needle($name);
             if ($needle === '') {
                 return [];
             }
-            $q = new \WP_Query([
-                'post_type' => $types,
-                'post_status' => 'publish',
-                'posts_per_page' => -1,
-                'fields' => 'ids',
-                'no_found_rows' => true,
-                'post__not_in' => $exclude,
-                'orderby' => ($order === 'title_asc') ? 'title' : 'date',
-                'order' => ($order === 'title_asc') ? 'ASC' : 'DESC',
-                'meta_query' => [['key' => 'author', 'value' => $needle, 'compare' => 'LIKE']],
-            ]);
-            $ids = array_map('intval', (array) $q->posts);
+            $ids = array_values(array_diff($this->match_ids($name, $needle, $types), array_map('intval', (array) $exclude)));
             if (!$ids) {
                 return [];
             }
-            update_meta_cache('post', $ids);
-            $out = [];
-            foreach ($ids as $id) {
-                if ($this->names_match(get_post_meta($id, 'author', true), $name)) {
-                    $out[] = $id;
-                }
-            }
-            return $limit > 0 ? array_slice($out, 0, $limit) : $out;
+            $q = new \WP_Query([
+                'post_type' => $types, 'post_status' => 'publish', 'post__in' => $ids, 'fields' => 'ids', 'no_found_rows' => true,
+                'posts_per_page' => $limit > 0 ? $limit : -1,
+                'orderby' => ($order === 'title_asc') ? 'title' : 'date',
+                'order' => ($order === 'title_asc') ? 'ASC' : 'DESC',
+            ]);
+            return array_map('intval', (array) $q->posts);
         }
 
         /** Card description: the first usable summary the page already has. */
