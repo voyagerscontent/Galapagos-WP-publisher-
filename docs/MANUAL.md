@@ -367,7 +367,10 @@ Magallanes, Naturalist Expert Contributor” line goes. It reads the page's ACF
 `author` field (or the **Text** box if filled) and turns only the **name** into a
 link to that expert's profile page — the published page whose *Galápagos Page
 Type* is **Experts** and whose title is the same name (case and accents ignored).
-The role / review note after the comma stays plain text. No matching profile, or
+The role / review note after the comma stays plain text. Put the link in the ACF field
+**Author URL** (`author_url`, next to Author / Byline); if it is filled it wins, otherwise
+the name links to the matching expert profile as described above. The widget also has a
+“Link” box to set it by hand. No matching profile, or
 you are already on that profile → plain text, no link. Outside Elementor the same
 thing is available as the shortcode `[island_byline]`.
 

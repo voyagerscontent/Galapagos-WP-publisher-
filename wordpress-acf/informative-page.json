@@ -79,6 +79,14 @@
                 "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
             },
             {
+                "key": "field_inf_author_url",
+                "label": "Author URL",
+                "name": "author_url",
+                "type": "url",
+                "instructions": "Optional. Link for the author's name (their profile page, e.g. https://galapagosislands.travel/about/juan-magallanes/). Leave blank to link automatically to the expert's profile page when one exists with the same name.",
+                "placeholder": "https://"
+            },
+            {
                 "key": "field_inf_tab_content",
                 "label": "Content Sections",
                 "name": "",

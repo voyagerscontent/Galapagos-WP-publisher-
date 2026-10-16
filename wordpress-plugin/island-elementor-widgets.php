@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.86
+ * Version:     0.4.87
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6311,7 +6311,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
      *  Reads the page's ACF `author` field unless "Text" is filled in.
      * =================================================================== */
     if (!function_exists('island_byline_html')) {
-        function island_byline_html($byline, $prefix = 'By')
+        function island_byline_html($byline, $prefix = 'By', $url = '')
         {
             $byline = trim(wp_strip_all_tags((string) $byline));
             $byline = trim(preg_replace('/^\s*by\s+/iu', '', $byline));
@@ -6325,13 +6325,14 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $s = remove_accents(trim(preg_replace('/\s+/u', ' ', (string) $s)));
                 return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
             };
-            $url = '';
-            $q = new \WP_Query([
+            // An explicit link (ACF "Author URL") wins; otherwise look for the expert's profile page.
+            $url = esc_url((string) $url, ['http', 'https']);
+            $q = $url !== '' ? null : new \WP_Query([
                 'post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 50, 'fields' => 'ids',
                 'no_found_rows' => true, 'orderby' => 'title', 'order' => 'ASC',
                 'meta_query' => [['key' => 'gp_page_type', 'value' => 'experts']],
             ]);
-            foreach ($q->posts as $pid) {
+            foreach ($q ? $q->posts : [] as $pid) {
                 if ($norm(get_the_title($pid)) === $norm($name) || $norm(preg_split('/\s*[,|–—]\s*|\s+-\s+/u', get_the_title($pid))[0]) === $norm($name)) {
                     $url = (int) get_queried_object_id() === (int) $pid ? '' : get_permalink($pid);
                     break;
@@ -6339,7 +6340,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             $label = esc_html($name);
             if ($url !== '') {
-                $label = '<a class="ibl-link" href="' . esc_url($url) . '">' . $label . '</a>';
+                $host = (string) wp_parse_url($url, PHP_URL_HOST);
+                $ext = $host !== '' && $host !== (string) wp_parse_url(home_url(), PHP_URL_HOST);
+                $label = '<a class="ibl-link" href="' . esc_url($url) . '"' . ($ext ? ' rel="noopener"' : '') . '>' . $label . '</a>';
             }
             $prefix = trim((string) $prefix);
             return '<p class="ibl-wrap">' . ($prefix !== '' ? esc_html($prefix) . ' ' : '') . $label . esc_html($rest) . '</p>';
@@ -6348,7 +6351,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
     add_shortcode('island_byline', function ($atts) {
         $a = shortcode_atts(['text' => '', 'prefix' => 'By'], $atts);
         $text = $a['text'] !== '' ? $a['text'] : (function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true));
-        return island_byline_html($text, $a['prefix']);
+        $url = function_exists('get_field') ? get_field('author_url') : get_post_meta(get_the_ID(), 'author_url', true);
+        return island_byline_html($text, $a['prefix'], is_string($url) ? $url : '');
     });
 
     class Island_Byline_Widget extends \Elementor\Widget_Base
@@ -6377,6 +6381,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         {
             $this->start_controls_section('c', ['label' => 'Byline']);
             $this->add_control('prefix', ['label' => 'Prefix', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'By']);
+            $this->add_control('url', ['label' => 'Link (leave empty to use the ACF “author_url” field)', 'type' => \Elementor\Controls_Manager::TEXT, 'dynamic' => ['active' => true], 'placeholder' => 'https://']);
             $this->add_control('text', ['label' => 'Text (leave empty to use the ACF “author” field)', 'type' => \Elementor\Controls_Manager::TEXT, 'dynamic' => ['active' => true]]);
             $this->end_controls_section();
             $this->start_controls_section('st', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
@@ -6392,7 +6397,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if ($text === '') {
                 $text = function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true);
             }
-            $html = island_byline_html($text, (string) ($s['prefix'] ?? 'By'));
+            $url = trim((string) ($s['url'] ?? ''));
+            if ($url === '' && trim((string) ($s['text'] ?? '')) === '') {
+                $url = function_exists('get_field') ? get_field('author_url') : get_post_meta(get_the_ID(), 'author_url', true);
+                $url = is_string($url) ? $url : '';
+            }
+            $html = island_byline_html($text, (string) ($s['prefix'] ?? 'By'), $url);
             if ($html === '') {
                 return;
             }

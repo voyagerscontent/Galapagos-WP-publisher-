@@ -374,7 +374,10 @@ Juan Magallanes, Naturalist Expert Contributor”. Lee el campo ACF `author` de 
 página (o el cuadro **Text** si lo llenas) y convierte solo el **nombre** en un
 enlace a la ficha de ese experto: la página publicada cuyo *Galápagos Page Type*
 es **Experts** y cuyo título es el mismo nombre (sin importar mayúsculas ni
-acentos). El cargo / nota de revisión después de la coma queda como texto. Si no
+acentos). El cargo / nota de revisión después de la coma queda como texto. Pon el enlace en el campo
+ACF **Author URL** (`author_url`, junto a Author / Byline); si está lleno manda ese; si no,
+el nombre enlaza a la ficha del experto como se describe arriba. El widget también tiene una
+caja “Link” para ponerlo a mano. Si no
 hay ficha con ese nombre, o ya estás en esa ficha → texto simple, sin enlace.
 Fuera de Elementor está el shortcode `[island_byline]`.
 
