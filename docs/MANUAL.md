@@ -417,8 +417,9 @@ Put it in the template once; it fills itself from each page:
 - No byline on the page → the widget prints nothing (the editor shows a dashed hint). Pages that are pure
   Elementor keep Elementor's own Author Box; this widget is for pages with the ACF fields.
 
-Style controls: name/note colours and typography, photo size and ring colour, gap, alignment, background and
-padding. The widget also has optional manual overrides (byline, note, link, photo).
+Style controls: name/note colours and typography, photo size and ring colour, gap, box position (left / centre /
+right), max width (box shrinks to its content, default 760px), background and padding. To sit at the bottom of a
+hero, put the widget last in the hero container and set that container's Justify Content to “Space Between”. The widget also has optional manual overrides (byline, note, link, photo).
 
 #### Keep Elementor's own Author Box: the “Island Author” dynamic tags
 

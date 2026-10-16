@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.114
+ * Version:     0.4.115
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6831,9 +6831,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('st', ['label' => 'Style', 'tab' => $C::TAB_STYLE]);
-            $this->add_responsive_control('align', ['label' => 'Alignment', 'type' => $C::CHOOSE, 'default' => 'flex-start',
-                'options' => ['flex-start' => ['title' => 'Left', 'icon' => 'eicon-h-align-left'], 'center' => ['title' => 'Center', 'icon' => 'eicon-h-align-center'], 'flex-end' => ['title' => 'Right', 'icon' => 'eicon-h-align-right']],
-                'selectors' => ['{{WRAPPER}} .iab' => 'justify-content:{{VALUE}}']]);
+            $this->add_responsive_control('align', ['label' => 'Box position', 'type' => $C::CHOOSE, 'default' => 'center',
+                'options' => ['left' => ['title' => 'Left', 'icon' => 'eicon-h-align-left'], 'center' => ['title' => 'Center', 'icon' => 'eicon-h-align-center'], 'right' => ['title' => 'Right', 'icon' => 'eicon-h-align-right']],
+                'selectors_dictionary' => ['left' => 'margin-left:0;margin-right:auto', 'center' => 'margin-left:auto;margin-right:auto', 'right' => 'margin-left:auto;margin-right:0'],
+                'selectors' => ['{{WRAPPER}} .iab' => '{{VALUE}}']]);
+            $this->add_responsive_control('max_w', ['label' => 'Max width', 'type' => $C::SLIDER, 'size_units' => ['px', '%'], 'range' => ['px' => ['min' => 280, 'max' => 1400], '%' => ['min' => 20, 'max' => 100]],
+                'default' => ['size' => 760, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iab' => 'max-width:{{SIZE}}{{UNIT}}']]);
             $this->add_control('c_name', ['label' => 'Name color', 'type' => $C::COLOR, 'default' => '#F7EFE1', 'selectors' => ['{{WRAPPER}} .iab-name' => 'color:{{VALUE}}']]);
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'name_typo', 'selector' => '{{WRAPPER}} .iab-name']);
             $this->add_control('c_note', ['label' => 'Note color', 'type' => $C::COLOR, 'default' => '#F3EAD9', 'selectors' => ['{{WRAPPER}} .iab-note' => 'color:{{VALUE}}']]);
@@ -6843,8 +6846,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('c_ring', ['label' => 'Photo ring color', 'type' => $C::COLOR, 'default' => 'rgba(255,255,255,.55)', 'selectors' => ['{{WRAPPER}} .iab-photo' => 'border-color:{{VALUE}}']]);
             $this->add_responsive_control('gap', ['label' => 'Gap photo ↔ text', 'type' => $C::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 48]], 'default' => ['size' => 18, 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .iab' => 'gap:{{SIZE}}{{UNIT}}']]);
-            $this->add_control('bg', ['label' => 'Background', 'type' => $C::COLOR, 'selectors' => ['{{WRAPPER}} .iab' => 'background:{{VALUE}}']]);
+            $this->add_control('bg', ['label' => 'Background', 'type' => $C::COLOR, 'default' => 'rgba(20,30,40,.5)', 'selectors' => ['{{WRAPPER}} .iab' => 'background:{{VALUE}}']]);
             $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => $C::DIMENSIONS, 'size_units' => ['px', 'em'],
+                'default' => ['top' => '14', 'right' => '22', 'bottom' => '14', 'left' => '22', 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .iab' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
             $this->end_controls_section();
         }
@@ -6921,7 +6925,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $img = '<span class="iab-photo">' . ($url !== '' ? island_byline_link($im, $url) : $im) . '</span>';
             }
             echo '<style id="iab-css">'
-                . '.iab{display:flex;align-items:center;gap:18px}'
+                . '.iab{display:flex;align-items:center;gap:18px;width:fit-content;max-width:100%;box-sizing:border-box;margin-left:auto;margin-right:auto}'
                 . '.iab-photo{flex:0 0 auto;width:76px;height:76px;border-radius:50%;border:2px solid rgba(255,255,255,.55);overflow:hidden;display:block;background:#d9cdbd}'
                 . '.iab-photo a{display:block;width:100%;height:100%}'
                 . '.iab-img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}'

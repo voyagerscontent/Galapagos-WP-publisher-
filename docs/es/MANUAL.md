@@ -426,7 +426,9 @@ páginas. Se llena solo con los datos de cada página:
   solo de Elementor siguen con el Author Box de Elementor; este widget es para páginas con los campos ACF.
 
 Controles de estilo: colores y tipografía del nombre y la nota, tamaño y aro de la foto, separación,
-alineación, fondo y relleno. El widget también tiene reemplazos manuales opcionales (byline, nota, enlace, foto).
+posición de la caja (izquierda / centro / derecha), ancho máximo (la caja se ajusta a su contenido, 760px por
+defecto), fondo y relleno. Para que quede abajo del hero, pon el widget al final del contenedor del hero y
+usa Justify Content = “Space Between” en ese contenedor. El widget también tiene reemplazos manuales opcionales (byline, nota, enlace, foto).
 
 #### Seguir con el Author Box de Elementor: las etiquetas dinámicas “Island Author”
 
