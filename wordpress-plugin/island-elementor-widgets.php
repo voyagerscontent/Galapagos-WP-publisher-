@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.108
+ * Version:     0.4.109
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -603,7 +603,7 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
 // sideways scroll). Same look as the tables inside the Feature Sections widget.
 add_action('wp_head', function () {
     $base = ''
-        . '.island-table table,table.island-table{background:#FBF8F4!important;width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(100,64,44,.14)!important;border-radius:12px!important;overflow:hidden!important;margin:16px 0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important}'
+        . '.island-table table,table.island-table{background:#FBF8F4!important;width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(100,64,44,.14)!important;border-radius:12px!important;overflow:hidden!important;margin:0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important}'
         . '.island-table th,.island-table td,table.island-table th,table.island-table td{padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important}'
         . '.island-table thead th,.island-table tr:first-child>th,table.island-table thead th,table.island-table tr:first-child>th{background:#64402C!important;color:#F6EFE7!important;font-weight:700!important;border-top:0!important}'
         . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4!important}'
