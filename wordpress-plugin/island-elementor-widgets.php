@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.98
+ * Version:     0.4.99
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -596,6 +596,23 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
         error_log('[island-widgets] page-type conditions skipped: ' . $e->getMessage());
     }
 });
+
+// Table style for ANY widget: add the CSS class "island-table" (Advanced → CSS Classes) to a
+// Text Editor / container / HTML widget — or class="island-table" on the <table> itself — and every
+// table inside gets the site table design (brown header, striped rows, rounded, text wraps, no
+// sideways scroll). Same look as the tables inside the Feature Sections widget.
+add_action('wp_head', function () {
+    echo '<style id="island-table-css">'
+        . '.island-table table,table.island-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(100,64,44,.14);border-radius:12px;overflow:hidden;margin:16px 0;font-size:15px;line-height:1.65;table-layout:auto}'
+        . '.island-table th,.island-table td,table.island-table th,table.island-table td{padding:13px 16px;text-align:left;vertical-align:top;white-space:normal;overflow-wrap:break-word;border:0;border-top:1px solid rgba(100,64,44,.14)}'
+        . '.island-table thead th,.island-table tr:first-child>th,table.island-table thead th,table.island-table tr:first-child>th{background:#64402C;color:#F6EFE7;font-weight:700;border-top:0}'
+        . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4}'
+        . '.island-table td:first-child,table.island-table td:first-child{font-weight:700;color:#64402C}'
+        . '.island-table td,table.island-table td{color:#3A2A1E}'
+        . '.island-table td:only-child,table.island-table td:only-child{font-weight:400}'
+        . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)}'
+        . '</style>';
+}, 20);
 
 // The "Island Expert Pages" matches are cached for a few hours; any page save refreshes them.
 add_action('save_post', function () {

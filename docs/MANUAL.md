@@ -368,6 +368,15 @@ when printing. Developers: turn it off with
 `add_filter('island_back_to_top', '__return_false');` or change the length
 threshold (in screens, default 3) with the `island_back_to_top_screens` filter.
 
+### Table style for any widget: class `island-table`
+
+Tables outside the Feature Sections widget (for example inside a Text Editor) have no design of
+their own. Add the CSS class **`island-table`** to that widget or container (Advanced → CSS
+Classes), or write `<table class="island-table">`, and every table inside gets the site design:
+brown header (a `<thead>` or a first row of `<th>`), striped rows, bold brown first column,
+rounded corners, and text that wraps (no sideways scroll). Tables inside Feature Sections already
+have this look and need no class.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

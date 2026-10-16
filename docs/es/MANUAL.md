@@ -375,6 +375,15 @@ editor/vista previa de Elementor ni al imprimir. Para desarrolladores: se apaga 
 `add_filter('island_back_to_top', '__return_false');` o se cambia el largo mínimo
 (en pantallas, por defecto 3) con el filtro `island_back_to_top_screens`.
 
+### Estilo de tabla para cualquier widget: clase `island-table`
+
+Las tablas fuera del widget de Feature Sections (por ejemplo dentro de un Text Editor) no tienen
+diseño propio. Agrega la clase CSS **`island-table`** a ese widget o contenedor (Advanced → CSS
+Classes), o escribe `<table class="island-table">`, y todas las tablas dentro toman el diseño del
+sitio: encabezado café (un `<thead>` o una primera fila de `<th>`), filas alternas, primera
+columna en negrita café, esquinas redondeadas y texto que se ajusta (sin scroll lateral). Las
+tablas dentro de Feature Sections ya tienen este aspecto y no necesitan la clase.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By
