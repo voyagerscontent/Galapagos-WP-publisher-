@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.110
+ * Version:     0.4.111
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -604,7 +604,7 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
 add_action('wp_head', function () {
     $base = ''
         . '.island-table table,table.island-table{background:#FBF8F4!important;width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(100,64,44,.14)!important;border-radius:12px!important;overflow:hidden!important;margin:0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important}'
-        . '.island-table th,.island-table td,table.island-table th,table.island-table td{padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important}'
+        . '.island-table th,.island-table td,table.island-table th,table.island-table td{font-family:inherit!important;font-style:normal!important;font-size:15px!important;line-height:1.65!important;letter-spacing:normal!important;text-transform:none!important;padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important}'
         . '.island-table thead th,.island-table tr:first-child>th,table.island-table thead th,table.island-table tr:first-child>th{background:#64402C!important;color:#F6EFE7!important;font-weight:700!important;border-top:0!important}'
         . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4!important}'
         . '.island-table td:first-child,table.island-table td:first-child{font-weight:700!important;color:#64402C!important}'
@@ -620,6 +620,9 @@ add_action('wp_head', function () {
     // section (a thin cream outline keeps the brown header visible against the brown background).
     echo '<style id="island-table-css">' . $base . str_replace('island-table', 'table-in-brown', $base)
         . '.table-in-brown table,table.table-in-brown{border:1px solid rgba(243,234,217,.6)!important}'
+        // On a brown section a brown header would melt into the background: table-in-brown gets a sand header.
+        . '.table-in-brown thead th,.table-in-brown tr:first-child>th,table.table-in-brown thead th,table.table-in-brown tr:first-child>th{background:#E6D5BE!important;color:#64402C!important}'
+        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child{background:#E6D5BE!important;color:#64402C!important}'
         // table-in-cream: for a CREAM page/section — a WHITE table (more contrast against the cream) with the brown header.
         . str_replace('island-table', 'table-in-cream', $base)
         . '.table-in-cream table,table.table-in-cream{background:#FFFFFF!important;border:1px solid rgba(100,64,44,.18)!important;box-shadow:0 6px 18px rgba(60,40,25,.08)!important}'

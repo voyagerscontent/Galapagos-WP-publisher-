@@ -381,9 +381,10 @@ have this look and need no class.
 
 #### On a brown section: class `table-in-brown`
 
-**`table-in-brown`** is **exactly the same design** as `island-table` (brown header, cream body,
-striped rows, rounded corners) under another name, for use on a **brown section**; it only adds a thin
-cream outline so the brown header stands out from the brown background. Use it the same way:
+**`table-in-brown`** is the same design as `island-table` (cream body, striped rows, rounded corners) for
+use on a **brown section**, with two differences: a **sand header** with brown text (a brown header would melt
+into the brown background) and a thin cream outline. All three table classes also force a normal font,
+15px size and comfortable line height on header and cells, so theme heading styles can't squash them. Use it the same way:
 Advanced → CSS Classes, or `<table class="table-in-brown">`.
 
 ### Bottom fade of the scrolling feature list

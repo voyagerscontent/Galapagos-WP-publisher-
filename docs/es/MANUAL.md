@@ -388,9 +388,11 @@ tablas dentro de Feature Sections ya tienen este aspecto y no necesitan la clase
 
 #### Sobre una sección café: clase `table-in-brown`
 
-**`table-in-brown`** es **exactamente el mismo diseño** que `island-table` (encabezado café, cuerpo crema,
-filas alternas, esquinas redondeadas), con otro nombre para usarlo sobre una **sección café**; solo
-agrega un borde fino crema para que el encabezado café se distinga del fondo. Se pone igual:
+**`table-in-brown`** es el mismo diseño que `island-table` (cuerpo crema, filas alternas, esquinas
+redondeadas) para usarlo sobre una **sección café**, con dos diferencias: un **encabezado arena** con texto
+café (uno café se perdería en el fondo café) y un borde fino crema. Las tres clases de tabla también fuerzan
+fuente normal, tamaño 15px e interlineado cómodo en encabezado y celdas, para que los estilos de título del
+tema no las aplasten. Se pone igual:
 Advanced → CSS Classes, o `<table class="table-in-brown">`.
 
 ### Degradado inferior de la lista con scroll
