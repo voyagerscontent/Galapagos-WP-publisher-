@@ -386,6 +386,14 @@ celda: línea de título y luego un párrafo) muestra el título en negrita y, s
 primera fila como encabezado café — igual que las tablas de “Ages”. Las
 tablas dentro de Feature Sections ya tienen este aspecto y no necesitan la clase.
 
+#### Sobre una sección café: clase `table-in-brown`
+
+Sobre un **fondo café (oscuro)** usa **`table-in-brown`** en lugar de `island-table` (mismos
+lugares: Advanced → CSS Classes, o `<table class="table-in-brown">`). Mismo diseño, pero el
+encabezado es crema con texto café, el texto es claro y las rayas son suaves y translúcidas, para
+que nada se pierda en el fondo. Las tablas de una columna y la regla de “primera fila como
+encabezado” funcionan igual.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By

@@ -379,6 +379,13 @@ title line, then a paragraph) shows the title in bold and, if it has no `<thead>
 brown header — exactly like the “Ages” tables. Tables inside Feature Sections already
 have this look and need no class.
 
+#### On a brown section: class `table-in-brown`
+
+On a **brown (dark) background** use **`table-in-brown`** instead of `island-table` (same places:
+Advanced → CSS Classes, or `<table class="table-in-brown">`). Same layout, but the header is cream
+with brown text, the body text is light, and the stripes are soft and translucent, so nothing
+disappears into the background. One-column tables and the “first row as header” rule work the same.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

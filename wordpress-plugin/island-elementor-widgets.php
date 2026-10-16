@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.100
+ * Version:     0.4.101
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -616,6 +616,20 @@ add_action('wp_head', function () {
         . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child{background:#64402C;color:#F6EFE7}'
         . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit;font-weight:700}'
         . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)}'
+        // table-in-brown: the same table for BROWN (dark) sections — cream header with brown text,
+        // light text, soft translucent stripes. Use it instead of island-table on a brown background.
+        . '.table-in-brown table,table.table-in-brown{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(243,234,217,.38);border-radius:12px;overflow:hidden;margin:16px 0;font-size:15px;line-height:1.65;table-layout:auto;background:transparent}'
+        . '.table-in-brown th,.table-in-brown td,table.table-in-brown th,table.table-in-brown td{padding:13px 16px;text-align:left;vertical-align:top;white-space:normal;overflow-wrap:break-word;border:0;border-top:1px solid rgba(243,234,217,.22);color:#F3EAD9;background:transparent}'
+        . '.table-in-brown thead th,.table-in-brown tr:first-child>th,table.table-in-brown thead th,table.table-in-brown tr:first-child>th{background:#F3EAD9;color:#64402C;font-weight:700;border-top:0}'
+        . '.table-in-brown tbody tr:nth-child(even)>td,table.table-in-brown tbody tr:nth-child(even)>td{background:rgba(255,255,255,.07)}'
+        . '.table-in-brown td:first-child,table.table-in-brown td:first-child{font-weight:700;color:#FFFFFF}'
+        . '.table-in-brown td:only-child,table.table-in-brown td:only-child{font-weight:400;font-size:15px;line-height:1.7}'
+        . '.table-in-brown td:only-child::first-line,table.table-in-brown td:only-child::first-line{font-weight:700;color:#FFFFFF}'
+        . '.table-in-brown thead th:only-child,table.table-in-brown thead th:only-child{font-weight:400;font-size:15px;line-height:1.7}'
+        . '.table-in-brown thead th:only-child::first-line,table.table-in-brown thead th:only-child::first-line{font-weight:700}'
+        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child{background:#F3EAD9;color:#64402C}'
+        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit;font-weight:700}'
+        . '.table-in-brown tbody tr:hover>td,table.table-in-brown tbody tr:hover>td{background:rgba(255,255,255,.13)}'
         . '</style>';
 }, 20);
 
