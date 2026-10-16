@@ -393,6 +393,13 @@ filas alternas, esquinas redondeadas), con otro nombre para usarlo sobre una **s
 agrega un borde fino crema para que el encabezado café se distinga del fondo. Se pone igual:
 Advanced → CSS Classes, o `<table class="table-in-brown">`.
 
+### Degradado inferior de la lista con scroll
+
+Los widgets que hacen scroll de su lista de features dentro de una altura fija (Feature Sections
+con “Match neighbour column”, y Wildlife · At a Glance + Features) muestran un degradado suave en el
+borde inferior como pista de “hay más”. Apaga **Show bottom fade** (junto al Fade color) para no
+tener degradado. El degradado del texto “Read more” dentro de cada tarjeta es aparte y se queda.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By

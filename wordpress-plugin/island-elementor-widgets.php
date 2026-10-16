@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.105
+ * Version:     0.4.106
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -2069,8 +2069,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('bind_min', ['label' => 'Minimum height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 300, 'min' => 160,
                 'condition' => ['bind_height' => 'yes'],
                 'description' => 'Never shrinks below this, even if the neighbour column is very short.']);
+            $this->add_control('bind_show_fade', ['label' => 'Show bottom fade', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'condition' => ['bind_height' => 'yes'], 'description' => 'The soft gradient at the bottom edge of the scrolling list. Off = no gradient.']);
             $this->add_control('bind_fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
-                'condition' => ['bind_height' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs-scrollwrap' => '--ifs-fade:{{VALUE}}'],
+                'condition' => ['bind_height' => 'yes', 'bind_show_fade' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs-scrollwrap' => '--ifs-fade:{{VALUE}}'],
                 'description' => 'The soft “there is more below” fade at the bottom edge. Set to the page/section background so it blends.']);
             $this->end_controls_section();
 
@@ -2562,7 +2564,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '</div>';  // .ifs
             if ($bind) {
-                echo '</div><div class="ifs-fade"></div></div>';  // close .ifs-scroll, fade, .ifs-scrollwrap
+                echo '</div>' . ((($s['bind_show_fade'] ?? 'yes') === 'yes') ? '<div class="ifs-fade"></div>' : '') . '</div>';  // close .ifs-scroll, fade, .ifs-scrollwrap
             }
             // Open on hover. Driven by JS (mouseenter/leave) so it never depends
             // on the CSS :hover firing — which Elementor's editor overlay can
@@ -5175,8 +5177,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-feats' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_control('min_h', ['label' => 'Minimum scroll height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 320, 'min' => 200,
                 'description' => 'The feature list never shrinks below this even if the card is short.']);
+            $this->add_control('show_scroll_fade', ['label' => 'Show bottom fade', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'The soft gradient at the bottom edge of the scrolling feature list. Off = no gradient.']);
             $this->add_control('fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
-                'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
+                'condition' => ['show_scroll_fade' => 'yes'], 'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
             $this->end_controls_section();
 
             /* CARD (left) */
@@ -5460,7 +5464,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</article>';
                 $i++;
             }
-            echo '</div></div><div class="wgf-fade"></div></div>';  // .wgf-feats .wgf-scroll .wgf-fade
+            echo '</div></div>' . ((($s['show_scroll_fade'] ?? 'yes') === 'yes') ? '<div class="wgf-fade"></div>' : '') . '</div>';  // .wgf-feats .wgf-scroll .wgf-fade
             echo '</div>';  // .wgf
 
             // Desktop: hover to expand each feature. The clamp opens ONLY when the

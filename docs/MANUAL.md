@@ -386,6 +386,13 @@ striped rows, rounded corners) under another name, for use on a **brown section*
 cream outline so the brown header stands out from the brown background. Use it the same way:
 Advanced → CSS Classes, or `<table class="table-in-brown">`.
 
+### Bottom fade of the scrolling feature list
+
+The widgets that scroll their feature list inside a fixed height (Feature Sections with “Match
+neighbour column”, and Wildlife · At a Glance + Features) show a soft gradient at the bottom edge
+as a “there is more” hint. Switch **Show bottom fade** off (next to the Fade color) for no gradient.
+The “Read more” text fade inside each card is separate and stays.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan
