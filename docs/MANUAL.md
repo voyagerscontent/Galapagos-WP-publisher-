@@ -393,6 +393,13 @@ neighbour column”, and Wildlife · At a Glance + Features) show a soft gradien
 as a “there is more” hint. Switch **Show bottom fade** off (next to the Fade color) for no gradient.
 The “Read more” text fade inside each card is separate and stays.
 
+#### On a cream section: class `table-in-cream`
+
+For a **cream page or section** use **`table-in-cream`**: a **white table** (more contrast against the cream)
+with the brown header, soft cream stripes and a light shadow. Same use as the other two: Advanced → CSS
+Classes, or `<table class="table-in-cream">`. Summary — `island-table`: default; `table-in-brown`: same look
+for brown sections; `table-in-cream`: white table for cream sections.
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

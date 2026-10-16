@@ -400,6 +400,13 @@ con “Match neighbour column”, y Wildlife · At a Glance + Features) muestran
 borde inferior como pista de “hay más”. Apaga **Show bottom fade** (junto al Fade color) para no
 tener degradado. El degradado del texto “Read more” dentro de cada tarjeta es aparte y se queda.
 
+#### Sobre una sección crema: clase `table-in-cream`
+
+Para una **página o sección crema** usa **`table-in-cream`**: una **tabla blanca** (más contraste contra el
+crema) con el encabezado café, rayas crema suaves y una sombra ligera. Se usa igual que las otras dos:
+Advanced → CSS Classes, o `<table class="table-in-cream">`. Resumen — `island-table`: la normal;
+`table-in-brown`: el mismo diseño para secciones cafés; `table-in-cream`: tabla blanca para secciones crema.
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By

@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.106
+ * Version:     0.4.107
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -620,6 +620,11 @@ add_action('wp_head', function () {
     // section (a thin cream outline keeps the brown header visible against the brown background).
     echo '<style id="island-table-css">' . $base . str_replace('island-table', 'table-in-brown', $base)
         . '.table-in-brown table,table.table-in-brown{border:1px solid rgba(243,234,217,.6)!important}'
+        // table-in-cream: for a CREAM page/section — a WHITE table (more contrast against the cream) with the brown header.
+        . str_replace('island-table', 'table-in-cream', $base)
+        . '.table-in-cream table,table.table-in-cream{background:#FFFFFF!important;border:1px solid rgba(100,64,44,.18)!important;box-shadow:0 6px 18px rgba(60,40,25,.08)!important}'
+        . '.table-in-cream tbody tr:nth-child(even)>td,table.table-in-cream tbody tr:nth-child(even)>td{background:#FAF6F0!important}'
+        . '.table-in-cream tbody tr:hover>td,table.table-in-cream tbody tr:hover>td{background:#F3EBDF!important}'
         . '</style>';
 }, 20);
 
