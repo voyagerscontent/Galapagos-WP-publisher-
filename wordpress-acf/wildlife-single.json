@@ -79,6 +79,21 @@
                 "instructions": "e.g. 'Juan Magallanes, Naturalist Expert Contributor'. Leave blank when the doc has no byline."
             },
             {
+                "key": "field_wls_author_url",
+                "label": "Author URL",
+                "name": "author_url",
+                "type": "url",
+                "instructions": "Optional. Link for the author's name (their profile page, e.g. https://galapagosislands.travel/about/juan-magallanes/). Leave blank to link automatically to the expert's profile page when one exists with the same name.",
+                "placeholder": "https://"
+            },
+            {
+                "key": "field_wls_review_note",
+                "label": "Review Note",
+                "name": "review_note",
+                "type": "text",
+                "instructions": "Optional. Line shown under the author in the hero, e.g. 'Reviewed for accuracy against National Park visitor-site data | Updated 2026'. Leave blank to use the default set in the Island Author Box widget."
+            },
+            {
                 "key": "field_wls_tab_facts",
                 "label": "Species Facts",
                 "name": "",
