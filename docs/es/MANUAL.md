@@ -383,7 +383,8 @@ caja “Link” para ponerlo a mano.
 y no hay nada que configurar: cualquier widget de la página que imprima el byline (por
 ejemplo un Heading con el campo ACF `author` después de “By ”) convierte automáticamente
 “By Juan Magallanes” en el enlace (Author URL, o la ficha del experto que coincida); el cargo
-después de la coma queda como texto. Si un widget muestra solo el nombre, ponle la clase CSS
+después de la coma queda como texto. El enlace conserva la fuente, el tamaño, el color
+y la cursiva del texto: visualmente solo cambia con un subrayado al pasar el mouse. Si un widget muestra solo el nombre, ponle la clase CSS
 `island-byline` (Advanced → CSS Classes). Si no
 hay ficha con ese nombre, o ya estás en esa ficha → texto simple, sin enlace.
 Fuera de Elementor está el shortcode `[island_byline]`.

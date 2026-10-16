@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.89
+ * Version:     0.4.90
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6344,6 +6344,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             $host = (string) wp_parse_url($url, PHP_URL_HOST);
             $ext = $host !== '' && $host !== (string) wp_parse_url(home_url(), PHP_URL_HOST);
+            $GLOBALS['island_byline_used'] = true;   // wp_footer prints the link CSS once
             return '<a class="ibl-link" href="' . esc_url($url) . '"' . ($ext ? ' rel="noopener"' : '') . '>' . $label . '</a>';
         }
     }
@@ -6363,6 +6364,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             return '<p class="ibl-wrap">' . $label . esc_html($rest) . '</p>';
         }
     }
+    // The byline link must look exactly like the text around it (same font, size, colour,
+    // italic…); only hovering underlines it. Printed once, and only when a link was made.
+    add_action('wp_footer', function () {
+        if (empty($GLOBALS['island_byline_used'])) {
+            return;
+        }
+        echo '<style id="island-byline-css">'
+            . 'a.ibl-link,a.ibl-link:visited,a.ibl-link:focus{color:inherit!important;font:inherit!important;letter-spacing:inherit!important;text-transform:inherit!important;'
+            . 'text-decoration:none!important;background:none!important;border:0!important;box-shadow:none!important}'
+            . 'a.ibl-link:hover{color:inherit!important;text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:4px}'
+            . '</style>';
+    }, 5);
     // AUTOMATIC: any Elementor widget on a page whose ACF "author" byline it prints
     // (for example a Heading with the dynamic tag, "By <author field>") gets the part
     // BEFORE THE COMMA — "By Juan Magallanes" — turned into a link: to ACF "Author URL",

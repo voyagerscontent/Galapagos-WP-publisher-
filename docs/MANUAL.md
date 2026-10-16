@@ -376,7 +376,8 @@ the name links to the matching expert profile as described above. The widget als
 replace it, and there is nothing to set up: any widget on the page that prints the byline
 (for example a Heading showing the ACF `author` field after “By ”) automatically gets “By
 Juan Magallanes” turned into the link (Author URL, or the matching expert profile); the
-role after the comma stays plain text. If a widget shows only the name, give it the CSS
+role after the comma stays plain text. The link keeps the text's own font, size, colour
+and italic — nothing changes visually except an underline on hover. If a widget shows only the name, give it the CSS
 class `island-byline` (Advanced → CSS Classes). No matching profile, or
 you are already on that profile → plain text, no link. Outside Elementor the same
 thing is available as the shortcode `[island_byline]`.
