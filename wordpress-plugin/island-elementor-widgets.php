@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.93
+ * Version:     0.4.94
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6072,6 +6072,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'options' => ['date_desc' => 'Newest first', 'title_asc' => 'Title A–Z']]);
             $this->add_control('limit', ['label' => 'Max pages (0 = all)', 'type' => \Elementor\Controls_Manager::NUMBER,
                 'min' => 0, 'max' => 100, 'default' => 12]);
+            $this->add_control('show_date', ['label' => 'Show date on cards', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'separator' => 'before']);
+            $this->add_control('date_type', ['label' => 'Date', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'modified',
+                'options' => ['modified' => 'Last updated', 'published' => 'Published'], 'condition' => ['show_date' => 'yes']]);
             $this->end_controls_section();
 
             /* Container only: the card design itself is fixed in styles(). */
@@ -6186,6 +6189,29 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             return '';
         }
 
+        /** "Updated Oct 12, 2026" / "Oct 12, 2026" in the site's own date format. */
+        private function date_html($id, $show, $type)
+        {
+            if (!$show) {
+                return '';
+            }
+            $post = get_post($id);
+            if (!$post) {
+                return '';
+            }
+            $gmt = $type === 'published' ? $post->post_date_gmt : $post->post_modified_gmt;
+            if (!$gmt || $gmt === '0000-00-00 00:00:00') {
+                $gmt = $type === 'published' ? $post->post_date : $post->post_modified;
+            }
+            $ts = strtotime($gmt . ' UTC');
+            if (!$ts) {
+                return '';
+            }
+            $label = wp_date(get_option('date_format') ?: 'F j, Y', $ts);
+            return '<time class="iep-date" datetime="' . esc_attr(gmdate('c', $ts)) . '">'
+                . ($type === 'modified' ? esc_html('Updated ') : '') . esc_html($label) . '</time>';
+        }
+
         /** The card title: the page's ACF hero_title, else its WordPress title. */
         private function card_title($id)
         {
@@ -6241,7 +6267,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .iep-wrap .iep-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(60,40,25,.16)}
               .iep-wrap .iep-media{aspect-ratio:16/10;overflow:hidden;background:#e8ddd0}
               .iep-wrap .iep-img{display:block;width:100%;height:100%;object-fit:cover}
-              .iep-wrap .iep-body{display:flex;flex-direction:column;gap:8px;padding:18px 20px 22px}
+              .iep-wrap .iep-body{display:flex;flex-direction:column;gap:8px;padding:18px 20px 22px;flex:1}
+              .iep-wrap .iep-date{margin-top:auto;padding-top:6px;font-size:13px;line-height:1.3;color:#8a7358}
               .iep-wrap .iep-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:20px;line-height:1.3;color:#64402c}
               .iep-wrap .iep-desc{margin:0;font-size:15px;line-height:1.55;color:#4a3a2c;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
               @media(max-width:900px){.iep-wrap .iep-track>.iep-card{flex-basis:calc((100% - 28px)/2)}}
@@ -6291,6 +6318,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (($s['show_heading'] ?? 'yes') === 'yes' && $heading !== '') {
                 echo '<h2 class="iep-h">' . esc_html(str_replace('{name}', $display, $heading)) . '</h2>';
             }
+            $show_date = ($s['show_date'] ?? 'yes') === 'yes';
+            $date_type = ($s['date_type'] ?? 'modified') === 'published' ? 'published' : 'modified';
             echo '<button type="button" class="iep-nav iep-prev" aria-label="Previous">&lsaquo;</button><div class="iep-track">';
             foreach ($ids as $id) {
                 $img = $this->thumb($id);
@@ -6299,6 +6328,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                     . '<div class="iep-media">' . $img . '</div>'
                     . '<div class="iep-body"><h3 class="iep-title">' . esc_html($this->card_title($id)) . '</h3>'
                     . ($text !== '' ? '<p class="iep-desc">' . esc_html($text) . '</p>' : '')
+                    . $this->date_html($id, $show_date, $date_type)
                     . '</div></a>';
             }
             echo '</div><button type="button" class="iep-nav iep-next" aria-label="Next">&rsaquo;</button></div></div>';
