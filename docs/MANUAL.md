@@ -374,7 +374,9 @@ Tables outside the Feature Sections widget (for example inside a Text Editor) ha
 their own. Add the CSS class **`island-table`** to that widget or container (Advanced → CSS
 Classes), or write `<table class="island-table">`, and every table inside gets the site design:
 brown header (a `<thead>` or a first row of `<th>`), striped rows, bold brown first column,
-rounded corners, and text that wraps (no sideways scroll). Tables inside Feature Sections already
+rounded corners, and text that wraps (no sideways scroll). A one-column table (each cell: a
+title line, then a paragraph) shows the title in bold and, if it has no `<thead>`, its first row as the
+brown header — exactly like the “Ages” tables. Tables inside Feature Sections already
 have this look and need no class.
 
 ### Byline link (the author's name links to their profile)

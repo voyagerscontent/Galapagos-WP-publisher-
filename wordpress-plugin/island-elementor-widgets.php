@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.99
+ * Version:     0.4.100
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -609,7 +609,12 @@ add_action('wp_head', function () {
         . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4}'
         . '.island-table td:first-child,table.island-table td:first-child{font-weight:700;color:#64402C}'
         . '.island-table td,table.island-table td{color:#3A2A1E}'
-        . '.island-table td:only-child,table.island-table td:only-child{font-weight:400}'
+        . '.island-table td:only-child,table.island-table td:only-child{font-weight:400;font-size:15px;line-height:1.7}'
+        . '.island-table td:only-child::first-line,table.island-table td:only-child::first-line{font-weight:700;color:#64402C}'
+        . '.island-table thead th:only-child,table.island-table thead th:only-child{font-weight:400;font-size:15px;line-height:1.7}'
+        . '.island-table thead th:only-child::first-line,table.island-table thead th:only-child::first-line{font-weight:700}'
+        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child{background:#64402C;color:#F6EFE7}'
+        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit;font-weight:700}'
         . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)}'
         . '</style>';
 }, 20);

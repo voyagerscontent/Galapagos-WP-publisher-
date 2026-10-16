@@ -381,7 +381,9 @@ Las tablas fuera del widget de Feature Sections (por ejemplo dentro de un Text E
 diseño propio. Agrega la clase CSS **`island-table`** a ese widget o contenedor (Advanced → CSS
 Classes), o escribe `<table class="island-table">`, y todas las tablas dentro toman el diseño del
 sitio: encabezado café (un `<thead>` o una primera fila de `<th>`), filas alternas, primera
-columna en negrita café, esquinas redondeadas y texto que se ajusta (sin scroll lateral). Las
+columna en negrita café, esquinas redondeadas y texto que se ajusta (sin scroll lateral). Una tabla de una columna (cada
+celda: línea de título y luego un párrafo) muestra el título en negrita y, si no tiene `<thead>`, su
+primera fila como encabezado café — igual que las tablas de “Ages”. Las
 tablas dentro de Feature Sections ya tienen este aspecto y no necesitan la clase.
 
 ### Enlace del autor (el nombre enlaza a su ficha)
