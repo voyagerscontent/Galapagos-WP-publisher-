@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.112
+ * Version:     0.4.113
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -820,7 +820,7 @@ add_action('elementor/dynamic_tags/register', function ($manager) {
             public function get_name() { return 'island-author-url'; }
             public function get_title() { return 'Author link (Author URL / expert profile)'; }
             public function get_group() { return ['island-author']; }
-            public function get_categories() { return [\Elementor\Modules\DynamicTags\Module::URL_CATEGORY]; }
+            public function get_categories() { return [\Elementor\Modules\DynamicTags\Module::URL_CATEGORY, \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY]; }
             public function render()
             {
                 $d = island_author_data();
@@ -6809,7 +6809,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('h_over', ['label' => 'Manual overrides (optional)', 'type' => $C::HEADING, 'separator' => 'before']);
             $this->add_control('text', ['label' => 'Byline (empty = ACF “author”)', 'type' => $C::TEXT, 'dynamic' => ['active' => true], 'label_block' => true]);
             $this->add_control('note', ['label' => 'Review note (empty = ACF “review_note”)', 'type' => $C::TEXTAREA, 'rows' => 2, 'dynamic' => ['active' => true], 'label_block' => true]);
-            $this->add_control('url', ['label' => 'Link (empty = ACF “author_url” / expert profile)', 'type' => $C::TEXT, 'dynamic' => ['active' => true], 'placeholder' => 'https://']);
+            $this->add_control('url', ['label' => 'Link (empty = ACF “author_url” / expert profile)', 'type' => $C::URL, 'dynamic' => ['active' => true], 'placeholder' => 'https://', 'label_block' => true]);
             $this->add_control('photo', ['label' => 'Photo (empty = expert profile photo)', 'type' => $C::MEDIA, 'dynamic' => ['active' => true]]);
             $this->end_controls_section();
 
@@ -6876,7 +6876,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $rest = isset($parts[1]) ? $parts[1] . (string) ($parts[2] ?? '') : '';
             $prefix = trim((string) ($s['prefix'] ?? 'By'));
 
-            $explicit = trim((string) ($s['url'] ?? ''));
+            $u = $s['url'] ?? '';
+            $explicit = is_array($u) ? trim((string) ($u['url'] ?? '')) : trim((string) $u);
             if ($explicit === '') {
                 $explicit = $this->field('author_url', $s);
             }
