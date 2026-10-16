@@ -408,6 +408,24 @@ Advanced → CSS Classes, o `<table class="table-in-cream">`. Dentro del marco d
 dibuja) las clases **no agregan un segundo borde, margen ni sombra**. Resumen — `island-table`: la normal;
 `table-in-brown`: el mismo diseño para secciones cafés; `table-in-cream`: tabla blanca para secciones crema.
 
+### Island Author Box (la caja de autor del hero como plantilla)
+
+Un solo widget para la caja bajo el título de la página — foto redonda, “By Juan Magallanes, Galapagos
+Travel Advisor” y la nota de revisión — para ponerlo una vez en una plantilla y que funcione en todas las
+páginas. Se llena solo con los datos de cada página:
+
+- **Nombre y cargo** — el campo ACF **Author / Byline** (`author`) de la página. Lo anterior a la coma es el nombre.
+- **Foto y enlace** — la **ficha del experto** que coincide (la página de tipo “Experts” cuyo título es ese
+  nombre): su **about image**, o si no su imagen destacada; el enlace va a esa ficha. Si el ACF **Author URL**
+  (`author_url`) está lleno, ese manda como enlace.
+- **Nota de revisión** — el campo ACF **Review Note** (`review_note`, un campo de texto nuevo que agregas a
+  mano junto a Author / Byline). Si la página no tiene, se usa la **Default review note** del widget.
+- Sin byline en la página → el widget no imprime nada (en el editor sale un aviso punteado). Las páginas
+  solo de Elementor siguen con el Author Box de Elementor; este widget es para páginas con los campos ACF.
+
+Controles de estilo: colores y tipografía del nombre y la nota, tamaño y aro de la foto, separación,
+alineación, fondo y relleno. El widget también tiene reemplazos manuales opcionales (byline, nota, enlace, foto).
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By

@@ -87,6 +87,13 @@
                 "placeholder": "https://"
             },
             {
+                "key": "field_inf_review_note",
+                "label": "Review Note",
+                "name": "review_note",
+                "type": "text",
+                "instructions": "Optional. Line shown under the author in the hero, e.g. 'Reviewed for accuracy against National Park visitor-site data | Updated 2026'. Leave blank to use the default set in the Island Author Box widget."
+            },
+            {
                 "key": "field_inf_tab_content",
                 "label": "Content Sections",
                 "name": "",

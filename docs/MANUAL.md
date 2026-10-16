@@ -401,6 +401,24 @@ Classes, or `<table class="table-in-cream">`. Inside a Feature Sections table fr
 the classes add **no second outline, margin or shadow**. Summary — `island-table`: default; `table-in-brown`: same look
 for brown sections; `table-in-cream`: white table for cream sections.
 
+### Island Author Box (the hero author box as a template)
+
+One widget for the box under the page title — round photo, “By Juan Magallanes, Galapagos Travel
+Advisor” and the review note — so it can live in a single template and work on every page.
+Put it in the template once; it fills itself from each page:
+
+- **Name and role** — the page's ACF **Author / Byline** (`author`). The part before the comma is the name.
+- **Photo and link** — the matching **expert profile page** (the page typed “Experts” whose title is that
+  name): its **about image**, else its featured image; the link goes to that profile. The ACF **Author URL**
+  (`author_url`), if filled, wins as the link.
+- **Review note** — the ACF **Review Note** (`review_note`, a new text field you add by hand next to Author /
+  Byline). If the page has none, the widget's **Default review note** is used.
+- No byline on the page → the widget prints nothing (the editor shows a dashed hint). Pages that are pure
+  Elementor keep Elementor's own Author Box; this widget is for pages with the ACF fields.
+
+Style controls: name/note colours and typography, photo size and ring colour, gap, alignment, background and
+padding. The widget also has optional manual overrides (byline, note, link, photo).
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

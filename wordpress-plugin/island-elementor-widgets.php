@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.109
+ * Version:     0.4.110
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6450,14 +6450,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
      *  case/accent-insensitive). No profile found → plain text, as before.
      *  Reads the page's ACF `author` field unless "Text" is filled in.
      * =================================================================== */
-    if (!function_exists('island_byline_url')) {
-        /** The link for an author NAME: an explicit URL wins, else the matching expert profile page, else ''. */
-        function island_byline_url($name, $explicit = '')
+    if (!function_exists('island_expert_profile_id')) {
+        /** ID of the published "Experts" page whose title is this author NAME (accents/case ignored), else 0. */
+        function island_expert_profile_id($name)
         {
-            $url = esc_url((string) $explicit, ['http', 'https']);
-            if ($url !== '') {
-                return $url;
-            }
             $norm = function ($s) {
                 $s = remove_accents(trim(preg_replace('/\s+/u', ' ', (string) $s)));
                 return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
@@ -6469,10 +6465,22 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             ]);
             foreach ($q->posts as $pid) {
                 if ($norm(get_the_title($pid)) === $norm($name) || $norm(preg_split('/\s*[,|–—]\s*|\s+-\s+/u', get_the_title($pid))[0]) === $norm($name)) {
-                    return (int) get_queried_object_id() === (int) $pid ? '' : get_permalink($pid);
+                    return (int) $pid;
                 }
             }
-            return '';
+            return 0;
+        }
+    }
+    if (!function_exists('island_byline_url')) {
+        /** The link for an author NAME: an explicit URL wins, else the matching expert profile page, else ''. */
+        function island_byline_url($name, $explicit = '')
+        {
+            $url = esc_url((string) $explicit, ['http', 'https']);
+            if ($url !== '') {
+                return $url;
+            }
+            $pid = island_expert_profile_id($name);
+            return ($pid && (int) get_queried_object_id() !== $pid) ? get_permalink($pid) : '';
         }
     }
     if (!function_exists('island_byline_link')) {
@@ -6639,6 +6647,153 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '<style id="ibl-css">.ibl-wrap{margin:0}.ibl-wrap .ibl-link{color:inherit;text-decoration:underline;text-underline-offset:3px}.ibl-wrap .ibl-link:hover{text-decoration-thickness:2px}</style>';
             echo $html;
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND AUTHOR BOX — the hero "photo + By Name, Role + review note" box, as a template.
+     *  Name/role come from the page's ACF `author`; the photo and link from the matching expert
+     *  profile page (about_image, else featured image) or ACF `author_url`; the note from the
+     *  ACF `review_note` (else the default set here). Pages that are pure Elementor keep using
+     *  Elementor's own Author Box — this widget simply prints nothing when there is no byline.
+     * =================================================================== */
+    class Island_AuthorBox_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_author_box';
+        }
+        public function get_title()
+        {
+            return 'Island Author Box';
+        }
+        public function get_icon()
+        {
+            return 'eicon-person';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        public function get_keywords()
+        {
+            return ['author', 'byline', 'expert', 'review', 'box'];
+        }
+        protected function register_controls()
+        {
+            $C = '\Elementor\Controls_Manager';
+            $this->start_controls_section('c', ['label' => 'Author box']);
+            $this->add_control('prefix', ['label' => 'Prefix', 'type' => $C::TEXT, 'default' => 'By']);
+            $this->add_control('default_note', ['label' => 'Default review note (when the page has none)', 'type' => $C::TEXTAREA, 'rows' => 3,
+                'default' => 'Reviewed for accuracy against National Park visitor-site data | Updated 2026', 'label_block' => true]);
+            $this->add_control('show_photo', ['label' => 'Show photo', 'type' => $C::SWITCHER, 'default' => 'yes']);
+            $this->add_control('h_over', ['label' => 'Manual overrides (optional)', 'type' => $C::HEADING, 'separator' => 'before']);
+            $this->add_control('text', ['label' => 'Byline (empty = ACF “author”)', 'type' => $C::TEXT, 'dynamic' => ['active' => true], 'label_block' => true]);
+            $this->add_control('note', ['label' => 'Review note (empty = ACF “review_note”)', 'type' => $C::TEXTAREA, 'rows' => 2, 'dynamic' => ['active' => true], 'label_block' => true]);
+            $this->add_control('url', ['label' => 'Link (empty = ACF “author_url” / expert profile)', 'type' => $C::TEXT, 'dynamic' => ['active' => true], 'placeholder' => 'https://']);
+            $this->add_control('photo', ['label' => 'Photo (empty = expert profile photo)', 'type' => $C::MEDIA, 'dynamic' => ['active' => true]]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('st', ['label' => 'Style', 'tab' => $C::TAB_STYLE]);
+            $this->add_responsive_control('align', ['label' => 'Alignment', 'type' => $C::CHOOSE, 'default' => 'flex-start',
+                'options' => ['flex-start' => ['title' => 'Left', 'icon' => 'eicon-h-align-left'], 'center' => ['title' => 'Center', 'icon' => 'eicon-h-align-center'], 'flex-end' => ['title' => 'Right', 'icon' => 'eicon-h-align-right']],
+                'selectors' => ['{{WRAPPER}} .iab' => 'justify-content:{{VALUE}}']]);
+            $this->add_control('c_name', ['label' => 'Name color', 'type' => $C::COLOR, 'default' => '#F7EFE1', 'selectors' => ['{{WRAPPER}} .iab-name' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'name_typo', 'selector' => '{{WRAPPER}} .iab-name']);
+            $this->add_control('c_note', ['label' => 'Note color', 'type' => $C::COLOR, 'default' => '#F3EAD9', 'selectors' => ['{{WRAPPER}} .iab-note' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'note_typo', 'selector' => '{{WRAPPER}} .iab-note']);
+            $this->add_responsive_control('photo_size', ['label' => 'Photo size', 'type' => $C::SLIDER, 'range' => ['px' => ['min' => 40, 'max' => 140]], 'default' => ['size' => 76, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iab-photo' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('c_ring', ['label' => 'Photo ring color', 'type' => $C::COLOR, 'default' => 'rgba(255,255,255,.55)', 'selectors' => ['{{WRAPPER}} .iab-photo' => 'border-color:{{VALUE}}']]);
+            $this->add_responsive_control('gap', ['label' => 'Gap photo ↔ text', 'type' => $C::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 48]], 'default' => ['size' => 18, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iab' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bg', ['label' => 'Background', 'type' => $C::COLOR, 'selectors' => ['{{WRAPPER}} .iab' => 'background:{{VALUE}}']]);
+            $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => $C::DIMENSIONS, 'size_units' => ['px', 'em'],
+                'selectors' => ['{{WRAPPER}} .iab' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+
+        /** Photo URL of an expert profile page: ACF about_image, else its featured image. */
+        private function profile_photo($pid)
+        {
+            if (!$pid) {
+                return '';
+            }
+            if (function_exists('get_field')) {
+                $img = get_field('about_image', $pid);
+                $att = is_array($img) ? (int) ($img['ID'] ?? $img['id'] ?? 0) : (int) $img;
+                if ($att) {
+                    $u = wp_get_attachment_image_url($att, 'medium');
+                    if ($u) {
+                        return $u;
+                    }
+                }
+            }
+            return has_post_thumbnail($pid) ? (string) get_the_post_thumbnail_url($pid, 'medium') : '';
+        }
+
+        private function field($key, $s)
+        {
+            $v = function_exists('get_field') ? get_field($key) : get_post_meta(get_the_ID(), $key, true);
+            return is_string($v) ? trim($v) : '';
+        }
+
+        protected function render()
+        {
+            $s = $this->get_settings_for_display();
+            $raw = trim((string) ($s['text'] ?? ''));
+            if ($raw === '') {
+                $raw = $this->field('author', $s);
+            }
+            $raw = trim(preg_replace('/^\s*by\s+/iu', '', wp_strip_all_tags($raw)));
+            if ($raw === '') {
+                if (class_exists('\Elementor\Plugin') && \Elementor\Plugin::$instance->editor->is_edit_mode()) {
+                    echo '<div style="padding:14px 16px;border:1px dashed #b9a78f;border-radius:6px;color:#7a6650;font-size:13px">Island Author Box: this page has no ACF “Author / Byline”, so nothing is shown. Fill that field (or the “Byline” override here).</div>';
+                }
+                return;
+            }
+            $parts = preg_split('/(\s*[,|–—]\s*|\s+-\s+)/u', $raw, 2, PREG_SPLIT_DELIM_CAPTURE);
+            $name = trim((string) $parts[0]);
+            $rest = isset($parts[1]) ? $parts[1] . (string) ($parts[2] ?? '') : '';
+            $prefix = trim((string) ($s['prefix'] ?? 'By'));
+
+            $explicit = trim((string) ($s['url'] ?? ''));
+            if ($explicit === '') {
+                $explicit = $this->field('author_url', $s);
+            }
+            $pid = island_expert_profile_id($name);
+            $url = island_byline_url($name, $explicit);
+
+            $photo = '';
+            if (($s['show_photo'] ?? 'yes') === 'yes') {
+                $photo = !empty($s['photo']['url']) ? (string) $s['photo']['url'] : $this->profile_photo($pid);
+            }
+            $note = trim((string) ($s['note'] ?? ''));
+            if ($note === '') {
+                $note = $this->field('review_note', $s);
+            }
+            if ($note === '') {
+                $note = trim((string) ($s['default_note'] ?? ''));
+            }
+
+            $label = esc_html(($prefix !== '' ? $prefix . ' ' : '') . $name);
+            $nameHtml = island_byline_link($label, $url) . esc_html($rest);
+            $img = '';
+            if ($photo !== '') {
+                $im = '<img class="iab-img" src="' . esc_url($photo) . '" alt="' . esc_attr($name) . '" loading="lazy">';
+                $img = '<span class="iab-photo">' . ($url !== '' ? island_byline_link($im, $url) : $im) . '</span>';
+            }
+            echo '<style id="iab-css">'
+                . '.iab{display:flex;align-items:center;gap:18px}'
+                . '.iab-photo{flex:0 0 auto;width:76px;height:76px;border-radius:50%;border:2px solid rgba(255,255,255,.55);overflow:hidden;display:block;background:#d9cdbd}'
+                . '.iab-photo a{display:block;width:100%;height:100%}'
+                . '.iab-img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}'
+                . '.iab-tx{min-width:0}'
+                . '.iab-name{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;line-height:1.3;color:#F7EFE1}'
+                . '.iab-note{margin:6px 0 0;font-size:17px;line-height:1.5;color:#F3EAD9}'
+                . '</style>';
+            echo '<div class="iab">' . $img . '<div class="iab-tx"><div class="iab-name">' . $nameHtml . '</div>'
+                . ($note !== '' ? '<p class="iab-note">' . esc_html($note) . '</p>' : '') . '</div></div>';
         }
     }
 
@@ -7619,6 +7774,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Expert_Widget',
         'Island_ExpertPages_Widget',
         'Island_Byline_Widget',
+        'Island_AuthorBox_Widget',
         'Island_AcfList_Widget',
         'Island_ProfileCard_Widget',
     ] as $island_ew_new) {
