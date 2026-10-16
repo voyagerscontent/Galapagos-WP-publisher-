@@ -388,10 +388,10 @@ tablas dentro de Feature Sections ya tienen este aspecto y no necesitan la clase
 
 #### Sobre una sección café: clase `table-in-brown`
 
-Sobre un **fondo café (oscuro)** usa **`table-in-brown`** en lugar de `island-table` (mismos
-lugares: Advanced → CSS Classes, o `<table class="table-in-brown">`). Una **tabla crema** que descansa sobre la
-sección café: cuerpo crema, encabezado arena con texto café, texto oscuro y rayas suaves. Las tablas de una columna y la regla de “primera fila como
-encabezado” funcionan igual.
+**`table-in-brown`** es **exactamente el mismo diseño** que `island-table` (encabezado café, cuerpo crema,
+filas alternas, esquinas redondeadas), con otro nombre para usarlo sobre una **sección café**; solo
+agrega un borde fino crema para que el encabezado café se distinga del fondo. Se pone igual:
+Advanced → CSS Classes, o `<table class="table-in-brown">`.
 
 ### Enlace del autor (el nombre enlaza a su ficha)
 

@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.103
+ * Version:     0.4.105
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -602,8 +602,8 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
 // table inside gets the site table design (brown header, striped rows, rounded, text wraps, no
 // sideways scroll). Same look as the tables inside the Feature Sections widget.
 add_action('wp_head', function () {
-    echo '<style id="island-table-css">'
-        . '.island-table table,table.island-table{width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(100,64,44,.14)!important;border-radius:12px!important;overflow:hidden!important;margin:16px 0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important}'
+    $base = ''
+        . '.island-table table,table.island-table{background:#FBF8F4!important;width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(100,64,44,.14)!important;border-radius:12px!important;overflow:hidden!important;margin:16px 0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important}'
         . '.island-table th,.island-table td,table.island-table th,table.island-table td{padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important}'
         . '.island-table thead th,.island-table tr:first-child>th,table.island-table thead th,table.island-table tr:first-child>th{background:#64402C!important;color:#F6EFE7!important;font-weight:700!important;border-top:0!important}'
         . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4!important}'
@@ -615,21 +615,11 @@ add_action('wp_head', function () {
         . '.island-table thead th:only-child::first-line,table.island-table thead th:only-child::first-line{font-weight:700!important}'
         . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child{background:#64402C!important;color:#F6EFE7!important}'
         . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit!important;font-weight:700!important}'
-        . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)!important}'
-        // table-in-brown: a CREAM table to sit on a BROWN (dark) section — cream body, tan header
-        // with brown text, dark text, soft stripes. Use it instead of island-table on a brown background.
-        . '.table-in-brown table,table.table-in-brown{width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(243,234,217,.55)!important;border-radius:12px!important;overflow:hidden!important;margin:16px 0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important;background:#F8F3EC!important}'
-        . '.table-in-brown th,.table-in-brown td,table.table-in-brown th,table.table-in-brown td{padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important;color:#3A2A1E!important;background:#F8F3EC!important}'
-        . '.table-in-brown thead th,.table-in-brown tr:first-child>th,table.table-in-brown thead th,table.table-in-brown tr:first-child>th{background:#E6D5BE!important;color:#64402C!important;font-weight:700!important;border-top:0!important}'
-        . '.table-in-brown tbody tr:nth-child(even)>td,table.table-in-brown tbody tr:nth-child(even)>td{background:#F1E8DC!important}'
-        . '.table-in-brown td:first-child,table.table-in-brown td:first-child{font-weight:700!important;color:#64402C!important}'
-        . '.table-in-brown td:only-child,table.table-in-brown td:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
-        . '.table-in-brown td:only-child::first-line,table.table-in-brown td:only-child::first-line{font-weight:700!important;color:#64402C!important}'
-        . '.table-in-brown thead th:only-child,table.table-in-brown thead th:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
-        . '.table-in-brown thead th:only-child::first-line,table.table-in-brown thead th:only-child::first-line{font-weight:700!important}'
-        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child{background:#E6D5BE!important;color:#64402C!important}'
-        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit!important;font-weight:700!important}'
-        . '.table-in-brown tbody tr:hover>td,table.table-in-brown tbody tr:hover>td{background:#EADFCF!important}'
+        . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)!important}';
+    // table-in-brown: EXACTLY the same table design, under another name — for tables placed on a BROWN
+    // section (a thin cream outline keeps the brown header visible against the brown background).
+    echo '<style id="island-table-css">' . $base . str_replace('island-table', 'table-in-brown', $base)
+        . '.table-in-brown table,table.table-in-brown{border:1px solid rgba(243,234,217,.6)!important}'
         . '</style>';
 }, 20);
 

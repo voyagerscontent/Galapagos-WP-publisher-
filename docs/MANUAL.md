@@ -381,9 +381,10 @@ have this look and need no class.
 
 #### On a brown section: class `table-in-brown`
 
-On a **brown (dark) background** use **`table-in-brown`** instead of `island-table` (same places:
-Advanced → CSS Classes, or `<table class="table-in-brown">`). A **cream table** that sits on the brown section: cream body,
-tan header with brown text, dark text and soft stripes. One-column tables and the “first row as header” rule work the same.
+**`table-in-brown`** is **exactly the same design** as `island-table` (brown header, cream body,
+striped rows, rounded corners) under another name, for use on a **brown section**; it only adds a thin
+cream outline so the brown header stands out from the brown background. Use it the same way:
+Advanced → CSS Classes, or `<table class="table-in-brown">`.
 
 ### Byline link (the author's name links to their profile)
 
