@@ -404,7 +404,8 @@ tener degradado. El degradado del texto “Read more” dentro de cada tarjeta e
 
 Para una **página o sección crema** usa **`table-in-cream`**: una **tabla blanca** (más contraste contra el
 crema) con el encabezado café, rayas crema suaves y una sombra ligera. Se usa igual que las otras dos:
-Advanced → CSS Classes, o `<table class="table-in-cream">`. Resumen — `island-table`: la normal;
+Advanced → CSS Classes, o `<table class="table-in-cream">`. Dentro del marco de tabla de Feature Sections (la tarjeta blanca / caja redondeada que el widget ya
+dibuja) las clases **no agregan un segundo borde, margen ni sombra**. Resumen — `island-table`: la normal;
 `table-in-brown`: el mismo diseño para secciones cafés; `table-in-cream`: tabla blanca para secciones crema.
 
 ### Enlace del autor (el nombre enlaza a su ficha)

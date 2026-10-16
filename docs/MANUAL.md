@@ -397,7 +397,8 @@ The “Read more” text fade inside each card is separate and stays.
 
 For a **cream page or section** use **`table-in-cream`**: a **white table** (more contrast against the cream)
 with the brown header, soft cream stripes and a light shadow. Same use as the other two: Advanced → CSS
-Classes, or `<table class="table-in-cream">`. Summary — `island-table`: default; `table-in-brown`: same look
+Classes, or `<table class="table-in-cream">`. Inside a Feature Sections table frame (the white card / rounded box the widget already draws)
+the classes add **no second outline, margin or shadow**. Summary — `island-table`: default; `table-in-brown`: same look
 for brown sections; `table-in-cream`: white table for cream sections.
 
 ### Byline link (the author's name links to their profile)
