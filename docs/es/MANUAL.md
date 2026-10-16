@@ -330,8 +330,8 @@ nada que mantener a mano: una página aparece en cuanto se publica con el byline
 
 Las tarjetas salen en un **carrusel**: tres a la vez en escritorio, dos en tablet,
 una en móvil. Si hay más páginas de las que caben, aparecen flechas fuera de las
-tarjetas, centradas en el widget (y se desliza con el dedo en el celular). Cada tarjeta muestra además una fecha pequeña abajo — “Updated 12 oct 2026” por defecto, o la fecha
-de publicación (interruptor **Show date on cards** / **Date**); usa el formato de fecha del sitio.
+tarjetas, centradas en el widget (y se desliza con el dedo en el celular). Las tarjetas pueden mostrar una fecha pequeña abajo (interruptor **Show date on cards**, **apagado** por defecto) — “Updated 12 oct 2026”, o la fecha
+de publicación (**Date**); usa el formato de fecha del sitio.
 El **título** de la tarjeta es el `hero_title` ACF de la página (si está vacío,
 el título de la página). El **texto** es la Respuesta Rápida (`geo_answer`) sin
 etiquetas, cortada a 3 líneas con “…”; solo si está vacía usa: Extracto →

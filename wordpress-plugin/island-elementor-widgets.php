@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.97
+ * Version:     0.4.98
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6080,7 +6080,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'options' => ['date_desc' => 'Newest first', 'title_asc' => 'Title A–Z']]);
             $this->add_control('limit', ['label' => 'Max pages (0 = all)', 'type' => \Elementor\Controls_Manager::NUMBER,
                 'min' => 0, 'max' => 100, 'default' => 12]);
-            $this->add_control('show_date', ['label' => 'Show date on cards', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'separator' => 'before']);
+            $this->add_control('show_date', ['label' => 'Show date on cards', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'separator' => 'before']);
             $this->add_control('date_type', ['label' => 'Date', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'modified',
                 'options' => ['modified' => 'Last updated', 'published' => 'Published'], 'condition' => ['show_date' => 'yes']]);
             $this->end_controls_section();
@@ -6386,7 +6386,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             if (($s['show_heading'] ?? 'yes') === 'yes' && $heading !== '') {
                 echo '<h2 class="iep-h">' . esc_html(str_replace('{name}', $display, $heading)) . '</h2>';
             }
-            $show_date = ($s['show_date'] ?? 'yes') === 'yes';
+            $show_date = ($s['show_date'] ?? '') === 'yes';
             $date_type = ($s['date_type'] ?? 'modified') === 'published' ? 'published' : 'modified';
             echo '<button type="button" class="iep-nav iep-prev" aria-label="Previous">&lsaquo;</button><div class="iep-track">';
             foreach ($ids as $id) {
