@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.91
+ * Version:     0.4.92
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -6228,7 +6228,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .iep-wrap .iep-h{margin:0 0 28px;text-align:center;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:30px;line-height:1.25;color:#64402c}
               .iep-wrap .iep-car{position:relative}
               .iep-wrap .iep-car.iep-scroll{padding-left:64px;padding-right:64px}
-              .iep-wrap .iep-track{display:flex;gap:28px;align-items:stretch;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:4px 2px 14px;margin:0 -2px}
+              .iep-wrap .iep-track{display:flex;gap:28px;align-items:stretch;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:8px 10px 18px;margin:0 -10px;scroll-padding-left:10px;scroll-padding-right:10px}
               .iep-wrap .iep-track::-webkit-scrollbar{display:none}
               .iep-wrap .iep-track>.iep-card{flex:0 0 calc((100% - 56px)/3);scroll-snap-align:start;min-width:0}
               .iep-wrap .iep-nav{display:none;position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;margin:0;padding:0;border:1px solid #d9c3ab;border-radius:50%;background:#fff;color:#64402c;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 6px 16px rgba(60,40,25,.18);z-index:2;align-items:center;justify-content:center}
