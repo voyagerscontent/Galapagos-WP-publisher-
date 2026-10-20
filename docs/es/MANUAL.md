@@ -447,6 +447,13 @@ Requiere Elementor Pro (etiquetas dinámicas). Una página con el campo `author`
 así que usa las etiquetas solo en una plantilla de páginas que tengan ese campo. **Island Author Box** (arriba)
 sigue disponible como alternativa.
 
+### Fuentes dentro del pie “Explore More”
+
+En **Island Related Links** (Content → Links) enciende **Also show the sources list (ACF “sources”)**: la misma
+lista colapsable “Sources & Citations (n)” aparece dentro del pie, con sus colores cafés, **después** o **antes** de
+las columnas de enlaces (**Sources position**), con su propio título y **Start open**. Un solo widget = todo el pie.
+Las etiquetas de las fuentes se limpian igual que en Island Sources & Links.
+
 ### Fuentes (Island Sources & Links)
 
 Imprime la lista ACF **`sources`** (etiqueta + URL) como una lista ordenada: cada fuente es **su etiqueta, enlazada a

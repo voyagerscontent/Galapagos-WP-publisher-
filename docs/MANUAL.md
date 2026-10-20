@@ -437,6 +437,13 @@ icon of the field → group **Island Author**):
 Needs Elementor Pro (dynamic tags). A page whose `author` field is empty shows an empty box, so use the tags only
 in a template for pages that have that field. **Island Author Box** (above) remains available as an alternative.
 
+### Sources inside the “Explore More” footer
+
+In **Island Related Links** (Content → Links) turn on **Also show the sources list (ACF “sources”)**: the same
+collapsible “Sources & Citations (n)” list appears inside the footer, in its brown colours, **after** or **before**
+the link columns (**Sources position**), with its own heading and **Start open**. One widget = the whole footer.
+Source labels are cleaned the same way as in Island Sources & Links.
+
 ### Sources (Island Sources & Links)
 
 Prints the ACF **`sources`** list (label + URL) as one tidy list: each source is **its label, linked to its URL** (a
