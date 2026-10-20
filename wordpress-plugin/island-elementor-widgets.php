@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.115
+ * Version:     0.4.116
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3943,100 +3943,44 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         protected function register_controls()
         {
-            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
-            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
-            $this->add_control('sources_title', ['label' => 'Sources heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Sources & Citations']);
-            $this->add_control('related_title', ['label' => 'Related heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Explore More']);
-            $this->add_control('show_related', ['label' => 'Show related links', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
-            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'mobile_default' => '1',
+            $C = '\Elementor\Controls_Manager';
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => $C::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => $C::NUMBER]);
+            $this->add_control('sources_title', ['label' => 'Sources heading', 'type' => $C::TEXT, 'default' => 'Sources & Citations']);
+            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => $C::SELECT, 'default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2', '3' => '3'],
-                'selectors' => ['{{WRAPPER}} .isrc-list,{{WRAPPER}} .isrc-groups' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
-            $this->add_control('gh_color', ['label' => 'Group heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
-                'selectors' => ['{{WRAPPER}} .isrc-gh' => 'color:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .isrc-list' => 'grid-template-columns:repeat({{VALUE}},minmax(0,1fr))']]);
             $this->end_controls_section();
 
-            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
-                'selectors' => ['{{WRAPPER}} .isrc-h' => 'color:{{VALUE}}']]);
-            $this->add_control('link_color', ['label' => 'Link color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a5a8c',
-                'selectors' => ['{{WRAPPER}} .isrc-list a' => 'color:{{VALUE}}']]);
-            $this->add_control('text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a4636',
-                'selectors' => ['{{WRAPPER}} .isrc-list li' => 'color:{{VALUE}}']]);
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => $C::TAB_STYLE]);
+            $this->add_control('h_color', ['label' => 'Heading color', 'type' => $C::COLOR, 'default' => '#64402C', 'selectors' => ['{{WRAPPER}} .isrc-h' => 'color:{{VALUE}}']]);
+            $this->add_control('link_color', ['label' => 'Link color', 'type' => $C::COLOR, 'default' => '#64402C', 'selectors' => ['{{WRAPPER}} .isrc-list a' => 'color:{{VALUE}}']]);
+            $this->add_control('text_color', ['label' => 'Text color (rows without a link)', 'type' => $C::COLOR, 'default' => '#5a4636', 'selectors' => ['{{WRAPPER}} .isrc-list li' => 'color:{{VALUE}}']]);
             $this->end_controls_section();
         }
-        private function links($rows, $heading)
+
+        /**
+         * One source row → [label, url]. Sources imported from a document can arrive with junk glued to the label
+         * ("…Moreno" + "Image: foo.jpg (400×300px…)Alt: …" + "[San Cristóbal](https://…)"): keep only the readable label,
+         * and take the URL from the row or from a Markdown link inside it.
+         */
+        private function clean_row($r)
         {
-            if (!$rows) {
-                return;
+            $label = trim((string) ($r['label'] ?? ''));
+            $url = trim((string) ($r['url'] ?? ''));
+            if ($url === '' && preg_match('/\[[^\]]*\]\(\s*(https?:\/\/[^)\s]+)\s*\)/i', $label, $m)) {
+                $url = $m[1];
             }
-            echo '<div class="isrc-block">';
-            if ($heading) {
-                echo '<h3 class="isrc-h">' . esc_html($heading) . '</h3>';
+            $label = preg_replace('/\[([^\]]*)\]\(\s*https?:\/\/[^)]*\)/i', '', $label);   // drop Markdown links
+            $label = preg_split('/\s*(?:Image|Alt)\s*:/', $label, 2)[0];                    // drop "Image: …Alt: …" tails
+            $label = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags($label)));
+            $label = trim($label, " \t\n\r\0\x0B[]()");                                    // dangling brackets
+            if ($label === '' && $url !== '') {
+                $label = preg_replace('#^https?://(www\.)?#i', '', $url);
             }
-            echo '<ul class="isrc-list">';
-            foreach ($rows as $r) {
-                $label = $r['label'] ?? '';
-                $url = $r['url'] ?? '';
-                if (!$label && !$url) {
-                    continue;
-                }
-                if ($url) {
-                    echo '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label ?: $url) . '</a></li>';
-                } else {
-                    echo '<li>' . esc_html($label) . '</li>';
-                }
-            }
-            echo '</ul></div>';
+            return [$label, $url];
         }
-        private function has_groups($rows)
-        {
-            foreach ((array) $rows as $r) {
-                if (trim((string) ($r['group'] ?? '')) !== '') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private function grouped_links($rows, $heading)
-        {
-            // Bucket the links by their "group" heading, preserving first-seen order.
-            $groups = [];
-            $order = [];
-            foreach ($rows as $r) {
-                $g = trim((string) ($r['group'] ?? ''));
-                if (!isset($groups[$g])) {
-                    $groups[$g] = [];
-                    $order[] = $g;
-                }
-                $groups[$g][] = $r;
-            }
-            echo '<div class="isrc-block">';
-            if ($heading) {
-                echo '<h3 class="isrc-h">' . esc_html($heading) . '</h3>';
-            }
-            echo '<div class="isrc-groups">';
-            foreach ($order as $g) {
-                echo '<div class="isrc-group">';
-                if ($g !== '') {
-                    echo '<h4 class="isrc-gh">' . esc_html($g) . '</h4>';
-                }
-                echo '<ul>';
-                foreach ($groups[$g] as $r) {
-                    $label = $r['label'] ?? '';
-                    $url = $r['url'] ?? '';
-                    if (!$label && !$url) {
-                        continue;
-                    }
-                    if ($url) {
-                        echo '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label ?: $url) . '</a></li>';
-                    } else {
-                        echo '<li>' . esc_html($label) . '</li>';
-                    }
-                }
-                echo '</ul></div>';
-            }
-            echo '</div></div>';
-        }
+
         protected function render()
         {
             if (!function_exists('get_field')) {
@@ -4044,32 +3988,32 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             $s = $this->get_settings_for_display();
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
-            $sources = get_field('sources', $pid) ?: [];
-            $related = ($s['show_related'] === 'yes') ? (get_field('related_links', $pid) ?: []) : [];
-            if (!$sources && !$related) {
+            $rows = get_field('sources', $pid) ?: [];
+            $items = '';
+            foreach ((array) $rows as $r) {
+                list($label, $url) = $this->clean_row(is_array($r) ? $r : []);
+                if ($label === '') {
+                    continue;
+                }
+                $items .= $url !== ''
+                    ? '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label) . '</a></li>'
+                    : '<li>' . esc_html($label) . '</li>';
+            }
+            if ($items === '') {
                 return;
             }
-            echo '<style>
-              {{WRAPPER}} .isrc-block{margin-bottom:22px}
-              {{WRAPPER}} .isrc-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;color:#64402C}
-              {{WRAPPER}} .isrc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:8px 26px}
-              {{WRAPPER}} .isrc-list li{font-size:14px;line-height:1.5;color:#5a4636;padding-left:16px;position:relative}
-              {{WRAPPER}} .isrc-list li::before{content:"\2192";position:absolute;left:0;color:#9c7b4e}
-              {{WRAPPER}} .isrc-list a{color:#3a5a8c;text-decoration:none}{{WRAPPER}} .isrc-list a:hover{text-decoration:underline}
-              {{WRAPPER}} .isrc-groups{display:grid;grid-template-columns:repeat(2,1fr);gap:26px 40px}
-              {{WRAPPER}} .isrc-gh{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;color:#64402C}
-              {{WRAPPER}} .isrc-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-              {{WRAPPER}} .isrc-group li{font-size:14px;line-height:1.5;color:#5a4636;padding-left:16px;position:relative}
-              {{WRAPPER}} .isrc-group li::before{content:"\2192";position:absolute;left:0;color:#9c7b4e}
-              {{WRAPPER}} .isrc-group a{color:#3a5a8c;text-decoration:none}{{WRAPPER}} .isrc-group a:hover{text-decoration:underline}
-              @media(max-width:680px){{{WRAPPER}} .isrc-list,{{WRAPPER}} .isrc-groups{grid-template-columns:1fr!important}}
-            </style>';
-            $this->links($sources, $s['sources_title']);
-            if ($this->has_groups($related)) {
-                $this->grouped_links($related, $s['related_title']);
-            } else {
-                $this->links($related, $s['related_title']);
-            }
+            echo '<style id="isrc-css">'
+                . '.isrc-wrap .isrc-h{margin:0 0 18px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:26px;line-height:1.25;color:#64402C}'
+                . '.isrc-wrap .isrc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 40px}'
+                . '.isrc-wrap .isrc-list li{position:relative;margin:0;padding-left:22px;font-size:16px;line-height:1.5;color:#5a4636;overflow-wrap:anywhere}'
+                . '.isrc-wrap .isrc-list li::before{content:"\2192";position:absolute;left:0;top:0;color:#9c7b4e}'
+                . '.isrc-wrap .isrc-list a{color:#64402C;text-decoration:none;font-weight:600;border-bottom:1px solid rgba(100,64,44,.3);transition:border-color .15s ease,color .15s ease}'
+                . '.isrc-wrap .isrc-list a:hover{color:#3a2a1e;border-bottom-color:#64402C}'
+                . '@media(max-width:680px){.isrc-wrap .isrc-list{grid-template-columns:1fr!important}}'
+                . '</style>';
+            echo '<div class="isrc-wrap">'
+                . (trim((string) ($s['sources_title'] ?? '')) !== '' ? '<h3 class="isrc-h">' . esc_html($s['sources_title']) . '</h3>' : '')
+                . '<ul class="isrc-list">' . $items . '</ul></div>';
         }
     }
 

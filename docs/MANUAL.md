@@ -437,6 +437,14 @@ icon of the field → group **Island Author**):
 Needs Elementor Pro (dynamic tags). A page whose `author` field is empty shows an empty box, so use the tags only
 in a template for pages that have that field. **Island Author Box** (above) remains available as an alternative.
 
+### Sources (Island Sources & Links)
+
+Prints the ACF **`sources`** list (label + URL) as one tidy list: each source is **its label, linked to its URL** (a
+row with no URL is plain text). It no longer prints the “Explore More” block — use **Island Related Links** for that.
+If a label arrives from a document with junk glued on (“…Image: photo.jpg (400×300px…)Alt: …”, a Markdown link,
+a stray “[”), the widget shows only the readable label and takes the URL from the row or from the Markdown link.
+Style controls: heading, link and text colours; columns (1–3, always 1 on phones).
+
 ### Byline link (the author's name links to their profile)
 
 Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan

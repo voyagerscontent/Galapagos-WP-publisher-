@@ -447,6 +447,14 @@ Requiere Elementor Pro (etiquetas dinámicas). Una página con el campo `author`
 así que usa las etiquetas solo en una plantilla de páginas que tengan ese campo. **Island Author Box** (arriba)
 sigue disponible como alternativa.
 
+### Fuentes (Island Sources & Links)
+
+Imprime la lista ACF **`sources`** (etiqueta + URL) como una lista ordenada: cada fuente es **su etiqueta, enlazada a
+su URL** (una fila sin URL queda como texto). Ya no imprime el bloque “Explore More”: para eso usa **Island Related
+Links**. Si una etiqueta llega de un documento con basura pegada (“…Image: foto.jpg (400×300px…)Alt: …”, un enlace
+Markdown, un “[” suelto), el widget muestra solo la etiqueta legible y toma la URL de la fila o del enlace Markdown.
+Controles de estilo: colores del título, de los enlaces y del texto; columnas (1–3, siempre 1 en celular).
+
 ### Enlace del autor (el nombre enlaza a su ficha)
 
 Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By
