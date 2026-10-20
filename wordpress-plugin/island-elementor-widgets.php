@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.118
+ * Version:     0.4.119
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3980,6 +3980,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->start_controls_section('c', ['label' => 'Content', 'tab' => $C::TAB_CONTENT]);
             $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => $C::NUMBER]);
             $this->add_control('sources_title', ['label' => 'Sources heading', 'type' => $C::TEXT, 'default' => 'Sources & Citations']);
+            $this->add_control('skin', ['label' => 'Background', 'type' => $C::SELECT, 'default' => 'light',
+                'options' => ['light' => 'Light page', 'dark' => 'Brown footer (cream text)'],
+                'description' => 'Choose “Brown footer” when the list sits right before/after the “Explore More” footer.']);
             $this->add_control('collapsible', ['label' => 'Collapsible list', 'type' => $C::SWITCHER, 'default' => 'yes',
                 'description' => 'The list opens/closes under the heading (with the number of sources), so it takes little space.']);
             $this->add_control('start_open', ['label' => 'Start open', 'type' => $C::SWITCHER, 'default' => '', 'condition' => ['collapsible' => 'yes']]);
@@ -4028,16 +4031,26 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 . '.isrc-wrap[open] .isrc-ar{transform:rotate(-135deg);margin-top:4px}'
                 . '.isrc-wrap.isrc-det .isrc-list{padding:4px 0 20px}'
                 . '.isrc-wrap .isrc-sum:focus-visible{outline:2px solid #64402C;outline-offset:2px}'
+                . '.isrc-wrap.isrc-dark.isrc-det{border-color:rgba(243,234,217,.32)}'
+                . '.isrc-wrap.isrc-dark .isrc-h{color:#f7efe1}'
+                . '.isrc-wrap.isrc-dark .isrc-n{color:#d9cebc}'
+                . '.isrc-wrap.isrc-dark .isrc-ar{border-color:#f3ead9}'
+                . '.isrc-wrap.isrc-dark .isrc-list li{color:#d9cebc}'
+                . '.isrc-wrap.isrc-dark .isrc-list li::before{color:#f3ead9}'
+                . '.isrc-wrap.isrc-dark .isrc-list a{color:#f7efe1;border-bottom-color:rgba(243,234,217,.4)}'
+                . '.isrc-wrap.isrc-dark .isrc-list a:hover{color:#fff;border-bottom-color:#fff}'
+                . '.isrc-wrap.isrc-dark .isrc-sum:focus-visible{outline-color:#f3ead9}'
                 . '@media(max-width:680px){.isrc-wrap .isrc-list{grid-template-columns:1fr!important}}'
                 . '</style>';
             $title = trim((string) ($s['sources_title'] ?? ''));
             $n = substr_count($items, '<li>');
+            $dark = (($s['skin'] ?? 'light') === 'dark') ? ' isrc-dark' : '';
             if (($s['collapsible'] ?? 'yes') === 'yes') {
-                echo '<details class="isrc-wrap isrc-det"' . (($s['start_open'] ?? '') === 'yes' ? ' open' : '') . '><summary class="isrc-sum">'
+                echo '<details class="isrc-wrap isrc-det' . $dark . '"' . (($s['start_open'] ?? '') === 'yes' ? ' open' : '') . '><summary class="isrc-sum">'
                     . '<span class="isrc-h">' . esc_html($title !== '' ? $title : 'Sources') . ' <span class="isrc-n">(' . (int) $n . ')</span></span>'
                     . '<span class="isrc-ar" aria-hidden="true"></span></summary><ul class="isrc-list">' . $items . '</ul></details>';
             } else {
-                echo '<div class="isrc-wrap">' . ($title !== '' ? '<h3 class="isrc-h">' . esc_html($title) . '</h3>' : '') . '<ul class="isrc-list">' . $items . '</ul></div>';
+                echo '<div class="isrc-wrap' . $dark . '">' . ($title !== '' ? '<h3 class="isrc-h">' . esc_html($title) . '</h3>' : '') . '<ul class="isrc-list">' . $items . '</ul></div>';
             }
         }
     }
@@ -4105,12 +4118,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('nofollow', ['label' => 'rel="nofollow"', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
                 'description' => 'Internal SEO links should usually NOT be nofollow.']);
             $this->add_control('new_tab', ['label' => 'Open in new tab', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '']);
-            $this->add_control('show_sources', ['label' => 'Also show the sources list (ACF “sources”)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'separator' => 'before',
-                'description' => 'Adds a collapsible “Sources & Citations” list inside this footer, in the same colours, before or after the link columns.']);
-            $this->add_control('sources_pos', ['label' => 'Sources position', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'after',
-                'options' => ['after' => 'After the columns', 'before' => 'Before the columns'], 'condition' => ['show_sources' => 'yes']]);
-            $this->add_control('sources_title', ['label' => 'Sources heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Sources & Citations', 'condition' => ['show_sources' => 'yes']]);
-            $this->add_control('sources_open', ['label' => 'Start open', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'condition' => ['show_sources' => 'yes']]);
             $this->end_controls_section();
 
             /* ─── HEADER ─── */
@@ -4456,21 +4463,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-one .irl-ct-head{justify-content:center}
               .irl-wrap .irl-one .irl-ct-head::after{left:50%;transform:translateX(-50%)}
               .irl-wrap .irl-item{position:relative;padding-left:24px;font-size:17px;line-height:1.5}
-              .irl-wrap .irl-src{margin-top:46px;border-top:1px solid rgba(243,234,217,.32);border-bottom:1px solid rgba(243,234,217,.32)}
-              .irl-wrap .irl-src.is-before{margin:0 0 46px}
-              .irl-wrap .irl-src-sum{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;cursor:pointer;list-style:none}
-              .irl-wrap .irl-src-sum::-webkit-details-marker{display:none}
-              .irl-wrap .irl-src-h{font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
-              .irl-wrap .irl-src-n{font-family:inherit;font-style:normal;font-size:15px;color:#d9cebc}
-              .irl-wrap .irl-src-ar{flex:0 0 auto;width:10px;height:10px;border-right:2px solid #f3ead9;border-bottom:2px solid #f3ead9;transform:rotate(45deg);margin:-4px 4px 0 0;transition:transform .2s ease}
-              .irl-wrap .irl-src[open] .irl-src-ar{transform:rotate(-135deg);margin-top:4px}
-              .irl-wrap .irl-src-sum:focus-visible{outline:2px solid #f3ead9;outline-offset:2px}
-              .irl-wrap .irl-src-list{list-style:none;margin:0;padding:4px 0 22px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 48px}
-              .irl-wrap .irl-src-list li{position:relative;margin:0;padding-left:22px;font-size:16px;line-height:1.5;color:#d9cebc;overflow-wrap:anywhere}
-              .irl-wrap .irl-src-list li::before{content:"\203A";position:absolute;left:2px;top:0;color:#f3ead9;font-size:20px;line-height:24px}
-              .irl-wrap .irl-src-list a{color:#f7efe1;text-decoration:none;border-bottom:1px solid rgba(243,234,217,.4);transition:border-color .15s ease}
-              .irl-wrap .irl-src-list a:hover{border-bottom-color:#fff;color:#fff}
-              @media(max-width:680px){.irl-wrap .irl-src-list{grid-template-columns:1fr}}
               .irl-wrap .irl-item::before{content:"\203A";position:absolute;left:2px;top:0;line-height:26px;color:#f3ead9;font-size:22px}
               .irl-wrap .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
               .irl-wrap .irl-item a:hover{color:#fff;text-decoration:underline}
@@ -4498,22 +4490,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             </style>';
         }
 
-        /** Collapsible "Sources & Citations" list in the footer's own colours. */
-        private function sources_block($rows, $s, $before)
-        {
-            $items = '';
-            foreach ($rows as $row) {
-                list($label, $url) = $row;
-                $items .= $url !== ''
-                    ? '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label) . '</a></li>'
-                    : '<li>' . esc_html($label) . '</li>';
-            }
-            $title = trim((string) ($s['sources_title'] ?? '')) ?: 'Sources & Citations';
-            echo '<details class="irl-src' . ($before ? ' is-before' : '') . '"' . (($s['sources_open'] ?? '') === 'yes' ? ' open' : '') . '><summary class="irl-src-sum">'
-                . '<span class="irl-src-h">' . esc_html($title) . ' <span class="irl-src-n">(' . count($rows) . ')</span></span><span class="irl-src-ar" aria-hidden="true"></span></summary>'
-                . '<ul class="irl-src-list">' . $items . '</ul></details>';
-        }
-
         protected function render()
         {
             $s = $this->get_settings_for_display();
@@ -4526,8 +4502,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             $related = $this->rows($s, $pid);
             $has_contact = (($s['show_contact'] ?? '') === 'yes');
-            $src = (($s['show_sources'] ?? '') === 'yes') ? island_source_rows($pid) : [];
-            if (!$related && !$has_contact && !$src) {
+            if (!$related && !$has_contact) {
                 return;
             }
 
@@ -4559,21 +4534,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div>';
             }
 
-            $before = (($s['sources_pos'] ?? 'after') === 'before');
-            if ($src && $before) {
-                $this->sources_block($src, $s, true);
+            echo '<div class="irl-cols' . ((int) $cols === 1 ? ' irl-one' : '') . '" style="--irl-cols:' . (int) $cols . '">';
+            if ($related) {
+                $this->columns($related, $s);
             }
-            if ($related || $has_contact) {
-                echo '<div class="irl-cols' . ((int) $cols === 1 ? ' irl-one' : '') . '" style="--irl-cols:' . (int) $cols . '">';
-                if ($related) {
-                    $this->columns($related, $s);
-                }
-                $this->contact_card($s);
-                echo '</div>';
-            }
-            if ($src && !$before) {
-                $this->sources_block($src, $s, false);
-            }
+            $this->contact_card($s);
+            echo '</div>';
 
             echo '</div></div>';
         }

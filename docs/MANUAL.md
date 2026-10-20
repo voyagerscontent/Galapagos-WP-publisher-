@@ -437,20 +437,14 @@ icon of the field → group **Island Author**):
 Needs Elementor Pro (dynamic tags). A page whose `author` field is empty shows an empty box, so use the tags only
 in a template for pages that have that field. **Island Author Box** (above) remains available as an alternative.
 
-### Sources inside the “Explore More” footer
-
-In **Island Related Links** (Content → Links) turn on **Also show the sources list (ACF “sources”)**: the same
-collapsible “Sources & Citations (n)” list appears inside the footer, in its brown colours, **after** or **before**
-the link columns (**Sources position**), with its own heading and **Start open**. One widget = the whole footer.
-Source labels are cleaned the same way as in Island Sources & Links.
-
 ### Sources (Island Sources & Links)
 
 Prints the ACF **`sources`** list (label + URL) as one tidy list: each source is **its label, linked to its URL** (a
 row with no URL is plain text). It no longer prints the “Explore More” block — use **Island Related Links** for that.
 If a label arrives from a document with junk glued on (“…Image: photo.jpg (400×300px…)Alt: …”, a Markdown link,
 a stray “[”), the widget shows only the readable label and takes the URL from the row or from the Markdown link.
-The list is **collapsible** by default (switch **Collapsible list**): a thin bar with the heading, the number of
+Set **Background** to **Brown footer** when the list sits right before or after the “Explore More” footer: same cream
+text and lines on the brown. The widget prints nothing when the page has no sources. The list is **collapsible** by default (switch **Collapsible list**): a thin bar with the heading, the number of
 sources and an arrow; click to open. **Start open** keeps it open. Style controls: heading, link and text colours;
 columns (1–3, always 1 on phones).
 

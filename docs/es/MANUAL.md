@@ -447,20 +447,14 @@ Requiere Elementor Pro (etiquetas dinámicas). Una página con el campo `author`
 así que usa las etiquetas solo en una plantilla de páginas que tengan ese campo. **Island Author Box** (arriba)
 sigue disponible como alternativa.
 
-### Fuentes dentro del pie “Explore More”
-
-En **Island Related Links** (Content → Links) enciende **Also show the sources list (ACF “sources”)**: la misma
-lista colapsable “Sources & Citations (n)” aparece dentro del pie, con sus colores cafés, **después** o **antes** de
-las columnas de enlaces (**Sources position**), con su propio título y **Start open**. Un solo widget = todo el pie.
-Las etiquetas de las fuentes se limpian igual que en Island Sources & Links.
-
 ### Fuentes (Island Sources & Links)
 
 Imprime la lista ACF **`sources`** (etiqueta + URL) como una lista ordenada: cada fuente es **su etiqueta, enlazada a
 su URL** (una fila sin URL queda como texto). Ya no imprime el bloque “Explore More”: para eso usa **Island Related
 Links**. Si una etiqueta llega de un documento con basura pegada (“…Image: foto.jpg (400×300px…)Alt: …”, un enlace
 Markdown, un “[” suelto), el widget muestra solo la etiqueta legible y toma la URL de la fila o del enlace Markdown.
-La lista es **colapsable** por defecto (interruptor **Collapsible list**): una barra fina con el título, el número
+Pon **Background** en **Brown footer** cuando la lista queda justo antes o después del pie “Explore More”: mismo texto
+crema y mismas líneas sobre el café. El widget no imprime nada si la página no tiene fuentes. La lista es **colapsable** por defecto (interruptor **Collapsible list**): una barra fina con el título, el número
 de fuentes y una flecha; clic para abrir. **Start open** la deja abierta. Controles de estilo: colores del título,
 de los enlaces y del texto; columnas (1–3, siempre 1 en celular).
 
