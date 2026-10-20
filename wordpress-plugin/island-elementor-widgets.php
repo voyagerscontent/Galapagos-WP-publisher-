@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.120
+ * Version:     0.4.121
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -3994,7 +3994,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->end_controls_section();
 
             $this->start_controls_section('s', ['label' => 'Style', 'tab' => $C::TAB_STYLE]);
-            $this->add_control('h_color', ['label' => 'Heading color', 'type' => $C::COLOR, 'default' => '#64402C', 'selectors' => ['{{WRAPPER}} .isrc-h' => 'color:{{VALUE}}']]);
+            $this->add_control('h_color', ['label' => 'Heading color', 'type' => $C::COLOR, 'default' => '#64402C', 'selectors' => ['{{WRAPPER}} .isrc-h,{{WRAPPER}} .isrc-wrap' => 'color:{{VALUE}}']]);
             $this->add_control('link_color', ['label' => 'Link color', 'type' => $C::COLOR, 'default' => '#64402C', 'selectors' => ['{{WRAPPER}} .isrc-list a' => 'color:{{VALUE}}']]);
             $this->add_control('text_color', ['label' => 'Text color (rows without a link)', 'type' => $C::COLOR, 'default' => '#5a4636', 'selectors' => ['{{WRAPPER}} .isrc-list li' => 'color:{{VALUE}}']]);
             $this->end_controls_section();
@@ -4018,23 +4018,25 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 return;
             }
             echo '<style id="isrc-css">'
-                . '.isrc-wrap .isrc-h{margin:0 0 18px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:26px;line-height:1.25;color:#64402C}'
+                . '.isrc-wrap .isrc-h{margin:0 0 18px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:26px;line-height:1.25;color:inherit}'
                 . '.isrc-wrap .isrc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 40px}'
                 . '.isrc-wrap .isrc-list li{position:relative;margin:0;padding-left:22px;font-size:16px;line-height:1.5;color:#5a4636;overflow-wrap:anywhere}'
                 . '.isrc-wrap .isrc-list li::before{content:"\2192";position:absolute;left:0;top:0;color:#9c7b4e}'
                 . '.isrc-wrap .isrc-list a{color:#64402C;text-decoration:none!important;font-weight:600;border:0!important;transition:color .15s ease}'
                 . '.isrc-wrap .isrc-list a:hover{color:#3a2a1e;text-decoration:underline!important;text-decoration-thickness:1.5px!important;text-underline-offset:4px}'
-                . '.isrc-wrap.isrc-det{border-top:1px solid rgba(100,64,44,.25);border-bottom:1px solid rgba(100,64,44,.25)}'
+                . '.isrc-wrap{color:#64402C}'
+                . '.isrc-wrap.isrc-det{border-top:1px solid rgba(100,64,44,.25);border-bottom:1px solid rgba(100,64,44,.25);border-color:color-mix(in srgb,currentColor 30%,transparent)}'
                 . '.isrc-wrap .isrc-sum{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;cursor:pointer;list-style:none}'
                 . '.isrc-wrap .isrc-sum::-webkit-details-marker{display:none}'
                 . '.isrc-wrap .isrc-sum::marker{content:""}'
                 . '.isrc-wrap .isrc-sum::before,.isrc-wrap .isrc-sum::after{content:none!important;display:none!important}'
                 . '.isrc-wrap .isrc-sum .isrc-h{margin:0;font-size:22px}'
                 . '.isrc-wrap .isrc-n{font-family:inherit;font-style:normal;font-size:15px;color:#9c7b4e}'
-                . '.isrc-wrap .isrc-ar{flex:0 0 auto;width:10px;height:10px;border-right:2px solid #64402C;border-bottom:2px solid #64402C;transform:rotate(45deg);margin:-4px 4px 0 0;transition:transform .2s ease}'
+                . '.isrc-wrap .isrc-ar{flex:0 0 auto;width:10px;height:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:-4px 4px 0 0;transition:transform .2s ease}'
                 . '.isrc-wrap[open] .isrc-ar{transform:rotate(-135deg);margin-top:4px}'
                 . '.isrc-wrap.isrc-det .isrc-list{padding:4px 0 20px}'
                 . '.isrc-wrap .isrc-sum:focus-visible{outline:2px solid #64402C;outline-offset:2px}'
+                . '.isrc-wrap.isrc-dark{color:#f7efe1}'
                 . '.isrc-wrap.isrc-dark.isrc-det{border-color:rgba(243,234,217,.32)}'
                 . '.isrc-wrap.isrc-dark .isrc-h{color:#f7efe1}'
                 . '.isrc-wrap.isrc-dark .isrc-n{color:#d9cebc}'
