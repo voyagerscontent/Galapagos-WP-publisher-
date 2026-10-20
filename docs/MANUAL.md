@@ -443,7 +443,8 @@ Prints the ACF **`sources`** list (label + URL) as one tidy list: each source is
 row with no URL is plain text). It no longer prints the “Explore More” block — use **Island Related Links** for that.
 If a label arrives from a document with junk glued on (“…Image: photo.jpg (400×300px…)Alt: …”, a Markdown link,
 a stray “[”), the widget shows only the readable label and takes the URL from the row or from the Markdown link.
-Set **Background** to **Brown footer** when the list sits right before or after the “Explore More” footer: same cream
+The “(n)” next to the heading counts the sources automatically (switch **Show the number of sources** to hide it).
+Links get an underline only on hover. Set **Background** to **Brown footer** when the list sits right before or after the “Explore More” footer: same cream
 text and lines on the brown. The widget prints nothing when the page has no sources. The list is **collapsible** by default (switch **Collapsible list**): a thin bar with the heading, the number of
 sources and an arrow; click to open. **Start open** keeps it open. Style controls: heading, link and text colours;
 columns (1–3, always 1 on phones).

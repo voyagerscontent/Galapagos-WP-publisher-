@@ -453,7 +453,8 @@ Imprime la lista ACF **`sources`** (etiqueta + URL) como una lista ordenada: cad
 su URL** (una fila sin URL queda como texto). Ya no imprime el bloque “Explore More”: para eso usa **Island Related
 Links**. Si una etiqueta llega de un documento con basura pegada (“…Image: foto.jpg (400×300px…)Alt: …”, un enlace
 Markdown, un “[” suelto), el widget muestra solo la etiqueta legible y toma la URL de la fila o del enlace Markdown.
-Pon **Background** en **Brown footer** cuando la lista queda justo antes o después del pie “Explore More”: mismo texto
+El “(n)” junto al título cuenta las fuentes automáticamente (el interruptor **Show the number of sources** lo oculta).
+Los enlaces se subrayan solo al pasar el mouse. Pon **Background** en **Brown footer** cuando la lista queda justo antes o después del pie “Explore More”: mismo texto
 crema y mismas líneas sobre el café. El widget no imprime nada si la página no tiene fuentes. La lista es **colapsable** por defecto (interruptor **Collapsible list**): una barra fina con el título, el número
 de fuentes y una flecha; clic para abrir. **Start open** la deja abierta. Controles de estilo: colores del título,
 de los enlaces y del texto; columnas (1–3, siempre 1 en celular).
