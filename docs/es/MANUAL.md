@@ -351,6 +351,15 @@ de “altura al abrir” ya no se usa (el texto siempre se abre completo). Los e
 de la sección (crema en una banda café) con subrayado, así nunca desaparecen sobre
 fondo oscuro.
 
+### Tablas cuyo encabezado es la primera fila (sin `<thead>`)
+
+Las tablas pegadas desde Word/Google Docs a menudo **no tienen `<thead>`**: el
+encabezado es solo el primer `<tr>` con celdas `<th>`. Dentro de Feature Sections /
+Bands esa fila ahora se ve como encabezado (fondo café, texto crema, versalitas)
+igual que un `<thead>` — antes su texto crema caía sobre blanco y no se veía. Usa
+los mismos controles de color “Header background / Header text”. Los `<div>`
+extra alrededor de la tabla no importan.
+
 ### Tablas dentro de las secciones (se ajustan, sin scroll lateral)
 
 Las tablas en filas/bandas de secciones ahora **ajustan el texto y siempre caben

@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.121
+ * Version:     0.4.122
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -174,6 +174,7 @@ if (!function_exists('island_ew_clip_script')) {
                 . '.ifs-tbl thead th:only-child{text-transform:none!important;letter-spacing:0!important;font-weight:400!important;font-size:15px!important;line-height:1.7}'
                 . '.ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child{background:#64402C;color:#F6EFE7;border-top:0}'
                 . '.ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child::first-line{color:inherit;font-weight:700;text-transform:none;letter-spacing:0;font-size:15px}'
+                . '.ifs-tbl table:not(:has(thead)) tr:first-child>th{background:#64402C;color:#F6EFE7;text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:13px 16px;vertical-align:middle}'
                 . '.ifs-tbl thead th:only-child::first-line{font-weight:700;text-transform:none;letter-spacing:0;font-size:15px}'
                 . '.ifs .ifs-body a,.ifs .ifs-after a,.ifb .ifb-body a,.wts .wts-desc a,.wgf .wgf-body a,.iw2 .iw2-desc a{color:inherit;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}'
                 . '.ifs .ifs-body a:hover,.ifs .ifs-after a:hover,.ifb .ifb-body a:hover,.wts .wts-desc a:hover,.wgf .wgf-body a:hover,.iw2 .iw2-desc a:hover{color:inherit;opacity:.8;text-decoration-thickness:2px}'
@@ -2451,9 +2452,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('tbl_wrap', ['label' => 'Wrap table text (no horizontal scroll)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'On: long cell text wraps and the table always fits the section. Off: the table keeps a minimum width and scrolls sideways.']);
             $this->add_control('tbl_head_bg', ['label' => 'Header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
-                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child' => 'background:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tr:first-child>th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child' => 'background:{{VALUE}}']]);
             $this->add_control('tbl_head_tx', ['label' => 'Header text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F6EFE7',
-                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child' => 'color:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tr:first-child>th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child' => 'color:{{VALUE}}']]);
             $this->add_responsive_control('tbl_head_fs', ['label' => 'Header text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 9, 'max' => 18]],
                 'default' => ['size' => 10.5, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'font-size:{{SIZE}}{{UNIT}}']]);
             $this->add_control('tbl_tx', ['label' => 'Cell text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',

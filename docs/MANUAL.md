@@ -345,6 +345,15 @@ more button)” and the “open height” setting is no longer used (text always
 in full). Links inside that text take the section's text colour (cream on a brown
 band) with an underline, so they never disappear on a dark background.
 
+### Tables whose header is the first row (no `<thead>`)
+
+Tables pasted from Word/Google Docs often have **no `<thead>`**: the header is just
+the first `<tr>` made of `<th>` cells. Inside Feature Sections / Bands that row is
+now styled as the header (brown background, cream text, small caps) exactly like a
+`<thead>` — before, its cream text landed on white and looked invisible. It follows
+the same “Header background / Header text” colour controls. Extra `<div>` wrappers
+around the table do not matter.
+
 ### Tables inside feature sections (wrap, no sideways scroll)
 
 Tables in feature rows/bands now **wrap their text and always fit the section** —
