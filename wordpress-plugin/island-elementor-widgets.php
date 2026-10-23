@@ -7,7 +7,7 @@
  *              typography, buttons, images, immersive background bands) so the
  *              layout is editable in Elementor without a paid add-on. The engine
  *              writes the ACF fields; these widgets render them.
- * Version:     0.4.68
+ * Version:     0.4.122
  * Author:      Galápagos Islands Travel
  *
  * Install like any plugin (Plugins → Add New → Upload → Activate). Requires
@@ -157,23 +157,74 @@ if (!function_exists('island_ew_itinerary_map')) {
 if (!function_exists('island_ew_clip_script')) {
     function island_ew_clip_script()
     {
-        echo '<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;'
-            . 'var mq=window.matchMedia("(max-width:1366px)");'
-            . 'var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body",0],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body",0],[".iw2 .rev",".iw2-desc.clip",0],[".wts.hx .wts-item",".wts-desc",0],[".wgf.hx .wgf-feat",".wgf-body",0]];'
-            . 'function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b,g[2]);});});}'
-            . 'function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";a.setAttribute("aria-expanded","false");a.textContent="Read More";'
-            . 'b.parentNode.insertBefore(a,b.nextSibling);a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();var o=it.classList.toggle("is-open");a.setAttribute("aria-expanded",o?"true":"false");a.textContent=o?"Read Less":"Read More";'
-            . 'if(!o){var y=it.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop||0)-80;window.scrollTo({top:y<0?0:y,behavior:"smooth"});}});it.__more=a;return a;}'
-            . 'function refresh(){each(function(it,b,always){var a=it.__more;var on=always||mq.matches;'
-            . 'if(!on){it.classList.remove("clip-m");if(a)a.style.display="none";return;}'
-            . 'it.classList.add("clip-m");'
-            . 'var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+2;'
-            . 'if(over){ensure(it,b).style.display="";}else{it.classList.remove("clip-m");if(a)a.style.display="none";}});}'
-            . 'function run(){refresh();setTimeout(refresh,400);setTimeout(refresh,1200);}'
-            . 'if(document.readyState!=="loading")run();else document.addEventListener("DOMContentLoaded",run);'
-            . 'window.addEventListener("load",run);'
-            . 'var t;window.addEventListener("resize",function(){clearTimeout(t);t=setTimeout(refresh,200);});'
-            . '})();</script>';
+        static $links = false;
+        if (!$links) {
+            $links = true;
+            // Links in these sections take the section's TEXT colour (cream on a brown
+            // band, dark on a light one) — the theme's brown link colour vanished on
+            // brown backgrounds. Underline + weight keep them recognisable as links.
+            echo '<style id="isl-body-links">'
+                // Tables: wrap instead of scrolling sideways (switch "Wrap table text"), and
+                // one-column "stacked" tables read as title line + normal paragraph.
+                . '.tbl-wrap .ifs-tbl{overflow:hidden!important}'
+                . '.tbl-wrap .ifs-tbl table{min-width:0!important;width:100%!important}'
+                . '.tbl-wrap .ifs-tbl th,.tbl-wrap .ifs-tbl td{white-space:normal!important;overflow-wrap:break-word;word-break:normal}'
+                . '.ifs-tbl td:only-child{font-weight:400!important;color:#3A2A1E;font-size:15px;line-height:1.7}'
+                . '.ifs-tbl td:only-child::first-line{font-weight:700;color:#64402C}'
+                . '.ifs-tbl thead th:only-child{text-transform:none!important;letter-spacing:0!important;font-weight:400!important;font-size:15px!important;line-height:1.7}'
+                . '.ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child{background:#64402C;color:#F6EFE7;border-top:0}'
+                . '.ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child::first-line{color:inherit;font-weight:700;text-transform:none;letter-spacing:0;font-size:15px}'
+                . '.ifs-tbl table:not(:has(thead)) tr:first-child>th{background:#64402C;color:#F6EFE7;text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:13px 16px;vertical-align:middle}'
+                . '.ifs-tbl thead th:only-child::first-line{font-weight:700;text-transform:none;letter-spacing:0;font-size:15px}'
+                . '.ifs .ifs-body a,.ifs .ifs-after a,.ifb .ifb-body a,.wts .wts-desc a,.wgf .wgf-body a,.iw2 .iw2-desc a{color:inherit;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}'
+                . '.ifs .ifs-body a:hover,.ifs .ifs-after a:hover,.ifb .ifb-body a:hover,.wts .wts-desc a:hover,.wgf .wgf-body a:hover,.iw2 .iw2-desc a:hover{color:inherit;opacity:.8;text-decoration-thickness:2px}'
+                . '</style>';
+        }
+        echo <<<'JS'
+<script>(function(){if(window.__islandClipM)return;window.__islandClipM=1;
+var G=[[".ifb.hx .ifb-band",".ifb-tx > .ifb-body"],[".ifs.hx .ifs-row",".ifs-tx > .ifs-body"],[".iw2 .rev",".iw2-desc.clip"],[".wts.hx .wts-item",".wts-desc"],[".wgf.hx .wgf-feat",".wgf-body"]];
+var VARS=["--fade","--ifb-bg","--wts-fade","--wgf-card"];
+var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;
+var MS=420;
+(function(){var st=document.createElement("style");var B=":is(.ifs-body,.ifb-body,.iw2-desc,.wts-desc,.wgf-body)";
+st.textContent=".clip-m "+B+"::after{transition:opacity .35s ease}.is-closing.is-open "+B+"::after{opacity:1!important}";document.head.appendChild(st);})();
+function each(fn){G.forEach(function(g){document.querySelectorAll(g[0]).forEach(function(it){var b=it.querySelector(g[1]);if(b)fn(it,b);});});}
+function bgOf(el){for(var n=el;n&&n.nodeType===1;n=n.parentElement){var c=getComputedStyle(n).backgroundColor;if(c&&c!=="transparent"&&!/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)/.test(c))return c;}return "";}
+function label(a,open){a.setAttribute("aria-expanded",open?"true":"false");a.innerHTML=open?'<span>Read less</span><span class="ic-ar">&uarr;</span>':'<span>Read more</span><span class="ic-ar">&darr;</span>';}
+function paint(it,b,a){var c=getComputedStyle(b).color;a.style.color=c;var bg=bgOf(b);if(bg){VARS.forEach(function(v){b.style.setProperty(v,bg);});}}
+function settle(b,fn){var done=false;function end(){if(done)return;done=true;b.style.transition="";fn();}b.addEventListener("transitionend",function h(e){if(e.target!==b||e.propertyName!=="max-height")return;b.removeEventListener("transitionend",h);end();});setTimeout(end,MS+80);}
+function toggle(it,b,a){
+ if(it.__busy)return;
+ var open=it.classList.contains("is-open");
+ if(!open){
+  var from=b.offsetHeight;it.__clamp=from;
+  if(reduce){it.classList.add("is-open");label(a,true);return;}
+  it.__busy=1;b.style.maxHeight=from+"px";it.classList.add("is-open");void b.offsetHeight;
+  b.style.transition="max-height "+MS+"ms ease";b.style.maxHeight=b.scrollHeight+"px";label(a,true);
+  settle(b,function(){b.style.maxHeight="";it.__busy=0;});
+ }else{
+  var top=it.getBoundingClientRect().top;
+  if(top<110){var y=top+(window.pageYOffset||document.documentElement.scrollTop||0)-110;window.scrollTo({top:y<0?0:y,behavior:reduce?"auto":"smooth"});}
+  if(reduce){it.classList.remove("is-open");label(a,false);return;}
+  it.__busy=1;it.classList.add("is-closing");b.style.maxHeight=b.offsetHeight+"px";void b.offsetHeight;
+  b.style.transition="max-height "+MS+"ms ease";b.style.maxHeight=(it.__clamp||0)+"px";label(a,false);
+  settle(b,function(){it.classList.remove("is-open","is-closing");b.style.maxHeight="";it.__busy=0;});
+ }
+}
+function ensure(it,b){if(it.__more)return it.__more;var a=document.createElement("button");a.type="button";a.className="ic-more";label(a,false);
+ b.parentNode.insertBefore(a,b.nextSibling);
+ a.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();toggle(it,b,a);});it.__more=a;return a;}
+function refresh(){each(function(it,b){if(it.__busy)return;var a=it.__more;it.classList.add("clip-m");
+ var cs=getComputedStyle(b),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.6;
+ /* only clip when MORE than 6 lines would be hidden — a card/section a little longer than the clamp shows in full, with no Read more bar */
+ var over=it.classList.contains("is-open")||b.scrollHeight>b.clientHeight+lh*6;
+ if(over){a=ensure(it,b);a.style.display="";paint(it,b,a);}else{it.classList.remove("clip-m");if(a)a.style.display="none";}});}
+function run(){refresh();setTimeout(refresh,400);setTimeout(refresh,1200);}
+if(document.readyState!=="loading")run();else document.addEventListener("DOMContentLoaded",run);
+window.addEventListener("load",run);
+var t;window.addEventListener("resize",function(){clearTimeout(t);t=setTimeout(refresh,200);});
+})();</script>
+JS;
     }
 }
 
@@ -233,6 +284,45 @@ add_filter('theme_page_templates', function ($templates) {
     $templates['experts-page'] = 'Experts Page';
     return $templates;
 });
+
+// Back-to-top button: a round grey button with a white chevron, bottom-right,
+// shown only on LONG pages (document taller than ~3 screens) once the visitor has
+// scrolled down a bit. Front-end only (not in the Elementor editor / preview).
+// Turn it off with: add_filter('island_back_to_top', '__return_false');
+// Tweak the length threshold (in screens) with the 'island_back_to_top_screens' filter.
+add_action('wp_footer', function () {
+    if (is_admin() || is_feed() || !apply_filters('island_back_to_top', true)) {
+        return;
+    }
+    if (class_exists('\Elementor\Plugin')) {
+        $el = \Elementor\Plugin::$instance;
+        if (($el->editor && $el->editor->is_edit_mode()) || ($el->preview && $el->preview->is_preview_mode())) {
+            return;
+        }
+    }
+    $screens = (float) apply_filters('island_back_to_top_screens', 3);
+    echo '<style id="island-btt-css">'
+        . '.island-btt{position:fixed;right:24px;bottom:24px;z-index:9990;width:56px;height:56px;padding:0;margin:0;border:0!important;border-radius:50%!important;'
+        . 'background:rgba(110,110,110,.92)!important;color:#fff!important;cursor:pointer;display:flex;align-items:center;justify-content:center;'
+        . 'box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s ease,transform .25s ease,visibility .25s,background .2s}'
+        . '.island-btt.is-on{opacity:1;visibility:visible;transform:none}'
+        . '.island-btt:hover{background:rgba(70,70,70,.96)!important}'
+        . '.island-btt:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px rgba(100,64,44,.9)}'
+        . '.island-btt svg{width:22px;height:22px;display:block;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}'
+        . '@media(max-width:600px){.island-btt{right:16px;bottom:16px;width:48px;height:48px}}'
+        . '@media print{.island-btt{display:none}}'
+        . '</style>'
+        . '<button type="button" class="island-btt" id="island-btt" aria-label="Back to top" title="Back to top">'
+        . '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg></button>'
+        . '<script id="island-btt-js">(function(){var b=document.getElementById("island-btt");if(!b)return;var N=' . json_encode($screens) . ',tick=0;'
+        . 'function update(){tick=0;var vh=window.innerHeight||800,doc=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight);'
+        . 'var long=doc>vh*N,y=window.pageYOffset||document.documentElement.scrollTop||0;b.classList.toggle("is-on",long&&y>vh*0.8);}'
+        . 'function req(){if(!tick){tick=1;requestAnimationFrame(update);}}'
+        . 'window.addEventListener("scroll",req,{passive:true});window.addEventListener("resize",req);window.addEventListener("load",function(){update();setTimeout(update,800);});'
+        . 'b.addEventListener("click",function(){var r=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;window.scrollTo({top:0,behavior:r?"auto":"smooth"});'
+        . '});'
+        . 'update();})();</script>';
+}, 99);
 
 // Collapse-when-empty helper: add the class "hide-if-empty" (or the same as a
 // Custom Attribute) to any Elementor SECTION/container, and it is hidden when it
@@ -508,6 +598,363 @@ add_action('elementor/theme/register_conditions', function ($conditions_manager)
     }
 });
 
+// ── Byline / author helpers (top level, so widgets, filters and dynamic tags can all use them) ──
+if (!function_exists('island_expert_profile_id')) {
+    /** ID of the published "Experts" page whose title is this author NAME (accents/case ignored), else 0. */
+    function island_expert_profile_id($name)
+    {
+        $norm = function ($s) {
+            $s = remove_accents(trim(preg_replace('/\s+/u', ' ', (string) $s)));
+            return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
+        };
+        $q = new \WP_Query([
+            'post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 50, 'fields' => 'ids',
+            'no_found_rows' => true, 'orderby' => 'title', 'order' => 'ASC',
+            'meta_query' => [['key' => 'gp_page_type', 'value' => 'experts']],
+        ]);
+        foreach ($q->posts as $pid) {
+            if ($norm(get_the_title($pid)) === $norm($name) || $norm(preg_split('/\s*[,|–—]\s*|\s+-\s+/u', get_the_title($pid))[0]) === $norm($name)) {
+                return (int) $pid;
+            }
+        }
+        // Profiles made by hand often lack the "Experts" page-type marker: fall back to a published
+        // page whose TITLE is the author's name; prefer one that has a photo.
+        global $wpdb;
+        if (isset($wpdb) && is_object($wpdb)) {
+            $ids = (array) $wpdb->get_col($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_title = %s ORDER BY ID ASC LIMIT 5",
+                trim((string) $name)
+            ));
+            foreach ($ids as $pid) {
+                if (function_exists('island_expert_photo') && island_expert_photo((int) $pid)) {
+                    return (int) $pid;
+                }
+            }
+            if ($ids) {
+                return (int) $ids[0];
+            }
+        }
+        return 0;
+    }
+}
+if (!function_exists('island_byline_url')) {
+    /** The link for an author NAME: an explicit URL wins, else the matching expert profile page, else ''. */
+    function island_byline_url($name, $explicit = '')
+    {
+        $url = esc_url((string) $explicit, ['http', 'https']);
+        if ($url !== '') {
+            return $url;
+        }
+        $pid = island_expert_profile_id($name);
+        return ($pid && (int) get_queried_object_id() !== $pid) ? get_permalink($pid) : '';
+    }
+}
+if (!function_exists('island_byline_link')) {
+    /** <a> around $name (already-escaped text is passed in as $label). */
+    function island_byline_link($label, $url)
+    {
+        if ($url === '') {
+            return $label;
+        }
+        $host = (string) wp_parse_url($url, PHP_URL_HOST);
+        $ext = $host !== '' && $host !== (string) wp_parse_url(home_url(), PHP_URL_HOST);
+        $GLOBALS['island_byline_used'] = true;   // wp_footer prints the link CSS once
+        return '<a class="ibl-link" href="' . esc_url($url) . '"' . ($ext ? ' rel="noopener"' : '') . '>' . $label . '</a>';
+    }
+}
+if (!function_exists('island_byline_html')) {
+    function island_byline_html($byline, $prefix = 'By', $url = '')
+    {
+        $byline = trim(wp_strip_all_tags((string) $byline));
+        $byline = trim(preg_replace('/^\s*by\s+/iu', '', $byline));
+        if ($byline === '') {
+            return '';
+        }
+        $parts = preg_split('/(\s*[,|–—]\s*|\s+-\s+)/u', $byline, 2, PREG_SPLIT_DELIM_CAPTURE);
+        $name = trim((string) $parts[0]);
+        $rest = isset($parts[1]) ? $parts[1] . (string) ($parts[2] ?? '') : '';
+        $prefix = trim((string) $prefix);
+        $label = island_byline_link(esc_html(($prefix !== '' ? $prefix . ' ' : '') . $name), island_byline_url($name, $url));
+        return '<p class="ibl-wrap">' . $label . esc_html($rest) . '</p>';
+    }
+}
+// The byline link must look exactly like the text around it (same font, size, colour,
+// italic…); only hovering underlines it. Printed once, and only when a link was made.
+add_action('wp_footer', function () {
+    if (empty($GLOBALS['island_byline_used'])) {
+        return;
+    }
+    echo '<style id="island-byline-css">'
+        . 'a.ibl-link,a.ibl-link:visited,a.ibl-link:focus{color:inherit!important;font:inherit!important;letter-spacing:inherit!important;text-transform:inherit!important;'
+        . 'text-decoration:none!important;background:none!important;border:0!important;box-shadow:none!important}'
+        . 'a.ibl-link:hover{color:inherit!important;text-decoration:underline!important;text-decoration-thickness:1px!important;text-underline-offset:4px}'
+        . '</style>';
+}, 5);
+// AUTOMATIC: any Elementor widget on a page whose ACF "author" byline it prints
+// (for example a Heading with the dynamic tag, "By <author field>") gets the part
+// BEFORE THE COMMA — "By Juan Magallanes" — turned into a link: to ACF "Author URL",
+// else to the matching expert profile page. The role after the comma stays plain text.
+// Nothing to configure. (A widget with the CSS class "island-byline" also links when
+// it shows only the name.)
+add_filter('elementor/widget/render_content', function ($content, $widget) {
+    if (!is_string($content) || $content === '' || !is_object($widget) || !method_exists($widget, 'get_settings')) {
+        return $content;
+    }
+    static $by = null, $name = '', $href = '';
+    static $pid = 0;
+    if ($pid !== (int) get_the_ID()) {
+        $pid = (int) get_the_ID();
+        $raw = function_exists('get_field') ? get_field('author') : get_post_meta($pid, 'author', true);
+        $by = trim(preg_replace('/^\s*by\s+/iu', '', wp_strip_all_tags((string) (is_string($raw) ? $raw : ''))));
+        $parts = preg_split('/\s*[,|–—]\s*|\s+-\s+/u', $by, 2);
+        $name = trim((string) ($parts[0] ?? ''));
+        $u = function_exists('get_field') ? get_field('author_url') : get_post_meta($pid, 'author_url', true);
+        $href = $name === '' ? '' : island_byline_url($name, is_string($u) ? $u : '');
+    }
+    if ($by === '' || $name === '' || $href === '') {
+        return $content;
+    }
+    $hasClass = (bool) preg_match('/(^|\s)island-byline(\s|$)/', (string) $widget->get_settings('_css_classes'));
+    foreach ([esc_html($by), $by] as $full) {
+        $at = strpos($content, $full);
+        if ($at === false) {
+            continue;
+        }
+        return island_byline_wrap($content, $at, $name, $href);
+    }
+    if ($hasClass) {
+        foreach ([esc_html($name), $name] as $n) {
+            $at = strpos($content, $n);
+            if ($at !== false) {
+                return island_byline_wrap($content, $at, $name, $href);
+            }
+        }
+    }
+    return $content;
+}, 20, 2);
+if (!function_exists('island_byline_wrap')) {
+    /** Wrap "[By ]Name" — Name starts at byte $at in $content — in the byline link. */
+    function island_byline_wrap($content, $at, $name, $href)
+    {
+        // Already inside a link (e.g. an Author Box whose "Link" is set)? Leave it alone —
+        // an <a> inside an <a> is invalid HTML.
+        $head = substr($content, 0, $at);
+        if (preg_match_all('/<a[\s>]/i', $head) > preg_match_all('/<\/a>/i', $head)) {
+            return $content;
+        }
+        $esc = esc_html($name);
+        $len = substr($content, $at, strlen($esc)) === $esc ? strlen($esc) : strlen($name);
+        $start = $at;
+        $before = substr($content, max(0, $at - 24), min(24, $at));
+        if (preg_match('/By(?:\s|&nbsp;|&#160;)+$/i', $before, $m)) {
+            $start = $at - strlen($m[0]);
+        }
+        $span = substr($content, $start, $at + $len - $start);
+        return substr($content, 0, $start) . island_byline_link($span, $href) . substr($content, $at + $len);
+    }
+}
+add_shortcode('island_byline', function ($atts) {
+    $a = shortcode_atts(['text' => '', 'prefix' => 'By'], $atts);
+    $text = $a['text'] !== '' ? $a['text'] : (function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true));
+    $url = function_exists('get_field') ? get_field('author_url') : get_post_meta(get_the_ID(), 'author_url', true);
+    return island_byline_html($text, $a['prefix'], is_string($url) ? $url : '');
+});
+
+
+// ── Dynamic tags for Elementor's own Author Box ──────────────────────────────────────────────
+// Pages that already use Elementor's Author Box with typed-in values are NOT touched. For a TEMPLATE,
+// the Author Box fields can instead take these tags (click the database icon of the field →
+// "Island Author"): Name ← the page's ACF `author`, Profile picture ← the expert profile's photo,
+// Link ← ACF `author_url` or the expert profile, Biography ← ACF `review_note` (or a default).
+if (!function_exists('island_author_data')) {
+    /** Byline pieces for the current page: ['by' => full byline, 'name' => before the comma, 'pid' => expert profile ID]. */
+    function island_author_data()
+    {
+        $raw = function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true);
+        $by = trim(preg_replace('/^\s*by\s+/iu', '', wp_strip_all_tags((string) (is_string($raw) ? $raw : ''))));
+        $parts = preg_split('/\s*[,|–—]\s*|\s+-\s+/u', $by, 2);
+        $name = trim((string) ($parts[0] ?? ''));
+        return ['by' => $by, 'name' => $name, 'pid' => $name === '' ? 0 : island_expert_profile_id($name)];
+    }
+    /** ['id' => attachment ID, 'url' => image URL] of an expert profile: ACF about_image, else featured image. */
+    function island_expert_photo($pid)
+    {
+        if (!$pid) {
+            return [];
+        }
+        if (function_exists('get_field')) {
+            $img = get_field('about_image', $pid);
+            $att = is_array($img) ? (int) ($img['ID'] ?? $img['id'] ?? 0) : (int) $img;
+            if ($att) {
+                $u = wp_get_attachment_image_url($att, 'medium');
+                if ($u) {
+                    return ['id' => $att, 'url' => $u];
+                }
+            }
+        }
+        if (has_post_thumbnail($pid)) {
+            return ['id' => (int) get_post_thumbnail_id($pid), 'url' => (string) get_the_post_thumbnail_url($pid, 'medium')];
+        }
+        return [];
+    }
+}
+add_action('elementor/dynamic_tags/register', function ($manager) {
+    if (!class_exists('\Elementor\Core\DynamicTags\Tag') || !class_exists('\Elementor\Core\DynamicTags\Data_Tag') || !class_exists('\Elementor\Modules\DynamicTags\Module')) {
+        return;
+    }
+    $M = '\Elementor\Modules\DynamicTags\Module';
+    if (!class_exists('Island_Tag_Author_Name')) {
+        class Island_Tag_Author_Name extends \Elementor\Core\DynamicTags\Tag
+        {
+            public function get_name() { return 'island-author-name'; }
+            public function get_title() { return 'Author name (By Name, Role)'; }
+            public function get_group() { return ['island-author']; }
+            public function get_categories() { return [\Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY]; }
+            protected function register_controls()
+            {
+                $this->add_control('prefix', ['label' => 'Prefix', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'By']);
+            }
+            public function render()
+            {
+                $d = island_author_data();
+                $prefix = trim((string) $this->get_settings('prefix'));
+                echo $d['by'] === '' ? '' : esc_html(($prefix !== '' ? $prefix . ' ' : '') . $d['by']);
+            }
+        }
+        class Island_Tag_Author_Photo extends \Elementor\Core\DynamicTags\Data_Tag
+        {
+            public function get_name() { return 'island-author-photo'; }
+            public function get_title() { return 'Author photo (expert profile)'; }
+            public function get_group() { return ['island-author']; }
+            public function get_categories() { return [\Elementor\Modules\DynamicTags\Module::IMAGE_CATEGORY]; }
+            public function get_value(array $options = [])
+            {
+                $d = island_author_data();
+                return island_expert_photo($d['pid']);
+            }
+        }
+        class Island_Tag_Author_Url extends \Elementor\Core\DynamicTags\Tag
+        {
+            public function get_name() { return 'island-author-url'; }
+            public function get_title() { return 'Author link (Author URL / expert profile)'; }
+            public function get_group() { return ['island-author']; }
+            public function get_categories() { return [\Elementor\Modules\DynamicTags\Module::URL_CATEGORY, \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY]; }
+            public function render()
+            {
+                $d = island_author_data();
+                $u = function_exists('get_field') ? get_field('author_url') : get_post_meta(get_the_ID(), 'author_url', true);
+                echo $d['name'] === '' ? '' : esc_url(island_byline_url($d['name'], is_string($u) ? $u : ''));
+            }
+        }
+        class Island_Tag_Review_Note extends \Elementor\Core\DynamicTags\Tag
+        {
+            public function get_name() { return 'island-review-note'; }
+            public function get_title() { return 'Review note (ACF review_note / default)'; }
+            public function get_group() { return ['island-author']; }
+            public function get_categories() { return [\Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY]; }
+            protected function register_controls()
+            {
+                $this->add_control('default_note', ['label' => 'Default (when the page has none)', 'type' => \Elementor\Controls_Manager::TEXTAREA, 'rows' => 3,
+                    'default' => 'Reviewed for accuracy against National Park visitor-site data | Updated 2026']);
+            }
+            public function render()
+            {
+                $n = function_exists('get_field') ? get_field('review_note') : get_post_meta(get_the_ID(), 'review_note', true);
+                $n = is_string($n) ? trim($n) : '';
+                echo esc_html($n !== '' ? $n : trim((string) $this->get_settings('default_note')));
+            }
+        }
+    }
+    $manager->register_group('island-author', ['title' => 'Island Author']);
+    foreach (['Island_Tag_Author_Name', 'Island_Tag_Author_Photo', 'Island_Tag_Author_Url', 'Island_Tag_Review_Note'] as $cls) {
+        if (method_exists($manager, 'register')) {
+            $manager->register(new $cls());
+        } else {
+            $manager->register_tag($cls);
+        }
+    }
+});
+
+if (!function_exists('island_source_rows')) {
+    /**
+     * The ACF `sources` rows of a page as clean [label, url] pairs. Sources imported from a document can arrive
+     * with junk glued to the label ("…Moreno" + "Image: foo.jpg (400×300px…)Alt: …" + "[San Cristóbal](https://…)"):
+     * keep only the readable label, and take the URL from the row or from a Markdown link inside it.
+     */
+    function island_source_rows($pid)
+    {
+        if (!function_exists('get_field')) {
+            return [];
+        }
+        $out = [];
+        foreach ((array) (get_field('sources', $pid) ?: []) as $r) {
+            $r = is_array($r) ? $r : [];
+            $label = trim((string) ($r['label'] ?? ''));
+            $url = trim((string) ($r['url'] ?? ''));
+            if ($url === '' && preg_match('/\[[^\]]*\]\(\s*(https?:\/\/[^)\s]+)\s*\)/i', $label, $m)) {
+                $url = $m[1];
+            }
+            $label = preg_replace('/\[([^\]]*)\]\(\s*https?:\/\/[^)]*\)/i', '', $label);
+            $label = preg_split('/\s*(?:Image|Alt)\s*:/', $label, 2)[0];
+            $label = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags($label)));
+            $label = trim($label, " \t\n\r\0\x0B[]()");
+            if ($label === '' && $url !== '') {
+                $label = preg_replace('#^https?://(www\.)?#i', '', $url);
+            }
+            if ($label !== '') {
+                $out[] = [$label, $url];
+            }
+        }
+        return $out;
+    }
+}
+// Table style for ANY widget: add the CSS class "island-table" (Advanced → CSS Classes) to a
+// Text Editor / container / HTML widget — or class="island-table" on the <table> itself — and every
+// table inside gets the site table design (brown header, striped rows, rounded, text wraps, no
+// sideways scroll). Same look as the tables inside the Feature Sections widget.
+add_action('wp_head', function () {
+    $base = ''
+        . '.island-table table,table.island-table{background:#FBF8F4!important;width:100%!important;border-collapse:separate!important;border-spacing:0!important;border:1px solid rgba(100,64,44,.14)!important;border-radius:12px!important;overflow:hidden!important;margin:0!important;font-size:15px!important;line-height:1.65!important;table-layout:auto!important}'
+        . '.island-table th,.island-table td,table.island-table th,table.island-table td{font-family:inherit!important;font-style:normal!important;font-size:15px!important;line-height:1.65!important;letter-spacing:normal!important;text-transform:none!important;padding:13px 16px!important;text-align:left!important;vertical-align:top!important;white-space:normal!important;overflow-wrap:break-word!important;border:0!important;border-top:1px solid rgba(100,64,44,.14)!important}'
+        . '.island-table thead th,.island-table tr:first-child>th,table.island-table thead th,table.island-table tr:first-child>th{background:#64402C!important;color:#F6EFE7!important;font-weight:700!important;border-top:0!important}'
+        . '.island-table tbody tr:nth-child(even)>td,table.island-table tbody tr:nth-child(even)>td{background:#F5EEE4!important}'
+        . '.island-table td:first-child,table.island-table td:first-child{font-weight:700!important;color:#64402C!important}'
+        . '.island-table td,table.island-table td{color:#3A2A1E!important}'
+        . '.island-table td:only-child,table.island-table td:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
+        . '.island-table td:only-child::first-line,table.island-table td:only-child::first-line{font-weight:700!important;color:#64402C!important}'
+        . '.island-table thead th:only-child,table.island-table thead th:only-child{font-weight:400!important;font-size:15px!important;line-height:1.7!important}'
+        . '.island-table thead th:only-child::first-line,table.island-table thead th:only-child::first-line{font-weight:700!important}'
+        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child{background:#64402C!important;color:#F6EFE7!important}'
+        . '.island-table table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line,table.island-table:not(:has(thead)) tbody tr:first-child>td:only-child::first-line{color:inherit!important;font-weight:700!important}'
+        . '.island-table tbody tr:hover>td,table.island-table tbody tr:hover>td{background:rgba(100,64,44,.07)!important}';
+    // table-in-brown: EXACTLY the same table design, under another name — for tables placed on a BROWN
+    // section (a thin cream outline keeps the brown header visible against the brown background).
+    echo '<style id="island-table-css">' . $base . str_replace('island-table', 'table-in-brown', $base)
+        . '.table-in-brown table,table.table-in-brown{border:1px solid rgba(243,234,217,.6)!important}'
+        // On a brown section a brown header would melt into the background: table-in-brown gets a sand header.
+        . '.table-in-brown thead th,.table-in-brown tr:first-child>th,table.table-in-brown thead th,table.table-in-brown tr:first-child>th{background:#E6D5BE!important;color:#64402C!important}'
+        . '.table-in-brown table:not(:has(thead)) tbody tr:first-child>td:only-child,table.table-in-brown:not(:has(thead)) tbody tr:first-child>td:only-child{background:#E6D5BE!important;color:#64402C!important}'
+        // table-in-cream: for a CREAM page/section — a WHITE table (more contrast against the cream) with the brown header.
+        . str_replace('island-table', 'table-in-cream', $base)
+        . '.table-in-cream table,table.table-in-cream{background:#FFFFFF!important;border:1px solid rgba(100,64,44,.18)!important;box-shadow:0 6px 18px rgba(60,40,25,.08)!important}'
+        . '.table-in-cream tbody tr:nth-child(even)>td,table.table-in-cream tbody tr:nth-child(even)>td{background:#FAF6F0!important}'
+        . '.table-in-cream tbody tr:hover>td,table.table-in-cream tbody tr:hover>td{background:#F3EBDF!important}'
+        // Inside a widget that already draws the table's frame (Feature Sections' .ifs-tbl / white card),
+        // these classes must not add a second outline, margin or shadow.
+        . implode('', array_map(function ($c) {
+            return ".ifs-tbl table.$c,.ifs-tbl .$c table,.$c .ifs-tbl table,.ifb-card table.$c,.ifb-card .$c table{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}";
+        }, ['island-table', 'table-in-brown', 'table-in-cream']))
+        . '</style>';
+}, 20);
+
+// The "Island Expert Pages" matches are cached for a few hours; any page save refreshes them.
+add_action('save_post', function () {
+    update_option('island_ep_ver', (string) microtime(true), false);
+});
+add_action('elementor/document/after_save', function () {
+    update_option('island_ep_ver', (string) microtime(true), false);
+});
+
 add_action('elementor/widgets/register', function ($widgets_manager) {
     if (!did_action('elementor/loaded')) {
         return;
@@ -705,12 +1152,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  when its description overflows). Tapping the arrow toggles .is-open,
                  which persists while scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .rev.clip-m .iw2-desc{position:relative;max-height:calc(var(--tl,3) * 1.62em);overflow:hidden}
-              {{WRAPPER}} .rev.clip-m .iw2-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none}
+              {{WRAPPER}} .rev.clip-m .iw2-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none}
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc{max-height:none}
               {{WRAPPER}} .rev.clip-m.is-open .iw2-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .rev.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .rev.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .rev.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .rev.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .rev.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               {{WRAPPER}} .iw2-ov .ic-more,{{WRAPPER}} .iw2-ofc .ic-more{color:#f0d9c4}
               {{WRAPPER}} .rev{cursor:pointer}
               {{WRAPPER}} .iw2-meta{list-style:none;padding:0;margin:9px 0 0;font-size:13px;color:#5a4636}{{WRAPPER}} .iw2-meta li{margin:0 0 2px}
@@ -737,14 +1185,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .iw2-ofc .iw2-desc{color:#f3e9df;--fade:#64402c}
               {{WRAPPER}} .iw2-ofc .iw2-meta{color:#e6d5c4}
               {{WRAPPER}} .iw2-ofc .iw2-btn{color:#f0d9c4;border-color:rgba(240,217,196,.6)}
-              /* Desktop (min-width:1367px): restore the paragraph clamp + hover/tap
-                 expand — a mouse is available there to reveal the full text. */
-              @media(min-width:1367px){
-                {{WRAPPER}} .iw2-desc.clip{max-height:calc(var(--tl) * 1.62em);overflow:hidden;transition:max-height .45s ease}
-                {{WRAPPER}} .iw2-desc.clip::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--fade));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .rev.is-open .iw2-desc.clip,{{WRAPPER}} .rev:hover .iw2-desc.clip{max-height:2000px}
-                {{WRAPPER}} .rev.is-open .iw2-desc.clip::after,{{WRAPPER}} .rev:hover .iw2-desc.clip::after{opacity:0}
-              }
               @media(max-width:760px){{{WRAPPER}} .iw2-grid{grid-template-columns:1fr!important}{{WRAPPER}} .iw2-ed{grid-template-columns:96px 1fr;gap:14px}{{WRAPPER}} .iw2-ed .iw2-num{display:none}}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). */
               @media(max-width:767px){
@@ -1919,7 +2359,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('title_tag', ['label' => 'Title tag', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'h3', 'options' => $tags]);
             $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes', 'condition' => ['layout' => 'rows']]);
             $this->add_control('show_img', ['label' => 'Show image', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
-            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            $this->add_control('hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'condition' => ['layout' => 'rows'],
                 'description' => 'Show a few lines by default; the full text opens on hover (tap on mobile) and closes on leave. A brown bottom border hints there is more.']);
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
@@ -1953,8 +2393,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('bind_min', ['label' => 'Minimum height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 300, 'min' => 160,
                 'condition' => ['bind_height' => 'yes'],
                 'description' => 'Never shrinks below this, even if the neighbour column is very short.']);
+            $this->add_control('bind_show_fade', ['label' => 'Show bottom fade', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'condition' => ['bind_height' => 'yes'], 'description' => 'The soft gradient at the bottom edge of the scrolling list. Off = no gradient.']);
             $this->add_control('bind_fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
-                'condition' => ['bind_height' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs-scrollwrap' => '--ifs-fade:{{VALUE}}'],
+                'condition' => ['bind_height' => 'yes', 'bind_show_fade' => 'yes'], 'selectors' => ['{{WRAPPER}} .ifs-scrollwrap' => '--ifs-fade:{{VALUE}}'],
                 'description' => 'The soft “there is more below” fade at the bottom edge. Set to the page/section background so it blends.']);
             $this->end_controls_section();
 
@@ -1985,7 +2427,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'title_typo', 'selector' => '{{WRAPPER}} .ifs-title']);
             $this->add_control('body_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#333333',
                 'selectors' => ['{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p' => 'color:{{VALUE}}']]);
-            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'body_typo', 'selector' => '{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p']);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'body_typo', 'selector' => '{{WRAPPER}} .ifs-body,{{WRAPPER}} .ifs-body p,{{WRAPPER}} .ifs-tbl td:only-child']);
             $this->add_control('btn_color', ['label' => 'Button text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
                 'selectors' => ['{{WRAPPER}} .ifs-btn' => 'color:{{VALUE}}']]);
             $this->add_control('btn_bd', ['label' => 'Button border', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#D3BAA3',
@@ -2007,10 +2449,12 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
 
             /* Table (styling for feature sections that contain a table) */
             $this->add_control('tbl_h', ['label' => 'Table', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
+            $this->add_control('tbl_wrap', ['label' => 'Wrap table text (no horizontal scroll)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'On: long cell text wraps and the table always fits the section. Off: the table keeps a minimum width and scrolls sideways.']);
             $this->add_control('tbl_head_bg', ['label' => 'Header background', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
-                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'background:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tr:first-child>th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child' => 'background:{{VALUE}}']]);
             $this->add_control('tbl_head_tx', ['label' => 'Header text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#F6EFE7',
-                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'color:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .ifs-tbl thead th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tr:first-child>th,{{WRAPPER}} .ifs-tbl table:not(:has(thead)) tbody tr:first-child td:only-child' => 'color:{{VALUE}}']]);
             $this->add_responsive_control('tbl_head_fs', ['label' => 'Header text size', 'type' => \Elementor\Controls_Manager::SLIDER, 'range' => ['px' => ['min' => 9, 'max' => 18]],
                 'default' => ['size' => 10.5, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .ifs-tbl thead th' => 'font-size:{{SIZE}}{{UNIT}}']]);
             $this->add_control('tbl_tx', ['label' => 'Cell text', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3A2A1E',
@@ -2187,7 +2631,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
              * text on hover (tap on mobile). The fade blends into that band's own
              * background colour. Tables/after-table text are never clamped. */
             $this->add_control('bd_hx_h', ['label' => 'Hover clamp', 'type' => \Elementor\Controls_Manager::HEADING, 'separator' => 'before']);
-            $this->add_control('bd_hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            $this->add_control('bd_hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'Show a few lines by default; the full text opens on hover (tap on mobile) and closes on leave. A soft fade hints there is more.']);
             $this->add_control('bd_clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
                 'condition' => ['bd_hover_expand' => 'yes'],
@@ -2247,12 +2691,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  body overflows). Tapping the arrow toggles .is-open, which persists
                  while scrolling. Desktop keeps its hover clamp (min-width block). */
               {{WRAPPER}} .ifs-row.clip-m .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden}
-              {{WRAPPER}} .ifs-row.clip-m .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none}
+              {{WRAPPER}} .ifs-row.clip-m .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none}
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body{max-height:none}
               {{WRAPPER}} .ifs-row.clip-m.is-open .ifs-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .ifs-row.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .ifs-row.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* No-photo row = full-width text/table section: never truncate — no
                  clamp, no fade, no Read More (title centering handled below). */
               {{WRAPPER}} .ifs-row.noimg .ifs-body{max-height:none!important;overflow:visible!important}
@@ -2311,10 +2756,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 {{WRAPPER}} .ifs-row.noimg .ifs-top{grid-template-columns:1fr;grid-template-areas:"head" "body"}
                 /* No-photo row keeps its centered title/eyebrow on desktop too. */
                 {{WRAPPER}} .ifs-row.noimg .ifs-eyebrow,{{WRAPPER}} .ifs-row.noimg .ifs-title{text-align:center}
-                {{WRAPPER}} .ifs.hx .ifs-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
-                {{WRAPPER}} .ifs.hx .ifs-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.8em;background:linear-gradient(rgba(0,0,0,0),var(--fade,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body{max-height:var(--open,900px)}
-                {{WRAPPER}} .ifs.hx .ifs-row.is-open .ifs-body::after{opacity:0}
               }
               {{WRAPPER}} .ifs-scrollwrap{position:relative}
               {{WRAPPER}} .ifs-scroll{overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#c8ad82 transparent}
@@ -2333,7 +2774,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 $bmin = max(160, (int) ($s['bind_min'] ?? 300));
                 echo '<div class="ifs-scrollwrap" data-ifs-bind="1" data-ifs-min="' . $bmin . '"><div class="ifs-scroll">';
             }
-            echo '<div class="ifs' . $hx . '">';
+            $tw = ($s['tbl_wrap'] ?? 'yes') === 'yes' ? ' tbl-wrap' : '';
+            echo '<div class="ifs' . $hx . $tw . '">';
             $i = 0;
             foreach ($rows as $r) {
                 // Validation: skip a row whose ACF fields are all empty. An empty
@@ -2446,21 +2888,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             echo '</div>';  // .ifs
             if ($bind) {
-                echo '</div><div class="ifs-fade"></div></div>';  // close .ifs-scroll, fade, .ifs-scrollwrap
+                echo '</div>' . ((($s['bind_show_fade'] ?? 'yes') === 'yes') ? '<div class="ifs-fade"></div>' : '') . '</div>';  // close .ifs-scroll, fade, .ifs-scrollwrap
             }
             // Open on hover. Driven by JS (mouseenter/leave) so it never depends
             // on the CSS :hover firing — which Elementor's editor overlay can
             // swallow. Touch: tap toggles it (and :focus-within via tabindex).
             // MUST print right after the .ifs container: it binds via
             // currentScript.previousElementSibling, so nothing may sit between.
-            if ($hx) {
-                // Desktop hover only; mobile tap-to-expand is the shared clip/arrow
-                // script (touchstart removed — it toggled while scrolling).
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".ifs-row").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
-            }
             island_ew_clip_script();  // shared mobile clamp + tappable arrow
             // Lightbox assets come AFTER the hover script so they don't break the
             // previousElementSibling lookup above.
@@ -2673,12 +3107,13 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  arrow. Tapping the arrow toggles .is-open, which PERSISTS while
                  scrolling until tapped again. Desktop keeps its hover clamp (below). */
               {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden}
-              {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none}
+              {{WRAPPER}} .ifb-band.clip-m .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none}
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body{max-height:none}
               {{WRAPPER}} .ifb-band.clip-m.is-open .ifb-tx .ifb-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:inline-block;margin-top:12px;padding:0;border:0;background:transparent;color:var(--t-title);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .ifb-band.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:var(--t-title)}
+              {{WRAPPER}} .ifb-band.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* Plain band = no icon AND no photo (else-branch .ifb-tx is a direct
                  child of .ifb-inner and carries no inline icon). These are full-width
                  text/table bands, so they must NEVER truncate: no clamp, no fade, no
@@ -2754,10 +3189,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                    (image bands and icon rows still left-align via their own rules). */
                 {{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-eyebrow,{{WRAPPER}} .ifb-inner>.ifb-tx:not(:has(.ifb-ic-inline)) .ifb-title{text-align:center}
                 {{WRAPPER}} .ifb-inner>.ifb-tx .ifb-ic-inline{float:none;margin:0 0 14px}
-                {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body{position:relative;max-height:calc(var(--cl,5) * 1.75em);overflow:hidden;transition:max-height .45s ease}
-                {{WRAPPER}} .ifb.hx .ifb-tx .ifb-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.9em;background:linear-gradient(rgba(0,0,0,0),var(--ifb-bg,#FBF8F4));pointer-events:none;transition:opacity .3s ease}
-                {{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body{max-height:var(--open,1200px)}
-                {{WRAPPER}} .ifb.hx .ifb-band.is-open .ifb-tx .ifb-body::after{opacity:0}
               }
             </style>';
             // Background palette comes from Elementor (design), NOT from ACF.
@@ -2765,7 +3196,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // via an optional ACF bg_color, but nothing requires it.
             $pal = (isset($s['bd_palette']) && is_array($s['bd_palette'])) ? array_values($s['bd_palette']) : [];
             $hx = ($s['bd_hover_expand'] ?? 'yes') === 'yes' ? ' hx' : '';
-            echo '<div class="ifb' . $hx . '">';
+            $tw = ($s['tbl_wrap'] ?? 'yes') === 'yes' ? ' tbl-wrap' : '';
+            echo '<div class="ifb' . $hx . $tw . '">';
             $ifb_info_any = false;  // set true when a lightbox infographic banner is printed
             $i = 0;
             foreach ($rows as $r) {
@@ -2944,15 +3376,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // a tap toggles it (and :focus-within via tabindex). Binds via
             // currentScript.previousElementSibling, so it MUST print right after
             // the .ifb container with nothing in between.
-            if ($hx) {
-                // Desktop hover only. The mobile tap-to-expand is handled by the
-                // shared clip/arrow script below (touchstart used to fire on scroll,
-                // which collapsed the text while scrolling — that is now removed).
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".ifb-band").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
-            }
             island_ew_clip_script();  // shared mobile clamp + tappable arrow
         }
     }
@@ -3554,100 +3977,30 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         }
         protected function register_controls()
         {
-            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
-            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => \Elementor\Controls_Manager::NUMBER]);
-            $this->add_control('sources_title', ['label' => 'Sources heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Sources & Citations']);
-            $this->add_control('related_title', ['label' => 'Related heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Explore More']);
-            $this->add_control('show_related', ['label' => 'Show related links', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
-            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'mobile_default' => '1',
+            $C = '\Elementor\Controls_Manager';
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => $C::TAB_CONTENT]);
+            $this->add_control('source_id', ['label' => 'Page ID (blank = current)', 'type' => $C::NUMBER]);
+            $this->add_control('sources_title', ['label' => 'Sources heading', 'type' => $C::TEXT, 'default' => 'Sources & Citations']);
+            $this->add_control('skin', ['label' => 'Background', 'type' => $C::SELECT, 'default' => 'light',
+                'options' => ['light' => 'Light page', 'dark' => 'Brown footer (cream text)'],
+                'description' => 'Choose “Brown footer” when the list sits right before/after the “Explore More” footer.']);
+            $this->add_control('collapsible', ['label' => 'Collapsible list', 'type' => $C::SWITCHER, 'default' => 'yes',
+                'description' => 'The list opens/closes under the heading (with the number of sources), so it takes little space.']);
+            $this->add_control('start_open', ['label' => 'Start open', 'type' => $C::SWITCHER, 'default' => '', 'condition' => ['collapsible' => 'yes']]);
+            $this->add_control('show_count', ['label' => 'Show the number of sources', 'type' => $C::SWITCHER, 'default' => 'yes', 'condition' => ['collapsible' => 'yes'],
+                'description' => 'The “(6)” next to the heading. It counts the sources automatically.']);
+            $this->add_responsive_control('columns', ['label' => 'Columns', 'type' => $C::SELECT, 'default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2', '3' => '3'],
-                'selectors' => ['{{WRAPPER}} .isrc-list,{{WRAPPER}} .isrc-groups' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
-            $this->add_control('gh_color', ['label' => 'Group heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
-                'selectors' => ['{{WRAPPER}} .isrc-gh' => 'color:{{VALUE}}']]);
+                'selectors' => ['{{WRAPPER}} .isrc-list' => 'grid-template-columns:repeat({{VALUE}},minmax(0,1fr))']]);
             $this->end_controls_section();
 
-            $this->start_controls_section('s', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
-            $this->add_control('h_color', ['label' => 'Heading color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#64402C',
-                'selectors' => ['{{WRAPPER}} .isrc-h' => 'color:{{VALUE}}']]);
-            $this->add_control('link_color', ['label' => 'Link color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#3a5a8c',
-                'selectors' => ['{{WRAPPER}} .isrc-list a' => 'color:{{VALUE}}']]);
-            $this->add_control('text_color', ['label' => 'Text color', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#5a4636',
-                'selectors' => ['{{WRAPPER}} .isrc-list li' => 'color:{{VALUE}}']]);
+            $this->start_controls_section('s', ['label' => 'Style', 'tab' => $C::TAB_STYLE]);
+            $this->add_control('h_color', ['label' => 'Heading color', 'type' => $C::COLOR, 'default' => '#64402C', 'selectors' => ['{{WRAPPER}} .isrc-h,{{WRAPPER}} .isrc-wrap' => 'color:{{VALUE}}']]);
+            $this->add_control('link_color', ['label' => 'Link color', 'type' => $C::COLOR, 'default' => '#64402C', 'selectors' => ['{{WRAPPER}} .isrc-list a' => 'color:{{VALUE}}']]);
+            $this->add_control('text_color', ['label' => 'Text color (rows without a link)', 'type' => $C::COLOR, 'default' => '#5a4636', 'selectors' => ['{{WRAPPER}} .isrc-list li' => 'color:{{VALUE}}']]);
             $this->end_controls_section();
         }
-        private function links($rows, $heading)
-        {
-            if (!$rows) {
-                return;
-            }
-            echo '<div class="isrc-block">';
-            if ($heading) {
-                echo '<h3 class="isrc-h">' . esc_html($heading) . '</h3>';
-            }
-            echo '<ul class="isrc-list">';
-            foreach ($rows as $r) {
-                $label = $r['label'] ?? '';
-                $url = $r['url'] ?? '';
-                if (!$label && !$url) {
-                    continue;
-                }
-                if ($url) {
-                    echo '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label ?: $url) . '</a></li>';
-                } else {
-                    echo '<li>' . esc_html($label) . '</li>';
-                }
-            }
-            echo '</ul></div>';
-        }
-        private function has_groups($rows)
-        {
-            foreach ((array) $rows as $r) {
-                if (trim((string) ($r['group'] ?? '')) !== '') {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private function grouped_links($rows, $heading)
-        {
-            // Bucket the links by their "group" heading, preserving first-seen order.
-            $groups = [];
-            $order = [];
-            foreach ($rows as $r) {
-                $g = trim((string) ($r['group'] ?? ''));
-                if (!isset($groups[$g])) {
-                    $groups[$g] = [];
-                    $order[] = $g;
-                }
-                $groups[$g][] = $r;
-            }
-            echo '<div class="isrc-block">';
-            if ($heading) {
-                echo '<h3 class="isrc-h">' . esc_html($heading) . '</h3>';
-            }
-            echo '<div class="isrc-groups">';
-            foreach ($order as $g) {
-                echo '<div class="isrc-group">';
-                if ($g !== '') {
-                    echo '<h4 class="isrc-gh">' . esc_html($g) . '</h4>';
-                }
-                echo '<ul>';
-                foreach ($groups[$g] as $r) {
-                    $label = $r['label'] ?? '';
-                    $url = $r['url'] ?? '';
-                    if (!$label && !$url) {
-                        continue;
-                    }
-                    if ($url) {
-                        echo '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label ?: $url) . '</a></li>';
-                    } else {
-                        echo '<li>' . esc_html($label) . '</li>';
-                    }
-                }
-                echo '</ul></div>';
-            }
-            echo '</div></div>';
-        }
+
         protected function render()
         {
             if (!function_exists('get_field')) {
@@ -3655,31 +4008,56 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             $s = $this->get_settings_for_display();
             $pid = !empty($s['source_id']) ? (int) $s['source_id'] : get_the_ID();
-            $sources = get_field('sources', $pid) ?: [];
-            $related = ($s['show_related'] === 'yes') ? (get_field('related_links', $pid) ?: []) : [];
-            if (!$sources && !$related) {
+            $items = '';
+            foreach (island_source_rows($pid) as $row) {
+                list($label, $url) = $row;
+                $items .= $url !== ''
+                    ? '<li><a href="' . esc_url($url) . '" rel="nofollow noopener" target="_blank">' . esc_html($label) . '</a></li>'
+                    : '<li>' . esc_html($label) . '</li>';
+            }
+            if ($items === '') {
                 return;
             }
-            echo '<style>
-              {{WRAPPER}} .isrc-block{margin-bottom:22px}
-              {{WRAPPER}} .isrc-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;color:#64402C}
-              {{WRAPPER}} .isrc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:8px 26px}
-              {{WRAPPER}} .isrc-list li{font-size:14px;line-height:1.5;color:#5a4636;padding-left:16px;position:relative}
-              {{WRAPPER}} .isrc-list li::before{content:"\2192";position:absolute;left:0;color:#9c7b4e}
-              {{WRAPPER}} .isrc-list a{color:#3a5a8c;text-decoration:none}{{WRAPPER}} .isrc-list a:hover{text-decoration:underline}
-              {{WRAPPER}} .isrc-groups{display:grid;grid-template-columns:repeat(2,1fr);gap:26px 40px}
-              {{WRAPPER}} .isrc-gh{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:20px;color:#64402C}
-              {{WRAPPER}} .isrc-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-              {{WRAPPER}} .isrc-group li{font-size:14px;line-height:1.5;color:#5a4636;padding-left:16px;position:relative}
-              {{WRAPPER}} .isrc-group li::before{content:"\2192";position:absolute;left:0;color:#9c7b4e}
-              {{WRAPPER}} .isrc-group a{color:#3a5a8c;text-decoration:none}{{WRAPPER}} .isrc-group a:hover{text-decoration:underline}
-              @media(max-width:680px){{{WRAPPER}} .isrc-list,{{WRAPPER}} .isrc-groups{grid-template-columns:1fr!important}}
-            </style>';
-            $this->links($sources, $s['sources_title']);
-            if ($this->has_groups($related)) {
-                $this->grouped_links($related, $s['related_title']);
+            echo '<style id="isrc-css">'
+                . '.isrc-wrap .isrc-h{margin:0 0 18px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:26px;line-height:1.25;color:inherit}'
+                . '.isrc-wrap .isrc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 40px}'
+                . '.isrc-wrap .isrc-list li{position:relative;margin:0;padding-left:22px;font-size:16px;line-height:1.5;color:#5a4636;overflow-wrap:anywhere}'
+                . '.isrc-wrap .isrc-list li::before{content:"\2192";position:absolute;left:0;top:0;color:#9c7b4e}'
+                . '.isrc-wrap .isrc-list a{color:#64402C;text-decoration:none!important;font-weight:600;border:0!important;transition:color .15s ease}'
+                . '.isrc-wrap .isrc-list a:hover{color:#3a2a1e;text-decoration:underline!important;text-decoration-thickness:1.5px!important;text-underline-offset:4px}'
+                . '.isrc-wrap{color:#64402C}'
+                . '.isrc-wrap.isrc-det{border-top:1px solid rgba(100,64,44,.25);border-bottom:1px solid rgba(100,64,44,.25);border-color:color-mix(in srgb,currentColor 30%,transparent)}'
+                . '.isrc-wrap .isrc-sum{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;cursor:pointer;list-style:none}'
+                . '.isrc-wrap .isrc-sum::-webkit-details-marker{display:none}'
+                . '.isrc-wrap .isrc-sum::marker{content:""}'
+                . '.isrc-wrap .isrc-sum::before,.isrc-wrap .isrc-sum::after{content:none!important;display:none!important}'
+                . '.isrc-wrap .isrc-sum .isrc-h{margin:0;font-size:22px}'
+                . '.isrc-wrap .isrc-n{font-family:inherit;font-style:normal;font-size:15px;color:#9c7b4e}'
+                . '.isrc-wrap .isrc-ar{flex:0 0 auto;width:10px;height:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:-4px 4px 0 0;transition:transform .2s ease}'
+                . '.isrc-wrap[open] .isrc-ar{transform:rotate(-135deg);margin-top:4px}'
+                . '.isrc-wrap.isrc-det .isrc-list{padding:4px 0 20px}'
+                . '.isrc-wrap .isrc-sum:focus-visible{outline:2px solid #64402C;outline-offset:2px}'
+                . '.isrc-wrap.isrc-dark{color:#f7efe1}'
+                . '.isrc-wrap.isrc-dark.isrc-det{border-color:rgba(243,234,217,.32)}'
+                . '.isrc-wrap.isrc-dark .isrc-h{color:#f7efe1}'
+                . '.isrc-wrap.isrc-dark .isrc-n{color:#d9cebc}'
+                . '.isrc-wrap.isrc-dark .isrc-ar{border-color:#f3ead9}'
+                . '.isrc-wrap.isrc-dark .isrc-list li{color:#d9cebc}'
+                . '.isrc-wrap.isrc-dark .isrc-list li::before{color:#f3ead9}'
+                . '.isrc-wrap.isrc-dark .isrc-list a{color:#f7efe1}'
+                . '.isrc-wrap.isrc-dark .isrc-list a:hover{color:#fff}'
+                . '.isrc-wrap.isrc-dark .isrc-sum:focus-visible{outline-color:#f3ead9}'
+                . '@media(max-width:680px){.isrc-wrap .isrc-list{grid-template-columns:1fr!important}}'
+                . '</style>';
+            $title = trim((string) ($s['sources_title'] ?? ''));
+            $n = substr_count($items, '<li>');
+            $dark = (($s['skin'] ?? 'light') === 'dark') ? ' isrc-dark' : '';
+            if (($s['collapsible'] ?? 'yes') === 'yes') {
+                echo '<details class="isrc-wrap isrc-det' . $dark . '"' . (($s['start_open'] ?? '') === 'yes' ? ' open' : '') . '><summary class="isrc-sum">'
+                    . '<span class="isrc-h">' . esc_html($title !== '' ? $title : 'Sources') . (($s['show_count'] ?? 'yes') === 'yes' ? ' <span class="isrc-n">(' . (int) $n . ')</span>' : '') . '</span>'
+                    . '<span class="isrc-ar" aria-hidden="true"></span></summary><ul class="isrc-list">' . $items . '</ul></details>';
             } else {
-                $this->links($related, $s['related_title']);
+                echo '<div class="isrc-wrap' . $dark . '">' . ($title !== '' ? '<h3 class="isrc-h">' . esc_html($title) . '</h3>' : '') . '<ul class="isrc-list">' . $items . '</ul></div>';
             }
         }
     }
@@ -3824,7 +4202,8 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('bg_color', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => ['{{WRAPPER}} .irl-wrap' => 'background:{{VALUE}}']]);
             $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px', 'em', '%'],
-                'default' => ['top' => '48', 'right' => '24', 'bottom' => '48', 'left' => '24', 'unit' => 'px'],
+                'default' => ['top' => '30', 'right' => '24', 'bottom' => '30', 'left' => '24', 'unit' => 'px'],
+                'mobile_default' => ['top' => '24', 'right' => '16', 'bottom' => '24', 'left' => '16', 'unit' => 'px'],
                 'selectors' => ['{{WRAPPER}} .irl-wrap' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
             $this->add_responsive_control('max_w', ['label' => 'Content max width', 'type' => \Elementor\Controls_Manager::SLIDER,
                 'range' => ['px' => ['min' => 600, 'max' => 1400]], 'default' => ['size' => 1120, 'unit' => 'px'],
@@ -4072,6 +4451,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             }
             $done = true;
             return '<style id="irl-css">
+              .elementor-widget-island_related_links,.elementor-widget-island_related_links>.elementor-widget-container{width:100%}
               .irl-wrap.irl-wrap{width:100%}
               .irl-wrap .irl-inner{margin:0 auto}
               .irl-wrap .irl-head{text-align:center}
@@ -4080,11 +4460,15 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-orn-i{display:inline-flex;line-height:1;font-size:30px}
               .irl-wrap .irl-orn-i svg{width:30px;height:30px;fill:currentColor}
               .irl-wrap .irl-h{margin:0 0 12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-size:30px;font-weight:400;color:#f7efe1}
-              .irl-wrap .irl-intro{margin:0 auto 40px;max-width:760px;font-size:16px;line-height:1.6;color:#d9cebc}
+              .irl-wrap .irl-intro{margin:0 auto 40px;max-width:760px;font-size:17px;line-height:1.6;color:#d9cebc}
               .irl-wrap .irl-cols{display:grid;grid-template-columns:repeat(var(--irl-cols,3),1fr);gap:34px 48px;align-items:start}
               .irl-wrap .irl-gh{position:relative;margin:0 0 22px;padding-bottom:12px;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:24px;color:#f7efe1}
               .irl-wrap .irl-gh::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:#f3ead9}
               .irl-wrap .irl-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+              .irl-wrap .irl-cols.irl-one{grid-template-columns:minmax(0,560px);justify-content:center}
+              .irl-wrap .irl-one .irl-contact{text-align:center}
+              .irl-wrap .irl-one .irl-ct-head{justify-content:center}
+              .irl-wrap .irl-one .irl-ct-head::after{left:50%;transform:translateX(-50%)}
               .irl-wrap .irl-item{position:relative;padding-left:24px;font-size:17px;line-height:1.5}
               .irl-wrap .irl-item::before{content:"\203A";position:absolute;left:2px;top:0;line-height:26px;color:#f3ead9;font-size:22px}
               .irl-wrap .irl-item a{color:#ece2d1;text-decoration:none;transition:color .18s ease}
@@ -4094,7 +4478,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               .irl-wrap .irl-contact .irl-ct-i{display:inline-flex;line-height:1;font-size:40px;color:#f3ead9}
               .irl-wrap .irl-contact .irl-ct-i svg{width:40px;height:40px;fill:currentColor}
               .irl-wrap .irl-ct-h{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;color:#f7efe1}
-              .irl-wrap .irl-ct-t{margin:0 0 20px;font-size:15px;line-height:1.6;color:#d9cebc}
+              .irl-wrap .irl-ct-t{margin:0 0 20px;font-size:17px;line-height:1.6;color:#d9cebc}
               .irl-wrap .irl-ct-btn{display:inline-flex;align-items:center;gap:10px;padding:11px 24px;border:1.5px solid #f3ead9;border-radius:8px;font-weight:600;font-size:16px;font-family:inherit;line-height:1.2;color:#f7efe1;background:transparent;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}
               .irl-wrap .irl-ct-btn:hover{background:#f3ead9;border-color:#f3ead9;color:#3a2a1e}
               .irl-wrap .irl-ct-btn .irl-ct-arw{display:inline-flex;align-items:center;line-height:1;transition:transform .2s ease}
@@ -4157,7 +4541,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</div>';
             }
 
-            echo '<div class="irl-cols" style="--irl-cols:' . (int) $cols . '">';
+            echo '<div class="irl-cols' . ((int) $cols === 1 ? ' irl-one' : '') . '" style="--irl-cols:' . (int) $cols . '">';
             if ($related) {
                 $this->columns($related, $s);
             }
@@ -4749,7 +5133,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_responsive_control('columns', ['label' => 'Card columns', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => '2', 'tablet_default' => '2', 'mobile_default' => '1',
                 'options' => ['1' => '1', '2' => '2'], 'condition' => ['layout' => 'cards'],
                 'selectors' => ['{{WRAPPER}} .wts-cards' => 'grid-template-columns:repeat({{VALUE}},1fr)']]);
-            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
+            $this->add_control('hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '',
                 'description' => 'Show a few lines per site; the full description opens on hover (tap on mobile) and hides again on leave. A soft fade hints there is more.']);
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 4, 'min' => 2, 'max' => 20,
                 'condition' => ['hover_expand' => 'yes']]);
@@ -4811,22 +5195,18 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .wts-r{display:grid;grid-template-columns:130px 1fr;gap:16px;padding:16px 20px;background:#FCF9F5;border-top:1px solid rgba(90,61,43,.14)}
               {{WRAPPER}} .wts-r:first-child{border-top:0}
               {{WRAPPER}} .wts-r .wts-isl{padding-top:3px}
-              {{WRAPPER}} .wts.hx .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden;transition:max-height .4s ease}
-              {{WRAPPER}} .wts.hx .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc{max-height:var(--wts-open,700px)}
-              {{WRAPPER}} .wts.hx .wts-item.is-open .wts-desc::after{opacity:0}
-              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wts.hx .wts-desc,{{WRAPPER}} .wts.hx .wts-desc::after{transition:none}}
               @media(max-width:720px){ {{WRAPPER}} .wts-cards{grid-template-columns:1fr} {{WRAPPER}} .wts-r{grid-template-columns:1fr} }
               /* MOBILE clamp + tappable arrow (added by JS as .clip-m per item when it
                  overflows). Tapping the arrow toggles .is-open, which persists while
                  scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .wts-item.clip-m .wts-desc{position:relative;max-height:calc(var(--cl,4) * 1.6em);overflow:hidden}
-              {{WRAPPER}} .wts-item.clip-m .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none}
+              {{WRAPPER}} .wts-item.clip-m .wts-desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--wts-fade,#FCF9F5));pointer-events:none}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc{max-height:none!important}
               {{WRAPPER}} .wts-item.clip-m.is-open .wts-desc::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wts-item.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .wts-item.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .wts-item.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wts-item.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .wts-item.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               /* Mobile carousel: horizontal swipe (CSS scroll-snap, no JS). The
                  peek of the next card is the swipe affordance. */
               @media(max-width:767px){
@@ -4874,12 +5254,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // Desktop: hover to expand each site's description (JS-driven so it
             // never depends on CSS :hover, which the Elementor overlay can
             // swallow). Mobile keeps the tappable "Read More" link only.
-            if ($hx) {
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".wts-item").forEach(function(c){'
-                    . 'c.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
-            }
             island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
         }
     }
@@ -5057,7 +5431,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             $this->add_control('feat_heading', ['label' => 'Features heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'Feature Sections',
                 'description' => 'Blank = use the page’s feature_sections_title if present.']);
             $this->add_control('alternate', ['label' => 'Alternate image side', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
-            $this->add_control('hover_expand', ['label' => 'Clamp text, expand on hover', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+            $this->add_control('hover_expand', ['label' => 'Clamp long text (Read more button)', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
                 'description' => 'Show a few lines per feature; the full text opens on hover (tap on mobile) and closes on leave. A soft fade hints there is more.']);
             $this->add_control('clamp_lines', ['label' => 'Lines when collapsed', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 5, 'min' => 2, 'max' => 20,
                 'condition' => ['hover_expand' => 'yes']]);
@@ -5082,8 +5456,10 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 'default' => ['size' => 18, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .wgf-feats' => 'gap:{{SIZE}}{{UNIT}}']]);
             $this->add_control('min_h', ['label' => 'Minimum scroll height (px)', 'type' => \Elementor\Controls_Manager::NUMBER, 'default' => 320, 'min' => 200,
                 'description' => 'The feature list never shrinks below this even if the card is short.']);
+            $this->add_control('show_scroll_fade', ['label' => 'Show bottom fade', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes',
+                'description' => 'The soft gradient at the bottom edge of the scrolling feature list. Off = no gradient.']);
             $this->add_control('fade', ['label' => 'Fade color (match page bg)', 'type' => \Elementor\Controls_Manager::COLOR, 'default' => '#efe7dd',
-                'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
+                'condition' => ['show_scroll_fade' => 'yes'], 'selectors' => ['{{WRAPPER}} .wgf-col' => '--wgf-fade:{{VALUE}}']]);
             $this->end_controls_section();
 
             /* CARD (left) */
@@ -5247,21 +5623,17 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                  (otherwise the first data row was wrongly bolded/shaded like a 2nd header). */
               {{WRAPPER}} .wgf-tbl table:not(:has(thead)) tr:first-child td{background:rgba(90,61,43,.06);font-weight:700}
               {{WRAPPER}} .wgf-tbl caption{caption-side:top;text-align:left;font-size:12px;color:#6a5646;padding:6px 2px}
-              {{WRAPPER}} .wgf.hx .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden;transition:max-height .45s ease}
-              {{WRAPPER}} .wgf.hx .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none;transition:opacity .3s ease}
-              {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body{max-height:var(--wgf-open,900px)}
-              {{WRAPPER}} .wgf.hx .wgf-feat.is-open .wgf-body::after{opacity:0}
-              @media(prefers-reduced-motion:reduce){{{WRAPPER}} .wgf.hx .wgf-body,{{WRAPPER}} .wgf.hx .wgf-body::after{transition:none}}
               /* MOBILE clamp + tappable arrow (added by JS as .clip-m per feature when
                  it overflows). Tapping the arrow toggles .is-open, persistent while
                  scrolling. Desktop keeps its hover clamp above. */
               {{WRAPPER}} .wgf-feat.clip-m .wgf-body{position:relative;max-height:calc(var(--cl,5) * 1.7em);overflow:hidden}
-              {{WRAPPER}} .wgf-feat.clip-m .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.7em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none}
+              {{WRAPPER}} .wgf-feat.clip-m .wgf-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(rgba(0,0,0,0),var(--wgf-card,#FCF9F5));pointer-events:none}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body{max-height:none!important}
               {{WRAPPER}} .wgf-feat.clip-m.is-open .wgf-body::after{opacity:0}
               {{WRAPPER}} .ic-more{display:none}
-              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:inline-block;margin-top:10px;padding:0;border:0;background:transparent;color:#64402C;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none}
-              {{WRAPPER}} .wgf-feat.clip-m .ic-more:hover{text-decoration:underline}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;margin-top:16px;padding:16px 0 0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;border-top:1px solid rgba(231,220,203,.28)!important;border-top-color:color-mix(in srgb,currentColor 30%,transparent)!important;background:transparent!important;text-transform:none;letter-spacing:normal;color:inherit;font-family:inherit;font-weight:400;font-size:18px;line-height:1.3;text-align:left;cursor:pointer;text-decoration:none}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more .ic-ar{font-size:24px;line-height:1;color:#64402C}
+              {{WRAPPER}} .wgf-feat.clip-m .ic-more:hover .ic-ar{transform:translateY(2px)}
               {{WRAPPER}} .wgf-media{min-height:150px;background:#e3d6c8 center/cover no-repeat}
               /* MOBILE: image always on TOP of each card (title/text below). The
                  desktop 2-col ordering is restored under .is-wide (glance mode). */
@@ -5371,7 +5743,7 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
                 echo '</article>';
                 $i++;
             }
-            echo '</div></div><div class="wgf-fade"></div></div>';  // .wgf-feats .wgf-scroll .wgf-fade
+            echo '</div></div>' . ((($s['show_scroll_fade'] ?? 'yes') === 'yes') ? '<div class="wgf-fade"></div>' : '') . '</div>';  // .wgf-feats .wgf-scroll .wgf-fade
             echo '</div>';  // .wgf
 
             // Desktop: hover to expand each feature. The clamp opens ONLY when the
@@ -5380,13 +5752,6 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
             // doesn't reflow it away and it stays clickable. Collapses on leaving
             // the whole card. Binds via previousElementSibling — must print right
             // after the .wgf. Mobile keeps the tappable "Read More" link only.
-            if ($hx) {
-                echo '<script>(function(){var w=document.currentScript&&document.currentScript.previousElementSibling;'
-                    . 'if(!w||!w.querySelectorAll)return;if(window.matchMedia&&!window.matchMedia("(min-width:1367px)").matches)return;w.querySelectorAll(".wgf-feat").forEach(function(c){'
-                    . 'var tx=c.querySelector(".wgf-tx");'
-                    . 'if(tx)tx.addEventListener("mouseenter",function(){c.classList.add("is-open");});'
-                    . 'c.addEventListener("mouseleave",function(){c.classList.remove("is-open");});});})();</script>';
-            }
             island_ew_clip_script();  // shared mobile clamp + "Read More" toggle
 
             // Infographic lightbox — printed AFTER the hover script so it never
@@ -5960,6 +6325,605 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
               {{WRAPPER}} .ipc--plain{display:flex;flex-direction:column;gap:8px;padding-left:18px;list-style:disc}
             </style>';
             echo '<div class="ipc">' . $blocks . '</div>';
+        }
+    }
+
+    /**
+     * Island Expert Pages — the pages an expert has written, as cards.
+     *
+     * Drop it on an expert's profile page. It finds every published page whose
+     * ACF `author` byline names that person and prints image, title and up to
+     * three lines of description. The name comes from the profile page's own
+     * title (override it in the widget if the title carries more than the name),
+     * and only the part of the byline before the first comma is compared — so
+     * "Juan Magallanes, Naturalist Expert Contributor" counts for "Juan
+     * Magallanes". Nothing is maintained by hand: a page shows up as soon as it
+     * is published with that byline.
+     *
+     * Like Related Links, the design is fixed on purpose so it reads the same on
+     * every profile; only the outer container is adjustable.
+     */
+    class Island_ExpertPages_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_expert_pages';
+        }
+        public function get_title()
+        {
+            return 'Island Expert Pages';
+        }
+        public function get_icon()
+        {
+            return 'eicon-posts-grid';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        public function get_keywords()
+        {
+            return ['expert', 'author', 'byline', 'pages', 'articles', 'cards', 'list'];
+        }
+
+        protected function register_controls()
+        {
+            $types = [];
+            foreach (get_post_types(['public' => true], 'objects') as $slug => $obj) {
+                if ($slug !== 'attachment') {
+                    $types[$slug] = $obj->labels->name ?? $slug;
+                }
+            }
+
+            $this->start_controls_section('c', ['label' => 'Content', 'tab' => \Elementor\Controls_Manager::TAB_CONTENT]);
+            $this->add_control('name_override', ['label' => 'Expert name (blank = this page\'s title)', 'type' => \Elementor\Controls_Manager::TEXT,
+                'label_block' => true, 'placeholder' => 'Juan Magallanes',
+                'description' => 'Compared with the part of each page\'s ACF "author" byline before the first comma.']);
+            $this->add_control('show_heading', ['label' => 'Show heading', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => 'yes']);
+            $this->add_control('heading', ['label' => 'Heading', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'More from {name}',
+                'label_block' => true, 'description' => '{name} is replaced by the expert\'s name.',
+                'condition' => ['show_heading' => 'yes']]);
+            $this->add_control('post_types', ['label' => 'Look in', 'type' => \Elementor\Controls_Manager::SELECT2, 'multiple' => true,
+                'options' => $types, 'default' => ['page'], 'separator' => 'before']);
+            $this->add_control('order', ['label' => 'Order', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'date_desc',
+                'options' => ['date_desc' => 'Newest first', 'title_asc' => 'Title A–Z']]);
+            $this->add_control('limit', ['label' => 'Max pages (0 = all)', 'type' => \Elementor\Controls_Manager::NUMBER,
+                'min' => 0, 'max' => 100, 'default' => 12]);
+            $this->add_control('show_date', ['label' => 'Show date on cards', 'type' => \Elementor\Controls_Manager::SWITCHER, 'default' => '', 'separator' => 'before']);
+            $this->add_control('date_type', ['label' => 'Date', 'type' => \Elementor\Controls_Manager::SELECT, 'default' => 'modified',
+                'options' => ['modified' => 'Last updated', 'published' => 'Published'], 'condition' => ['show_date' => 'yes']]);
+            $this->end_controls_section();
+
+            /* Container only: the card design itself is fixed in styles(). */
+            $this->start_controls_section('sl', ['label' => 'Container', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('bg_color', ['label' => 'Background', 'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => ['{{WRAPPER}} .iep-wrap' => 'background:{{VALUE}}']]);
+            $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => \Elementor\Controls_Manager::DIMENSIONS, 'size_units' => ['px', 'em', '%'],
+                'default' => ['top' => '48', 'right' => '24', 'bottom' => '48', 'left' => '24', 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iep-wrap' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->add_responsive_control('max_w', ['label' => 'Content max width', 'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => ['px' => ['min' => 600, 'max' => 1400]], 'default' => ['size' => 1120, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iep-inner' => 'max-width:{{SIZE}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+
+        /** The name part of a byline — "By Juan Magallanes, Role — site" → "Juan Magallanes". */
+        private function display_name($s)
+        {
+            $s = wp_strip_all_tags((string) $s);
+            $s = preg_replace('/^\s*by\s+/iu', '', $s);
+            $parts = preg_split('/\s*[,|–—]\s*|\s+-\s+/u', $s, 2);
+            return trim(preg_replace('/\s+/u', ' ', (string) ($parts[0] ?? '')));
+        }
+
+        /** Case- and accent-insensitive form of a name, for comparing. */
+        private function norm($s)
+        {
+            $s = remove_accents($this->display_name($s));
+            return function_exists('mb_strtolower') ? mb_strtolower($s, 'UTF-8') : strtolower($s);
+        }
+
+        private function names_match($byline, $name)
+        {
+            $a = $this->norm($byline);
+            return $a !== '' && $a === $this->norm($name);
+        }
+
+        /**
+         * A word to pre-filter the database with. The longest plain-ASCII word, so
+         * the LIKE still matches on a database whose collation is accent-sensitive;
+         * the exact comparison happens afterwards in PHP.
+         */
+        private function needle($name)
+        {
+            $name = $this->display_name($name);
+            $best = '';
+            foreach (preg_split('/\s+/u', $name) as $w) {
+                $w = trim($w, " .,;:-");
+                if (preg_match('/^[A-Za-z]+$/', $w) && strlen($w) > strlen($best)) {
+                    $best = $w;
+                }
+            }
+            return $best !== '' ? $best : $name;
+        }
+
+        /** Author names typed into Elementor "Author Box" widgets (Source: Custom) on a page. */
+        private function elementor_author_names($id)
+        {
+            $raw = get_post_meta($id, '_elementor_data', true);
+            $data = is_string($raw) ? json_decode($raw, true) : (is_array($raw) ? $raw : null);
+            $names = [];
+            $walk = function ($nodes) use (&$walk, &$names) {
+                foreach ((array) $nodes as $n) {
+                    if (!is_array($n)) {
+                        continue;
+                    }
+                    if (($n['widgetType'] ?? '') === 'author-box') {
+                        $nm = $n['settings']['author_name'] ?? '';
+                        if (is_string($nm) && trim($nm) !== '') {
+                            $names[] = $nm;
+                        }
+                    }
+                    if (!empty($n['elements'])) {
+                        $walk($n['elements']);
+                    }
+                }
+            };
+            if (is_array($data)) {
+                $walk($data);
+            }
+            return $names;
+        }
+
+        /** IDs (unordered) of the published pages whose byline names $name — ACF/post-meta `author`, or an Elementor Author Box. */
+        private function match_ids($name, $needle, $types)
+        {
+            $key = 'island_ep_' . md5($name . '|' . implode(',', (array) $types) . '|' . (string) get_option('island_ep_ver', '0'));
+            $hit = get_transient($key);
+            if (is_array($hit)) {
+                return $hit;
+            }
+            $found = [];
+            $q = new \WP_Query([
+                'post_type' => $types, 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true,
+                'meta_query' => [['key' => 'author', 'value' => $needle, 'compare' => 'LIKE']],
+            ]);
+            $ids = array_map('intval', (array) $q->posts);
+            if ($ids) {
+                update_meta_cache('post', $ids);
+            }
+            foreach ($ids as $id) {
+                if ($this->names_match(get_post_meta($id, 'author', true), $name)) {
+                    $found[$id] = $id;
+                }
+            }
+            // Pages built only with Elementor keep the byline in an Author Box widget (not a field).
+            $q2 = new \WP_Query([
+                'post_type' => $types, 'post_status' => 'publish', 'posts_per_page' => 300, 'fields' => 'ids', 'no_found_rows' => true,
+                'meta_query' => [['key' => '_elementor_data', 'value' => $needle, 'compare' => 'LIKE']],
+            ]);
+            foreach ((array) $q2->posts as $id) {
+                $id = (int) $id;
+                if (isset($found[$id])) {
+                    continue;
+                }
+                foreach ($this->elementor_author_names($id) as $nm) {
+                    if ($this->names_match($nm, $name)) {
+                        $found[$id] = $id;
+                        break;
+                    }
+                }
+            }
+            $found = array_values($found);
+            set_transient($key, $found, 6 * HOUR_IN_SECONDS);
+            return $found;
+        }
+
+        /** IDs of the published pages whose byline names $name, ordered and limited. */
+        private function find($name, $types, $limit, $order, $exclude)
+        {
+            $needle = $this->needle($name);
+            if ($needle === '') {
+                return [];
+            }
+            $ids = array_values(array_diff($this->match_ids($name, $needle, $types), array_map('intval', (array) $exclude)));
+            if (!$ids) {
+                return [];
+            }
+            $q = new \WP_Query([
+                'post_type' => $types, 'post_status' => 'publish', 'post__in' => $ids, 'fields' => 'ids', 'no_found_rows' => true,
+                'posts_per_page' => $limit > 0 ? $limit : -1,
+                'orderby' => ($order === 'title_asc') ? 'title' : 'date',
+                'order' => ($order === 'title_asc') ? 'ASC' : 'DESC',
+            ]);
+            return array_map('intval', (array) $q->posts);
+        }
+
+        /** Card description: the first usable summary the page already has. */
+        private function blurb($id)
+        {
+            $has_acf = function_exists('get_field');
+            $cands = [
+                // Quick Answer (GEO) is the card text; the rest only fill in when it is empty.
+                $has_acf ? get_field('geo_answer', $id) : '',
+                get_post_field('post_excerpt', $id),
+                $has_acf ? get_field('hero_subtitle', $id) : '',
+                $has_acf ? get_field('intro', $id) : '',
+                // SEO descriptions are written for Google, so they come last.
+                get_post_meta($id, '_yoast_wpseo_metadesc', true),
+                get_post_meta($id, 'rank_math_description', true),
+            ];
+            foreach ($cands as $c) {
+                if (!is_scalar($c)) {
+                    continue;
+                }
+                $t = trim(preg_replace('/\s+/u', ' ', html_entity_decode(wp_strip_all_tags((string) $c), ENT_QUOTES, 'UTF-8')));
+                // Unresolved SEO template variables (%%title%% …) are not a summary.
+                if ($t !== '' && strpos($t, '%%') === false) {
+                    return wp_trim_words($t, 60, '…');
+                }
+            }
+            return '';
+        }
+
+        /** "Updated Oct 12, 2026" / "Oct 12, 2026" in the site's own date format. */
+        private function date_html($id, $show, $type)
+        {
+            if (!$show) {
+                return '';
+            }
+            $post = get_post($id);
+            if (!$post) {
+                return '';
+            }
+            $gmt = $type === 'published' ? $post->post_date_gmt : $post->post_modified_gmt;
+            if (!$gmt || $gmt === '0000-00-00 00:00:00') {
+                $gmt = $type === 'published' ? $post->post_date : $post->post_modified;
+            }
+            $ts = strtotime($gmt . ' UTC');
+            if (!$ts) {
+                return '';
+            }
+            $label = wp_date(get_option('date_format') ?: 'F j, Y', $ts);
+            return '<time class="iep-date" datetime="' . esc_attr(gmdate('c', $ts)) . '">'
+                . ($type === 'modified' ? esc_html('Updated ') : '') . esc_html($label) . '</time>';
+        }
+
+        /** The card title: the page's ACF hero_title, else its WordPress title. */
+        private function card_title($id)
+        {
+            $t = function_exists('get_field') ? get_field('hero_title', $id) : '';
+            $t = is_scalar($t) ? trim(html_entity_decode(wp_strip_all_tags((string) $t), ENT_QUOTES, 'UTF-8')) : '';
+            return $t !== '' ? $t : get_the_title($id);
+        }
+
+        private function thumb($id)
+        {
+            $attr = ['class' => 'iep-img', 'loading' => 'lazy', 'alt' => ''];
+            if (has_post_thumbnail($id)) {
+                return get_the_post_thumbnail($id, 'medium_large', $attr);
+            }
+            if (function_exists('get_field')) {
+                $img = get_field('hero_image', $id);
+                $att = is_array($img) ? (int) ($img['ID'] ?? $img['id'] ?? 0) : (int) $img;
+                if ($att) {
+                    return wp_get_attachment_image($att, 'medium_large', false, $attr);
+                }
+            }
+            return '';
+        }
+
+        /**
+         * The stylesheet, printed once per request. Real CSS — Elementor's
+         * {{WRAPPER}} token is only resolved inside a control's `selectors` — and
+         * anchored on .iep-wrap so the theme's own link and heading rules lose.
+         */
+        private function styles()
+        {
+            static $done = false;
+            if ($done) {
+                return '';
+            }
+            $done = true;
+            return '<style id="iep-css">
+              .iep-wrap.iep-wrap{width:100%}
+              .iep-wrap .iep-inner{margin:0 auto}
+              .iep-wrap .iep-h{margin:0 0 28px;text-align:center;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:30px;line-height:1.25;color:#64402c}
+              .iep-wrap .iep-car{position:relative}
+              .iep-wrap .iep-car.iep-scroll{padding-left:64px;padding-right:64px}
+              .iep-wrap .iep-track{display:flex;gap:28px;align-items:stretch;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:8px 10px 18px;margin:0 -10px;scroll-padding-left:10px;scroll-padding-right:10px}
+              .iep-wrap .iep-track::-webkit-scrollbar{display:none}
+              .iep-wrap .iep-track>.iep-card{flex:0 0 calc((100% - 56px)/3);scroll-snap-align:start;min-width:0}
+              .iep-wrap .iep-nav{display:none;position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;margin:0;padding:0;border:1px solid #d9c3ab;border-radius:50%;background:#fff;color:#64402c;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 6px 16px rgba(60,40,25,.18);z-index:2;align-items:center;justify-content:center}
+              .iep-wrap .iep-nav:hover{background:#64402c;color:#fff;border-color:#64402c}
+              .iep-wrap .iep-nav[disabled]{opacity:.35;cursor:default}
+              .iep-wrap .iep-prev{left:0}
+              .iep-wrap .iep-next{right:0}
+              .iep-wrap .iep-car.iep-scroll .iep-nav{display:flex}
+              .iep-wrap .iep-card{display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid #d9c3ab;border-radius:8px;color:inherit;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}
+              .iep-wrap .iep-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(60,40,25,.16)}
+              .iep-wrap .iep-media{aspect-ratio:16/10;overflow:hidden;background:#e8ddd0}
+              .iep-wrap .iep-img{display:block;width:100%;height:100%;object-fit:cover}
+              .iep-wrap .iep-body{display:flex;flex-direction:column;gap:8px;padding:18px 20px 22px;flex:1}
+              .iep-wrap .iep-date{margin-top:auto;padding-top:6px;font-size:13px;line-height:1.3;color:#8a7358}
+              .iep-wrap .iep-title{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:20px;line-height:1.3;color:#64402c}
+              .iep-wrap .iep-desc{margin:0;font-size:15px;line-height:1.55;color:#4a3a2c;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
+              @media(max-width:900px){.iep-wrap .iep-track>.iep-card{flex-basis:calc((100% - 28px)/2)}}
+              @media(max-width:600px){.iep-wrap .iep-car.iep-scroll{padding-left:44px;padding-right:44px}.iep-wrap .iep-track>.iep-card{flex-basis:100%}.iep-wrap .iep-nav{width:36px;height:36px;font-size:22px}}
+            </style><script>(function(){
+              function init(c){var t=c.querySelector(".iep-track"),p=c.querySelector(".iep-prev"),n=c.querySelector(".iep-next");if(!t||c.__iep){return}c.__iep=1;
+              function up(){var m=t.scrollWidth-t.clientWidth;c.classList.toggle("iep-scroll",m>4);p.disabled=t.scrollLeft<=4;n.disabled=t.scrollLeft>=m-4}
+              function go(d){var w=t.querySelector(".iep-card");t.scrollBy({left:d*((w?w.offsetWidth:300)+28),behavior:"smooth"})}
+              p.addEventListener("click",function(){go(-1)});n.addEventListener("click",function(){go(1)});
+              t.addEventListener("scroll",up,{passive:true});window.addEventListener("resize",up);up();setTimeout(up,400)}
+              function all(){document.querySelectorAll(".iep-car").forEach(init)}
+              if(document.readyState!=="loading"){all()}else{document.addEventListener("DOMContentLoaded",all)}
+              window.addEventListener("elementor/frontend/init",function(){if(window.elementorFrontend){elementorFrontend.hooks.addAction("frontend/element_ready/island_expert_pages.default",all)}});
+            })();</script>';
+        }
+
+        protected function render()
+        {
+            $s = $this->get_settings_for_display();
+            $name = trim((string) ($s['name_override'] ?? ''));
+            if ($name === '') {
+                $name = get_the_title();
+            }
+            $display = $this->display_name($name);
+            $types = array_values(array_filter((array) ($s['post_types'] ?? []))) ?: ['page'];
+            $ids = $display === '' ? [] : $this->find(
+                $name,
+                $types,
+                (int) ($s['limit'] ?? 12),
+                (string) ($s['order'] ?? 'date_desc'),
+                array_filter([(int) get_the_ID()])
+            );
+
+            if (!$ids) {
+                // Visitors see nothing; the editor is told why the box is empty.
+                if (class_exists('\Elementor\Plugin') && \Elementor\Plugin::$instance->editor->is_edit_mode()) {
+                    echo '<div style="padding:14px 16px;border:1px dashed #b9a78f;border-radius:6px;color:#7a6650;font-size:13px">'
+                        . 'Island Expert Pages: no published page has an ACF “author” byline starting with <strong>'
+                        . esc_html($display !== '' ? $display : '—') . '</strong> yet. They appear here automatically once one does.</div>';
+                }
+                return;
+            }
+
+            echo $this->styles();
+            echo '<div class="iep-wrap"><div class="iep-inner iep-car">';
+            $heading = trim((string) ($s['heading'] ?? ''));
+            if (($s['show_heading'] ?? 'yes') === 'yes' && $heading !== '') {
+                echo '<h2 class="iep-h">' . esc_html(str_replace('{name}', $display, $heading)) . '</h2>';
+            }
+            $show_date = ($s['show_date'] ?? '') === 'yes';
+            $date_type = ($s['date_type'] ?? 'modified') === 'published' ? 'published' : 'modified';
+            echo '<button type="button" class="iep-nav iep-prev" aria-label="Previous">&lsaquo;</button><div class="iep-track">';
+            foreach ($ids as $id) {
+                $img = $this->thumb($id);
+                $text = $this->blurb($id);
+                echo '<a class="iep-card" href="' . esc_url(get_permalink($id)) . '">'
+                    . '<div class="iep-media">' . $img . '</div>'
+                    . '<div class="iep-body"><h3 class="iep-title">' . esc_html($this->card_title($id)) . '</h3>'
+                    . ($text !== '' ? '<p class="iep-desc">' . esc_html($text) . '</p>' : '')
+                    . $this->date_html($id, $show_date, $date_type)
+                    . '</div></a>';
+            }
+            echo '</div><button type="button" class="iep-nav iep-next" aria-label="Next">&rsaquo;</button></div></div>';
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND BYLINE — "By Juan Magallanes, Role | review note" where the
+     *  NAME is a link to that expert's profile page (a published page whose
+     *  Galápagos Page Type is "experts" and whose title is the same name,
+     *  case/accent-insensitive). No profile found → plain text, as before.
+     *  Reads the page's ACF `author` field unless "Text" is filled in.
+     * =================================================================== */
+    class Island_Byline_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_byline';
+        }
+        public function get_title()
+        {
+            return 'Island Byline';
+        }
+        public function get_icon()
+        {
+            return 'eicon-person';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        public function get_keywords()
+        {
+            return ['byline', 'author', 'expert', 'by'];
+        }
+        protected function register_controls()
+        {
+            $this->start_controls_section('c', ['label' => 'Byline']);
+            $this->add_control('prefix', ['label' => 'Prefix', 'type' => \Elementor\Controls_Manager::TEXT, 'default' => 'By']);
+            $this->add_control('url', ['label' => 'Link (leave empty to use the ACF “author_url” field)', 'type' => \Elementor\Controls_Manager::TEXT, 'dynamic' => ['active' => true], 'placeholder' => 'https://']);
+            $this->add_control('text', ['label' => 'Text (leave empty to use the ACF “author” field)', 'type' => \Elementor\Controls_Manager::TEXT, 'dynamic' => ['active' => true]]);
+            $this->end_controls_section();
+            $this->start_controls_section('st', ['label' => 'Style', 'tab' => \Elementor\Controls_Manager::TAB_STYLE]);
+            $this->add_control('color', ['label' => 'Color', 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => ['{{WRAPPER}} .ibl-wrap, {{WRAPPER}} .ibl-wrap a' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'typo', 'selector' => '{{WRAPPER}} .ibl-wrap']);
+            $this->add_responsive_control('align', ['label' => 'Alignment', 'type' => \Elementor\Controls_Manager::CHOOSE, 'options' => ['left' => ['title' => 'Left', 'icon' => 'eicon-text-align-left'], 'center' => ['title' => 'Center', 'icon' => 'eicon-text-align-center'], 'right' => ['title' => 'Right', 'icon' => 'eicon-text-align-right']], 'selectors' => ['{{WRAPPER}} .ibl-wrap' => 'text-align:{{VALUE}}']]);
+            $this->end_controls_section();
+        }
+        protected function render()
+        {
+            $s = $this->get_settings_for_display();
+            $text = trim((string) ($s['text'] ?? ''));
+            if ($text === '') {
+                $text = function_exists('get_field') ? get_field('author') : get_post_meta(get_the_ID(), 'author', true);
+            }
+            $url = trim((string) ($s['url'] ?? ''));
+            if ($url === '' && trim((string) ($s['text'] ?? '')) === '') {
+                $url = function_exists('get_field') ? get_field('author_url') : get_post_meta(get_the_ID(), 'author_url', true);
+                $url = is_string($url) ? $url : '';
+            }
+            $html = island_byline_html($text, (string) ($s['prefix'] ?? 'By'), $url);
+            if ($html === '') {
+                return;
+            }
+            echo '<style id="ibl-css">.ibl-wrap{margin:0}.ibl-wrap .ibl-link{color:inherit;text-decoration:underline;text-underline-offset:3px}.ibl-wrap .ibl-link:hover{text-decoration-thickness:2px}</style>';
+            echo $html;
+        }
+    }
+
+    /* ===================================================================
+     *  ISLAND AUTHOR BOX — the hero "photo + By Name, Role + review note" box, as a template.
+     *  Name/role come from the page's ACF `author`; the photo and link from the matching expert
+     *  profile page (about_image, else featured image) or ACF `author_url`; the note from the
+     *  ACF `review_note` (else the default set here). Pages that are pure Elementor keep using
+     *  Elementor's own Author Box — this widget simply prints nothing when there is no byline.
+     * =================================================================== */
+    class Island_AuthorBox_Widget extends \Elementor\Widget_Base
+    {
+        public function get_name()
+        {
+            return 'island_author_box';
+        }
+        public function get_title()
+        {
+            return 'Island Author Box';
+        }
+        public function get_icon()
+        {
+            return 'eicon-person';
+        }
+        public function get_categories()
+        {
+            return ['galapagos_site'];
+        }
+        public function get_keywords()
+        {
+            return ['author', 'byline', 'expert', 'review', 'box'];
+        }
+        protected function register_controls()
+        {
+            $C = '\Elementor\Controls_Manager';
+            $this->start_controls_section('c', ['label' => 'Author box']);
+            $this->add_control('prefix', ['label' => 'Prefix', 'type' => $C::TEXT, 'default' => 'By']);
+            $this->add_control('default_note', ['label' => 'Default review note (when the page has none)', 'type' => $C::TEXTAREA, 'rows' => 3,
+                'default' => 'Reviewed for accuracy against National Park visitor-site data | Updated 2026', 'label_block' => true]);
+            $this->add_control('show_photo', ['label' => 'Show photo', 'type' => $C::SWITCHER, 'default' => 'yes']);
+            $this->add_control('h_over', ['label' => 'Manual overrides (optional)', 'type' => $C::HEADING, 'separator' => 'before']);
+            $this->add_control('text', ['label' => 'Byline (empty = ACF “author”)', 'type' => $C::TEXT, 'dynamic' => ['active' => true], 'label_block' => true]);
+            $this->add_control('note', ['label' => 'Review note (empty = ACF “review_note”)', 'type' => $C::TEXTAREA, 'rows' => 2, 'dynamic' => ['active' => true], 'label_block' => true]);
+            $this->add_control('url', ['label' => 'Link (empty = ACF “author_url” / expert profile)', 'type' => $C::URL, 'dynamic' => ['active' => true], 'placeholder' => 'https://', 'label_block' => true]);
+            $this->add_control('photo', ['label' => 'Photo (empty = expert profile photo)', 'type' => $C::MEDIA, 'dynamic' => ['active' => true]]);
+            $this->end_controls_section();
+
+            $this->start_controls_section('st', ['label' => 'Style', 'tab' => $C::TAB_STYLE]);
+            $this->add_responsive_control('align', ['label' => 'Box position', 'type' => $C::CHOOSE, 'default' => 'center',
+                'options' => ['left' => ['title' => 'Left', 'icon' => 'eicon-h-align-left'], 'center' => ['title' => 'Center', 'icon' => 'eicon-h-align-center'], 'right' => ['title' => 'Right', 'icon' => 'eicon-h-align-right']],
+                'selectors_dictionary' => ['left' => 'margin-left:0;margin-right:auto', 'center' => 'margin-left:auto;margin-right:auto', 'right' => 'margin-left:auto;margin-right:0'],
+                'selectors' => ['{{WRAPPER}} .iab' => '{{VALUE}}']]);
+            $this->add_responsive_control('max_w', ['label' => 'Max width', 'type' => $C::SLIDER, 'size_units' => ['px', '%'], 'range' => ['px' => ['min' => 280, 'max' => 1400], '%' => ['min' => 20, 'max' => 100]],
+                'default' => ['size' => 760, 'unit' => 'px'], 'selectors' => ['{{WRAPPER}} .iab' => 'max-width:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('c_name', ['label' => 'Name color', 'type' => $C::COLOR, 'default' => '#F7EFE1', 'selectors' => ['{{WRAPPER}} .iab-name' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'name_typo', 'selector' => '{{WRAPPER}} .iab-name']);
+            $this->add_control('c_note', ['label' => 'Note color', 'type' => $C::COLOR, 'default' => '#F3EAD9', 'selectors' => ['{{WRAPPER}} .iab-note' => 'color:{{VALUE}}']]);
+            $this->add_group_control(\Elementor\Group_Control_Typography::get_type(), ['name' => 'note_typo', 'selector' => '{{WRAPPER}} .iab-note']);
+            $this->add_responsive_control('photo_size', ['label' => 'Photo size', 'type' => $C::SLIDER, 'range' => ['px' => ['min' => 40, 'max' => 140]], 'default' => ['size' => 76, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iab-photo' => 'width:{{SIZE}}{{UNIT}};height:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('c_ring', ['label' => 'Photo ring color', 'type' => $C::COLOR, 'default' => 'rgba(255,255,255,.55)', 'selectors' => ['{{WRAPPER}} .iab-photo' => 'border-color:{{VALUE}}']]);
+            $this->add_responsive_control('gap', ['label' => 'Gap photo ↔ text', 'type' => $C::SLIDER, 'range' => ['px' => ['min' => 0, 'max' => 48]], 'default' => ['size' => 18, 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iab' => 'gap:{{SIZE}}{{UNIT}}']]);
+            $this->add_control('bg', ['label' => 'Background', 'type' => $C::COLOR, 'default' => 'rgba(20,30,40,.5)', 'selectors' => ['{{WRAPPER}} .iab' => 'background:{{VALUE}}']]);
+            $this->add_responsive_control('pad', ['label' => 'Padding', 'type' => $C::DIMENSIONS, 'size_units' => ['px', 'em'],
+                'default' => ['top' => '14', 'right' => '22', 'bottom' => '14', 'left' => '22', 'unit' => 'px'],
+                'selectors' => ['{{WRAPPER}} .iab' => 'padding:{{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}']]);
+            $this->end_controls_section();
+        }
+
+        /** Photo URL of an expert profile page: ACF about_image, else its featured image. */
+        private function profile_photo($pid)
+        {
+            if (!$pid) {
+                return '';
+            }
+            if (function_exists('get_field')) {
+                $img = get_field('about_image', $pid);
+                $att = is_array($img) ? (int) ($img['ID'] ?? $img['id'] ?? 0) : (int) $img;
+                if ($att) {
+                    $u = wp_get_attachment_image_url($att, 'medium');
+                    if ($u) {
+                        return $u;
+                    }
+                }
+            }
+            return has_post_thumbnail($pid) ? (string) get_the_post_thumbnail_url($pid, 'medium') : '';
+        }
+
+        private function field($key, $s)
+        {
+            $v = function_exists('get_field') ? get_field($key) : get_post_meta(get_the_ID(), $key, true);
+            return is_string($v) ? trim($v) : '';
+        }
+
+        protected function render()
+        {
+            $s = $this->get_settings_for_display();
+            $raw = trim((string) ($s['text'] ?? ''));
+            if ($raw === '') {
+                $raw = $this->field('author', $s);
+            }
+            $raw = trim(preg_replace('/^\s*by\s+/iu', '', wp_strip_all_tags($raw)));
+            if ($raw === '') {
+                if (class_exists('\Elementor\Plugin') && \Elementor\Plugin::$instance->editor->is_edit_mode()) {
+                    echo '<div style="padding:14px 16px;border:1px dashed #b9a78f;border-radius:6px;color:#7a6650;font-size:13px">Island Author Box: this page has no ACF “Author / Byline”, so nothing is shown. Fill that field (or the “Byline” override here).</div>';
+                }
+                return;
+            }
+            $parts = preg_split('/(\s*[,|–—]\s*|\s+-\s+)/u', $raw, 2, PREG_SPLIT_DELIM_CAPTURE);
+            $name = trim((string) $parts[0]);
+            $rest = isset($parts[1]) ? $parts[1] . (string) ($parts[2] ?? '') : '';
+            $prefix = trim((string) ($s['prefix'] ?? 'By'));
+
+            $u = $s['url'] ?? '';
+            $explicit = is_array($u) ? trim((string) ($u['url'] ?? '')) : trim((string) $u);
+            if ($explicit === '') {
+                $explicit = $this->field('author_url', $s);
+            }
+            $pid = island_expert_profile_id($name);
+            $url = island_byline_url($name, $explicit);
+
+            $photo = '';
+            if (($s['show_photo'] ?? 'yes') === 'yes') {
+                $photo = !empty($s['photo']['url']) ? (string) $s['photo']['url'] : $this->profile_photo($pid);
+            }
+            $note = trim((string) ($s['note'] ?? ''));
+            if ($note === '') {
+                $note = $this->field('review_note', $s);
+            }
+            if ($note === '') {
+                $note = trim((string) ($s['default_note'] ?? ''));
+            }
+
+            $label = esc_html(($prefix !== '' ? $prefix . ' ' : '') . $name);
+            $nameHtml = island_byline_link($label, $url) . esc_html($rest);
+            $img = '';
+            if ($photo !== '') {
+                $im = '<img class="iab-img" src="' . esc_url($photo) . '" alt="' . esc_attr($name) . '" loading="lazy">';
+                $img = '<span class="iab-photo">' . ($url !== '' ? island_byline_link($im, $url) : $im) . '</span>';
+            }
+            echo '<style id="iab-css">'
+                . '.iab{display:flex;align-items:center;gap:18px;width:fit-content;max-width:100%;box-sizing:border-box;margin-left:auto;margin-right:auto}'
+                . '.iab-photo{flex:0 0 auto;width:76px;height:76px;border-radius:50%;border:2px solid rgba(255,255,255,.55);overflow:hidden;display:block;background:#d9cdbd}'
+                . '.iab-photo a{display:block;width:100%;height:100%}'
+                . '.iab-img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}'
+                . '.iab-tx{min-width:0}'
+                . '.iab-name{margin:0;font-family:Merriweather,Georgia,serif;font-style:italic;font-weight:400;font-size:22px;line-height:1.3;color:#F7EFE1}'
+                . '.iab-note{margin:6px 0 0;font-size:17px;line-height:1.5;color:#F3EAD9}'
+                . '</style>';
+            echo '<div class="iab">' . $img . '<div class="iab-tx"><div class="iab-name">' . $nameHtml . '</div>'
+                . ($note !== '' ? '<p class="iab-note">' . esc_html($note) . '</p>' : '') . '</div></div>';
         }
     }
 
@@ -6938,6 +7902,9 @@ add_action('elementor/widgets/register', function ($widgets_manager) {
         'Island_Video_Widget',
         'Island_CruiseItineraries_Widget',
         'Island_Expert_Widget',
+        'Island_ExpertPages_Widget',
+        'Island_Byline_Widget',
+        'Island_AuthorBox_Widget',
         'Island_AcfList_Widget',
         'Island_ProfileCard_Widget',
     ] as $island_ew_new) {

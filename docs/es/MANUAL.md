@@ -295,6 +295,201 @@ mayoría de los demás widgets de este archivo siguen emitiendo bloques con
 `{{WRAPPER}}` que nunca aplican; su aspecto sale de los valores por defecto de
 los controles.
 
+Cuando solo hay UNA columna (por ejemplo solo el bloque de contacto “Need help?”,
+porque la página no tiene enlaces relacionados), ese bloque se centra en la página y
+su texto y botón también quedan centrados.
+
+### Expert Pages (las páginas que escribió un experto)
+
+Pon **Island Expert Pages** en la ficha de un experto y lista, como tarjetas, todas
+las páginas publicadas que nombran a esa persona en su byline ACF `author`. No hay
+nada que mantener a mano: una página aparece en cuanto se publica con el byline.
+
+- **A quién busca.** El nombre sale del propio título de la ficha (se puede
+  sobrescribir en el widget si el título lleva algo más que el nombre). Sólo se
+  compara la parte del byline anterior a la primera coma, sin distinguir
+  mayúsculas, acentos ni un "By" inicial; así `Juan Magallanes, Naturalist Expert
+  Contributor` cuenta para *Juan Magallanes*, pero *María Magallanes* o *Juan
+  Magallanes Jr* no.
+- **Qué muestra cada tarjeta.** La imagen destacada de la página (si no, su
+  `hero_image`), el título y hasta **tres líneas** de descripción. La descripción es
+  la primera disponible de: el extracto, la meta descripción de Yoast / Rank Math,
+  `geo_answer`, `hero_subtitle`, `intro`.
+- **Páginas solo de Elementor.** Una página sin campos ACF también se encuentra si tiene un
+  **Author Box** de Elementor (Source: Custom) con el **Name** escrito a mano (p. ej. “By Juan
+  Magallanes, Galapagos Travel Advisor”): se compara la parte antes de la coma, igual que con el
+  byline ACF. Un Author Box cuyo Name es una etiqueta dinámica se ignora. Los resultados se
+  guardan unas horas y se refrescan cuando se guarda cualquier página.
+- **Límites.** Lee el campo `author`, que sólo llevan los grupos Informative, Island
+  y Wildlife. Un tipo de página sin ese campo (cruceros, itinerarios) no aparecerá
+  hasta que se agregue el campo a su grupo. La propia ficha nunca se lista a sí
+  misma.
+- **Diseño.** Fijo, como Related Links: sólo el contenedor (fondo, padding, ancho
+  máximo) es ajustable. Los controles cubren el encabezado (`{name}` se sustituye),
+  en qué tipos de contenido buscar, el orden y un máximo.
+
+Las tarjetas salen en un **carrusel**: tres a la vez en escritorio, dos en tablet,
+una en móvil. Si hay más páginas de las que caben, aparecen flechas fuera de las
+tarjetas, centradas en el widget (y se desliza con el dedo en el celular). Las tarjetas pueden mostrar una fecha pequeña abajo (interruptor **Show date on cards**, **apagado** por defecto) — “Updated 12 oct 2026”, o la fecha
+de publicación (**Date**); usa el formato de fecha del sitio.
+El **título** de la tarjeta es el `hero_title` ACF de la página (si está vacío,
+el título de la página). El **texto** es la Respuesta Rápida (`geo_answer`) sin
+etiquetas, cortada a 3 líneas con “…”; solo si está vacía usa: Extracto →
+`hero_subtitle` → `intro` → descripción de Yoast → descripción de Rank Math.
+
+### Texto largo: barra “Read more” (todos los tamaños de pantalla)
+
+Las bandas/filas de secciones, los ítems de "dónde ver" y las fichas de vida
+silvestre recortan el texto largo y muestran una barra **Read more ↓** (línea
+fina, texto a la izquierda y flecha a la derecha). Al hacer clic se abre el texto
+completo (pasa a **Read less ↑**); al cerrarlo, la página vuelve al inicio de esa
+sección si ya te habías desplazado más abajo. El texto corto no lleva barra — ni el que apenas supera el recorte (la barra aparece
+solo si se ocultarían MÁS de 6 líneas). Ya no
+hay hover para expandir: hacía saltar la página cuando una sección se cerraba bajo
+el mouse. El interruptor se llama “Clamp long text (Read more button)” y el ajuste
+de “altura al abrir” ya no se usa (el texto siempre se abre completo). Los enlaces dentro de ese texto toman el color del texto
+de la sección (crema en una banda café) con subrayado, así nunca desaparecen sobre
+fondo oscuro.
+
+### Tablas cuyo encabezado es la primera fila (sin `<thead>`)
+
+Las tablas pegadas desde Word/Google Docs a menudo **no tienen `<thead>`**: el
+encabezado es solo el primer `<tr>` con celdas `<th>`. Dentro de Feature Sections /
+Bands esa fila ahora se ve como encabezado (fondo café, texto crema, versalitas)
+igual que un `<thead>` — antes su texto crema caía sobre blanco y no se veía. Usa
+los mismos controles de color “Header background / Header text”. Los `<div>`
+extra alrededor de la tabla no importan.
+
+### Tablas dentro de las secciones (se ajustan, sin scroll lateral)
+
+Las tablas en filas/bandas de secciones ahora **ajustan el texto y siempre caben
+en la sección**: sin barra de scroll horizontal. El grupo Table tiene el
+interruptor **“Wrap table text (no horizontal scroll)”** (activado por defecto);
+apágalo para volver al comportamiento anterior (ancho mínimo, scroll lateral). Una
+**tabla de una sola columna** (cada celda = línea de título y luego un párrafo) se
+ve con el título en negrita y el texto normal; la celda del encabezado usa el
+mismo patrón con el color del encabezado (línea de título en negrita, del mismo tamaño que el texto). Su texto es de 15px con interlineado 1.7
+(igual que el texto del cuerpo de la sección) y, en las filas de secciones, sigue la
+tipografía “Body”. Si una tabla de una columna no tiene fila de encabezado
+(`<thead>`), su primera fila se muestra automáticamente como encabezado café (los
+colores siguen los controles “Header background / text”).
+
+### Botón de volver arriba
+
+Las páginas largas muestran un botón redondo gris de **volver arriba** (flecha
+blanca, abajo a la derecha). Solo aparece cuando la página mide más de unas 3
+pantallas y el visitante ya bajó un poco; un clic sube suavemente al inicio
+(instantáneo si el visitante prefiere menos movimiento). No se muestra en el
+editor/vista previa de Elementor ni al imprimir. Para desarrolladores: se apaga con
+`add_filter('island_back_to_top', '__return_false');` o se cambia el largo mínimo
+(en pantallas, por defecto 3) con el filtro `island_back_to_top_screens`.
+
+### Estilo de tabla para cualquier widget: clase `island-table`
+
+Las tablas fuera del widget de Feature Sections (por ejemplo dentro de un Text Editor) no tienen
+diseño propio. Agrega la clase CSS **`island-table`** a ese widget o contenedor (Advanced → CSS
+Classes), o escribe `<table class="island-table">`, y todas las tablas dentro toman el diseño del
+sitio: encabezado café (un `<thead>` o una primera fila de `<th>`), filas alternas, primera
+columna en negrita café, esquinas redondeadas y texto que se ajusta (sin scroll lateral). Una tabla de una columna (cada
+celda: línea de título y luego un párrafo) muestra el título en negrita y, si no tiene `<thead>`, su
+primera fila como encabezado café — igual que las tablas de “Ages”. Las
+tablas dentro de Feature Sections ya tienen este aspecto y no necesitan la clase.
+
+#### Sobre una sección café: clase `table-in-brown`
+
+**`table-in-brown`** es el mismo diseño que `island-table` (cuerpo crema, filas alternas, esquinas
+redondeadas) para usarlo sobre una **sección café**, con dos diferencias: un **encabezado arena** con texto
+café (uno café se perdería en el fondo café) y un borde fino crema. Las tres clases de tabla también fuerzan
+fuente normal, tamaño 15px e interlineado cómodo en encabezado y celdas, para que los estilos de título del
+tema no las aplasten. Se pone igual:
+Advanced → CSS Classes, o `<table class="table-in-brown">`.
+
+### Degradado inferior de la lista con scroll
+
+Los widgets que hacen scroll de su lista de features dentro de una altura fija (Feature Sections
+con “Match neighbour column”, y Wildlife · At a Glance + Features) muestran un degradado suave en el
+borde inferior como pista de “hay más”. Apaga **Show bottom fade** (junto al Fade color) para no
+tener degradado. El degradado del texto “Read more” dentro de cada tarjeta es aparte y se queda.
+
+#### Sobre una sección crema: clase `table-in-cream`
+
+Para una **página o sección crema** usa **`table-in-cream`**: una **tabla blanca** (más contraste contra el
+crema) con el encabezado café, rayas crema suaves y una sombra ligera. Se usa igual que las otras dos:
+Advanced → CSS Classes, o `<table class="table-in-cream">`. Dentro del marco de tabla de Feature Sections (la tarjeta blanca / caja redondeada que el widget ya
+dibuja) las clases **no agregan un segundo borde, margen ni sombra**. Resumen — `island-table`: la normal;
+`table-in-brown`: el mismo diseño para secciones cafés; `table-in-cream`: tabla blanca para secciones crema.
+
+### Island Author Box (la caja de autor del hero como plantilla)
+
+Un solo widget para la caja bajo el título de la página — foto redonda, “By Juan Magallanes, Galapagos
+Travel Advisor” y la nota de revisión — para ponerlo una vez en una plantilla y que funcione en todas las
+páginas. Se llena solo con los datos de cada página:
+
+- **Nombre y cargo** — el campo ACF **Author / Byline** (`author`) de la página. Lo anterior a la coma es el nombre.
+- **Foto y enlace** — la **ficha del experto** que coincide (la página de tipo “Experts” cuyo título es ese
+  nombre; si ninguna está marcada “Experts”, se usa cualquier página publicada con exactamente ese título): su **about image**, o si no su imagen destacada; el enlace va a esa ficha. Si el ACF **Author URL**
+  (`author_url`) está lleno, ese manda como enlace.
+- **Nota de revisión** — el campo ACF **Review Note** (`review_note`, un campo de texto nuevo que agregas a
+  mano junto a Author / Byline). Si la página no tiene, se usa la **Default review note** del widget.
+- Sin byline en la página → el widget no imprime nada (en el editor sale un aviso punteado). Las páginas
+  solo de Elementor siguen con el Author Box de Elementor; este widget es para páginas con los campos ACF.
+
+Controles de estilo: colores y tipografía del nombre y la nota, tamaño y aro de la foto, separación,
+posición de la caja (izquierda / centro / derecha), ancho máximo (la caja se ajusta a su contenido, 760px por
+defecto), fondo y relleno. Para que quede abajo del hero, pon el widget al final del contenedor del hero y
+usa Justify Content = “Space Between” en ese contenedor. El widget también tiene reemplazos manuales opcionales (byline, nota, enlace, foto).
+
+#### Seguir con el Author Box de Elementor: las etiquetas dinámicas “Island Author”
+
+Si prefieres el **Author Box** de Elementor (Source: Custom), no cambia nada en las páginas que ya lo usan con
+valores escritos a mano. Para una **plantilla**, llena sus campos con estas etiquetas dinámicas (clic en el
+icono de discos del campo → grupo **Island Author**):
+
+| Campo del Author Box | Etiqueta | Valor |
+|---|---|---|
+| Name | **Author name (By Name, Role)** | “By ” + el ACF `author` de la página (prefijo editable) |
+| Profile Picture | **Author photo (expert profile)** | la about image / imagen destacada de la ficha del experto |
+| Link | **Author link (Author URL / expert profile)** | ACF `author_url`, o si no la ficha del experto |
+| Biography | **Review note** | ACF `review_note`, o si no el texto por defecto que escribes en la etiqueta |
+
+Requiere Elementor Pro (etiquetas dinámicas). Una página con el campo `author` vacío muestra la caja vacía,
+así que usa las etiquetas solo en una plantilla de páginas que tengan ese campo. **Island Author Box** (arriba)
+sigue disponible como alternativa.
+
+### Fuentes (Island Sources & Links)
+
+Imprime la lista ACF **`sources`** (etiqueta + URL) como una lista ordenada: cada fuente es **su etiqueta, enlazada a
+su URL** (una fila sin URL queda como texto). Ya no imprime el bloque “Explore More”: para eso usa **Island Related
+Links**. Si una etiqueta llega de un documento con basura pegada (“…Image: foto.jpg (400×300px…)Alt: …”, un enlace
+Markdown, un “[” suelto), el widget muestra solo la etiqueta legible y toma la URL de la fila o del enlace Markdown.
+El “(n)” junto al título cuenta las fuentes automáticamente (el interruptor **Show the number of sources** lo oculta).
+Los enlaces se subrayan solo al pasar el mouse. Pon **Background** en **Brown footer** cuando la lista queda justo antes o después del pie “Explore More”: mismo texto
+crema y mismas líneas sobre el café. El widget no imprime nada si la página no tiene fuentes. La lista es **colapsable** por defecto (interruptor **Collapsible list**): una barra fina con el título, el número
+de fuentes y una flecha; clic para abrir. **Start open** la deja abierta. Controles de estilo: colores del título,
+de los enlaces y del texto; columnas (1–3, siempre 1 en celular).
+
+### Enlace del autor (el nombre enlaza a su ficha)
+
+Pon **Island Byline** (categoría “Galápagos Site Widgets”) donde va la línea “By
+Juan Magallanes, Naturalist Expert Contributor”. Lee el campo ACF `author` de la
+página (o el cuadro **Text** si lo llenas) y convierte la parte **“By Nombre”** (todo lo anterior a la coma) en un
+enlace a la ficha de ese experto: la página publicada cuyo *Galápagos Page Type*
+es **Experts** y cuyo título es el mismo nombre (sin importar mayúsculas ni
+acentos). El cargo / nota de revisión después de la coma queda como texto. Pon el enlace en el campo
+ACF **Author URL** (`author_url`, junto a Author / Byline); si está lleno manda ese; si no,
+el nombre enlaza a la ficha del experto como se describe arriba. El widget también tiene una
+caja “Link” para ponerlo a mano.
+
+¿Ya tienes el byline en otro widget (un Heading, Text Editor…)? No hace falta reemplazarlo:
+y no hay nada que configurar: cualquier widget de la página que imprima el byline (por
+ejemplo un Heading con el campo ACF `author` después de “By ”) convierte automáticamente
+“By Juan Magallanes” en el enlace (Author URL, o la ficha del experto que coincida); el cargo
+después de la coma queda como texto. El enlace conserva la fuente, el tamaño, el color
+y la cursiva del texto: visualmente solo cambia con un subrayado al pasar el mouse. Si un widget muestra solo el nombre, ponle la clase CSS
+`island-byline` (Advanced → CSS Classes). Si no
+hay ficha con ese nombre, o ya estás en esa ficha → texto simple, sin enlace.
+Fuera de Elementor está el shortcode `[island_byline]`.
+
 ## 12. Los 3 formatos de documento por dentro (contrato técnico)
 
 Cómo lee el motor cada formato. El lector correcto se elige por la extensión y por

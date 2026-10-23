@@ -291,6 +291,195 @@ once per request, scoped to its own `.irl-*` classes and with no token. Most of
 the other widgets in this file still echo `{{WRAPPER}}` blocks that never
 apply; they get their look from control defaults instead.
 
+When there is only ONE column (for example just the “Need help?” contact block, because
+the page has no related links), that block is centred on the page and its text and
+button are centred too.
+
+### Expert Pages (the pages an expert has written)
+
+Drop **Island Expert Pages** on an expert's profile page and it lists, as cards,
+every published page that names that person in its ACF `author` byline. Nothing
+is maintained by hand: a page appears as soon as it is published with the byline.
+
+- **Who it looks for.** The name comes from the profile page's own title (override
+  it in the widget if the title carries more than the name). Only the part of the
+  byline before the first comma is compared, ignoring case, accents and a leading
+  "By", so `Juan Magallanes, Naturalist Expert Contributor` counts for *Juan
+  Magallanes*, while *María Magallanes* or *Juan Magallanes Jr* do not.
+- **What a card shows.** The page's featured image (else its `hero_image`), its
+  title and up to **three lines** of description. The description is the first of:
+  the page excerpt, the Yoast / Rank Math meta description, `geo_answer`,
+  `hero_subtitle`, `intro`.
+- **Elementor-only pages.** A page with no ACF fields is also found when it has an Elementor
+  **Author Box** (Source: Custom) whose **Name** is typed by hand (e.g. “By Juan Magallanes,
+  Galapagos Travel Advisor”) — the part before the comma is compared, same as the ACF byline.
+  An Author Box whose Name is a dynamic tag is ignored. Matches are cached for a few hours and
+  refresh whenever any page is saved.
+- **Limits.** It reads the `author` field, which only the Informative, Island and
+  Wildlife groups carry. A page type without that field (cruises, itineraries)
+  will not appear until the field is added to its group. The profile page never
+  lists itself.
+- **Design.** Fixed, like Related Links: only the container (background, padding,
+  max width) is adjustable. Controls cover the heading (`{name}` is replaced), which
+  post types to look in, the order and a maximum.
+
+The cards show up in a **carousel**: three at a time on desktop, two on tablet,
+one on mobile. If there are more pages than fit, arrows appear outside the cards,
+centred on the widget (and you can swipe on a phone). Cards can show a small date at the bottom (switch **Show date on cards**, **off** by default) — “Updated Oct 12, 2026”, or the
+publish date (**Date**); it uses the site's own date format.
+The card **title** is the page's ACF `hero_title` (page title if empty). The card
+**text** is the Quick Answer (`geo_answer`) with tags removed, cut to 3 lines with
+“…”; only if it is empty does it fall back to: Excerpt → `hero_subtitle` → `intro`
+→ Yoast description → Rank Math description.
+
+### Long text: “Read more” bar (all screen sizes)
+
+Feature bands/rows, "where to see" items and wildlife features clip long text and
+show a **Read more ↓** bar (thin line, label on the left, arrow on the right).
+Click it to open the full text (it becomes **Read less ↑**); closing it scrolls
+back to the start of that section if you had scrolled past it. Short text gets no
+bar — and neither does text that is only slightly longer than the clamp (the bar
+appears only when MORE than 6 lines would be hidden). There is no hover-to-expand any more — it caused the page to jump when a
+section collapsed under the mouse. The switch is labelled “Clamp long text (Read
+more button)” and the “open height” setting is no longer used (text always opens
+in full). Links inside that text take the section's text colour (cream on a brown
+band) with an underline, so they never disappear on a dark background.
+
+### Tables whose header is the first row (no `<thead>`)
+
+Tables pasted from Word/Google Docs often have **no `<thead>`**: the header is just
+the first `<tr>` made of `<th>` cells. Inside Feature Sections / Bands that row is
+now styled as the header (brown background, cream text, small caps) exactly like a
+`<thead>` — before, its cream text landed on white and looked invisible. It follows
+the same “Header background / Header text” colour controls. Extra `<div>` wrappers
+around the table do not matter.
+
+### Tables inside feature sections (wrap, no sideways scroll)
+
+Tables in feature rows/bands now **wrap their text and always fit the section** —
+no horizontal scrollbar. The Table group has a switch **“Wrap table text (no
+horizontal scroll)”** (on by default); switch it off to bring back the old
+behaviour (minimum width, scrolls sideways). A **one-column table** (each cell =
+a title line, then a paragraph) reads as a bold title plus normal text; the header
+cell uses the same pattern in the header colour (title line bold, same size as the text). Its text is 15px with 1.7 line
+height — the same as the section's body text — and in feature rows it follows the
+“Body” typography setting. If a one-column table has no header row (`<thead>`), its
+first row is shown as the brown header automatically (colours follow the “Header
+background / text” controls).
+
+### Back-to-top button
+
+Long pages get a round grey **back-to-top** button (white chevron, bottom-right).
+It appears only when the page is longer than about 3 screens and the visitor has
+scrolled down a little; one click scrolls smoothly to the top (instant if the
+visitor prefers reduced motion). It is not shown in the Elementor editor/preview or
+when printing. Developers: turn it off with
+`add_filter('island_back_to_top', '__return_false');` or change the length
+threshold (in screens, default 3) with the `island_back_to_top_screens` filter.
+
+### Table style for any widget: class `island-table`
+
+Tables outside the Feature Sections widget (for example inside a Text Editor) have no design of
+their own. Add the CSS class **`island-table`** to that widget or container (Advanced → CSS
+Classes), or write `<table class="island-table">`, and every table inside gets the site design:
+brown header (a `<thead>` or a first row of `<th>`), striped rows, bold brown first column,
+rounded corners, and text that wraps (no sideways scroll). A one-column table (each cell: a
+title line, then a paragraph) shows the title in bold and, if it has no `<thead>`, its first row as the
+brown header — exactly like the “Ages” tables. Tables inside Feature Sections already
+have this look and need no class.
+
+#### On a brown section: class `table-in-brown`
+
+**`table-in-brown`** is the same design as `island-table` (cream body, striped rows, rounded corners) for
+use on a **brown section**, with two differences: a **sand header** with brown text (a brown header would melt
+into the brown background) and a thin cream outline. All three table classes also force a normal font,
+15px size and comfortable line height on header and cells, so theme heading styles can't squash them. Use it the same way:
+Advanced → CSS Classes, or `<table class="table-in-brown">`.
+
+### Bottom fade of the scrolling feature list
+
+The widgets that scroll their feature list inside a fixed height (Feature Sections with “Match
+neighbour column”, and Wildlife · At a Glance + Features) show a soft gradient at the bottom edge
+as a “there is more” hint. Switch **Show bottom fade** off (next to the Fade color) for no gradient.
+The “Read more” text fade inside each card is separate and stays.
+
+#### On a cream section: class `table-in-cream`
+
+For a **cream page or section** use **`table-in-cream`**: a **white table** (more contrast against the cream)
+with the brown header, soft cream stripes and a light shadow. Same use as the other two: Advanced → CSS
+Classes, or `<table class="table-in-cream">`. Inside a Feature Sections table frame (the white card / rounded box the widget already draws)
+the classes add **no second outline, margin or shadow**. Summary — `island-table`: default; `table-in-brown`: same look
+for brown sections; `table-in-cream`: white table for cream sections.
+
+### Island Author Box (the hero author box as a template)
+
+One widget for the box under the page title — round photo, “By Juan Magallanes, Galapagos Travel
+Advisor” and the review note — so it can live in a single template and work on every page.
+Put it in the template once; it fills itself from each page:
+
+- **Name and role** — the page's ACF **Author / Byline** (`author`). The part before the comma is the name.
+- **Photo and link** — the matching **expert profile page** (the page typed “Experts” whose title is that
+  name; if none is marked “Experts”, any published page titled exactly with the name is used): its **about image**, else its featured image; the link goes to that profile. The ACF **Author URL**
+  (`author_url`), if filled, wins as the link.
+- **Review note** — the ACF **Review Note** (`review_note`, a new text field you add by hand next to Author /
+  Byline). If the page has none, the widget's **Default review note** is used.
+- No byline on the page → the widget prints nothing (the editor shows a dashed hint). Pages that are pure
+  Elementor keep Elementor's own Author Box; this widget is for pages with the ACF fields.
+
+Style controls: name/note colours and typography, photo size and ring colour, gap, box position (left / centre /
+right), max width (box shrinks to its content, default 760px), background and padding. To sit at the bottom of a
+hero, put the widget last in the hero container and set that container's Justify Content to “Space Between”. The widget also has optional manual overrides (byline, note, link, photo).
+
+#### Keep Elementor's own Author Box: the “Island Author” dynamic tags
+
+If you prefer Elementor's **Author Box** (Source: Custom), nothing changes for the pages that already use it
+with typed-in values. For a **template**, fill its fields with these dynamic tags instead (click the database
+icon of the field → group **Island Author**):
+
+| Author Box field | Tag | Value |
+|---|---|---|
+| Name | **Author name (By Name, Role)** | “By ” + the page's ACF `author` (prefix editable) |
+| Profile Picture | **Author photo (expert profile)** | the matching expert profile's about image / featured image |
+| Link | **Author link (Author URL / expert profile)** | ACF `author_url`, else the expert profile page |
+| Biography | **Review note** | ACF `review_note`, else the default text you type in the tag |
+
+Needs Elementor Pro (dynamic tags). A page whose `author` field is empty shows an empty box, so use the tags only
+in a template for pages that have that field. **Island Author Box** (above) remains available as an alternative.
+
+### Sources (Island Sources & Links)
+
+Prints the ACF **`sources`** list (label + URL) as one tidy list: each source is **its label, linked to its URL** (a
+row with no URL is plain text). It no longer prints the “Explore More” block — use **Island Related Links** for that.
+If a label arrives from a document with junk glued on (“…Image: photo.jpg (400×300px…)Alt: …”, a Markdown link,
+a stray “[”), the widget shows only the readable label and takes the URL from the row or from the Markdown link.
+The “(n)” next to the heading counts the sources automatically (switch **Show the number of sources** to hide it).
+Links get an underline only on hover. Set **Background** to **Brown footer** when the list sits right before or after the “Explore More” footer: same cream
+text and lines on the brown. The widget prints nothing when the page has no sources. The list is **collapsible** by default (switch **Collapsible list**): a thin bar with the heading, the number of
+sources and an arrow; click to open. **Start open** keeps it open. Style controls: heading, link and text colours;
+columns (1–3, always 1 on phones).
+
+### Byline link (the author's name links to their profile)
+
+Drop **Island Byline** (category “Galápagos Site Widgets”) where the “By Juan
+Magallanes, Naturalist Expert Contributor” line goes. It reads the page's ACF
+`author` field (or the **Text** box if filled) and turns the **“By Name”** part (everything before the comma) into a
+link to that expert's profile page — the published page whose *Galápagos Page
+Type* is **Experts** and whose title is the same name (case and accents ignored).
+The role / review note after the comma stays plain text. Put the link in the ACF field
+**Author URL** (`author_url`, next to Author / Byline); if it is filled it wins, otherwise
+the name links to the matching expert profile as described above. The widget also has a
+“Link” box to set it by hand.
+
+**Already have the byline in another widget** (a Heading, Text Editor…)? You don't have to
+replace it, and there is nothing to set up: any widget on the page that prints the byline
+(for example a Heading showing the ACF `author` field after “By ”) automatically gets “By
+Juan Magallanes” turned into the link (Author URL, or the matching expert profile); the
+role after the comma stays plain text. The link keeps the text's own font, size, colour
+and italic — nothing changes visually except an underline on hover. If a widget shows only the name, give it the CSS
+class `island-byline` (Advanced → CSS Classes). No matching profile, or
+you are already on that profile → plain text, no link. Outside Elementor the same
+thing is available as the shortcode `[island_byline]`.
+
 ## 12. The 3 document formats under the hood (technical contract)
 
 How the engine reads each format. The correct reader is chosen by the extension and
